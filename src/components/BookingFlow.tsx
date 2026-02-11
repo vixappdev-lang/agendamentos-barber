@@ -3,15 +3,17 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, ArrowRight, Check, Calendar, User, Clock, Send, X } from "lucide-react";
 import type { Service, Barber } from "@/data/services";
 import { barbers, availableTimes } from "@/data/services";
+import type { User as AuthUser } from "@supabase/supabase-js";
 
 interface BookingFlowProps {
   service: Service;
   onClose: () => void;
+  user?: AuthUser | null;
 }
 
 const steps = ["Serviço", "Barbeiro", "Data & Hora", "Seus Dados", "Confirmar"];
 
-const BookingFlow = ({ service, onClose }: BookingFlowProps) => {
+const BookingFlow = ({ service, onClose, user }: BookingFlowProps) => {
   const [currentStep, setCurrentStep] = useState(0);
   const [selectedBarber, setSelectedBarber] = useState<Barber | null>(null);
   const [selectedDate, setSelectedDate] = useState("");
@@ -77,7 +79,7 @@ const BookingFlow = ({ service, onClose }: BookingFlowProps) => {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4"
-      style={{ background: 'hsl(220 25% 6% / 0.85)', backdropFilter: 'blur(12px)' }}
+      style={{ background: 'hsl(230 20% 7% / 0.85)', backdropFilter: 'blur(12px)' }}
     >
       <motion.div
         initial={{ y: 40, opacity: 0 }}
@@ -102,7 +104,7 @@ const BookingFlow = ({ service, onClose }: BookingFlowProps) => {
                   {i < currentStep ? <Check className="w-4 h-4" /> : i + 1}
                 </div>
                 {i < steps.length - 1 && (
-                  <div className="hidden sm:block w-8 h-px mx-1" style={{ background: i < currentStep ? 'hsl(43 74% 49% / 0.3)' : 'hsl(0 0% 100% / 0.06)' }} />
+                  <div className="hidden sm:block w-8 h-px mx-1" style={{ background: i < currentStep ? 'hsl(245 60% 55% / 0.3)' : 'hsl(0 0% 100% / 0.06)' }} />
                 )}
               </div>
             ))}
@@ -141,16 +143,16 @@ const BookingFlow = ({ service, onClose }: BookingFlowProps) => {
                       onClick={() => setSelectedBarber(barber)}
                       className="w-full glass-card p-4 text-left transition-all"
                       style={{
-                        borderColor: selectedBarber?.id === barber.id ? 'hsl(43 74% 49% / 0.3)' : undefined,
-                        background: selectedBarber?.id === barber.id ? 'hsl(43 74% 49% / 0.06)' : undefined,
+                        borderColor: selectedBarber?.id === barber.id ? 'hsl(245 60% 55% / 0.3)' : undefined,
+                        background: selectedBarber?.id === barber.id ? 'hsl(245 60% 55% / 0.06)' : undefined,
                       }}
                     >
                       <div className="flex items-center gap-3">
                         <div
                           className="w-11 h-11 rounded-xl flex items-center justify-center font-bold text-sm"
                           style={{
-                            background: selectedBarber?.id === barber.id ? 'linear-gradient(135deg, hsl(43, 74%, 49%), hsl(43, 80%, 60%))' : 'hsl(0 0% 100% / 0.05)',
-                            color: selectedBarber?.id === barber.id ? 'hsl(220 25% 6%)' : 'hsl(220 10% 50%)',
+                            background: selectedBarber?.id === barber.id ? 'linear-gradient(135deg, hsl(245 60% 50%), hsl(265 60% 55%))' : 'hsl(0 0% 100% / 0.05)',
+                            color: selectedBarber?.id === barber.id ? 'hsl(0 0% 100%)' : 'hsl(0 0% 50%)',
                           }}
                         >
                           {barber.avatar}
@@ -180,11 +182,11 @@ const BookingFlow = ({ service, onClose }: BookingFlowProps) => {
                           className="shrink-0 w-16 py-3 rounded-xl text-center transition-all"
                           style={{
                             background: selectedDate === d.value
-                              ? 'linear-gradient(135deg, hsl(43, 74%, 49%), hsl(43, 80%, 60%))'
+                              ? 'linear-gradient(135deg, hsl(245 60% 50%), hsl(265 60% 55%))'
                               : 'hsl(0 0% 100% / 0.04)',
                             border: `1px solid ${selectedDate === d.value ? 'transparent' : 'hsl(0 0% 100% / 0.06)'}`,
-                            color: selectedDate === d.value ? 'hsl(220 25% 6%)' : 'hsl(220 10% 55%)',
-                            boxShadow: selectedDate === d.value ? '0 4px 20px hsl(43 74% 49% / 0.25)' : 'none',
+                            color: selectedDate === d.value ? 'hsl(0 0% 100%)' : 'hsl(0 0% 55%)',
+                            boxShadow: selectedDate === d.value ? '0 4px 20px hsl(245 60% 55% / 0.25)' : 'none',
                           }}
                         >
                           <span className="block text-[10px] uppercase font-medium opacity-70">{d.weekday}</span>
@@ -205,11 +207,11 @@ const BookingFlow = ({ service, onClose }: BookingFlowProps) => {
                           className="py-2.5 rounded-xl text-sm font-medium transition-all"
                           style={{
                             background: selectedTime === t
-                              ? 'linear-gradient(135deg, hsl(43, 74%, 49%), hsl(43, 80%, 60%))'
+                              ? 'linear-gradient(135deg, hsl(245 60% 50%), hsl(265 60% 55%))'
                               : 'hsl(0 0% 100% / 0.04)',
                             border: `1px solid ${selectedTime === t ? 'transparent' : 'hsl(0 0% 100% / 0.06)'}`,
-                            color: selectedTime === t ? 'hsl(220 25% 6%)' : 'hsl(220 10% 55%)',
-                            boxShadow: selectedTime === t ? '0 4px 16px hsl(43 74% 49% / 0.2)' : 'none',
+                            color: selectedTime === t ? 'hsl(0 0% 100%)' : 'hsl(0 0% 55%)',
+                            boxShadow: selectedTime === t ? '0 4px 16px hsl(245 60% 55% / 0.2)' : 'none',
                           }}
                         >
                           {t}
