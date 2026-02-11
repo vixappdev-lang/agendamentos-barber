@@ -2,52 +2,52 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap');
 
 @layer base {
   :root {
-    --background: 220 15% 8%;
-    --foreground: 40 10% 92%;
+    --background: 220 25% 7%;
+    --foreground: 0 0% 95%;
 
-    --card: 220 12% 12%;
-    --card-foreground: 40 10% 92%;
+    --card: 220 20% 10%;
+    --card-foreground: 0 0% 95%;
 
-    --popover: 220 12% 12%;
-    --popover-foreground: 40 10% 92%;
+    --popover: 220 20% 10%;
+    --popover-foreground: 0 0% 95%;
 
     --primary: 43 74% 49%;
-    --primary-foreground: 220 15% 8%;
+    --primary-foreground: 220 25% 7%;
 
-    --secondary: 220 10% 18%;
-    --secondary-foreground: 40 10% 85%;
+    --secondary: 220 15% 15%;
+    --secondary-foreground: 0 0% 80%;
 
-    --muted: 220 10% 16%;
-    --muted-foreground: 220 10% 55%;
+    --muted: 220 15% 13%;
+    --muted-foreground: 220 10% 50%;
 
     --accent: 43 74% 49%;
-    --accent-foreground: 220 15% 8%;
+    --accent-foreground: 220 25% 7%;
 
     --destructive: 0 72% 51%;
-    --destructive-foreground: 40 10% 92%;
+    --destructive-foreground: 0 0% 95%;
 
-    --border: 220 10% 20%;
-    --input: 220 10% 20%;
+    --border: 220 15% 16%;
+    --input: 220 15% 16%;
     --ring: 43 74% 49%;
 
-    --radius: 0.75rem;
+    --radius: 1rem;
 
-    --sidebar-background: 220 15% 6%;
-    --sidebar-foreground: 40 10% 92%;
+    --sidebar-background: 220 25% 5%;
+    --sidebar-foreground: 0 0% 95%;
     --sidebar-primary: 43 74% 49%;
-    --sidebar-primary-foreground: 220 15% 8%;
-    --sidebar-accent: 220 10% 14%;
-    --sidebar-accent-foreground: 40 10% 92%;
-    --sidebar-border: 220 10% 18%;
+    --sidebar-primary-foreground: 220 25% 7%;
+    --sidebar-accent: 220 15% 12%;
+    --sidebar-accent-foreground: 0 0% 95%;
+    --sidebar-border: 220 15% 14%;
     --sidebar-ring: 43 74% 49%;
 
     --gold-glow: 43 80% 55%;
-    --glass: 220 12% 14%;
-    --glass-border: 220 10% 22%;
+    --glass: 220 20% 12%;
+    --glass-border: 0 0% 100% / 0.08;
     --whatsapp: 142 70% 40%;
     --whatsapp-foreground: 0 0% 100%;
   }
@@ -59,18 +59,40 @@
   }
 
   body {
-    @apply bg-background text-foreground font-sans antialiased;
-    font-family: 'Inter', sans-serif;
+    @apply bg-background text-foreground antialiased;
+    font-family: 'Montserrat', sans-serif;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    font-family: 'Playfair Display', serif;
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+  }
+
+  /* Hide scrollbar globally but keep scroll functionality */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
   }
 }
 
 @layer components {
   .glass-card {
-    @apply bg-card/80 backdrop-blur-md border border-glass-border rounded-xl;
+    background: hsl(220 20% 10% / 0.6);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid hsl(0 0% 100% / 0.08);
+    border-radius: 1rem;
+  }
+
+  .glass-card-strong {
+    background: hsl(220 20% 10% / 0.8);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid hsl(0 0% 100% / 0.1);
+    border-radius: 1.25rem;
   }
 
   .gold-gradient {
@@ -90,7 +112,7 @@
 
   .hover-lift:hover {
     transform: translateY(-4px);
-    box-shadow: 0 12px 40px -12px hsl(43 74% 49% / 0.2);
+    box-shadow: 0 16px 48px -12px hsl(43 74% 49% / 0.15);
   }
 
   .step-indicator {
@@ -107,5 +129,32 @@
 
   .step-inactive {
     @apply bg-muted text-muted-foreground;
+  }
+
+  .btn-primary {
+    @apply px-6 py-3 rounded-xl font-semibold text-sm transition-all duration-300;
+    background: linear-gradient(135deg, hsl(43, 74%, 49%), hsl(43, 80%, 60%));
+    color: hsl(220 25% 7%);
+  }
+
+  .btn-primary:hover {
+    opacity: 0.9;
+    box-shadow: 0 8px 24px -4px hsl(43 74% 49% / 0.3);
+  }
+
+  .btn-primary:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  .btn-secondary {
+    @apply px-5 py-3 rounded-xl font-medium text-sm transition-all duration-300;
+    background: hsl(0 0% 100% / 0.05);
+    border: 1px solid hsl(0 0% 100% / 0.1);
+    color: hsl(0 0% 80%);
+  }
+
+  .btn-secondary:hover {
+    background: hsl(0 0% 100% / 0.08);
   }
 }

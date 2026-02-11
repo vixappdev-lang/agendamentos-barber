@@ -38,7 +38,7 @@ const BookingFlow = ({ service, onClose }: BookingFlowProps) => {
   };
 
   const generateDates = () => {
-    const dates: { label: string; value: string }[] = [];
+    const dates: { label: string; value: string; weekday: string; day: string }[] = [];
     const today = new Date();
     for (let i = 1; i <= 14; i++) {
       const d = new Date(today);
@@ -47,6 +47,8 @@ const BookingFlow = ({ service, onClose }: BookingFlowProps) => {
         dates.push({
           label: d.toLocaleDateString("pt-BR", { weekday: "short", day: "2-digit", month: "2-digit" }),
           value: d.toISOString().split("T")[0],
+          weekday: d.toLocaleDateString("pt-BR", { weekday: "short" }).replace(".", ""),
+          day: d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" }),
         });
       }
     }
@@ -74,18 +76,18 @@ const BookingFlow = ({ service, onClose }: BookingFlowProps) => {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 bg-background/95 backdrop-blur-sm flex items-center justify-center p-4"
+      className="fixed inset-0 z-50 bg-background/80 backdrop-blur-md flex items-center justify-center p-4"
     >
       <motion.div
         initial={{ scale: 0.95, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.95, opacity: 0 }}
-        className="glass-card w-full max-w-lg max-h-[90vh] overflow-y-auto"
+        className="glass-card-strong w-full max-w-lg max-h-[90vh] overflow-y-auto scrollbar-hide"
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-5 border-b border-border/50">
-          <h2 className="font-display text-xl font-bold text-foreground">Agendamento</h2>
-          <button onClick={onClose} className="p-2 rounded-lg hover:bg-muted transition-colors">
+        <div className="flex items-center justify-between p-5 border-b border-white/5">
+          <h2 className="text-xl font-bold text-foreground">Agendamento</h2>
+          <button onClick={onClose} className="p-2 rounded-xl hover:bg-white/5 transition-colors">
             <X className="w-5 h-5 text-muted-foreground" />
           </button>
         </div>
@@ -99,12 +101,12 @@ const BookingFlow = ({ service, onClose }: BookingFlowProps) => {
                   {i < currentStep ? <Check className="w-4 h-4" /> : i + 1}
                 </div>
                 {i < steps.length - 1 && (
-                  <div className={`hidden sm:block w-8 h-px mx-1 ${i < currentStep ? "bg-primary/50" : "bg-border"}`} />
+                  <div className={`hidden sm:block w-8 h-px mx-1 ${i < currentStep ? "bg-primary/50" : "bg-white/10"}`} />
                 )}
               </div>
             ))}
           </div>
-          <p className="text-sm text-muted-foreground mt-3">{steps[currentStep]}</p>
+          <p className="text-sm text-muted-foreground mt-3 font-medium">{steps[currentStep]}</p>
         </div>
 
         {/* Content */}
@@ -114,21 +116,19 @@ const BookingFlow = ({ service, onClose }: BookingFlowProps) => {
 
               {currentStep === 0 && (
                 <div className="space-y-3">
-                  <div className="glass-card p-4 border-primary/30">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                        <service.icon className="w-5 h-5 text-primary" />
-                      </div>
-                      <div>
-                        <h3 className="font-semibold text-foreground">{service.title}</h3>
-                        <p className="text-sm text-muted-foreground">{service.subtitle}</p>
-                      </div>
+                  <div className="glass-card p-4 border-primary/20 flex items-center gap-4 overflow-hidden">
+                    <div className="w-16 h-16 rounded-xl overflow-hidden shrink-0">
+                      <img src={service.image} alt={service.title} className="w-full h-full object-cover" />
                     </div>
-                    <div className="flex items-center gap-4 mt-3 text-sm">
-                      <span className="gold-text font-bold text-lg">R$ {service.price}</span>
-                      <span className="flex items-center gap-1 text-muted-foreground">
-                        <Clock className="w-3 h-3" /> {service.duration}
-                      </span>
+                    <div className="flex-1">
+                      <h3 className="font-bold text-foreground">{service.title}</h3>
+                      <p className="text-sm text-muted-foreground">{service.subtitle}</p>
+                      <div className="flex items-center gap-4 mt-2 text-sm">
+                        <span className="gold-text font-bold text-lg">R$ {service.price}</span>
+                        <span className="flex items-center gap-1 text-muted-foreground">
+                          <Clock className="w-3 h-3" /> {service.duration}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -140,17 +140,17 @@ const BookingFlow = ({ service, onClose }: BookingFlowProps) => {
                     <button
                       key={barber.id}
                       onClick={() => setSelectedBarber(barber)}
-                      className={`w-full glass-card p-4 text-left transition-all ${selectedBarber?.id === barber.id ? "border-primary/50 bg-primary/5" : "hover:border-border"}`}
+                      className={`w-full glass-card p-4 text-left transition-all ${selectedBarber?.id === barber.id ? "border-primary/30 bg-primary/5" : "hover:bg-white/5"}`}
                     >
                       <div className="flex items-center gap-3">
-                        <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm ${selectedBarber?.id === barber.id ? "gold-gradient text-primary-foreground" : "bg-muted text-muted-foreground"}`}>
+                        <div className={`w-11 h-11 rounded-xl flex items-center justify-center font-bold text-sm ${selectedBarber?.id === barber.id ? "gold-gradient text-primary-foreground" : "bg-white/5 text-muted-foreground"}`}>
                           {barber.avatar}
                         </div>
-                        <div>
+                        <div className="flex-1">
                           <h4 className="font-semibold text-foreground">{barber.name}</h4>
                           <p className="text-sm text-muted-foreground">{barber.specialty}</p>
                         </div>
-                        {selectedBarber?.id === barber.id && <Check className="w-5 h-5 text-primary ml-auto" />}
+                        {selectedBarber?.id === barber.id && <Check className="w-5 h-5 text-primary" />}
                       </div>
                     </button>
                   ))}
@@ -158,33 +158,42 @@ const BookingFlow = ({ service, onClose }: BookingFlowProps) => {
               )}
 
               {currentStep === 2 && (
-                <div className="space-y-4">
+                <div className="space-y-5">
                   <div>
-                    <label className="text-sm font-medium text-foreground flex items-center gap-2 mb-2">
+                    <label className="text-sm font-semibold text-foreground flex items-center gap-2 mb-3">
                       <Calendar className="w-4 h-4 text-primary" /> Data
                     </label>
-                    <div className="grid grid-cols-3 gap-2 max-h-36 overflow-y-auto">
+                    <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-2">
                       {dates.map((d) => (
                         <button
                           key={d.value}
                           onClick={() => setSelectedDate(d.value)}
-                          className={`p-2 rounded-lg text-xs font-medium transition-all ${selectedDate === d.value ? "gold-gradient text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-muted/80"}`}
+                          className={`shrink-0 w-16 py-3 rounded-xl text-center transition-all ${
+                            selectedDate === d.value
+                              ? "gold-gradient text-primary-foreground shadow-lg shadow-primary/20"
+                              : "bg-white/5 text-muted-foreground hover:bg-white/10 border border-white/5"
+                          }`}
                         >
-                          {d.label}
+                          <span className="block text-[10px] uppercase font-medium opacity-70">{d.weekday}</span>
+                          <span className="block text-sm font-bold mt-0.5">{d.day}</span>
                         </button>
                       ))}
                     </div>
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-foreground flex items-center gap-2 mb-2">
+                    <label className="text-sm font-semibold text-foreground flex items-center gap-2 mb-3">
                       <Clock className="w-4 h-4 text-primary" /> Horário
                     </label>
-                    <div className="grid grid-cols-4 gap-2 max-h-36 overflow-y-auto">
+                    <div className="grid grid-cols-4 sm:grid-cols-5 gap-2 max-h-40 overflow-y-auto scrollbar-hide">
                       {availableTimes.map((t) => (
                         <button
                           key={t}
                           onClick={() => setSelectedTime(t)}
-                          className={`p-2 rounded-lg text-sm font-medium transition-all ${selectedTime === t ? "gold-gradient text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-muted/80"}`}
+                          className={`py-2.5 rounded-xl text-sm font-medium transition-all ${
+                            selectedTime === t
+                              ? "gold-gradient text-primary-foreground shadow-lg shadow-primary/20"
+                              : "bg-white/5 text-muted-foreground hover:bg-white/10 border border-white/5"
+                          }`}
                         >
                           {t}
                         </button>
@@ -197,7 +206,7 @@ const BookingFlow = ({ service, onClose }: BookingFlowProps) => {
               {currentStep === 3 && (
                 <div className="space-y-4">
                   <div>
-                    <label className="text-sm font-medium text-foreground flex items-center gap-2 mb-2">
+                    <label className="text-sm font-semibold text-foreground flex items-center gap-2 mb-2">
                       <User className="w-4 h-4 text-primary" /> Seu nome
                     </label>
                     <input
@@ -205,11 +214,11 @@ const BookingFlow = ({ service, onClose }: BookingFlowProps) => {
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                       placeholder="Digite seu nome"
-                      className="w-full bg-muted border border-border rounded-lg px-4 py-3 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
                     />
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-foreground flex items-center gap-2 mb-2">
+                    <label className="text-sm font-semibold text-foreground flex items-center gap-2 mb-2">
                       <Send className="w-4 h-4 text-primary" /> WhatsApp
                     </label>
                     <input
@@ -217,7 +226,7 @@ const BookingFlow = ({ service, onClose }: BookingFlowProps) => {
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
                       placeholder="(11) 99999-9999"
-                      className="w-full bg-muted border border-border rounded-lg px-4 py-3 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
                     />
                   </div>
                 </div>
@@ -225,7 +234,7 @@ const BookingFlow = ({ service, onClose }: BookingFlowProps) => {
 
               {currentStep === 4 && (
                 <div className="space-y-3">
-                  <h3 className="font-display text-lg font-semibold text-foreground mb-4">Resumo do Agendamento</h3>
+                  <h3 className="text-lg font-bold text-foreground mb-4">Resumo do Agendamento</h3>
                   {[
                     { label: "Serviço", value: service.title },
                     { label: "Barbeiro", value: selectedBarber?.name || "" },
@@ -235,9 +244,9 @@ const BookingFlow = ({ service, onClose }: BookingFlowProps) => {
                     { label: "WhatsApp", value: phone },
                     { label: "Valor", value: `R$ ${service.price}` },
                   ].map((item) => (
-                    <div key={item.label} className="flex justify-between py-2 border-b border-border/30">
+                    <div key={item.label} className="flex justify-between py-2.5 border-b border-white/5">
                       <span className="text-sm text-muted-foreground">{item.label}</span>
-                      <span className="text-sm font-medium text-foreground">{item.value}</span>
+                      <span className="text-sm font-semibold text-foreground">{item.value}</span>
                     </div>
                   ))}
                 </div>
@@ -248,10 +257,10 @@ const BookingFlow = ({ service, onClose }: BookingFlowProps) => {
         </div>
 
         {/* Footer */}
-        <div className="p-5 border-t border-border/50 flex items-center justify-between">
+        <div className="p-5 border-t border-white/5 flex items-center justify-between">
           <button
             onClick={currentStep === 0 ? onClose : back}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-muted text-muted-foreground hover:bg-muted/80 transition-colors text-sm font-medium"
+            className="btn-secondary flex items-center gap-2"
           >
             <ArrowLeft className="w-4 h-4" />
             {currentStep === 0 ? "Cancelar" : "Voltar"}
@@ -261,14 +270,14 @@ const BookingFlow = ({ service, onClose }: BookingFlowProps) => {
             <button
               onClick={next}
               disabled={!canProceed()}
-              className="flex items-center gap-2 px-5 py-2 rounded-lg gold-gradient text-primary-foreground text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
+              className="btn-primary flex items-center gap-2"
             >
               Próximo <ArrowRight className="w-4 h-4" />
             </button>
           ) : (
             <button
               onClick={sendWhatsApp}
-              className="flex items-center gap-2 px-5 py-2 rounded-lg bg-whatsapp hover:bg-whatsapp/90 text-whatsapp-foreground text-sm font-semibold transition-colors"
+              className="flex items-center gap-2 px-6 py-3 rounded-xl bg-whatsapp hover:bg-whatsapp/90 text-whatsapp-foreground text-sm font-semibold transition-all shadow-lg shadow-whatsapp/20"
             >
               <Send className="w-4 h-4" /> Enviar via WhatsApp
             </button>

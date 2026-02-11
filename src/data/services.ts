@@ -1,5 +1,12 @@
 import { Scissors, Sparkles, Star, Brush, Droplets, Crown } from "lucide-react";
 
+import imgCorte from "@/assets/service-corte.jpg";
+import imgBarba from "@/assets/service-barba.jpg";
+import imgCombo from "@/assets/service-combo.jpg";
+import imgSobrancelha from "@/assets/service-sobrancelha.jpg";
+import imgHidratacao from "@/assets/service-hidratacao.jpg";
+import imgPremium from "@/assets/service-premium.jpg";
+
 export interface Service {
   id: string;
   title: string;
@@ -7,6 +14,7 @@ export interface Service {
   price: number;
   duration: string;
   icon: typeof Scissors;
+  image: string;
 }
 
 export const services: Service[] = [
@@ -17,6 +25,7 @@ export const services: Service[] = [
     price: 45,
     duration: "40 min",
     icon: Scissors,
+    image: imgCorte,
   },
   {
     id: "barba",
@@ -25,6 +34,7 @@ export const services: Service[] = [
     price: 35,
     duration: "30 min",
     icon: Brush,
+    image: imgBarba,
   },
   {
     id: "combo",
@@ -33,6 +43,7 @@ export const services: Service[] = [
     price: 70,
     duration: "1h 10min",
     icon: Crown,
+    image: imgCombo,
   },
   {
     id: "sobrancelha",
@@ -41,6 +52,7 @@ export const services: Service[] = [
     price: 20,
     duration: "15 min",
     icon: Sparkles,
+    image: imgSobrancelha,
   },
   {
     id: "hidratacao",
@@ -49,6 +61,7 @@ export const services: Service[] = [
     price: 55,
     duration: "45 min",
     icon: Droplets,
+    image: imgHidratacao,
   },
   {
     id: "premium",
@@ -57,6 +70,7 @@ export const services: Service[] = [
     price: 150,
     duration: "2h",
     icon: Star,
+    image: imgPremium,
   },
 ];
 

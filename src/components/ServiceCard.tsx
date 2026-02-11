@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Clock } from "lucide-react";
+import { Clock, ArrowRight } from "lucide-react";
 import type { Service } from "@/data/services";
 
 interface ServiceCardProps {
@@ -9,26 +9,30 @@ interface ServiceCardProps {
 }
 
 const ServiceCard = ({ service, onSelect, index }: ServiceCardProps) => {
-  const Icon = service.icon;
-
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay: index * 0.08 }}
-      className="glass-card p-5 hover-lift cursor-pointer group"
+      className="glass-card hover-lift cursor-pointer group overflow-hidden"
       onClick={() => onSelect(service)}
     >
-      <div className="flex items-start gap-4">
-        <div className="w-12 h-12 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0 group-hover:bg-primary/20 transition-colors">
-          <Icon className="w-5 h-5 text-primary" />
+      <div className="flex items-center gap-0">
+        {/* Realistic image */}
+        <div className="w-24 h-24 sm:w-28 sm:h-28 shrink-0 overflow-hidden rounded-l-2xl">
+          <img
+            src={service.image}
+            alt={service.title}
+            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+          />
         </div>
 
-        <div className="flex-1 min-w-0">
-          <h3 className="font-display text-lg font-semibold text-foreground">
+        {/* Content */}
+        <div className="flex-1 min-w-0 p-4 sm:p-5">
+          <h3 className="text-base sm:text-lg font-bold text-foreground tracking-tight">
             {service.title}
           </h3>
-          <p className="text-sm text-muted-foreground mt-0.5 leading-relaxed">
+          <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 leading-relaxed line-clamp-1">
             {service.subtitle}
           </p>
 
@@ -43,8 +47,8 @@ const ServiceCard = ({ service, onSelect, index }: ServiceCardProps) => {
               </span>
             </div>
 
-            <button className="px-4 py-2 rounded-lg gold-gradient text-primary-foreground text-sm font-semibold hover:opacity-90 transition-opacity">
-              Agendar
+            <button className="btn-primary flex items-center gap-1.5 !px-4 !py-2 text-xs sm:text-sm">
+              Agendar <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </div>
         </div>
