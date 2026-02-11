@@ -49,8 +49,8 @@ const ServiceCard = ({ service, onSelect, index }: ServiceCardProps) => {
               </span>
             </div>
 
-            <button className="btn-primary flex items-center gap-1 !px-3 !py-1.5 min-[375px]:!px-4 min-[375px]:!py-2 text-[11px] min-[375px]:text-xs sm:text-sm whitespace-nowrap">
-              Agendar <ArrowRight className="w-3 h-3 min-[375px]:w-3.5 min-[375px]:h-3.5" />
+            <button className="btn-primary flex items-center justify-center gap-1.5 !px-4 !py-2 min-[375px]:!px-5 min-[375px]:!py-2.5 text-[11px] min-[375px]:text-xs sm:text-sm whitespace-nowrap rounded-xl w-full sm:w-auto">
+              Agendar Aqui <ArrowRight className="w-3 h-3 min-[375px]:w-3.5 min-[375px]:h-3.5" />
             </button>
           </div>
         </div>
