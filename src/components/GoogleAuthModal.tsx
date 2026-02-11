@@ -42,10 +42,10 @@ const GoogleAuthModal = ({ onClose, onSignIn, loading }: GoogleAuthModalProps) =
             </svg>
           </div>
           <h3 className="text-xl font-bold text-foreground mb-2">
-            Conecte sua conta
+            Acesse sua conta
           </h3>
           <p className="text-sm text-muted-foreground leading-relaxed">
-            Para agendar, conecte-se com sua conta Google. Assim você não precisa preencher seus dados toda vez.
+            Para agendar na Barbearia, conecte-se com sua conta Google. Rápido e seguro.
           </p>
         </div>
 
@@ -69,7 +69,7 @@ const GoogleAuthModal = ({ onClose, onSignIn, loading }: GoogleAuthModalProps) =
         </button>
 
         <p className="text-[11px] text-muted-foreground/50 mt-4">
-          Seus dados ficam seguros e protegidos.
+          Seus dados ficam seguros e protegidos pela Barbearia.
         </p>
       </motion.div>
     </motion.div>
