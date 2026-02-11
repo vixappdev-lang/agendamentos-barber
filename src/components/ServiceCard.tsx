@@ -49,7 +49,7 @@ const ServiceCard = ({ service, onSelect, index }: ServiceCardProps) => {
               </span>
             </div>
 
-            <button className="btn-primary flex items-center justify-center gap-1.5 !px-4 !py-2 min-[375px]:!px-5 min-[375px]:!py-2.5 text-[11px] min-[375px]:text-xs sm:text-sm whitespace-nowrap rounded-xl w-full sm:w-auto">
+            <button className="flex items-center justify-center gap-1.5 px-4 py-2 min-[375px]:px-5 min-[375px]:py-2.5 text-[11px] min-[375px]:text-xs sm:text-sm whitespace-nowrap rounded-xl w-full sm:w-auto font-semibold transition-all duration-300" style={{ background: 'hsl(220 30% 18%)', color: 'hsl(220 20% 85%)' }}>
               Agendar Aqui <ArrowRight className="w-3 h-3 min-[375px]:w-3.5 min-[375px]:h-3.5" />
             </button>
           </div>
