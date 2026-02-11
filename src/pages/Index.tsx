@@ -75,7 +75,7 @@ const Index = () => {
   return (
     <div className="min-h-screen min-h-[100dvh] relative">
       <div className="relative z-10">
-        <Header user={user} onSignOut={signOut} />
+        <Header user={user} onSignOut={signOut} onCategorySelect={setActiveCategory} />
 
         <main className="container mx-auto px-3 min-[375px]:px-4 py-6 min-[375px]:py-8 max-w-2xl">
           {/* Greeting */}
