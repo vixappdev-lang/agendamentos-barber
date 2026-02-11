@@ -17,48 +17,47 @@ const ServiceCard = ({ service, onSelect, index }: ServiceCardProps) => {
       className="glass-card hover-lift cursor-pointer group overflow-hidden"
       onClick={() => onSelect(service)}
     >
-      {/* Mobile: stack vertical / Desktop: horizontal */}
-      <div className="flex flex-col min-[420px]:flex-row min-[420px]:items-stretch">
+      <div className="flex items-stretch">
         {/* Image */}
-        <div className="h-36 min-[420px]:h-auto min-[420px]:w-24 sm:w-28 shrink-0 overflow-hidden rounded-t-2xl min-[420px]:rounded-t-none min-[420px]:rounded-l-2xl relative">
+        <div className="w-28 sm:w-32 shrink-0 overflow-hidden rounded-l-2xl relative">
           <img
             src={service.image}
             alt={service.title}
             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
             loading="lazy"
           />
-          <div className="absolute inset-0 bg-gradient-to-b min-[420px]:bg-gradient-to-r from-transparent to-background/50" />
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent to-background/40" />
         </div>
 
         {/* Content */}
-        <div className="flex-1 min-w-0 p-4 sm:p-5 flex flex-col justify-center">
-          <h3 className="text-base sm:text-lg font-bold text-foreground tracking-tight leading-tight">
-            {service.title}
-          </h3>
-          <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 leading-relaxed line-clamp-2">
-            {service.subtitle}
-          </p>
+        <div className="flex-1 min-w-0 p-4 flex flex-col justify-between">
+          <div>
+            <h3 className="text-[15px] sm:text-lg font-bold text-foreground tracking-tight leading-snug">
+              {service.title}
+            </h3>
+            <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 leading-relaxed line-clamp-1">
+              {service.subtitle}
+            </p>
+          </div>
 
-          <div className="flex items-center justify-between mt-3 gap-3">
-            <div className="flex items-center gap-3">
-              <span className="gold-text text-lg font-bold">
+          <div className="flex items-center justify-between mt-3">
+            <div className="flex items-center gap-2.5">
+              <span className="gold-text text-lg font-bold leading-none">
                 R$ {service.price}
               </span>
-              <span className="flex items-center gap-1 text-xs text-muted-foreground">
+              <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
                 <Clock className="w-3 h-3" />
                 {service.duration}
               </span>
             </div>
 
-            <button className="hidden min-[420px]:flex items-center justify-center gap-1.5 px-5 py-2.5 text-xs sm:text-sm whitespace-nowrap rounded-xl font-semibold transition-all duration-300" style={{ background: 'hsl(0 0% 12%)', color: 'hsl(0 0% 65%)', border: '1px solid hsl(0 0% 18%)' }}>
-              Agendar <ArrowRight className="w-3.5 h-3.5" />
+            <button
+              className="flex items-center gap-1.5 px-3.5 py-2 text-xs whitespace-nowrap rounded-xl font-semibold transition-all duration-300"
+              style={{ background: 'hsl(0 0% 12%)', color: 'hsl(0 0% 65%)', border: '1px solid hsl(0 0% 18%)' }}
+            >
+              Agendar Aqui <ArrowRight className="w-3 h-3" />
             </button>
           </div>
-
-          {/* Full-width button on small screens */}
-          <button className="flex min-[420px]:hidden items-center justify-center gap-2 w-full mt-3 px-4 py-2.5 text-sm rounded-xl font-semibold transition-all duration-300" style={{ background: 'hsl(0 0% 12%)', color: 'hsl(0 0% 65%)', border: '1px solid hsl(0 0% 18%)' }}>
-            Agendar Aqui <ArrowRight className="w-3.5 h-3.5" />
-          </button>
         </div>
       </div>
     </motion.div>
