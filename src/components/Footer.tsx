@@ -11,7 +11,7 @@ const Footer = () => {
         <div className="flex flex-col items-center text-center gap-6">
           {/* Brand */}
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl gold-gradient flex items-center justify-center" style={{ boxShadow: '0 4px 16px hsl(43 74% 49% / 0.2)' }}>
+            <div className="w-9 h-9 rounded-xl gold-gradient flex items-center justify-center" style={{ boxShadow: '0 4px 16px hsl(0 0% 100% / 0.08)' }}>
               <Scissors className="w-4 h-4 text-primary-foreground" />
             </div>
             <span className="text-lg font-bold text-foreground tracking-tight">SuaBarbearia</span>
@@ -34,7 +34,7 @@ const Footer = () => {
             ))}
           </div>
 
-          <div className="w-12 h-px" style={{ background: 'hsl(0 0% 100% / 0.08)' }} />
+          <div className="w-12 h-px" style={{ background: 'hsl(0 0% 100% / 0.06)' }} />
 
           <p className="text-[11px] text-muted-foreground/50">
             © {new Date().getFullYear()} SuaBarbearia. Todos os direitos reservados.
