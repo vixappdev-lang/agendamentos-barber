@@ -10,7 +10,7 @@ const Header = () => {
     }}>
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl gold-gradient flex items-center justify-center shadow-lg" style={{ boxShadow: '0 4px 20px hsl(0 0% 100% / 0.1)' }}>
+          <div className="w-10 h-10 rounded-xl gold-gradient flex items-center justify-center shadow-lg" style={{ boxShadow: '0 4px 20px hsl(245 60% 55% / 0.25)' }}>
             <Scissors className="w-5 h-5 text-primary-foreground" />
           </div>
           <div>
