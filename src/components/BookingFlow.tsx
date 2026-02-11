@@ -76,18 +76,18 @@ const BookingFlow = ({ service, onClose }: BookingFlowProps) => {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4"
       style={{ background: 'hsl(220 25% 6% / 0.85)', backdropFilter: 'blur(12px)' }}
     >
       <motion.div
-        initial={{ scale: 0.95, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        exit={{ scale: 0.95, opacity: 0 }}
-        className="glass-card-strong w-full max-w-lg max-h-[90vh] overflow-y-auto scrollbar-hide"
+        initial={{ y: 40, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        exit={{ y: 40, opacity: 0 }}
+        className="glass-card-strong w-full sm:max-w-lg max-h-[92dvh] sm:max-h-[90vh] overflow-y-auto scrollbar-hide rounded-t-2xl sm:rounded-2xl"
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-5" style={{ borderBottom: '1px solid hsl(0 0% 100% / 0.06)' }}>
-          <h2 className="text-xl font-bold text-foreground">Agendamento</h2>
+        <div className="flex items-center justify-between p-4 min-[375px]:p-5 sticky top-0 z-10" style={{ borderBottom: '1px solid hsl(0 0% 100% / 0.06)', background: 'hsl(0 0% 100% / 0.04)', backdropFilter: 'blur(28px)' }}>
+          <h2 className="text-lg min-[375px]:text-xl font-bold text-foreground">Agendamento</h2>
           <button onClick={onClose} className="p-2 rounded-xl transition-colors" style={{ background: 'hsl(0 0% 100% / 0.05)' }}>
             <X className="w-5 h-5 text-muted-foreground" />
           </button>
