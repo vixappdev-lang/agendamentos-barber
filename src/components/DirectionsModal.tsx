@@ -29,6 +29,7 @@ const DirectionsModal = ({ onClose }: DirectionsModalProps) => {
   const userMarkerRef = useRef<maplibregl.Marker | null>(null);
   const watchIdRef = useRef<number | null>(null);
   const routeAnimRef = useRef<number | null>(null);
+  const pulseAnimRef = useRef<number | null>(null);
 
   const [address, setAddress] = useState("");
   const [destLat, setDestLat] = useState(-23.5505);
@@ -133,10 +134,87 @@ const DirectionsModal = ({ onClose }: DirectionsModalProps) => {
 
   // ─── Remove old route layers helper ───
   const removeRouteLayers = useCallback((map: maplibregl.Map) => {
-    const layers = ["route-glow", "route-outline", "route-casing", "route-line", "route-arrow", "route-dot"];
+    if (pulseAnimRef.current) { cancelAnimationFrame(pulseAnimRef.current); pulseAnimRef.current = null; }
+    const layers = ["route-glow", "route-casing", "route-line", "route-arrow", "route-pulse", "route-pulse-glow", "route-dot"];
     layers.forEach(id => { if (map.getLayer(id)) map.removeLayer(id); });
     if (map.getSource("route")) map.removeSource("route");
     if (map.getSource("route-dot")) map.removeSource("route-dot");
+    if (map.getSource("route-pulse")) map.removeSource("route-pulse");
+  }, []);
+
+  // ─── Continuous GPS pulse that travels along the route ───
+  const startPulseAnimation = useCallback((map: maplibregl.Map, coordinates: [number, number][]) => {
+    if (pulseAnimRef.current) cancelAnimationFrame(pulseAnimRef.current);
+
+    if (!map.getSource("route-pulse")) {
+      map.addSource("route-pulse", {
+        type: "geojson",
+        data: { type: "Feature", properties: {}, geometry: { type: "Point", coordinates: coordinates[0] } },
+      });
+    }
+
+    if (!map.getLayer("route-pulse-glow")) {
+      map.addLayer({
+        id: "route-pulse-glow", type: "circle", source: "route-pulse",
+        paint: {
+          "circle-radius": 14, "circle-color": "hsl(250, 85%, 65%)",
+          "circle-opacity": 0.15, "circle-blur": 1,
+        },
+      });
+    }
+
+    if (!map.getLayer("route-pulse")) {
+      map.addLayer({
+        id: "route-pulse", type: "circle", source: "route-pulse",
+        paint: {
+          "circle-radius": 5, "circle-color": "hsl(250, 90%, 75%)",
+          "circle-opacity": 0.95, "circle-stroke-width": 2, "circle-stroke-color": "white",
+        },
+      });
+    }
+
+    // Compute cumulative distances for interpolation
+    const dists: number[] = [0];
+    for (let i = 1; i < coordinates.length; i++) {
+      const dx = coordinates[i][0] - coordinates[i - 1][0];
+      const dy = coordinates[i][1] - coordinates[i - 1][1];
+      dists.push(dists[i - 1] + Math.sqrt(dx * dx + dy * dy));
+    }
+    const totalDist = dists[dists.length - 1];
+
+    const cycleDuration = 6000; // ms per full trip
+
+    const tick = (time: number) => {
+      const t = (time % cycleDuration) / cycleDuration; // 0→1 repeating
+      const eased = t < 0.5
+        ? 2 * t * t
+        : 1 - Math.pow(-2 * t + 2, 2) / 2; // ease in-out
+      const targetDist = eased * totalDist;
+
+      // Find segment
+      let idx = 0;
+      for (let i = 1; i < dists.length; i++) {
+        if (dists[i] >= targetDist) { idx = i - 1; break; }
+      }
+      const segLen = dists[idx + 1] - dists[idx];
+      const frac = segLen > 0 ? (targetDist - dists[idx]) / segLen : 0;
+      const lng = coordinates[idx][0] + frac * (coordinates[idx + 1][0] - coordinates[idx][0]);
+      const lat = coordinates[idx][1] + frac * (coordinates[idx + 1][1] - coordinates[idx][1]);
+
+      const src = map.getSource("route-pulse") as maplibregl.GeoJSONSource;
+      if (src) src.setData({ type: "Feature", properties: {}, geometry: { type: "Point", coordinates: [lng, lat] } });
+
+      // Pulsing glow effect
+      const glowPhase = (Math.sin(time / 400) + 1) / 2;
+      if (map.getLayer("route-pulse-glow")) {
+        map.setPaintProperty("route-pulse-glow", "circle-radius", 10 + glowPhase * 8);
+        map.setPaintProperty("route-pulse-glow", "circle-opacity", 0.1 + glowPhase * 0.12);
+      }
+
+      pulseAnimRef.current = requestAnimationFrame(tick);
+    };
+
+    pulseAnimRef.current = requestAnimationFrame(tick);
   }, []);
 
   // ─── Animate Route Drawing ───
@@ -149,7 +227,6 @@ const DirectionsModal = ({ onClose }: DirectionsModalProps) => {
       data: { type: "Feature", properties: {}, geometry: { type: "LineString", coordinates: [] } },
     });
 
-    // Animated dot source
     map.addSource("route-dot", {
       type: "geojson",
       data: { type: "Feature", properties: {}, geometry: { type: "Point", coordinates: coordinates[0] } },
@@ -162,7 +239,7 @@ const DirectionsModal = ({ onClose }: DirectionsModalProps) => {
       layout: { "line-cap": "round", "line-join": "round" },
     });
 
-    // 2) Casing (dark border)
+    // 2) Casing
     map.addLayer({
       id: "route-casing", type: "line", source: "route",
       paint: { "line-color": "hsl(250, 30%, 12%)", "line-width": 8, "line-opacity": 0.7 },
@@ -176,34 +253,26 @@ const DirectionsModal = ({ onClose }: DirectionsModalProps) => {
       layout: { "line-cap": "round", "line-join": "round" },
     });
 
-    // 4) Arrow pattern (direction indicators)
+    // 4) Arrows
     map.addLayer({
       id: "route-arrow", type: "symbol", source: "route",
       layout: {
-        "symbol-placement": "line",
-        "symbol-spacing": 80,
-        "text-field": "▸",
-        "text-size": 16,
-        "text-rotation-alignment": "map",
-        "text-keep-upright": false,
+        "symbol-placement": "line", "symbol-spacing": 80,
+        "text-field": "▸", "text-size": 16,
+        "text-rotation-alignment": "map", "text-keep-upright": false,
       },
       paint: { "text-color": "hsl(250, 90%, 85%)", "text-opacity": 0.7 },
     });
 
-    // 5) Leading dot (animated)
+    // 5) Leading dot for draw animation
     map.addLayer({
       id: "route-dot", type: "circle", source: "route-dot",
       paint: {
-        "circle-radius": 6,
-        "circle-color": "hsl(250, 90%, 75%)",
-        "circle-opacity": 1,
-        "circle-stroke-width": 2.5,
-        "circle-stroke-color": "white",
-        "circle-blur": 0.1,
+        "circle-radius": 6, "circle-color": "hsl(250, 90%, 75%)",
+        "circle-opacity": 1, "circle-stroke-width": 2.5, "circle-stroke-color": "white",
       },
     });
 
-    // Animate: draw polyline progressively with leading dot
     const totalPoints = coordinates.length;
     const duration = 2200;
     let startTime: number | null = null;
@@ -217,24 +286,21 @@ const DirectionsModal = ({ onClose }: DirectionsModalProps) => {
 
       const routeSrc = map.getSource("route") as maplibregl.GeoJSONSource;
       const dotSrc = map.getSource("route-dot") as maplibregl.GeoJSONSource;
-      if (routeSrc) {
-        routeSrc.setData({ type: "Feature", properties: {}, geometry: { type: "LineString", coordinates: slice } });
-      }
-      if (dotSrc) {
-        dotSrc.setData({ type: "Feature", properties: {}, geometry: { type: "Point", coordinates: slice[slice.length - 1] } });
-      }
+      if (routeSrc) routeSrc.setData({ type: "Feature", properties: {}, geometry: { type: "LineString", coordinates: slice } });
+      if (dotSrc) dotSrc.setData({ type: "Feature", properties: {}, geometry: { type: "Point", coordinates: slice[slice.length - 1] } });
 
       if (progress < 1) {
         routeAnimRef.current = requestAnimationFrame(draw);
       } else {
         routeAnimRef.current = null;
-        // Hide leading dot after animation completes
+        // Hide leading dot, start continuous GPS pulse
         if (map.getLayer("route-dot")) map.setPaintProperty("route-dot", "circle-opacity", 0);
+        startPulseAnimation(map, coordinates);
       }
     };
 
     routeAnimRef.current = requestAnimationFrame(draw);
-  }, [removeRouteLayers]);
+  }, [removeRouteLayers, startPulseAnimation]);
 
   // ─── Start Route Tracking ───
   const startRouteTracking = useCallback(() => {
@@ -337,6 +403,7 @@ const DirectionsModal = ({ onClose }: DirectionsModalProps) => {
 
     return () => {
       if (routeAnimRef.current) cancelAnimationFrame(routeAnimRef.current);
+      if (pulseAnimRef.current) cancelAnimationFrame(pulseAnimRef.current);
       if (watchIdRef.current) navigator.geolocation.clearWatch(watchIdRef.current);
       map.remove();
       mapInstance.current = null;
