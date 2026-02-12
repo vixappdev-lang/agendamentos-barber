@@ -11,15 +11,10 @@ import {
 import {
   AreaChart,
   Area,
-  BarChart,
-  Bar,
   XAxis,
   YAxis,
   Tooltip,
   ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
 } from "recharts";
 
 const COLORS = [
@@ -43,6 +38,16 @@ const Dashboard = () => {
 
   useEffect(() => {
     fetchDashboardData();
+
+    // Realtime subscription
+    const channel = supabase
+      .channel('dashboard-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'appointments' }, () => {
+        fetchDashboardData();
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
   }, []);
 
   const fetchDashboardData = async () => {
@@ -204,39 +209,28 @@ const Dashboard = () => {
         className="glass-card p-5"
       >
         <h3 className="text-sm font-semibold text-foreground mb-4">Distribuição por Serviço</h3>
-        <div className="h-64 flex items-center justify-center">
-          {serviceDistribution.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Nenhum agendamento registrado ainda</p>
-          ) : (
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={serviceDistribution}
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={90}
-                  innerRadius={55}
-                  paddingAngle={3}
-                  dataKey="value"
-                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                >
-                  {serviceDistribution.map((_, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip
-                  contentStyle={{
-                    background: 'hsl(230 18% 11%)',
-                    border: '1px solid hsl(0 0% 100% / 0.1)',
-                    borderRadius: '12px',
-                    color: 'hsl(0 0% 90%)',
-                    fontSize: 12,
-                  }}
-                />
-              </PieChart>
-            </ResponsiveContainer>
-          )}
-        </div>
+        {serviceDistribution.length === 0 ? (
+          <p className="text-sm text-muted-foreground">Nenhum agendamento registrado ainda</p>
+        ) : (
+          <div className="space-y-2">
+            {serviceDistribution
+              .sort((a, b) => b.value - a.value)
+              .map((item, index) => {
+                const total = serviceDistribution.reduce((s, i) => s + i.value, 0);
+                const percent = total > 0 ? (item.value / total) * 100 : 0;
+                return (
+                  <div key={item.name} className="flex items-center gap-3">
+                    <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: COLORS[index % COLORS.length] }} />
+                    <span className="text-sm text-foreground flex-1 truncate">{item.name}</span>
+                    <span className="text-xs text-muted-foreground">{item.value} ({percent.toFixed(0)}%)</span>
+                    <div className="w-24 h-1.5 rounded-full overflow-hidden" style={{ background: 'hsl(0 0% 100% / 0.06)' }}>
+                      <div className="h-full rounded-full" style={{ width: `${percent}%`, background: COLORS[index % COLORS.length] }} />
+                    </div>
+                  </div>
+                );
+              })}
+          </div>
+        )}
       </motion.div>
     </div>
   );

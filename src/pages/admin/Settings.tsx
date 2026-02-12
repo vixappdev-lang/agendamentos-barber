@@ -1,14 +1,16 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { motion } from "framer-motion";
-import { Save, Store, Phone, Clock, MapPin, CalendarOff } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Save, Store, Phone, Clock, MapPin, CalendarOff, Map } from "lucide-react";
 import { toast } from "sonner";
+import LocationPickerModal from "@/components/LocationPickerModal";
 
 const dayLabels = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 
 const Settings = () => {
   const [settings, setSettings] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
+  const [showMap, setShowMap] = useState(false);
 
   useEffect(() => { fetchSettings(); }, []);
 
@@ -34,12 +36,21 @@ const Settings = () => {
 
   const handleSave = async () => {
     setSaving(true);
-    const promises = Object.entries(settings).map(([key, value]) =>
-      supabase.from("business_settings").update({ value }).eq("key", key)
+    // Ensure location keys exist
+    const keysToSave = { ...settings };
+    const allKeys = ["business_name", "address", "whatsapp_number", "opening_time", "closing_time", "lunch_start", "lunch_end", "days_off", "location_lat", "location_lng"];
+    
+    const promises = Object.entries(keysToSave).map(([key, value]) =>
+      supabase.from("business_settings").upsert({ key, value }, { onConflict: "key" })
     );
     await Promise.all(promises);
     toast.success("Configurações salvas!");
     setSaving(false);
+  };
+
+  const handleLocationConfirm = (address: string, lat: string, lng: string) => {
+    setSettings(prev => ({ ...prev, address, location_lat: lat, location_lng: lng }));
+    setShowMap(false);
   };
 
   const daysOff = (settings.days_off || "").split(",").filter(Boolean);
@@ -64,6 +75,22 @@ const Settings = () => {
                 <MapPin className="w-3 h-3" /> Endereço
               </label>
               <input className="glass-input" value={settings.address || ""} onChange={(e) => updateSetting("address", e.target.value)} />
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1 block flex items-center gap-1">
+                <Map className="w-3 h-3" /> Localização no Mapa
+              </label>
+              <button
+                onClick={() => setShowMap(true)}
+                className="w-full glass-input text-left flex items-center gap-2 cursor-pointer"
+              >
+                <MapPin className="w-4 h-4 text-accent shrink-0" />
+                <span className="text-sm truncate">
+                  {settings.location_lat && settings.location_lng
+                    ? `${parseFloat(settings.location_lat).toFixed(4)}, ${parseFloat(settings.location_lng).toFixed(4)}`
+                    : "Clique para selecionar no mapa"}
+                </span>
+              </button>
             </div>
             <div>
               <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1 block flex items-center gap-1">
@@ -129,6 +156,18 @@ const Settings = () => {
         whileTap={{ scale: 0.98 }}>
         <Save className="w-4 h-4" /> {saving ? "Salvando..." : "Salvar Configurações"}
       </motion.button>
+
+      <AnimatePresence>
+        {showMap && (
+          <LocationPickerModal
+            onClose={() => setShowMap(false)}
+            onConfirm={handleLocationConfirm}
+            initialAddress={settings.address}
+            initialLat={settings.location_lat}
+            initialLng={settings.location_lng}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 };
