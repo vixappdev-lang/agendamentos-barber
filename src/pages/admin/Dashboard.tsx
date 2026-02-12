@@ -161,7 +161,7 @@ const Dashboard = () => {
           </div>
         </motion.div>
 
-        {/* Bar chart */}
+        {/* Area chart - Receita */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -171,7 +171,13 @@ const Dashboard = () => {
           <h3 className="text-sm font-semibold text-foreground mb-4">Receita (Últimos 7 dias)</h3>
           <div className="h-52">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={weeklyData}>
+              <AreaChart data={weeklyData}>
+                <defs>
+                  <linearGradient id="gradReceita" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="hsl(200 70% 50%)" stopOpacity={0.3} />
+                    <stop offset="100%" stopColor="hsl(200 70% 50%)" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
                 <XAxis dataKey="day" tick={{ fill: 'hsl(0 0% 50%)', fontSize: 11 }} axisLine={false} tickLine={false} />
                 <YAxis tick={{ fill: 'hsl(0 0% 50%)', fontSize: 11 }} axisLine={false} tickLine={false} />
                 <Tooltip
@@ -183,8 +189,8 @@ const Dashboard = () => {
                     fontSize: 12,
                   }}
                 />
-                <Bar dataKey="receita" fill="hsl(200 70% 50%)" radius={[6, 6, 0, 0]} />
-              </BarChart>
+                <Area type="monotone" dataKey="receita" stroke="hsl(200 70% 50%)" fill="url(#gradReceita)" strokeWidth={2} />
+              </AreaChart>
             </ResponsiveContainer>
           </div>
         </motion.div>

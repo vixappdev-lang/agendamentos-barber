@@ -45,7 +45,7 @@ const Settings = () => {
   const daysOff = (settings.days_off || "").split(",").filter(Boolean);
 
   return (
-    <div className="space-y-6 max-w-2xl">
+    <div className="space-y-6 w-full max-w-2xl mx-auto">
       <h2 className="text-lg font-bold text-foreground">Configurações</h2>
 
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="glass-card p-5 space-y-5">

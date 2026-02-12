@@ -277,14 +277,16 @@ const BookingFlow = ({ service, onClose, user }: BookingFlowProps) => {
                           const isBooked = bookedTimes.includes(t);
                           return (
                             <button key={t} onClick={() => !isBooked && setSelectedTime(t)} disabled={isBooked}
-                              className="py-2.5 rounded-xl text-sm font-medium transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                              className="py-2.5 rounded-xl text-sm font-medium transition-all disabled:opacity-30 disabled:cursor-not-allowed relative"
                               style={{
-                                background: selectedTime === t ? 'linear-gradient(135deg, hsl(245 60% 50%), hsl(265 60% 55%))' : isBooked ? 'hsl(0 60% 50% / 0.06)' : 'hsl(0 0% 100% / 0.04)',
-                                border: `1px solid ${selectedTime === t ? 'transparent' : isBooked ? 'hsl(0 60% 50% / 0.15)' : 'hsl(0 0% 100% / 0.06)'}`,
-                                color: selectedTime === t ? 'hsl(0 0% 100%)' : isBooked ? 'hsl(0 60% 50% / 0.5)' : 'hsl(0 0% 55%)',
+                                background: selectedTime === t ? 'linear-gradient(135deg, hsl(245 60% 50%), hsl(265 60% 55%))' : isBooked ? 'hsl(0 60% 50% / 0.08)' : 'hsl(0 0% 100% / 0.04)',
+                                border: `1px solid ${selectedTime === t ? 'transparent' : isBooked ? 'hsl(0 60% 50% / 0.2)' : 'hsl(0 0% 100% / 0.06)'}`,
+                                color: selectedTime === t ? 'hsl(0 0% 100%)' : isBooked ? 'hsl(0 60% 55%)' : 'hsl(0 0% 55%)',
                                 boxShadow: selectedTime === t ? '0 4px 16px hsl(245 60% 55% / 0.2)' : 'none',
-                                textDecoration: isBooked ? 'line-through' : 'none',
-                              }}>{t}</button>
+                              }}>
+                              <span style={{ textDecoration: isBooked ? 'line-through' : 'none' }}>{t}</span>
+                              {isBooked && <span className="block text-[9px] font-semibold mt-0.5" style={{ color: 'hsl(0 60% 55%)' }}>Agendado</span>}
+                            </button>
                           );
                         })}
                       </div>
