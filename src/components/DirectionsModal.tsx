@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, MapPin, Navigation, Layers, Plus, Minus, Crosshair, RotateCcw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -123,6 +123,37 @@ const DirectionsModal = ({ onClose }: DirectionsModalProps) => {
     );
   };
 
+  const orbitalRef = useRef<number | null>(null);
+
+  const stopOrbital = useCallback(() => {
+    if (orbitalRef.current) {
+      cancelAnimationFrame(orbitalRef.current);
+      orbitalRef.current = null;
+    }
+  }, []);
+
+  const startOrbitalAnimation = (map: maplibregl.Map) => {
+    let startTime: number | null = null;
+    const duration = 4000;
+    const startBearing = map.getBearing();
+
+    const animate = (time: number) => {
+      if (!startTime) startTime = time;
+      const elapsed = time - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      map.setBearing((startBearing + eased * 360) % 360);
+
+      if (progress < 1) {
+        orbitalRef.current = requestAnimationFrame(animate);
+      } else {
+        orbitalRef.current = null;
+      }
+    };
+
+    orbitalRef.current = requestAnimationFrame(animate);
+  };
+
   useEffect(() => {
     if (loading || !mapRef.current || mapInstance.current) return;
 
@@ -138,14 +169,22 @@ const DirectionsModal = ({ onClose }: DirectionsModalProps) => {
 
     map.on("load", () => {
       add3DBuildings(map);
+      setTimeout(() => startOrbitalAnimation(map), 500);
     });
 
     map.on("zoom", () => setCurrentZoom(Math.round(map.getZoom())));
+
+    // Stop orbital on user interaction
+    const stop = () => stopOrbital();
+    map.on("mousedown", stop);
+    map.on("touchstart", stop);
+    map.on("wheel", stop);
 
     markerRef.current = createMarker(map, lat, lng);
     mapInstance.current = map;
 
     return () => {
+      stopOrbital();
       map.remove();
       mapInstance.current = null;
     };
