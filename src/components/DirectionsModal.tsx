@@ -304,6 +304,11 @@ const DirectionsModal = ({ onClose }: DirectionsModalProps) => {
     destMarkerRef.current = createDestMarker(map, destLat, destLng);
     mapInstance.current = map;
 
+    // Start route tracking after map is fully loaded
+    map.on("load", () => {
+      setTimeout(() => startRouteTracking(), 500);
+    });
+
     return () => {
       if (routeAnimRef.current) cancelAnimationFrame(routeAnimRef.current);
       if (pulseAnimRef.current) cancelAnimationFrame(pulseAnimRef.current);
@@ -312,14 +317,6 @@ const DirectionsModal = ({ onClose }: DirectionsModalProps) => {
       mapInstance.current = null;
     };
   }, [loading, destLat, destLng]);
-
-  // Auto-start route on map load
-  useEffect(() => {
-    if (!loading && mapInstance.current) {
-      const timer = setTimeout(() => startRouteTracking(), 800);
-      return () => clearTimeout(timer);
-    }
-  }, [loading, startRouteTracking]);
 
   const switchMapStyle = (styleId: string) => {
     setMapStyle(styleId);
