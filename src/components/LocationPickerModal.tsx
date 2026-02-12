@@ -29,20 +29,38 @@ const LocationPickerModal = ({ onClose, onConfirm, initialAddress, initialLat, i
 
     const map = L.map(mapRef.current, {
       center: [initLat, initLng],
-      zoom: 15,
+      zoom: 17,
       zoomControl: false,
+      attributionControl: false,
     });
 
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution: '© OpenStreetMap',
-    }).addTo(map);
+    // Satellite layer
+    const satellite = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", {
+      attribution: '© Esri',
+      maxZoom: 19,
+    });
+
+    // Labels overlay
+    const labels = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}", {
+      maxZoom: 19,
+    });
+
+    satellite.addTo(map);
+    labels.addTo(map);
 
     L.control.zoom({ position: "bottomright" }).addTo(map);
 
     const customIcon = L.divIcon({
-      html: `<div style="width:32px;height:32px;background:hsl(245 60% 55%);border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:3px solid white;box-shadow:0 4px 12px rgba(0,0,0,0.3);"></div>`,
-      iconSize: [32, 32],
-      iconAnchor: [16, 32],
+      html: `
+        <div style="position:relative;width:40px;height:40px;">
+          <div style="position:absolute;inset:0;background:hsl(245 60% 55% / 0.25);border-radius:50%;animation:pulse-ring 1.5s ease-out infinite;"></div>
+          <div style="position:absolute;top:4px;left:4px;width:32px;height:32px;background:linear-gradient(135deg,hsl(245 60% 60%),hsl(245 60% 45%));border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:3px solid white;box-shadow:0 4px 16px rgba(0,0,0,0.4);"></div>
+          <div style="position:absolute;top:13px;left:13px;width:14px;height:14px;background:white;border-radius:50%;"></div>
+        </div>
+        <style>@keyframes pulse-ring{0%{transform:scale(1);opacity:0.6}100%{transform:scale(2.2);opacity:0}}</style>
+      `,
+      iconSize: [40, 40],
+      iconAnchor: [20, 40],
       className: "",
     });
 
