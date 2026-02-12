@@ -29,6 +29,7 @@ const DirectionsModal = ({ onClose }: DirectionsModalProps) => {
   const userMarkerRef = useRef<maplibregl.Marker | null>(null);
   const watchIdRef = useRef<number | null>(null);
   const routeDrawnRef = useRef(false);
+  const lastRouteCoordsRef = useRef<[number, number][] | null>(null);
 
   const [address, setAddress] = useState("");
   const [destLat, setDestLat] = useState(-23.5505);
@@ -108,6 +109,9 @@ const DirectionsModal = ({ onClose }: DirectionsModalProps) => {
 
   // ─── Draw or update route on map ───
   const drawRoute = useCallback((map: maplibregl.Map, coordinates: [number, number][]) => {
+    // Save coords for re-draw after style switch
+    lastRouteCoordsRef.current = coordinates;
+
     const geojsonData: GeoJSON.Feature<GeoJSON.LineString> = {
       type: "Feature",
       properties: {},
@@ -124,7 +128,6 @@ const DirectionsModal = ({ onClose }: DirectionsModalProps) => {
     // Otherwise create source + layers from scratch
     map.addSource("route", { type: "geojson", data: geojsonData });
 
-    // 1) Purple glow
     map.addLayer({
       id: "route-glow",
       type: "line",
@@ -132,7 +135,6 @@ const DirectionsModal = ({ onClose }: DirectionsModalProps) => {
       layout: { "line-join": "round", "line-cap": "round" },
       paint: { "line-color": "#a78bfa", "line-width": 14, "line-opacity": 0.3, "line-blur": 6 },
     });
-    // 2) Dark casing
     map.addLayer({
       id: "route-casing",
       type: "line",
@@ -140,7 +142,6 @@ const DirectionsModal = ({ onClose }: DirectionsModalProps) => {
       layout: { "line-join": "round", "line-cap": "round" },
       paint: { "line-color": "#1e1b4b", "line-width": 7, "line-opacity": 0.9 },
     });
-    // 3) Main visible line
     map.addLayer({
       id: "route-line",
       type: "line",
@@ -148,8 +149,6 @@ const DirectionsModal = ({ onClose }: DirectionsModalProps) => {
       layout: { "line-join": "round", "line-cap": "round" },
       paint: { "line-color": "#7c3aed", "line-width": 4, "line-opacity": 1 },
     });
-
-    console.log("[Route] Layers added with", coordinates.length, "points");
   }, []);
 
   // ─── Remove route layers (for style switch) ───
@@ -272,25 +271,25 @@ const DirectionsModal = ({ onClose }: DirectionsModalProps) => {
     const zoom = map.getZoom();
     const pitch = map.getPitch();
     const bearing = map.getBearing();
+    
+    // Cache route coords before style wipes everything
+    const cachedCoords = lastRouteCoordsRef.current;
 
     map.setStyle(style.url);
     map.once("style.load", () => {
       map.jumpTo({ center, zoom, pitch, bearing });
 
+      // Re-create markers
       if (destMarkerRef.current) destMarkerRef.current.remove();
       destMarkerRef.current = createDestMarker(map, destLat, destLng);
       if (userPos && userMarkerRef.current) {
         userMarkerRef.current.remove();
         userMarkerRef.current = createUserMarker(map, userPos.lat, userPos.lng);
       }
-      // Re-draw route if active
-      if (routeStatus === "active" && userPos) {
-        fetchRoute(userPos.lng, userPos.lat, destLng, destLat).then(route => {
-          if (route) {
-            removeRouteLayers(map);
-            drawRoute(map, route.geometry.coordinates as [number, number][]);
-          }
-        });
+      
+      // Re-draw route immediately from cached coordinates (no async fetch needed)
+      if (cachedCoords && cachedCoords.length > 0) {
+        drawRoute(map, cachedCoords);
       }
     });
   };
