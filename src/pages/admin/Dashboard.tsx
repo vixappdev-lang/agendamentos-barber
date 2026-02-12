@@ -71,15 +71,17 @@ const Dashboard = () => {
       todayAppointments: todayApps.length,
     });
 
-    // Weekly data (last 7 days)
+    // Weekly data (last 7 days + next 7 days = 14 days range)
     const days = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
-    const weekly = Array.from({ length: 7 }, (_, i) => {
+    const weekly = Array.from({ length: 14 }, (_, i) => {
       const d = new Date();
-      d.setDate(d.getDate() - (6 - i));
+      d.setDate(d.getDate() - (7 - i));
       const dateStr = d.toISOString().split("T")[0];
       const dayApps = appointments.filter((a) => a.appointment_date === dateStr);
+      const dayNum = d.getDate().toString().padStart(2, '0');
+      const monthNum = (d.getMonth() + 1).toString().padStart(2, '0');
       return {
-        day: days[d.getDay()],
+        day: `${dayNum}/${monthNum}`,
         agendamentos: dayApps.length,
         receita: dayApps.reduce((s, a) => s + (Number(a.total_price) || 0), 0),
       };
@@ -139,7 +141,7 @@ const Dashboard = () => {
           transition={{ delay: 0.4 }}
           className="glass-card p-5"
         >
-          <h3 className="text-sm font-semibold text-foreground mb-4">Agendamentos (Últimos 7 dias)</h3>
+          <h3 className="text-sm font-semibold text-foreground mb-4">Agendamentos (14 dias)</h3>
           <div className="h-52">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={weeklyData}>
@@ -173,7 +175,7 @@ const Dashboard = () => {
           transition={{ delay: 0.5 }}
           className="glass-card p-5"
         >
-          <h3 className="text-sm font-semibold text-foreground mb-4">Receita (Últimos 7 dias)</h3>
+          <h3 className="text-sm font-semibold text-foreground mb-4">Receita (14 dias)</h3>
           <div className="h-52">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={weeklyData}>
