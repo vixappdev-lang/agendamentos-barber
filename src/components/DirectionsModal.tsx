@@ -10,9 +10,9 @@ interface DirectionsModalProps {
 }
 
 const MAP_STYLES = [
-  { id: "satellite", label: "Satélite", url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}" },
-  { id: "streets", label: "Ruas", url: "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" },
-  { id: "topo", label: "Terreno", url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}" },
+  { id: "dark", label: "Escuro", url: "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", emoji: "🌙" },
+  { id: "voyager", label: "Moderno", url: "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", emoji: "🗺️" },
+  { id: "satellite", label: "Satélite", url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", emoji: "🛰️" },
 ];
 
 const LABELS_URL = "https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}";
@@ -47,7 +47,7 @@ const DirectionsModal = ({ onClose }: DirectionsModalProps) => {
   const [lat, setLat] = useState(-23.5505);
   const [lng, setLng] = useState(-46.6333);
   const [loading, setLoading] = useState(true);
-  const [mapStyle, setMapStyle] = useState("satellite");
+  const [mapStyle, setMapStyle] = useState("dark");
   const [showStylePicker, setShowStylePicker] = useState(false);
   const [currentZoom, setCurrentZoom] = useState(17);
 
@@ -78,11 +78,9 @@ const DirectionsModal = ({ onClose }: DirectionsModalProps) => {
       maxZoom: 19,
     });
 
-    const tile = L.tileLayer(MAP_STYLES[0].url, { maxZoom: 19 }).addTo(map);
+    const tile = L.tileLayer(MAP_STYLES[0].url, { maxZoom: 19, attribution: '' }).addTo(map);
     tileLayerRef.current = tile;
-
-    const labels = L.tileLayer(LABELS_URL, { maxZoom: 19 }).addTo(map);
-    labelsLayerRef.current = labels;
+    labelsLayerRef.current = null;
 
     const customIcon = L.divIcon({
       html: MARKER_HTML,
@@ -107,11 +105,11 @@ const DirectionsModal = ({ onClose }: DirectionsModalProps) => {
     if (tileLayerRef.current) mapInstance.current.removeLayer(tileLayerRef.current);
     if (labelsLayerRef.current) mapInstance.current.removeLayer(labelsLayerRef.current);
 
-    const newTile = L.tileLayer(style.url, { maxZoom: 19 }).addTo(mapInstance.current);
+    const newTile = L.tileLayer(style.url, { maxZoom: 19, attribution: '' }).addTo(mapInstance.current);
     tileLayerRef.current = newTile;
 
     if (styleId === "satellite") {
-      const newLabels = L.tileLayer(LABELS_URL, { maxZoom: 19 }).addTo(mapInstance.current);
+      const newLabels = L.tileLayer(LABELS_URL, { maxZoom: 19, attribution: '' }).addTo(mapInstance.current);
       labelsLayerRef.current = newLabels;
     } else {
       labelsLayerRef.current = null;
@@ -204,9 +202,7 @@ const DirectionsModal = ({ onClose }: DirectionsModalProps) => {
                             color: mapStyle === s.id ? 'hsl(245 60% 70%)' : 'hsl(0 0% 60%)',
                             border: `1px solid ${mapStyle === s.id ? 'hsl(245 60% 55% / 0.3)' : 'transparent'}`,
                           }}>
-                          {s.id === "satellite" && "🛰️"}
-                          {s.id === "streets" && "🗺️"}
-                          {s.id === "topo" && "⛰️"}
+                          {s.emoji}
                           <span>{s.label}</span>
                         </button>
                       ))}
