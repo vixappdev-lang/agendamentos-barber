@@ -90,32 +90,7 @@ const DirectionsModal = ({ onClose }: DirectionsModalProps) => {
     return new maplibregl.Marker({ element: el, anchor: "center" }).setLngLat([longitude, latitude]).addTo(map);
   };
 
-  // ─── 3D Buildings (subtle, modern) ───
-  const add3DBuildings = (map: maplibregl.Map) => {
-    const layers = map.getStyle().layers;
-    if (!layers) return;
-    let labelLayerId: string | undefined;
-    for (const layer of layers) {
-      if (layer.type === "symbol" && (layer as any).layout?.["text-field"]) { labelLayerId = layer.id; break; }
-    }
-    const sources = map.getStyle().sources;
-    const vectorSource = Object.keys(sources).find(key => sources[key].type === "vector");
-    if (!vectorSource || map.getLayer("3d-buildings")) return;
-
-    map.addLayer({
-      id: "3d-buildings", source: vectorSource, "source-layer": "building",
-      filter: ["==", ["geometry-type"], "Polygon"], type: "fill-extrusion", minzoom: 14,
-      paint: {
-        "fill-extrusion-color": [
-          "interpolate", ["linear"], ["get", "render_height"],
-          0, "hsl(230, 15%, 15%)", 40, "hsl(230, 12%, 20%)", 100, "hsl(230, 10%, 28%)",
-        ],
-        "fill-extrusion-height": ["get", "render_height"],
-        "fill-extrusion-base": ["get", "render_min_height"],
-        "fill-extrusion-opacity": 0.6,
-      },
-    }, labelLayerId);
-  };
+  // (3D buildings removed for cleaner flat map like Uber/99)
 
   // ─── Fetch Route from OSRM ───
   const fetchRoute = useCallback(async (fromLng: number, fromLat: number, toLng: number, toLat: number) => {
@@ -140,53 +115,9 @@ const DirectionsModal = ({ onClose }: DirectionsModalProps) => {
     if (map.getSource("route")) map.removeSource("route");
   }, []);
 
-  // ─── Start flowing dash animation (continuous) ───
-  const startFlowAnimation = useCallback((map: maplibregl.Map) => {
-    if (pulseAnimRef.current) cancelAnimationFrame(pulseAnimRef.current);
-    let dashOffset = 0;
+  // (unused startFlowAnimation removed)
 
-    const tick = () => {
-      dashOffset -= 0.5;
-      if (map.getLayer("route-flow")) {
-        map.setPaintProperty("route-flow", "line-dasharray", [0, 4 + dashOffset % 4, 3]);
-      }
-      pulseAnimRef.current = requestAnimationFrame(tick);
-    };
-
-    // Use a simpler approach: animate line-translate for a "marching ants" effect
-    // MapLibre doesn't support animating dasharray well, so we use a second offset line
-    // that we translate along the route direction.
-    // Instead, we'll use the line-dasharray with a cycling pattern via re-rendering.
-    
-    let step = 0;
-    const animate = () => {
-      step = (step + 1) % 40;
-      // Create a flowing effect by shifting the pattern
-      const phase = step / 40;
-      const dashLen = 2;
-      const gapLen = 3;
-      // We shift by changing the initial gap
-      const initialGap = phase * (dashLen + gapLen);
-      
-      if (map.getLayer("route-flow")) {
-        map.setPaintProperty("route-flow", "line-dasharray", [
-          initialGap < dashLen ? dashLen - initialGap : 0,
-          initialGap < dashLen ? gapLen : gapLen + dashLen - (initialGap - dashLen > 0 ? initialGap - dashLen : 0),
-          initialGap >= dashLen ? dashLen : 0,
-          initialGap >= dashLen ? (initialGap - dashLen) : 0,
-        ].filter((_, i, arr) => {
-          // Simplify: just use basic marching
-          return true;
-        }));
-      }
-      pulseAnimRef.current = requestAnimationFrame(animate);
-    };
-    
-    // Simpler and cleaner approach: translate a dashed overlay line
-    pulseAnimRef.current = requestAnimationFrame(animate);
-  }, []);
-
-  // ─── Draw the full route with layers ───
+  // ─── Draw the full route (dark solid line like Uber/99) ───
   const drawFullRoute = useCallback((map: maplibregl.Map, coordinates: [number, number][]) => {
     removeRouteLayers(map);
 
@@ -195,49 +126,37 @@ const DirectionsModal = ({ onClose }: DirectionsModalProps) => {
       data: { type: "Feature", properties: {}, geometry: { type: "LineString", coordinates } },
     });
 
-    // 1) Soft outer glow
+    // 1) Outer shadow/glow — subtle dark spread
     map.addLayer({
       id: "route-glow", type: "line", source: "route",
-      paint: { "line-color": "hsl(250, 80%, 60%)", "line-width": 18, "line-opacity": 0.1, "line-blur": 14 },
+      paint: { "line-color": "hsl(0, 0%, 0%)", "line-width": 14, "line-opacity": 0.15, "line-blur": 10 },
       layout: { "line-cap": "round", "line-join": "round" },
     });
 
-    // 2) Dark casing / border
+    // 2) Casing — dark border
     map.addLayer({
       id: "route-casing", type: "line", source: "route",
-      paint: { "line-color": "hsl(250, 25%, 10%)", "line-width": 9, "line-opacity": 0.8 },
+      paint: { "line-color": "hsl(220, 15%, 8%)", "line-width": 8, "line-opacity": 0.9 },
       layout: { "line-cap": "round", "line-join": "round" },
     });
 
-    // 3) Main solid route line (like Uber/99)
+    // 3) Main solid route line — dark charcoal like 99/Uber
     map.addLayer({
       id: "route-line", type: "line", source: "route",
-      paint: { "line-color": "hsl(250, 70%, 58%)", "line-width": 5.5, "line-opacity": 1 },
+      paint: { "line-color": "hsl(220, 10%, 18%)", "line-width": 5, "line-opacity": 1 },
       layout: { "line-cap": "round", "line-join": "round" },
     });
 
-    // 4) Animated flow overlay — lighter dashes that "march" along the line
-    map.addLayer({
-      id: "route-flow", type: "line", source: "route",
-      paint: {
-        "line-color": "hsl(250, 100%, 82%)",
-        "line-width": 3,
-        "line-opacity": 0.6,
-        "line-dasharray": [0, 2, 3],
-      },
-      layout: { "line-cap": "round", "line-join": "round" },
-    });
-
-    // 5) Direction arrows
+    // 4) Direction arrows along the route
     map.addLayer({
       id: "route-arrow", type: "symbol", source: "route",
       layout: {
-        "symbol-placement": "line", "symbol-spacing": 100,
-        "text-field": "›", "text-size": 22,
+        "symbol-placement": "line", "symbol-spacing": 80,
+        "text-field": "›", "text-size": 18,
         "text-rotation-alignment": "map", "text-keep-upright": false,
         "text-allow-overlap": true,
       },
-      paint: { "text-color": "hsl(0, 0%, 100%)", "text-opacity": 0.5 },
+      paint: { "text-color": "hsl(0, 0%, 50%)", "text-opacity": 0.6 },
     });
   }, [removeRouteLayers]);
 
@@ -246,21 +165,20 @@ const DirectionsModal = ({ onClose }: DirectionsModalProps) => {
     if (routeAnimRef.current) cancelAnimationFrame(routeAnimRef.current);
     removeRouteLayers(map);
 
-    // Temporary source for draw animation
     map.addSource("route", {
       type: "geojson",
       data: { type: "Feature", properties: {}, geometry: { type: "LineString", coordinates: [] } },
     });
 
-    // Simplified layers for draw phase
+    // Draw-phase layers (dark like final)
     map.addLayer({
       id: "route-casing", type: "line", source: "route",
-      paint: { "line-color": "hsl(250, 25%, 10%)", "line-width": 9, "line-opacity": 0.8 },
+      paint: { "line-color": "hsl(220, 15%, 8%)", "line-width": 8, "line-opacity": 0.9 },
       layout: { "line-cap": "round", "line-join": "round" },
     });
     map.addLayer({
       id: "route-line", type: "line", source: "route",
-      paint: { "line-color": "hsl(250, 70%, 58%)", "line-width": 5.5, "line-opacity": 1 },
+      paint: { "line-color": "hsl(220, 10%, 18%)", "line-width": 5, "line-opacity": 1 },
       layout: { "line-cap": "round", "line-join": "round" },
     });
 
@@ -323,7 +241,7 @@ const DirectionsModal = ({ onClose }: DirectionsModalProps) => {
         const coords = route.geometry.coordinates as [number, number][];
         const bounds = new maplibregl.LngLatBounds(coords[0], coords[0]);
         coords.forEach(c => bounds.extend(c));
-        map.fitBounds(bounds, { padding: { top: 80, bottom: 100, left: 50, right: 50 }, pitch: 45, bearing: 0, duration: 1200 });
+        map.fitBounds(bounds, { padding: { top: 80, bottom: 100, left: 50, right: 50 }, pitch: 0, bearing: 0, duration: 1200 });
 
         // Animate route after fly
         setTimeout(() => animateRoute(map, coords), 1300);
@@ -376,14 +294,11 @@ const DirectionsModal = ({ onClose }: DirectionsModalProps) => {
       style: MAP_STYLES[0].url,
       center: [destLng, destLat],
       zoom: 15,
-      pitch: 50,
-      bearing: -15,
+      pitch: 0,
+      bearing: 0,
       attributionControl: false,
     });
 
-    map.on("load", () => {
-      add3DBuildings(map);
-    });
     map.on("zoom", () => setCurrentZoom(Math.round(map.getZoom())));
 
     destMarkerRef.current = createDestMarker(map, destLat, destLng);
@@ -420,7 +335,7 @@ const DirectionsModal = ({ onClose }: DirectionsModalProps) => {
     map.setStyle(style.url);
     map.once("style.load", () => {
       map.jumpTo({ center, zoom, pitch, bearing });
-      add3DBuildings(map);
+
       if (destMarkerRef.current) destMarkerRef.current.remove();
       destMarkerRef.current = createDestMarker(map, destLat, destLng);
       if (userPos && userMarkerRef.current) {
@@ -444,9 +359,9 @@ const DirectionsModal = ({ onClose }: DirectionsModalProps) => {
     if (!mapInstance.current) return;
     if (userPos) {
       const bounds = new maplibregl.LngLatBounds([userPos.lng, userPos.lat], [destLng, destLat]);
-      mapInstance.current.fitBounds(bounds, { padding: 80, pitch: 45, bearing: 0, duration: 1200 });
+      mapInstance.current.fitBounds(bounds, { padding: 80, pitch: 0, bearing: 0, duration: 1200 });
     } else {
-      mapInstance.current.flyTo({ center: [destLng, destLat], zoom: 15, pitch: 50, bearing: -15, duration: 1200 });
+      mapInstance.current.flyTo({ center: [destLng, destLat], zoom: 15, pitch: 0, bearing: 0, duration: 1200 });
     }
   };
 
