@@ -12,7 +12,6 @@ interface DirectionsModalProps {
 const MAP_STYLES = [
   { id: "dark", label: "Escuro", url: "https://tiles.openfreemap.org/styles/dark", emoji: "🌙" },
   { id: "liberty", label: "Padrão", url: "https://tiles.openfreemap.org/styles/liberty", emoji: "🗺️" },
-  { id: "positron", label: "Claro", url: "https://tiles.openfreemap.org/styles/positron", emoji: "☀️" },
 ];
 
 const CTRL_STYLE = {
@@ -246,11 +245,51 @@ const DirectionsModal = ({ onClose }: DirectionsModalProps) => {
 
     map.on("zoom", () => setCurrentZoom(Math.round(map.getZoom())));
 
-    destMarkerRef.current = createDestMarker(map, destLat, destLng);
     mapInstance.current = map;
 
-    // Start route tracking after map is fully loaded
-    map.on("load", () => {
+    // ─── PERSISTENT style.load handler: re-adds markers + route on EVERY style load ───
+    map.on("style.load", () => {
+      // Re-create destination marker
+      if (destMarkerRef.current) destMarkerRef.current.remove();
+      destMarkerRef.current = createDestMarker(map, destLat, destLng);
+
+      // Re-create user marker if exists
+      const uPos = userMarkerRef.current?.getLngLat();
+      if (uPos && userMarkerRef.current) {
+        userMarkerRef.current.remove();
+        userMarkerRef.current = createUserMarker(map, uPos.lat, uPos.lng);
+      }
+
+      // Re-draw route from cached coords
+      const cachedCoords = lastRouteCoordsRef.current;
+      if (cachedCoords && cachedCoords.length > 0) {
+        const geojsonData: GeoJSON.Feature<GeoJSON.LineString> = {
+          type: "Feature",
+          properties: {},
+          geometry: { type: "LineString", coordinates: cachedCoords },
+        };
+        map.addSource("route", { type: "geojson", data: geojsonData });
+        map.addLayer({
+          id: "route-glow", type: "line", source: "route",
+          layout: { "line-join": "round", "line-cap": "round" },
+          paint: { "line-color": "#a78bfa", "line-width": 14, "line-opacity": 0.3, "line-blur": 6 },
+        });
+        map.addLayer({
+          id: "route-casing", type: "line", source: "route",
+          layout: { "line-join": "round", "line-cap": "round" },
+          paint: { "line-color": "#1e1b4b", "line-width": 7, "line-opacity": 0.9 },
+        });
+        map.addLayer({
+          id: "route-line", type: "line", source: "route",
+          layout: { "line-join": "round", "line-cap": "round" },
+          paint: { "line-color": "#7c3aed", "line-width": 4, "line-opacity": 1 },
+        });
+        console.log("[style.load] Route re-drawn with", cachedCoords.length, "points");
+      }
+    });
+
+    // Start route tracking after initial load
+    map.once("load", () => {
       setTimeout(() => startRouteTracking(), 500);
     });
 
@@ -269,65 +308,13 @@ const DirectionsModal = ({ onClose }: DirectionsModalProps) => {
     const map = mapInstance.current;
     const center = map.getCenter();
     const zoom = map.getZoom();
-    const pitch = map.getPitch();
-    const bearing = map.getBearing();
-    
-    // Cache route coords before style wipes everything
-    const cachedCoords = lastRouteCoordsRef.current;
-    const cachedUserPos = userPos;
 
+    // setStyle wipes everything — the persistent map.on("style.load") handler
+    // registered in useEffect will automatically re-add markers + route layers
     map.setStyle(style.url);
-    
-    const redrawEverything = () => {
-      map.jumpTo({ center, zoom, pitch, bearing });
-
-      // Re-create markers
-      if (destMarkerRef.current) destMarkerRef.current.remove();
-      destMarkerRef.current = createDestMarker(map, destLat, destLng);
-      if (cachedUserPos && userMarkerRef.current) {
-        userMarkerRef.current.remove();
-        userMarkerRef.current = createUserMarker(map, cachedUserPos.lat, cachedUserPos.lng);
-      }
-      
-      // Re-draw route from cached coordinates
-      if (cachedCoords && cachedCoords.length > 0) {
-        // Force-remove any stale references first
-        ["route-glow", "route-casing", "route-line"].forEach(id => {
-          try { if (map.getLayer(id)) map.removeLayer(id); } catch {}
-        });
-        try { if (map.getSource("route")) map.removeSource("route"); } catch {}
-        
-        // Now add fresh source + layers
-        const geojsonData: GeoJSON.Feature<GeoJSON.LineString> = {
-          type: "Feature",
-          properties: {},
-          geometry: { type: "LineString", coordinates: cachedCoords },
-        };
-        
-        map.addSource("route", { type: "geojson", data: geojsonData });
-        map.addLayer({
-          id: "route-glow", type: "line", source: "route",
-          layout: { "line-join": "round", "line-cap": "round" },
-          paint: { "line-color": "#a78bfa", "line-width": 14, "line-opacity": 0.3, "line-blur": 6 },
-        });
-        map.addLayer({
-          id: "route-casing", type: "line", source: "route",
-          layout: { "line-join": "round", "line-cap": "round" },
-          paint: { "line-color": "#1e1b4b", "line-width": 7, "line-opacity": 0.9 },
-        });
-        map.addLayer({
-          id: "route-line", type: "line", source: "route",
-          layout: { "line-join": "round", "line-cap": "round" },
-          paint: { "line-color": "#7c3aed", "line-width": 4, "line-opacity": 1 },
-        });
-        console.log("[StyleSwitch] Route re-drawn with", cachedCoords.length, "points");
-      }
-    };
-
-    // Use both events for maximum reliability
+    // Restore camera after style loads
     map.once("style.load", () => {
-      // Small delay to ensure style internals are fully ready
-      setTimeout(redrawEverything, 100);
+      map.jumpTo({ center, zoom, pitch: 0, bearing: 0 });
     });
   };
 
