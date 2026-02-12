@@ -160,7 +160,7 @@ const DirectionsModal = ({ onClose }: DirectionsModalProps) => {
     });
   }, [removeRouteLayers]);
 
-  // ─── Animate Route Drawing (progressive reveal + then static) ───
+  // ─── Animate Route Drawing (progressive reveal, then keep permanently) ───
   const animateRoute = useCallback((map: maplibregl.Map, coordinates: [number, number][]) => {
     if (routeAnimRef.current) cancelAnimationFrame(routeAnimRef.current);
     removeRouteLayers(map);
@@ -170,18 +170,38 @@ const DirectionsModal = ({ onClose }: DirectionsModalProps) => {
       data: { type: "Feature", properties: {}, geometry: { type: "LineString", coordinates: [] } },
     });
 
-    // Draw-phase layers (dark like final)
+    // Add ALL layers upfront (they start empty, so invisible)
+    // 1) Glow
+    map.addLayer({
+      id: "route-glow", type: "line", source: "route",
+      paint: { "line-color": "hsl(0, 0%, 0%)", "line-width": 14, "line-opacity": 0.15, "line-blur": 10 },
+      layout: { "line-cap": "round", "line-join": "round" },
+    });
+    // 2) Casing
     map.addLayer({
       id: "route-casing", type: "line", source: "route",
       paint: { "line-color": "hsl(220, 15%, 8%)", "line-width": 8, "line-opacity": 0.9 },
       layout: { "line-cap": "round", "line-join": "round" },
     });
+    // 3) Main line
     map.addLayer({
       id: "route-line", type: "line", source: "route",
       paint: { "line-color": "hsl(220, 10%, 18%)", "line-width": 5, "line-opacity": 1 },
       layout: { "line-cap": "round", "line-join": "round" },
     });
+    // 4) Arrows
+    map.addLayer({
+      id: "route-arrow", type: "symbol", source: "route",
+      layout: {
+        "symbol-placement": "line", "symbol-spacing": 80,
+        "text-field": "›", "text-size": 18,
+        "text-rotation-alignment": "map", "text-keep-upright": false,
+        "text-allow-overlap": true,
+      },
+      paint: { "text-color": "hsl(0, 0%, 50%)", "text-opacity": 0.6 },
+    });
 
+    // Progressively reveal by updating source data
     const totalPoints = coordinates.length;
     const duration = 1800;
     let startTime: number | null = null;
@@ -200,13 +220,12 @@ const DirectionsModal = ({ onClose }: DirectionsModalProps) => {
         routeAnimRef.current = requestAnimationFrame(draw);
       } else {
         routeAnimRef.current = null;
-        // Replace with full styled route
-        drawFullRoute(map, coordinates);
+        // Line stays — all layers already added, no removal needed
       }
     };
 
     routeAnimRef.current = requestAnimationFrame(draw);
-  }, [removeRouteLayers, drawFullRoute]);
+  }, [removeRouteLayers]);
 
   // ─── Start Route Tracking ───
   const startRouteTracking = useCallback(() => {
@@ -270,12 +289,13 @@ const DirectionsModal = ({ onClose }: DirectionsModalProps) => {
           if (route) {
             setRouteInfo({ distance: route.distance, duration: route.duration });
             const coords = route.geometry.coordinates as [number, number][];
-            // Update existing source or redraw
+            // Just update the data — layers stay intact
             const routeSrc = map.getSource("route") as maplibregl.GeoJSONSource;
             if (routeSrc) {
               routeSrc.setData({ type: "Feature", properties: {}, geometry: { type: "LineString", coordinates: coords } });
             } else {
-              drawFullRoute(map, coords);
+              // Layers were lost (e.g. style switch), re-create everything
+              animateRoute(map, coords);
             }
           }
         });
@@ -283,7 +303,7 @@ const DirectionsModal = ({ onClose }: DirectionsModalProps) => {
       () => {},
       { enableHighAccuracy: true, timeout: 15000, maximumAge: 5000 }
     );
-  }, [destLat, destLng, fetchRoute, animateRoute, drawFullRoute]);
+  }, [destLat, destLng, fetchRoute, animateRoute]);
 
   // ─── Initialize Map ───
   useEffect(() => {
@@ -342,7 +362,7 @@ const DirectionsModal = ({ onClose }: DirectionsModalProps) => {
       // Re-draw route if active
       if (routeStatus === "active" && userPos) {
         fetchRoute(userPos.lng, userPos.lat, destLng, destLat).then(route => {
-          if (route) drawFullRoute(map, route.geometry.coordinates as [number, number][]);
+          if (route) animateRoute(map, route.geometry.coordinates as [number, number][]);
         });
       }
     });
