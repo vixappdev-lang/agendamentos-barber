@@ -274,23 +274,60 @@ const DirectionsModal = ({ onClose }: DirectionsModalProps) => {
     
     // Cache route coords before style wipes everything
     const cachedCoords = lastRouteCoordsRef.current;
+    const cachedUserPos = userPos;
 
     map.setStyle(style.url);
-    map.once("style.load", () => {
+    
+    const redrawEverything = () => {
       map.jumpTo({ center, zoom, pitch, bearing });
 
       // Re-create markers
       if (destMarkerRef.current) destMarkerRef.current.remove();
       destMarkerRef.current = createDestMarker(map, destLat, destLng);
-      if (userPos && userMarkerRef.current) {
+      if (cachedUserPos && userMarkerRef.current) {
         userMarkerRef.current.remove();
-        userMarkerRef.current = createUserMarker(map, userPos.lat, userPos.lng);
+        userMarkerRef.current = createUserMarker(map, cachedUserPos.lat, cachedUserPos.lng);
       }
       
-      // Re-draw route immediately from cached coordinates (no async fetch needed)
+      // Re-draw route from cached coordinates
       if (cachedCoords && cachedCoords.length > 0) {
-        drawRoute(map, cachedCoords);
+        // Force-remove any stale references first
+        ["route-glow", "route-casing", "route-line"].forEach(id => {
+          try { if (map.getLayer(id)) map.removeLayer(id); } catch {}
+        });
+        try { if (map.getSource("route")) map.removeSource("route"); } catch {}
+        
+        // Now add fresh source + layers
+        const geojsonData: GeoJSON.Feature<GeoJSON.LineString> = {
+          type: "Feature",
+          properties: {},
+          geometry: { type: "LineString", coordinates: cachedCoords },
+        };
+        
+        map.addSource("route", { type: "geojson", data: geojsonData });
+        map.addLayer({
+          id: "route-glow", type: "line", source: "route",
+          layout: { "line-join": "round", "line-cap": "round" },
+          paint: { "line-color": "#a78bfa", "line-width": 14, "line-opacity": 0.3, "line-blur": 6 },
+        });
+        map.addLayer({
+          id: "route-casing", type: "line", source: "route",
+          layout: { "line-join": "round", "line-cap": "round" },
+          paint: { "line-color": "#1e1b4b", "line-width": 7, "line-opacity": 0.9 },
+        });
+        map.addLayer({
+          id: "route-line", type: "line", source: "route",
+          layout: { "line-join": "round", "line-cap": "round" },
+          paint: { "line-color": "#7c3aed", "line-width": 4, "line-opacity": 1 },
+        });
+        console.log("[StyleSwitch] Route re-drawn with", cachedCoords.length, "points");
       }
+    };
+
+    // Use both events for maximum reliability
+    map.once("style.load", () => {
+      // Small delay to ensure style internals are fully ready
+      setTimeout(redrawEverything, 100);
     });
   };
 
