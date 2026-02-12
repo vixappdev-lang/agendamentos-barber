@@ -134,6 +134,27 @@ const BookingFlow = ({ service, onClose, user }: BookingFlowProps) => {
   };
 
   const handleConfirm = async () => {
+    // Input validation
+    const trimmedName = name.trim();
+    if (!trimmedName || trimmedName.length < 2 || trimmedName.length > 100) {
+      toast.error("Nome inválido. Use entre 2 e 100 caracteres.");
+      return;
+    }
+    const digitsOnly = phone.replace(/\D/g, "");
+    if (!digitsOnly || digitsOnly.length < 10 || digitsOnly.length > 15) {
+      toast.error("Telefone inválido. Use um número com DDD.");
+      return;
+    }
+    const today = new Date().toISOString().split("T")[0];
+    if (!selectedDate || selectedDate <= today) {
+      toast.error("Selecione uma data futura válida.");
+      return;
+    }
+    if (!selectedTime || !availableTimes.includes(selectedTime) || bookedTimes.includes(selectedTime)) {
+      toast.error("Horário inválido ou indisponível.");
+      return;
+    }
+
     setSubmitting(true);
     const { error } = await supabase.from("appointments").insert({
       service_id: service.id,
