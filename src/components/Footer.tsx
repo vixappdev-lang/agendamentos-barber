@@ -28,12 +28,6 @@ const Footer = () => {
           {/* Info pills */}
           {!loading && (
             <div className="flex flex-wrap items-center justify-center gap-3">
-              {address && (
-                <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-muted-foreground glass-surface">
-                  <MapPin className="w-3 h-3 text-primary/60" />
-                  {address}
-                </span>
-              )}
               {phone && (
                 <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-muted-foreground glass-surface">
                   <Phone className="w-3 h-3 text-primary/60" />
