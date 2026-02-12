@@ -1,12 +1,23 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, ArrowRight, Check, Calendar, User, Clock, Send, X } from "lucide-react";
-import type { Service, Barber } from "@/data/services";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import { barbers, availableTimes } from "@/data/services";
+import type { Barber } from "@/data/services";
 import type { User as AuthUser } from "@supabase/supabase-js";
 
+interface BookingService {
+  id: string;
+  title: string;
+  subtitle: string;
+  price: number;
+  duration: string;
+  image: string;
+}
+
 interface BookingFlowProps {
-  service: Service;
+  service: BookingService;
   onClose: () => void;
   user?: AuthUser | null;
 }
@@ -20,6 +31,7 @@ const BookingFlow = ({ service, onClose, user }: BookingFlowProps) => {
   const [selectedTime, setSelectedTime] = useState("");
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
   const canProceed = () => {
     switch (currentStep) {
@@ -31,13 +43,8 @@ const BookingFlow = ({ service, onClose, user }: BookingFlowProps) => {
     }
   };
 
-  const next = () => {
-    if (canProceed() && currentStep < steps.length - 1) setCurrentStep(currentStep + 1);
-  };
-
-  const back = () => {
-    if (currentStep > 0) setCurrentStep(currentStep - 1);
-  };
+  const next = () => { if (canProceed() && currentStep < steps.length - 1) setCurrentStep(currentStep + 1); };
+  const back = () => { if (currentStep > 0) setCurrentStep(currentStep - 1); };
 
   const generateDates = () => {
     const dates: { label: string; value: string; weekday: string; day: string }[] = [];
@@ -57,12 +64,37 @@ const BookingFlow = ({ service, onClose, user }: BookingFlowProps) => {
     return dates;
   };
 
-  const sendWhatsApp = () => {
-    const dateFormatted = selectedDate
-      ? new Date(selectedDate + "T12:00:00").toLocaleDateString("pt-BR")
-      : "";
+  const handleConfirm = async () => {
+    setSubmitting(true);
+
+    // Save to database
+    const { error } = await supabase.from("appointments").insert({
+      service_id: service.id,
+      customer_name: name,
+      customer_phone: phone,
+      customer_email: user?.email || null,
+      barber_name: selectedBarber?.name || null,
+      appointment_date: selectedDate,
+      appointment_time: selectedTime,
+      total_price: service.price,
+      status: "pending",
+    });
+
+    if (error) {
+      toast.error("Erro ao agendar. Tente novamente.");
+      setSubmitting(false);
+      return;
+    }
+
+    toast.success("Agendamento realizado com sucesso!");
+
+    // Also send via WhatsApp
+    const dateFormatted = selectedDate ? new Date(selectedDate + "T12:00:00").toLocaleDateString("pt-BR") : "";
     const msg = `Olá! Gostaria de confirmar meu agendamento:%0A%0A📋 *Serviço:* ${service.title}%0A💈 *Barbeiro:* ${selectedBarber?.name}%0A📅 *Data:* ${dateFormatted}%0A🕐 *Horário:* ${selectedTime}%0A👤 *Nome:* ${name}%0A📱 *Telefone:* ${phone}%0A💰 *Valor:* R$ ${service.price}`;
     window.open(`https://wa.me/5511999999999?text=${msg}`, "_blank");
+
+    setSubmitting(false);
+    onClose();
   };
 
   const dates = generateDates();
@@ -75,16 +107,12 @@ const BookingFlow = ({ service, onClose, user }: BookingFlowProps) => {
 
   return (
     <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
+      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
       className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4"
       style={{ background: 'hsl(230 20% 7% / 0.85)', backdropFilter: 'blur(12px)' }}
     >
       <motion.div
-        initial={{ y: 40, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        exit={{ y: 40, opacity: 0 }}
+        initial={{ y: 40, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 40, opacity: 0 }}
         className="glass-card-strong w-full sm:max-w-lg max-h-[92dvh] sm:max-h-[90vh] overflow-y-auto scrollbar-hide rounded-t-2xl sm:rounded-2xl"
       >
         {/* Header */}
@@ -138,9 +166,7 @@ const BookingFlow = ({ service, onClose, user }: BookingFlowProps) => {
               {currentStep === 1 && (
                 <div className="space-y-3">
                   {barbers.map((barber) => (
-                    <button
-                      key={barber.id}
-                      onClick={() => setSelectedBarber(barber)}
+                    <button key={barber.id} onClick={() => setSelectedBarber(barber)}
                       className="w-full glass-card p-4 text-left transition-all"
                       style={{
                         borderColor: selectedBarber?.id === barber.id ? 'hsl(245 60% 55% / 0.3)' : undefined,
@@ -148,15 +174,12 @@ const BookingFlow = ({ service, onClose, user }: BookingFlowProps) => {
                       }}
                     >
                       <div className="flex items-center gap-3">
-                        <div
-                          className="w-11 h-11 rounded-xl flex items-center justify-center font-bold text-sm"
+                        <div className="w-11 h-11 rounded-xl flex items-center justify-center font-bold text-sm"
                           style={{
                             background: selectedBarber?.id === barber.id ? 'linear-gradient(135deg, hsl(245 60% 50%), hsl(265 60% 55%))' : 'hsl(0 0% 100% / 0.05)',
                             color: selectedBarber?.id === barber.id ? 'hsl(0 0% 100%)' : 'hsl(0 0% 50%)',
                           }}
-                        >
-                          {barber.avatar}
-                        </div>
+                        >{barber.avatar}</div>
                         <div className="flex-1">
                           <h4 className="font-semibold text-foreground">{barber.name}</h4>
                           <p className="text-sm text-muted-foreground">{barber.specialty}</p>
@@ -176,14 +199,10 @@ const BookingFlow = ({ service, onClose, user }: BookingFlowProps) => {
                     </label>
                     <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-2">
                       {dates.map((d) => (
-                        <button
-                          key={d.value}
-                          onClick={() => setSelectedDate(d.value)}
+                        <button key={d.value} onClick={() => setSelectedDate(d.value)}
                           className="shrink-0 w-16 py-3 rounded-xl text-center transition-all"
                           style={{
-                            background: selectedDate === d.value
-                              ? 'linear-gradient(135deg, hsl(245 60% 50%), hsl(265 60% 55%))'
-                              : 'hsl(0 0% 100% / 0.04)',
+                            background: selectedDate === d.value ? 'linear-gradient(135deg, hsl(245 60% 50%), hsl(265 60% 55%))' : 'hsl(0 0% 100% / 0.04)',
                             border: `1px solid ${selectedDate === d.value ? 'transparent' : 'hsl(0 0% 100% / 0.06)'}`,
                             color: selectedDate === d.value ? 'hsl(0 0% 100%)' : 'hsl(0 0% 55%)',
                             boxShadow: selectedDate === d.value ? '0 4px 20px hsl(245 60% 55% / 0.25)' : 'none',
@@ -201,21 +220,15 @@ const BookingFlow = ({ service, onClose, user }: BookingFlowProps) => {
                     </label>
                     <div className="grid grid-cols-4 sm:grid-cols-5 gap-2 max-h-40 overflow-y-auto scrollbar-hide">
                       {availableTimes.map((t) => (
-                        <button
-                          key={t}
-                          onClick={() => setSelectedTime(t)}
+                        <button key={t} onClick={() => setSelectedTime(t)}
                           className="py-2.5 rounded-xl text-sm font-medium transition-all"
                           style={{
-                            background: selectedTime === t
-                              ? 'linear-gradient(135deg, hsl(245 60% 50%), hsl(265 60% 55%))'
-                              : 'hsl(0 0% 100% / 0.04)',
+                            background: selectedTime === t ? 'linear-gradient(135deg, hsl(245 60% 50%), hsl(265 60% 55%))' : 'hsl(0 0% 100% / 0.04)',
                             border: `1px solid ${selectedTime === t ? 'transparent' : 'hsl(0 0% 100% / 0.06)'}`,
                             color: selectedTime === t ? 'hsl(0 0% 100%)' : 'hsl(0 0% 55%)',
                             boxShadow: selectedTime === t ? '0 4px 16px hsl(245 60% 55% / 0.2)' : 'none',
                           }}
-                        >
-                          {t}
-                        </button>
+                        >{t}</button>
                       ))}
                     </div>
                   </div>
@@ -228,25 +241,13 @@ const BookingFlow = ({ service, onClose, user }: BookingFlowProps) => {
                     <label className="text-sm font-semibold text-foreground flex items-center gap-2 mb-2">
                       <User className="w-4 h-4 text-primary" /> Seu nome
                     </label>
-                    <input
-                      type="text"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      placeholder="Digite seu nome"
-                      className="glass-input"
-                    />
+                    <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Digite seu nome" className="glass-input" />
                   </div>
                   <div>
                     <label className="text-sm font-semibold text-foreground flex items-center gap-2 mb-2">
                       <Send className="w-4 h-4 text-primary" /> WhatsApp
                     </label>
-                    <input
-                      type="tel"
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                      placeholder="(11) 99999-9999"
-                      className="glass-input"
-                    />
+                    <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="(11) 99999-9999" className="glass-input" />
                   </div>
                 </div>
               )}
@@ -277,33 +278,22 @@ const BookingFlow = ({ service, onClose, user }: BookingFlowProps) => {
 
         {/* Footer */}
         <div className="p-5 flex items-center justify-between" style={{ borderTop: '1px solid hsl(0 0% 100% / 0.06)' }}>
-          <button
-            onClick={currentStep === 0 ? onClose : back}
-            className="btn-secondary flex items-center gap-2"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            {currentStep === 0 ? "Cancelar" : "Voltar"}
+          <button onClick={currentStep === 0 ? onClose : back} className="btn-secondary flex items-center gap-2">
+            <ArrowLeft className="w-4 h-4" /> {currentStep === 0 ? "Cancelar" : "Voltar"}
           </button>
 
           {currentStep < steps.length - 1 ? (
-            <button
-              onClick={next}
-              disabled={!canProceed()}
-              className="btn-primary flex items-center gap-2"
-            >
+            <button onClick={next} disabled={!canProceed()} className="btn-primary flex items-center gap-2">
               Próximo <ArrowRight className="w-4 h-4" />
             </button>
           ) : (
             <button
-              onClick={sendWhatsApp}
-              className="flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold transition-all"
-              style={{
-                background: 'hsl(142 70% 40%)',
-                color: 'white',
-                boxShadow: '0 4px 20px hsl(142 70% 40% / 0.25)',
-              }}
+              onClick={handleConfirm}
+              disabled={submitting}
+              className="flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold transition-all disabled:opacity-50"
+              style={{ background: 'hsl(142 70% 40%)', color: 'white', boxShadow: '0 4px 20px hsl(142 70% 40% / 0.25)' }}
             >
-              <Send className="w-4 h-4" /> Enviar via WhatsApp
+              <Send className="w-4 h-4" /> {submitting ? "Enviando..." : "Confirmar & WhatsApp"}
             </button>
           )}
         </div>

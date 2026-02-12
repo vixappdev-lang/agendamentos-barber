@@ -1,13 +1,53 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Scissors, Search, LogOut } from "lucide-react";
+import { Scissors, Search } from "lucide-react";
 import Header from "@/components/Header";
 import ServiceCard from "@/components/ServiceCard";
 import BookingFlow from "@/components/BookingFlow";
 import GoogleAuthModal from "@/components/GoogleAuthModal";
 import Footer from "@/components/Footer";
-import { services, type Service } from "@/data/services";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+import { stockImages } from "@/data/stockImages";
+
+// Fallback images from static assets
+import imgCorte from "@/assets/service-corte.jpg";
+import imgBarba from "@/assets/service-barba.jpg";
+import imgCombo from "@/assets/service-combo.jpg";
+import imgSobrancelha from "@/assets/service-sobrancelha.jpg";
+import imgHidratacao from "@/assets/service-hidratacao.jpg";
+import imgPremium from "@/assets/service-premium.jpg";
+
+const fallbackImages: Record<string, string> = {
+  "Corte Masculino": imgCorte,
+  "Barba": imgBarba,
+  "Corte + Barba": imgCombo,
+  "Sobrancelha": imgSobrancelha,
+  "Hidratação Capilar": imgHidratacao,
+  "Dia do Noivo": imgPremium,
+};
+
+interface DBService {
+  id: string;
+  title: string;
+  subtitle: string | null;
+  price: number;
+  duration: string;
+  image_url: string | null;
+  active: boolean;
+  sort_order: number | null;
+}
+
+const resolveImageUrl = (service: DBService): string => {
+  const url = service.image_url;
+  if (url && url.startsWith("stock://")) {
+    const stockId = url.replace("stock://", "");
+    const stock = stockImages.find(s => s.id === stockId);
+    return stock?.src || fallbackImages[service.title] || imgCorte;
+  }
+  if (url && url.startsWith("http")) return url;
+  return fallbackImages[service.title] || imgCorte;
+};
 
 const categories = [
   { id: "all", label: "Todos", icon: "✨" },
@@ -17,22 +57,30 @@ const categories = [
   { id: "extras", label: "Extras", icon: "💎" },
 ];
 
-const serviceCategoryMap: Record<string, string> = {
-  corte: "cabelo",
-  barba: "barba",
-  combo: "combo",
-  sobrancelha: "extras",
-  hidratacao: "extras",
-  premium: "combo",
+const guessCategoryFromTitle = (title: string): string => {
+  const lower = title.toLowerCase();
+  if (lower.includes("combo") || lower.includes("noivo") || (lower.includes("corte") && lower.includes("barba"))) return "combo";
+  if (lower.includes("barba")) return "barba";
+  if (lower.includes("corte") || lower.includes("degradê") || lower.includes("degrade") || lower.includes("cabelo")) return "cabelo";
+  return "extras";
 };
 
 const Index = () => {
-  const [selectedService, setSelectedService] = useState<Service | null>(null);
+  const [services, setServices] = useState<DBService[]>([]);
+  const [selectedService, setSelectedService] = useState<any>(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const [pendingService, setPendingService] = useState<Service | null>(null);
+  const [pendingService, setPendingService] = useState<any>(null);
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState("all");
   const { user, loading: authLoading, signInWithGoogle, signOut } = useAuth();
+
+  useEffect(() => {
+    const fetchServices = async () => {
+      const { data } = await supabase.from("services").select("*").eq("active", true).order("sort_order");
+      if (data) setServices(data as DBService[]);
+    };
+    fetchServices();
+  }, []);
 
   const now = new Date();
   const weekday = now.toLocaleDateString("pt-BR", { weekday: "long" });
@@ -42,30 +90,32 @@ const Index = () => {
 
   const filteredServices = useMemo(() => {
     return services.filter((s) => {
-      const matchesSearch =
-        !search ||
-        s.title.toLowerCase().includes(search.toLowerCase()) ||
-        s.subtitle.toLowerCase().includes(search.toLowerCase());
-      const matchesCategory =
-        activeCategory === "all" || serviceCategoryMap[s.id] === activeCategory;
+      const matchesSearch = !search || s.title.toLowerCase().includes(search.toLowerCase()) || (s.subtitle || "").toLowerCase().includes(search.toLowerCase());
+      const cat = guessCategoryFromTitle(s.title);
+      const matchesCategory = activeCategory === "all" || cat === activeCategory;
       return matchesSearch && matchesCategory;
     });
-  }, [search, activeCategory]);
+  }, [search, activeCategory, services]);
 
-  const handleServiceSelect = (service: Service) => {
+  const handleServiceSelect = (service: DBService) => {
+    const mapped = {
+      id: service.id,
+      title: service.title,
+      subtitle: service.subtitle || "",
+      price: service.price,
+      duration: service.duration,
+      image: resolveImageUrl(service),
+    };
     if (user) {
-      setSelectedService(service);
+      setSelectedService(mapped);
     } else {
-      setPendingService(service);
+      setPendingService(mapped);
       setShowAuthModal(true);
     }
   };
 
-  const handleGoogleSignIn = async () => {
-    await signInWithGoogle();
-  };
+  const handleGoogleSignIn = async () => { await signInWithGoogle(); };
 
-  // After auth, if there's a pending service, open it
   if (user && pendingService && !selectedService) {
     setSelectedService(pendingService);
     setPendingService(null);
@@ -79,12 +129,7 @@ const Index = () => {
 
         <main className="container mx-auto px-3 min-[375px]:px-4 py-6 min-[375px]:py-8 max-w-2xl">
           {/* Greeting */}
-          <motion.div
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="mb-6 min-[375px]:mb-8"
-          >
+          <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="mb-6 min-[375px]:mb-8">
             <h2 className="text-xl min-[375px]:text-2xl sm:text-3xl font-extrabold text-foreground leading-tight tracking-tight">
               Olá, seja bem vindo!
             </h2>
@@ -94,43 +139,21 @@ const Index = () => {
           </motion.div>
 
           {/* Search */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="mb-5 min-[375px]:mb-6 flex gap-2"
-          >
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="mb-5 min-[375px]:mb-6 flex gap-2">
             <div className="flex-1 relative">
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <input
-                type="text"
-                placeholder="Faça a sua busca..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="glass-input !pl-10"
-              />
+              <input type="text" placeholder="Faça a sua busca..." value={search} onChange={(e) => setSearch(e.target.value)} className="glass-input !pl-10" />
             </div>
           </motion.div>
 
           {/* Categories */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.15 }}
-            className="flex gap-2 overflow-x-auto scrollbar-hide mb-6 min-[375px]:mb-8 pb-1"
-          >
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.15 }} className="flex gap-2 overflow-x-auto scrollbar-hide mb-6 min-[375px]:mb-8 pb-1">
             {categories.map((cat) => (
-              <button
-                key={cat.id}
-                onClick={() => setActiveCategory(cat.id)}
+              <button key={cat.id} onClick={() => setActiveCategory(cat.id)}
                 className="shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs min-[375px]:text-sm font-medium transition-all duration-200"
                 style={{
-                  background: activeCategory === cat.id
-                    ? 'hsl(0 0% 90%)'
-                    : 'hsl(0 0% 100% / 0.04)',
-                  color: activeCategory === cat.id
-                    ? 'hsl(230 20% 7%)'
-                    : 'hsl(0 0% 55%)',
+                  background: activeCategory === cat.id ? 'hsl(0 0% 90%)' : 'hsl(0 0% 100% / 0.04)',
+                  color: activeCategory === cat.id ? 'hsl(230 20% 7%)' : 'hsl(0 0% 55%)',
                   border: `1px solid ${activeCategory === cat.id ? 'transparent' : 'hsl(0 0% 100% / 0.08)'}`,
                 }}
               >
@@ -140,17 +163,10 @@ const Index = () => {
           </motion.div>
 
           {/* Services label */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.2 }}
-            className="mb-4 min-[375px]:mb-5"
-          >
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }} className="mb-4 min-[375px]:mb-5">
             <div className="flex items-center gap-2">
               <Scissors className="w-4 h-4 text-primary" />
-              <h3 className="text-[10px] min-[375px]:text-xs font-semibold text-muted-foreground uppercase tracking-[0.2em]">
-                Faça sua reserva
-              </h3>
+              <h3 className="text-[10px] min-[375px]:text-xs font-semibold text-muted-foreground uppercase tracking-[0.2em]">Faça sua reserva</h3>
             </div>
           </motion.div>
 
@@ -159,8 +175,8 @@ const Index = () => {
               filteredServices.map((service, i) => (
                 <ServiceCard
                   key={service.id}
-                  service={service}
-                  onSelect={handleServiceSelect}
+                  service={{ ...service, subtitle: service.subtitle || "", image: resolveImageUrl(service), icon: Scissors }}
+                  onSelect={() => handleServiceSelect(service)}
                   index={i}
                 />
               ))
@@ -176,22 +192,12 @@ const Index = () => {
       </div>
 
       <AnimatePresence>
-        {selectedService && (
-          <BookingFlow
-            service={selectedService}
-            onClose={() => setSelectedService(null)}
-            user={user}
-          />
-        )}
+        {selectedService && <BookingFlow service={selectedService} onClose={() => setSelectedService(null)} user={user} />}
       </AnimatePresence>
 
       <AnimatePresence>
         {showAuthModal && (
-          <GoogleAuthModal
-            onClose={() => { setShowAuthModal(false); setPendingService(null); }}
-            onSignIn={handleGoogleSignIn}
-            loading={authLoading}
-          />
+          <GoogleAuthModal onClose={() => { setShowAuthModal(false); setPendingService(null); }} onSignIn={handleGoogleSignIn} loading={authLoading} />
         )}
       </AnimatePresence>
     </div>
