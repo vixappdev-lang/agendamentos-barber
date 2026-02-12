@@ -10,6 +10,7 @@ const dayLabels = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 const Settings = () => {
   const [settings, setSettings] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
   const [showMap, setShowMap] = useState(false);
 
   useEffect(() => { fetchSettings(); }, []);
@@ -36,7 +37,7 @@ const Settings = () => {
 
   const handleSave = async () => {
     setSaving(true);
-    // Ensure location keys exist
+    setSaved(false);
     const keysToSave = { ...settings };
     const allKeys = ["business_name", "address", "whatsapp_number", "opening_time", "closing_time", "lunch_start", "lunch_end", "days_off", "location_lat", "location_lng"];
     
@@ -44,8 +45,10 @@ const Settings = () => {
       supabase.from("business_settings").upsert({ key, value }, { onConflict: "key" })
     );
     await Promise.all(promises);
-    toast.success("Configurações salvas!");
     setSaving(false);
+    setSaved(true);
+    toast.success("Configurações salvas com sucesso! ✅");
+    setTimeout(() => setSaved(false), 2000);
   };
 
   const handleLocationConfirm = (address: string, lat: string, lng: string) => {
@@ -61,7 +64,7 @@ const Settings = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Left column: Dados da Barbearia */}
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="glass-card p-5 space-y-5">
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0, scale: saved ? [1, 1.02, 1] : 1, borderColor: saved ? 'hsl(140 60% 50% / 0.4)' : 'transparent' }} transition={{ duration: 0.4 }} className="glass-card p-5 space-y-5" style={{ border: '1px solid transparent' }}>
           <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
             <Store className="w-4 h-4" style={{ color: 'hsl(245 60% 65%)' }} /> Dados da Barbearia
           </h3>
@@ -103,7 +106,7 @@ const Settings = () => {
 
         {/* Right column: Horário + Dias de Folga stacked */}
         <div className="space-y-4">
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="glass-card p-5 space-y-5">
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0, scale: saved ? [1, 1.02, 1] : 1, borderColor: saved ? 'hsl(140 60% 50% / 0.4)' : 'transparent' }} transition={{ delay: 0.1, duration: 0.4 }} className="glass-card p-5 space-y-5" style={{ border: '1px solid transparent' }}>
             <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
               <Clock className="w-4 h-4" style={{ color: 'hsl(245 60% 65%)' }} /> Horário de Funcionamento
             </h3>
@@ -127,7 +130,7 @@ const Settings = () => {
             </div>
           </motion.div>
 
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="glass-card p-5 space-y-4">
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0, scale: saved ? [1, 1.02, 1] : 1, borderColor: saved ? 'hsl(140 60% 50% / 0.4)' : 'transparent' }} transition={{ delay: 0.2, duration: 0.4 }} className="glass-card p-5 space-y-4" style={{ border: '1px solid transparent' }}>
             <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
               <CalendarOff className="w-4 h-4" style={{ color: 'hsl(245 60% 65%)' }} /> Dias de Folga
             </h3>
@@ -152,9 +155,15 @@ const Settings = () => {
       <motion.button
         onClick={handleSave} disabled={saving}
         className="w-full py-3.5 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-all disabled:opacity-50"
-        style={{ background: 'hsl(245 60% 55%)', color: 'white', boxShadow: '0 4px 20px hsl(245 60% 55% / 0.25)' }}
+        style={{ 
+          background: saved ? 'hsl(140 60% 45%)' : 'hsl(245 60% 55%)', 
+          color: 'white', 
+          boxShadow: saved ? '0 4px 20px hsl(140 60% 45% / 0.25)' : '0 4px 20px hsl(245 60% 55% / 0.25)' 
+        }}
+        animate={{ scale: saved ? [1, 1.03, 1] : 1 }}
+        transition={{ duration: 0.3 }}
         whileTap={{ scale: 0.98 }}>
-        <Save className="w-4 h-4" /> {saving ? "Salvando..." : "Salvar Configurações"}
+        <Save className="w-4 h-4" /> {saving ? "Salvando..." : saved ? "Salvo ✓" : "Salvar Configurações"}
       </motion.button>
 
       <AnimatePresence>
