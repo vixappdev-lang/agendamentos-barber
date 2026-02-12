@@ -110,57 +110,45 @@ const DirectionsModal = ({ onClose }: DirectionsModalProps) => {
   // ─── Remove old route layers helper ───
   const removeRouteLayers = useCallback((map: maplibregl.Map) => {
     if (pulseAnimRef.current) { cancelAnimationFrame(pulseAnimRef.current); pulseAnimRef.current = null; }
-    const layers = ["route-glow", "route-casing", "route-line", "route-flow", "route-arrow"];
-    layers.forEach(id => { if (map.getLayer(id)) map.removeLayer(id); });
-    if (map.getSource("route")) map.removeSource("route");
+    const layers = ["route-glow", "route-casing", "route-line", "route-arrow"];
+    layers.forEach(id => { try { if (map.getLayer(id)) map.removeLayer(id); } catch {} });
+    try { if (map.getSource("route")) map.removeSource("route"); } catch {}
   }, []);
 
-  // (unused startFlowAnimation removed)
-
-  // ─── Draw the full route (dark solid line like Uber/99) ───
-  const drawFullRoute = useCallback((map: maplibregl.Map, coordinates: [number, number][]) => {
-    removeRouteLayers(map);
-
-    map.addSource("route", {
-      type: "geojson",
-      data: { type: "Feature", properties: {}, geometry: { type: "LineString", coordinates } },
-    });
-
-    // 1) Outer shadow/glow — subtle dark spread
+  // ─── Add route layers to the map (bright visible colors) ───
+  const addRouteLayers = useCallback((map: maplibregl.Map) => {
+    // 1) Purple glow
     map.addLayer({
       id: "route-glow", type: "line", source: "route",
-      paint: { "line-color": "hsl(0, 0%, 0%)", "line-width": 14, "line-opacity": 0.15, "line-blur": 10 },
+      paint: { "line-color": "#8b5cf6", "line-width": 16, "line-opacity": 0.25, "line-blur": 8 },
       layout: { "line-cap": "round", "line-join": "round" },
     });
-
-    // 2) Casing — dark border
+    // 2) Dark casing for depth
     map.addLayer({
       id: "route-casing", type: "line", source: "route",
-      paint: { "line-color": "hsl(220, 15%, 8%)", "line-width": 8, "line-opacity": 0.9 },
+      paint: { "line-color": "#1e1b4b", "line-width": 8, "line-opacity": 0.9 },
       layout: { "line-cap": "round", "line-join": "round" },
     });
-
-    // 3) Main solid route line — dark charcoal like 99/Uber
+    // 3) Main bright purple line — HIGHLY VISIBLE
     map.addLayer({
       id: "route-line", type: "line", source: "route",
-      paint: { "line-color": "hsl(220, 10%, 18%)", "line-width": 5, "line-opacity": 1 },
+      paint: { "line-color": "#7c3aed", "line-width": 5, "line-opacity": 1 },
       layout: { "line-cap": "round", "line-join": "round" },
     });
-
-    // 4) Direction arrows along the route
+    // 4) Direction arrows
     map.addLayer({
       id: "route-arrow", type: "symbol", source: "route",
       layout: {
-        "symbol-placement": "line", "symbol-spacing": 80,
-        "text-field": "›", "text-size": 18,
+        "symbol-placement": "line", "symbol-spacing": 60,
+        "text-field": "›", "text-size": 20,
         "text-rotation-alignment": "map", "text-keep-upright": false,
         "text-allow-overlap": true,
       },
-      paint: { "text-color": "hsl(0, 0%, 50%)", "text-opacity": 0.6 },
+      paint: { "text-color": "#c4b5fd", "text-opacity": 0.8 },
     });
-  }, [removeRouteLayers]);
+  }, []);
 
-  // ─── Animate Route Drawing (progressive reveal, then keep permanently) ───
+  // ─── Draw route with animation ───
   const animateRoute = useCallback((map: maplibregl.Map, coordinates: [number, number][]) => {
     if (routeAnimRef.current) cancelAnimationFrame(routeAnimRef.current);
     removeRouteLayers(map);
@@ -170,40 +158,11 @@ const DirectionsModal = ({ onClose }: DirectionsModalProps) => {
       data: { type: "Feature", properties: {}, geometry: { type: "LineString", coordinates: [] } },
     });
 
-    // Add ALL layers upfront (they start empty, so invisible)
-    // 1) Glow
-    map.addLayer({
-      id: "route-glow", type: "line", source: "route",
-      paint: { "line-color": "hsl(0, 0%, 0%)", "line-width": 14, "line-opacity": 0.15, "line-blur": 10 },
-      layout: { "line-cap": "round", "line-join": "round" },
-    });
-    // 2) Casing
-    map.addLayer({
-      id: "route-casing", type: "line", source: "route",
-      paint: { "line-color": "hsl(220, 15%, 8%)", "line-width": 8, "line-opacity": 0.9 },
-      layout: { "line-cap": "round", "line-join": "round" },
-    });
-    // 3) Main line
-    map.addLayer({
-      id: "route-line", type: "line", source: "route",
-      paint: { "line-color": "hsl(220, 10%, 18%)", "line-width": 5, "line-opacity": 1 },
-      layout: { "line-cap": "round", "line-join": "round" },
-    });
-    // 4) Arrows
-    map.addLayer({
-      id: "route-arrow", type: "symbol", source: "route",
-      layout: {
-        "symbol-placement": "line", "symbol-spacing": 80,
-        "text-field": "›", "text-size": 18,
-        "text-rotation-alignment": "map", "text-keep-upright": false,
-        "text-allow-overlap": true,
-      },
-      paint: { "text-color": "hsl(0, 0%, 50%)", "text-opacity": 0.6 },
-    });
+    addRouteLayers(map);
 
-    // Progressively reveal by updating source data
+    // Progressively reveal
     const totalPoints = coordinates.length;
-    const duration = 1800;
+    const duration = 2000;
     let startTime: number | null = null;
 
     const draw = (time: number) => {
@@ -211,21 +170,21 @@ const DirectionsModal = ({ onClose }: DirectionsModalProps) => {
       const progress = Math.min((time - startTime) / duration, 1);
       const eased = 1 - Math.pow(1 - progress, 3);
       const pointCount = Math.max(2, Math.floor(eased * totalPoints));
-      const slice = coordinates.slice(0, pointCount);
 
-      const src = map.getSource("route") as maplibregl.GeoJSONSource;
-      if (src) src.setData({ type: "Feature", properties: {}, geometry: { type: "LineString", coordinates: slice } });
+      try {
+        const src = map.getSource("route") as maplibregl.GeoJSONSource;
+        if (src) src.setData({ type: "Feature", properties: {}, geometry: { type: "LineString", coordinates: coordinates.slice(0, pointCount) } });
+      } catch {}
 
       if (progress < 1) {
         routeAnimRef.current = requestAnimationFrame(draw);
       } else {
         routeAnimRef.current = null;
-        // Line stays — all layers already added, no removal needed
       }
     };
 
     routeAnimRef.current = requestAnimationFrame(draw);
-  }, [removeRouteLayers]);
+  }, [removeRouteLayers, addRouteLayers]);
 
   // ─── Start Route Tracking ───
   const startRouteTracking = useCallback(() => {
