@@ -99,11 +99,15 @@ const AdminLayout = () => {
       </motion.aside>
 
       <div className="flex-1 flex flex-col min-w-0">
-        <header className="sticky top-0 z-30 flex items-center gap-3 px-4 sm:px-6 py-3"
+        <header className="sticky top-0 z-30 flex items-center gap-3 px-4 sm:px-6 py-4"
           style={{ background: 'hsl(230 20% 5% / 0.8)', backdropFilter: 'blur(12px)', borderBottom: '1px solid hsl(0 0% 100% / 0.06)' }}>
           <button className="lg:hidden" onClick={() => setSidebarOpen(true)}><Menu className="w-5 h-5 text-foreground" /></button>
-          <h1 className="text-sm font-semibold text-foreground">
-            {navItems.find((i) => i.path === location.pathname)?.label || "Admin"}
+          <h1 className="text-lg sm:text-xl font-bold text-foreground">
+            {location.pathname === "/admin" ? (() => {
+              const hour = new Date().getHours();
+              const greeting = hour >= 5 && hour < 12 ? "Bom dia" : hour >= 12 && hour < 18 ? "Boa tarde" : hour >= 18 && hour < 24 ? "Boa noite" : "Boa madrugada";
+              return `${greeting}, Admin.`;
+            })() : navItems.find((i) => i.path === location.pathname)?.label || "Admin"}
           </h1>
         </header>
         <main className="flex-1 p-4 sm:p-6 overflow-auto"><Outlet /></main>
