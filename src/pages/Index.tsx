@@ -6,6 +6,7 @@ import ServiceCard from "@/components/ServiceCard";
 import BookingFlow from "@/components/BookingFlow";
 import GoogleAuthModal from "@/components/GoogleAuthModal";
 import Footer from "@/components/Footer";
+import DirectionsModal from "@/components/DirectionsModal";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { stockImages } from "@/data/stockImages";
@@ -72,6 +73,7 @@ const Index = () => {
   const [pendingService, setPendingService] = useState<any>(null);
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState("all");
+  const [showDirections, setShowDirections] = useState(false);
   const { user, loading: authLoading, signInWithGoogle, signOut } = useAuth();
 
   useEffect(() => {
@@ -125,7 +127,7 @@ const Index = () => {
   return (
     <div className="min-h-screen min-h-[100dvh] relative">
       <div className="relative z-10">
-        <Header user={user} onSignOut={signOut} onCategorySelect={setActiveCategory} />
+        <Header user={user} onSignOut={signOut} onCategorySelect={setActiveCategory} onDirections={() => setShowDirections(true)} />
 
         <main className="container mx-auto px-3 min-[375px]:px-4 py-6 min-[375px]:py-8 max-w-2xl">
           {/* Greeting */}
@@ -199,6 +201,10 @@ const Index = () => {
         {showAuthModal && (
           <GoogleAuthModal onClose={() => { setShowAuthModal(false); setPendingService(null); }} onSignIn={handleGoogleSignIn} loading={authLoading} />
         )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showDirections && <DirectionsModal onClose={() => setShowDirections(false)} />}
       </AnimatePresence>
     </div>
   );

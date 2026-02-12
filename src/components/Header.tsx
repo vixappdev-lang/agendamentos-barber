@@ -2,7 +2,7 @@ import { useState } from "react";
 import {
   Scissors, LogOut, Menu, X, Home, CalendarDays,
   ScissorsIcon, Brush, Sparkles, Crown,
-  ChevronRight,
+  ChevronRight, MapPin,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { User } from "@supabase/supabase-js";
@@ -11,6 +11,7 @@ interface HeaderProps {
   user?: User | null;
   onSignOut?: () => void;
   onCategorySelect?: (category: string) => void;
+  onDirections?: () => void;
 }
 
 const menuSections = [
@@ -19,6 +20,7 @@ const menuSections = [
     items: [
       { id: "inicio", label: "Início", icon: Home },
       { id: "agendamentos", label: "Meus Agendamentos", icon: CalendarDays },
+      { id: "directions", label: "Como Chegar", icon: MapPin },
     ],
   },
   {
@@ -32,12 +34,14 @@ const menuSections = [
   },
 ];
 
-const Header = ({ user, onSignOut, onCategorySelect }: HeaderProps) => {
+const Header = ({ user, onSignOut, onCategorySelect, onDirections }: HeaderProps) => {
   const [menuOpen, setMenuOpen] = useState(false);
 
   const handleMenuClick = (id: string) => {
     if (id === "inicio") {
       onCategorySelect?.("all");
+    } else if (id === "directions") {
+      onDirections?.();
     } else if (["cabelo", "barba", "combo", "extras"].includes(id)) {
       onCategorySelect?.(id);
     }
