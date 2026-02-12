@@ -6,6 +6,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { User } from "@supabase/supabase-js";
+import { useBusinessSettings } from "@/hooks/useBusinessSettings";
 
 interface HeaderProps {
   user?: User | null;
@@ -36,6 +37,8 @@ const menuSections = [
 
 const Header = ({ user, onSignOut, onCategorySelect, onDirections }: HeaderProps) => {
   const [menuOpen, setMenuOpen] = useState(false);
+  const { settings } = useBusinessSettings();
+  const businessName = settings.business_name || "Barbearia";
 
   const handleMenuClick = (id: string) => {
     if (id === "inicio") {
@@ -64,7 +67,7 @@ const Header = ({ user, onSignOut, onCategorySelect, onDirections }: HeaderProps
               <Scissors className="w-4 h-4 min-[375px]:w-5 min-[375px]:h-5 text-primary-foreground" />
             </div>
             <div>
-              <h1 className="text-base min-[375px]:text-lg font-bold tracking-tight text-foreground leading-tight">SuaBarbearia</h1>
+              <h1 className="text-base min-[375px]:text-lg font-bold tracking-tight text-foreground leading-tight">{businessName}</h1>
               <p className="text-[9px] min-[375px]:text-[10px] text-muted-foreground tracking-[0.2em] uppercase -mt-0.5">Premium Grooming</p>
             </div>
           </div>
@@ -195,7 +198,7 @@ const Header = ({ user, onSignOut, onCategorySelect, onDirections }: HeaderProps
                 )}
 
                 <p className="text-[10px] text-center text-muted-foreground/30">
-                  © {new Date().getFullYear()} SuaBarbearia
+                  © {new Date().getFullYear()} {businessName}
                 </p>
               </div>
             </motion.div>

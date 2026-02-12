@@ -1,6 +1,14 @@
 import { Scissors, MapPin, Phone, Clock } from "lucide-react";
+import { useBusinessSettings } from "@/hooks/useBusinessSettings";
 
 const Footer = () => {
+  const { settings, loading, formatSchedule, formatPhone } = useBusinessSettings();
+
+  const businessName = settings.business_name || "Barbearia";
+  const address = settings.address || "";
+  const phone = formatPhone();
+  const schedule = formatSchedule();
+
   return (
     <footer className="mt-16" style={{
       background: 'hsl(0 0% 100% / 0.02)',
@@ -14,30 +22,37 @@ const Footer = () => {
             <div className="w-9 h-9 rounded-xl gold-gradient flex items-center justify-center" style={{ boxShadow: '0 4px 16px hsl(245 60% 55% / 0.2)' }}>
               <Scissors className="w-4 h-4 text-primary-foreground" />
             </div>
-            <span className="text-lg font-bold text-foreground tracking-tight">SuaBarbearia</span>
+            <span className="text-lg font-bold text-foreground tracking-tight">{businessName}</span>
           </div>
 
           {/* Info pills */}
-          <div className="flex flex-wrap items-center justify-center gap-3">
-            {[
-              { icon: MapPin, text: "Rua Exemplo, 123 — SP" },
-              { icon: Phone, text: "(11) 99999-9999" },
-              { icon: Clock, text: "Seg–Sáb · 9h–19h" },
-            ].map((item) => (
-              <span
-                key={item.text}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-muted-foreground glass-surface"
-              >
-                <item.icon className="w-3 h-3 text-primary/60" />
-                {item.text}
-              </span>
-            ))}
-          </div>
+          {!loading && (
+            <div className="flex flex-wrap items-center justify-center gap-3">
+              {address && (
+                <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-muted-foreground glass-surface">
+                  <MapPin className="w-3 h-3 text-primary/60" />
+                  {address}
+                </span>
+              )}
+              {phone && (
+                <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-muted-foreground glass-surface">
+                  <Phone className="w-3 h-3 text-primary/60" />
+                  {phone}
+                </span>
+              )}
+              {schedule && (
+                <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-muted-foreground glass-surface">
+                  <Clock className="w-3 h-3 text-primary/60" />
+                  {schedule}
+                </span>
+              )}
+            </div>
+          )}
 
           <div className="w-12 h-px" style={{ background: 'hsl(0 0% 100% / 0.06)' }} />
 
           <p className="text-[11px] text-muted-foreground/50">
-            © {new Date().getFullYear()} SuaBarbearia. Todos os direitos reservados.
+            © {new Date().getFullYear()} {businessName}. Todos os direitos reservados.
           </p>
         </div>
       </div>
