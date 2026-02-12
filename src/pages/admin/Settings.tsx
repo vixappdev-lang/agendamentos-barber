@@ -48,9 +48,8 @@ const Settings = () => {
     <div className="space-y-6">
       <h2 className="text-lg font-bold text-foreground">Configurações</h2>
 
-      {/* Grid layout: side by side on desktop */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* Dados da Barbearia */}
+        {/* Left column: Dados da Barbearia */}
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="glass-card p-5 space-y-5">
           <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
             <Store className="w-4 h-4" style={{ color: 'hsl(245 60% 65%)' }} /> Dados da Barbearia
@@ -75,52 +74,53 @@ const Settings = () => {
           </div>
         </motion.div>
 
-        {/* Horário de Funcionamento */}
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="glass-card p-5 space-y-5">
-          <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
-            <Clock className="w-4 h-4" style={{ color: 'hsl(245 60% 65%)' }} /> Horário de Funcionamento
-          </h3>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1 block">Abertura</label>
-              <input type="time" className="glass-input" value={settings.opening_time || "09:00"} onChange={(e) => updateSetting("opening_time", e.target.value)} />
+        {/* Right column: Horário + Dias de Folga stacked */}
+        <div className="space-y-4">
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="glass-card p-5 space-y-5">
+            <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+              <Clock className="w-4 h-4" style={{ color: 'hsl(245 60% 65%)' }} /> Horário de Funcionamento
+            </h3>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1 block">Abertura</label>
+                <input type="time" className="glass-input" value={settings.opening_time || "09:00"} onChange={(e) => updateSetting("opening_time", e.target.value)} />
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1 block">Fechamento</label>
+                <input type="time" className="glass-input" value={settings.closing_time || "19:00"} onChange={(e) => updateSetting("closing_time", e.target.value)} />
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1 block">Início Almoço</label>
+                <input type="time" className="glass-input" value={settings.lunch_start || "12:00"} onChange={(e) => updateSetting("lunch_start", e.target.value)} />
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1 block">Fim Almoço</label>
+                <input type="time" className="glass-input" value={settings.lunch_end || "13:00"} onChange={(e) => updateSetting("lunch_end", e.target.value)} />
+              </div>
             </div>
-            <div>
-              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1 block">Fechamento</label>
-              <input type="time" className="glass-input" value={settings.closing_time || "19:00"} onChange={(e) => updateSetting("closing_time", e.target.value)} />
-            </div>
-            <div>
-              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1 block">Início Almoço</label>
-              <input type="time" className="glass-input" value={settings.lunch_start || "12:00"} onChange={(e) => updateSetting("lunch_start", e.target.value)} />
-            </div>
-            <div>
-              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1 block">Fim Almoço</label>
-              <input type="time" className="glass-input" value={settings.lunch_end || "13:00"} onChange={(e) => updateSetting("lunch_end", e.target.value)} />
-            </div>
-          </div>
-        </motion.div>
-      </div>
+          </motion.div>
 
-      {/* Dias de Folga - full width */}
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="glass-card p-5 space-y-4">
-        <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
-          <CalendarOff className="w-4 h-4" style={{ color: 'hsl(245 60% 65%)' }} /> Dias de Folga
-        </h3>
-        <div className="flex gap-2">
-          {dayLabels.map((label, i) => (
-            <button key={i} onClick={() => toggleDayOff(i)}
-              className="flex-1 py-2.5 rounded-xl text-xs font-semibold transition-all"
-              style={{
-                background: daysOff.includes(String(i)) ? 'hsl(0 60% 50% / 0.15)' : 'hsl(0 0% 100% / 0.04)',
-                color: daysOff.includes(String(i)) ? 'hsl(0 60% 65%)' : 'hsl(0 0% 55%)',
-                border: `1px solid ${daysOff.includes(String(i)) ? 'hsl(0 60% 50% / 0.3)' : 'hsl(0 0% 100% / 0.06)'}`,
-              }}>
-              {label}
-            </button>
-          ))}
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="glass-card p-5 space-y-4">
+            <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+              <CalendarOff className="w-4 h-4" style={{ color: 'hsl(245 60% 65%)' }} /> Dias de Folga
+            </h3>
+            <div className="flex gap-2">
+              {dayLabels.map((label, i) => (
+                <button key={i} onClick={() => toggleDayOff(i)}
+                  className="flex-1 py-2.5 rounded-xl text-xs font-semibold transition-all"
+                  style={{
+                    background: daysOff.includes(String(i)) ? 'hsl(0 60% 50% / 0.15)' : 'hsl(0 0% 100% / 0.04)',
+                    color: daysOff.includes(String(i)) ? 'hsl(0 60% 65%)' : 'hsl(0 0% 55%)',
+                    border: `1px solid ${daysOff.includes(String(i)) ? 'hsl(0 60% 50% / 0.3)' : 'hsl(0 0% 100% / 0.06)'}`,
+                  }}>
+                  {label}
+                </button>
+              ))}
+            </div>
+            <p className="text-[10px] text-muted-foreground">Clique nos dias em que a barbearia não funciona</p>
+          </motion.div>
         </div>
-        <p className="text-[10px] text-muted-foreground">Clique nos dias em que a barbearia não funciona</p>
-      </motion.div>
+      </div>
 
       <motion.button
         onClick={handleSave} disabled={saving}
