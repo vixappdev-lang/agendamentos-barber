@@ -1,55 +1,31 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, MapPin, Navigation, Layers, Plus, Minus, Crosshair } from "lucide-react";
+import { X, MapPin, Navigation, Layers, Plus, Minus, Crosshair, RotateCcw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import L from "leaflet";
-import "leaflet/dist/leaflet.css";
+import maplibregl from "maplibre-gl";
+import "maplibre-gl/dist/maplibre-gl.css";
 
 interface DirectionsModalProps {
   onClose: () => void;
 }
 
 const MAP_STYLES = [
-  { id: "dark", label: "Escuro", url: "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", emoji: "🌙" },
-  { id: "voyager", label: "Moderno", url: "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", emoji: "🗺️" },
-  { id: "satellite", label: "Satélite", url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", emoji: "🛰️" },
+  { id: "dark", label: "Escuro", url: "https://tiles.openfreemap.org/styles/dark", emoji: "🌙" },
+  { id: "liberty", label: "3D", url: "https://tiles.openfreemap.org/styles/liberty", emoji: "🏙️" },
+  { id: "positron", label: "Claro", url: "https://tiles.openfreemap.org/styles/positron", emoji: "☀️" },
 ];
-
-const LABELS_URL = "https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}";
-
-const MARKER_HTML = `
-  <div style="position:relative;width:44px;height:56px;">
-    <div style="position:absolute;bottom:-4px;left:50%;transform:translateX(-50%);width:20px;height:6px;background:rgba(0,0,0,0.3);border-radius:50%;filter:blur(2px);"></div>
-    <div style="position:absolute;inset:2px 2px auto 2px;width:40px;height:40px;background:hsl(245 60% 55% / 0.2);border-radius:50%;animation:marker-pulse 2s ease-out infinite;"></div>
-    <svg viewBox="0 0 44 56" width="44" height="56" style="position:absolute;top:0;left:0;filter:drop-shadow(0 4px 8px rgba(0,0,0,0.4));">
-      <defs>
-        <linearGradient id="dpin-grad" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stop-color="hsl(245 65% 65%)" />
-          <stop offset="100%" stop-color="hsl(245 55% 42%)" />
-        </linearGradient>
-      </defs>
-      <path d="M22 2C11 2 2 11 2 22c0 14 20 32 20 32s20-18 20-32C42 11 33 2 22 2z" fill="url(#dpin-grad)" stroke="white" stroke-width="2.5"/>
-      <circle cx="22" cy="20" r="8" fill="white" opacity="0.95"/>
-      <circle cx="22" cy="20" r="4" fill="hsl(245 60% 55%)"/>
-    </svg>
-  </div>
-  <style>
-    @keyframes marker-pulse{0%{transform:scale(1);opacity:0.6}50%{transform:scale(1.8);opacity:0}100%{transform:scale(2.2);opacity:0}}
-  </style>
-`;
 
 const DirectionsModal = ({ onClose }: DirectionsModalProps) => {
   const mapRef = useRef<HTMLDivElement>(null);
-  const mapInstance = useRef<L.Map | null>(null);
-  const tileLayerRef = useRef<L.TileLayer | null>(null);
-  const labelsLayerRef = useRef<L.TileLayer | null>(null);
+  const mapInstance = useRef<maplibregl.Map | null>(null);
+  const markerRef = useRef<maplibregl.Marker | null>(null);
   const [address, setAddress] = useState("");
   const [lat, setLat] = useState(-23.5505);
   const [lng, setLng] = useState(-46.6333);
   const [loading, setLoading] = useState(true);
   const [mapStyle, setMapStyle] = useState("dark");
   const [showStylePicker, setShowStylePicker] = useState(false);
-  const [currentZoom, setCurrentZoom] = useState(17);
+  const [currentZoom, setCurrentZoom] = useState(16);
 
   useEffect(() => {
     const fetchLocation = async () => {
@@ -66,34 +42,113 @@ const DirectionsModal = ({ onClose }: DirectionsModalProps) => {
     fetchLocation();
   }, []);
 
+  const createMarker = (map: maplibregl.Map, latitude: number, longitude: number) => {
+    // Custom marker element
+    const el = document.createElement("div");
+    el.innerHTML = `
+      <div style="position:relative;width:48px;height:60px;cursor:pointer;">
+        <div style="position:absolute;bottom:-4px;left:50%;transform:translateX(-50%);width:22px;height:7px;background:rgba(139,92,246,0.4);border-radius:50%;filter:blur(3px);"></div>
+        <div style="position:absolute;top:4px;left:4px;width:40px;height:40px;background:rgba(139,92,246,0.2);border-radius:50%;animation:ml-pulse 2s ease-out infinite;"></div>
+        <svg viewBox="0 0 48 60" width="48" height="60" style="position:absolute;top:0;left:0;filter:drop-shadow(0 6px 12px rgba(139,92,246,0.5));">
+          <defs>
+            <linearGradient id="ml-grad" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#a78bfa"/>
+              <stop offset="100%" stop-color="#7c3aed"/>
+            </linearGradient>
+          </defs>
+          <path d="M24 2C12 2 2 12 2 24c0 15 22 34 22 34s22-19 22-34C46 12 36 2 24 2z" fill="url(#ml-grad)" stroke="white" stroke-width="2.5"/>
+          <circle cx="24" cy="22" r="9" fill="white" opacity="0.95"/>
+          <circle cx="24" cy="22" r="4.5" fill="#8b5cf6"/>
+        </svg>
+      </div>
+      <style>
+        @keyframes ml-pulse{0%{transform:scale(1);opacity:0.7}50%{transform:scale(2);opacity:0}100%{transform:scale(2.5);opacity:0}}
+      </style>
+    `;
+
+    const marker = new maplibregl.Marker({ element: el, anchor: "bottom" })
+      .setLngLat([longitude, latitude])
+      .addTo(map);
+
+    return marker;
+  };
+
+  const add3DBuildings = (map: maplibregl.Map) => {
+    const layers = map.getStyle().layers;
+    if (!layers) return;
+
+    // Find the first symbol/label layer to insert buildings below it
+    let labelLayerId: string | undefined;
+    for (const layer of layers) {
+      if (layer.type === "symbol" && (layer as any).layout?.["text-field"]) {
+        labelLayerId = layer.id;
+        break;
+      }
+    }
+
+    // Check if source exists
+    const sources = map.getStyle().sources;
+    const vectorSource = Object.keys(sources).find(key => {
+      const src = sources[key];
+      return src.type === "vector";
+    });
+
+    if (!vectorSource) return;
+
+    if (map.getLayer("3d-buildings")) return;
+
+    map.addLayer(
+      {
+        id: "3d-buildings",
+        source: vectorSource,
+        "source-layer": "building",
+        filter: ["==", ["geometry-type"], "Polygon"],
+        type: "fill-extrusion",
+        minzoom: 14,
+        paint: {
+          "fill-extrusion-color": [
+            "interpolate",
+            ["linear"],
+            ["get", "render_height"],
+            0, "hsl(260, 20%, 18%)",
+            50, "hsl(260, 25%, 25%)",
+            100, "hsl(260, 30%, 35%)",
+          ],
+          "fill-extrusion-height": ["get", "render_height"],
+          "fill-extrusion-base": ["get", "render_min_height"],
+          "fill-extrusion-opacity": 0.7,
+        },
+      },
+      labelLayerId
+    );
+  };
+
   useEffect(() => {
     if (loading || !mapRef.current || mapInstance.current) return;
 
-    const map = L.map(mapRef.current, {
-      center: [lat, lng],
-      zoom: 17,
-      zoomControl: false,
+    const map = new maplibregl.Map({
+      container: mapRef.current,
+      style: MAP_STYLES[0].url,
+      center: [lng, lat],
+      zoom: 16,
+      pitch: 55,
+      bearing: -20,
       attributionControl: false,
-      minZoom: 3,
-      maxZoom: 19,
     });
 
-    const tile = L.tileLayer(MAP_STYLES[0].url, { maxZoom: 19, attribution: '' }).addTo(map);
-    tileLayerRef.current = tile;
-    labelsLayerRef.current = null;
-
-    const customIcon = L.divIcon({
-      html: MARKER_HTML,
-      iconSize: [44, 56],
-      iconAnchor: [22, 56],
-      className: "",
+    map.on("load", () => {
+      add3DBuildings(map);
     });
 
-    L.marker([lat, lng], { icon: customIcon }).addTo(map);
-    map.on("zoomend", () => setCurrentZoom(map.getZoom()));
+    map.on("zoom", () => setCurrentZoom(Math.round(map.getZoom())));
+
+    markerRef.current = createMarker(map, lat, lng);
     mapInstance.current = map;
 
-    return () => { map.remove(); mapInstance.current = null; };
+    return () => {
+      map.remove();
+      mapInstance.current = null;
+    };
   }, [loading, lat, lng]);
 
   const switchMapStyle = (styleId: string) => {
@@ -102,22 +157,36 @@ const DirectionsModal = ({ onClose }: DirectionsModalProps) => {
     const style = MAP_STYLES.find(s => s.id === styleId);
     if (!style || !mapInstance.current) return;
 
-    if (tileLayerRef.current) mapInstance.current.removeLayer(tileLayerRef.current);
-    if (labelsLayerRef.current) mapInstance.current.removeLayer(labelsLayerRef.current);
+    const map = mapInstance.current;
+    const center = map.getCenter();
+    const zoom = map.getZoom();
+    const pitch = map.getPitch();
+    const bearing = map.getBearing();
 
-    const newTile = L.tileLayer(style.url, { maxZoom: 19, attribution: '' }).addTo(mapInstance.current);
-    tileLayerRef.current = newTile;
+    map.setStyle(style.url);
 
-    if (styleId === "satellite") {
-      const newLabels = L.tileLayer(LABELS_URL, { maxZoom: 19, attribution: '' }).addTo(mapInstance.current);
-      labelsLayerRef.current = newLabels;
-    } else {
-      labelsLayerRef.current = null;
-    }
+    map.once("style.load", () => {
+      map.jumpTo({ center, zoom, pitch, bearing });
+      add3DBuildings(map);
+
+      // Re-add marker
+      if (markerRef.current) markerRef.current.remove();
+      markerRef.current = createMarker(map, lat, lng);
+    });
   };
 
-  const handleZoom = (delta: number) => mapInstance.current?.zoomIn(delta);
-  const handleRecenter = () => mapInstance.current?.setView([lat, lng], 17, { animate: true });
+  const handleZoom = (delta: number) => {
+    if (!mapInstance.current) return;
+    mapInstance.current.easeTo({ zoom: mapInstance.current.getZoom() + delta, duration: 300 });
+  };
+
+  const handleRecenter = () => {
+    mapInstance.current?.flyTo({ center: [lng, lat], zoom: 16, pitch: 55, bearing: -20, duration: 1500 });
+  };
+
+  const handleResetView = () => {
+    mapInstance.current?.flyTo({ center: [lng, lat], zoom: 16, pitch: 0, bearing: 0, duration: 1000 });
+  };
 
   const openGPS = () => {
     window.open(`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`, "_blank");
@@ -149,7 +218,7 @@ const DirectionsModal = ({ onClose }: DirectionsModalProps) => {
             </div>
             <div>
               <h3 className="text-base font-bold text-foreground">Como Chegar</h3>
-              <p className="text-[10px] text-muted-foreground mt-0.5">Navegue até nosso local</p>
+              <p className="text-[10px] text-muted-foreground mt-0.5">Mapa 3D interativo</p>
             </div>
           </div>
           <button onClick={onClose} className="p-2 rounded-xl transition-colors hover:bg-white/10" style={{ background: 'hsl(0 0% 100% / 0.05)' }}>
@@ -172,10 +241,10 @@ const DirectionsModal = ({ onClose }: DirectionsModalProps) => {
         {/* Map */}
         <div className="p-4">
           <div className="relative rounded-xl overflow-hidden" style={{ border: '1px solid hsl(0 0% 100% / 0.06)' }}>
-            <div ref={mapRef} className="w-full h-[300px]" style={{ background: 'hsl(230 18% 8%)' }} />
+            <div ref={mapRef} className="w-full h-[320px]" style={{ background: 'hsl(230 18% 8%)' }} />
 
             {/* Map Controls */}
-            <div className="absolute top-3 right-3 flex flex-col gap-2 z-[1000]">
+            <div className="absolute top-3 right-3 flex flex-col gap-2 z-[10]">
               {/* Style Toggle */}
               <div className="relative">
                 <button
@@ -227,12 +296,23 @@ const DirectionsModal = ({ onClose }: DirectionsModalProps) => {
                 style={{ background: 'hsl(230 15% 12% / 0.9)', backdropFilter: 'blur(8px)', border: '1px solid hsl(0 0% 100% / 0.1)', boxShadow: '0 4px 12px rgba(0,0,0,0.4)' }}>
                 <Crosshair className="w-4 h-4 text-foreground" />
               </button>
+              <button onClick={handleResetView}
+                className="w-9 h-9 rounded-xl flex items-center justify-center transition-all active:scale-90"
+                style={{ background: 'hsl(230 15% 12% / 0.9)', backdropFilter: 'blur(8px)', border: '1px solid hsl(0 0% 100% / 0.1)', boxShadow: '0 4px 12px rgba(0,0,0,0.4)' }}>
+                <RotateCcw className="w-3.5 h-3.5 text-foreground" />
+              </button>
             </div>
 
-            {/* Zoom indicator */}
-            <div className="absolute bottom-3 left-3 z-[1000] px-2.5 py-1 rounded-lg text-[10px] font-semibold text-foreground/70"
-              style={{ background: 'hsl(230 15% 12% / 0.8)', backdropFilter: 'blur(8px)' }}>
-              Zoom: {currentZoom}x
+            {/* Zoom & Pitch indicator */}
+            <div className="absolute bottom-3 left-3 z-[10] flex gap-2">
+              <div className="px-2.5 py-1 rounded-lg text-[10px] font-semibold text-foreground/70"
+                style={{ background: 'hsl(230 15% 12% / 0.8)', backdropFilter: 'blur(8px)' }}>
+                Zoom: {currentZoom}x
+              </div>
+              <div className="px-2.5 py-1 rounded-lg text-[10px] font-semibold text-foreground/70"
+                style={{ background: 'hsl(230 15% 12% / 0.8)', backdropFilter: 'blur(8px)' }}>
+                3D
+              </div>
             </div>
           </div>
         </div>
