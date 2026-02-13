@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { motion, AnimatePresence } from "framer-motion";
-import { Save, Store, Phone, Clock, MapPin, CalendarOff, Map, ShoppingBag } from "lucide-react";
+import { Save, Store, Phone, Clock, MapPin, CalendarOff, Map, ShoppingBag, CreditCard, Smartphone, ShoppingCart } from "lucide-react";
 import { toast } from "sonner";
 import LocationPickerModal from "@/components/LocationPickerModal";
 
@@ -39,7 +39,7 @@ const Settings = () => {
     setSaving(true);
     setSaved(false);
     const keysToSave = { ...settings };
-    const allKeys = ["business_name", "address", "whatsapp_number", "opening_time", "closing_time", "lunch_start", "lunch_end", "days_off", "location_lat", "location_lng"];
+    const allKeys = ["business_name", "address", "whatsapp_number", "opening_time", "closing_time", "lunch_start", "lunch_end", "days_off", "location_lat", "location_lng", "store_enabled", "store_order_mode", "pix_key", "pix_type"];
     
     const promises = Object.entries(keysToSave).map(([key, value]) =>
       supabase.from("business_settings").upsert({ key, value }, { onConflict: "key" })
@@ -170,6 +170,57 @@ const Settings = () => {
             </button>
           </div>
         </motion.div>
+
+        {/* Store Order Mode */}
+        {settings.store_enabled === "true" && (
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
+            className="glass-card p-5 lg:col-span-2 space-y-4">
+            <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+              <CreditCard className="w-4 h-4" style={{ color: 'hsl(245 60% 65%)' }} /> Configurações da Loja
+            </h3>
+
+            <div>
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 block">Modo de Pedido</label>
+              <div className="grid grid-cols-2 gap-3">
+                <button onClick={() => updateSetting("store_order_mode", "ifood")}
+                  className="flex items-center gap-2 p-3 rounded-xl text-xs font-semibold transition-all"
+                  style={{
+                    background: settings.store_order_mode === "ifood" ? "hsl(245 60% 55% / 0.1)" : "hsl(0 0% 100% / 0.03)",
+                    border: `1.5px solid ${settings.store_order_mode === "ifood" ? "hsl(245 60% 55% / 0.4)" : "hsl(0 0% 100% / 0.08)"}`,
+                    color: settings.store_order_mode === "ifood" ? "hsl(245 60% 70%)" : "hsl(0 0% 55%)",
+                  }}>
+                  <ShoppingCart className="w-4 h-4" /> Similar ao iFood
+                </button>
+                <button onClick={() => updateSetting("store_order_mode", "whatsapp")}
+                  className="flex items-center gap-2 p-3 rounded-xl text-xs font-semibold transition-all"
+                  style={{
+                    background: settings.store_order_mode === "whatsapp" ? "hsl(245 60% 55% / 0.1)" : "hsl(0 0% 100% / 0.03)",
+                    border: `1.5px solid ${settings.store_order_mode === "whatsapp" ? "hsl(245 60% 55% / 0.4)" : "hsl(0 0% 100% / 0.08)"}`,
+                    color: settings.store_order_mode === "whatsapp" ? "hsl(245 60% 70%)" : "hsl(0 0% 55%)",
+                  }}>
+                  <Smartphone className="w-4 h-4" /> Via WhatsApp
+                </button>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1 block">Tipo Chave PIX</label>
+                <select className="glass-input text-sm" value={settings.pix_type || "cpf"} onChange={(e) => updateSetting("pix_type", e.target.value)}>
+                  <option value="cpf">CPF</option>
+                  <option value="cnpj">CNPJ</option>
+                  <option value="email">Email</option>
+                  <option value="telefone">Telefone</option>
+                  <option value="aleatoria">Chave Aleatória</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1 block">Chave PIX</label>
+                <input className="glass-input text-sm" value={settings.pix_key || ""} onChange={(e) => updateSetting("pix_key", e.target.value)} placeholder="Sua chave PIX" />
+              </div>
+            </div>
+          </motion.div>
+        )}
       </div>
 
       <motion.button

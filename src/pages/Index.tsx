@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Scissors, Search, ShoppingBag, Gift } from "lucide-react";
+import { Scissors, Search, ShoppingBag, Settings as SettingsIcon } from "lucide-react";
 import Header from "@/components/Header";
 import ServiceCard from "@/components/ServiceCard";
 import ProductCard from "@/components/ProductCard";
@@ -9,6 +9,8 @@ import GoogleAuthModal from "@/components/GoogleAuthModal";
 import Footer from "@/components/Footer";
 import DirectionsModal from "@/components/DirectionsModal";
 import PrizeWheel from "@/components/PrizeWheel";
+import StoreConfigModal from "@/components/store/StoreConfigModal";
+import CheckoutModal from "@/components/store/CheckoutModal";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { stockImages } from "@/data/stockImages";
@@ -33,6 +35,10 @@ interface DBService {
 interface DBProduct {
   id: string; title: string; description: string | null; price: number;
   image_url: string | null; active: boolean; sort_order: number;
+}
+
+interface CartItem {
+  id: string; title: string; price: number; quantity: number; image_url: string | null;
 }
 
 const resolveImageUrl = (service: DBService): string => {
@@ -77,20 +83,34 @@ const Index = () => {
   const [storeEnabled, setStoreEnabled] = useState(false);
   const [wheelEnabled, setWheelEnabled] = useState(false);
   const [showWheel, setShowWheel] = useState(false);
+  const [storeOrderMode, setStoreOrderMode] = useState<"ifood" | "whatsapp">("whatsapp");
+  const [showStoreConfig, setShowStoreConfig] = useState(false);
+  const [cart, setCart] = useState<CartItem[]>([]);
+  const [showCheckout, setShowCheckout] = useState(false);
+  const [whatsappNumber, setWhatsappNumber] = useState("");
+  const [pixKey, setPixKey] = useState("");
+  const [pixType, setPixType] = useState("cpf");
   const { user, loading: authLoading, signInWithGoogle, signOut } = useAuth();
 
   useEffect(() => {
     const fetchAll = async () => {
-      const [servicesRes, productsRes, storeRes, wheelRes] = await Promise.all([
+      const [servicesRes, productsRes, settingsRes] = await Promise.all([
         supabase.from("services").select("*").eq("active", true).order("sort_order"),
         supabase.from("products").select("*").eq("active", true).order("sort_order"),
-        supabase.from("business_settings").select("value").eq("key", "store_enabled").maybeSingle(),
-        supabase.from("business_settings").select("value").eq("key", "prize_wheel_enabled").maybeSingle(),
+        supabase.from("business_settings").select("*"),
       ]);
       if (servicesRes.data) setServices(servicesRes.data as DBService[]);
       if (productsRes.data) setProducts(productsRes.data as DBProduct[]);
-      setStoreEnabled(storeRes.data?.value === "true");
-      setWheelEnabled(wheelRes.data?.value === "true");
+      if (settingsRes.data) {
+        const map: Record<string, string> = {};
+        for (const row of settingsRes.data) map[row.key] = row.value || "";
+        setStoreEnabled(map.store_enabled === "true");
+        setWheelEnabled(map.prize_wheel_enabled === "true");
+        setStoreOrderMode((map.store_order_mode as any) || "whatsapp");
+        setWhatsappNumber(map.whatsapp_number || "");
+        setPixKey(map.pix_key || "");
+        setPixType(map.pix_type || "cpf");
+      }
     };
     fetchAll();
   }, []);
@@ -126,6 +146,14 @@ const Index = () => {
     else { setPendingService(mapped); setShowAuthModal(true); }
   };
 
+  const handleAddToCart = (product: DBProduct) => {
+    setCart((prev) => {
+      const existing = prev.find((i) => i.id === product.id);
+      if (existing) return prev.map((i) => i.id === product.id ? { ...i, quantity: i.quantity + 1 } : i);
+      return [...prev, { id: product.id, title: product.title, price: product.price, quantity: 1, image_url: product.image_url }];
+    });
+  };
+
   const handleGoogleSignIn = async () => { await signInWithGoogle(); };
 
   if (user && pendingService && !selectedService) {
@@ -133,6 +161,9 @@ const Index = () => {
     setPendingService(null);
     setShowAuthModal(false);
   }
+
+  const cartTotal = cart.reduce((s, i) => s + i.price * i.quantity, 0);
+  const cartCount = cart.reduce((s, i) => s + i.quantity, 0);
 
   return (
     <div className="min-h-screen min-h-[100dvh] relative">
@@ -150,7 +181,7 @@ const Index = () => {
             </p>
           </motion.div>
 
-          {/* Main Tabs (Services / Store) */}
+          {/* Main Tabs */}
           {storeEnabled && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex gap-2 mb-5">
               {([
@@ -222,11 +253,16 @@ const Index = () => {
             </>
           ) : (
             <>
-              {/* Store label */}
+              {/* Store header with config */}
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mb-4 min-[375px]:mb-5">
-                <div className="flex items-center gap-2">
-                  <ShoppingBag className="w-4 h-4 text-primary" />
-                  <h3 className="text-[10px] min-[375px]:text-xs font-semibold text-muted-foreground uppercase tracking-[0.2em]">Nossos Produtos</h3>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <ShoppingBag className="w-4 h-4 text-primary" />
+                    <h3 className="text-[10px] min-[375px]:text-xs font-semibold text-muted-foreground uppercase tracking-[0.2em]">Nossos Produtos</h3>
+                  </div>
+                  <button onClick={() => setShowStoreConfig(true)} className="p-2 rounded-lg" style={{ background: "hsl(0 0% 100% / 0.05)" }}>
+                    <SettingsIcon className="w-4 h-4 text-muted-foreground" />
+                  </button>
                 </div>
               </motion.div>
 
@@ -236,11 +272,7 @@ const Index = () => {
                     <ProductCard
                       key={product.id}
                       product={{ ...product, description: product.description || "" }}
-                      onSelect={() => {
-                        // Could open WhatsApp or a purchase flow
-                        const msg = `Olá! Tenho interesse no produto: ${product.title} (R$ ${Number(product.price).toFixed(2)})`;
-                        window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, "_blank");
-                      }}
+                      onSelect={() => handleAddToCart(product)}
                       index={i}
                     />
                   ))
@@ -250,9 +282,26 @@ const Index = () => {
                   </div>
                 )}
               </div>
+
+              {/* Floating cart bar */}
+              <AnimatePresence>
+                {cartCount > 0 && (
+                  <motion.div initial={{ y: 60, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 60, opacity: 0 }}
+                    className="fixed bottom-6 left-4 right-4 max-w-2xl mx-auto z-40">
+                    <button onClick={() => setShowCheckout(true)}
+                      className="w-full flex items-center justify-between px-5 py-4 rounded-2xl font-bold text-sm transition-all"
+                      style={{ background: "hsl(245 60% 55%)", color: "white", boxShadow: "0 8px 32px hsl(245 60% 55% / 0.4)" }}>
+                      <span className="flex items-center gap-2">
+                        <ShoppingBag className="w-5 h-5" />
+                        {cartCount} {cartCount === 1 ? "item" : "itens"}
+                      </span>
+                      <span>R$ {cartTotal.toFixed(2)}</span>
+                    </button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </>
           )}
-
         </main>
 
         <Footer />
@@ -274,6 +323,30 @@ const Index = () => {
 
       <AnimatePresence>
         {showWheel && <PrizeWheel onClose={() => setShowWheel(false)} />}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showStoreConfig && (
+          <StoreConfigModal
+            onClose={() => setShowStoreConfig(false)}
+            currentMode={storeOrderMode}
+            onModeSelected={(mode) => setStoreOrderMode(mode)}
+          />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showCheckout && (
+          <CheckoutModal
+            items={cart}
+            onClose={() => setShowCheckout(false)}
+            onSuccess={() => { setShowCheckout(false); setCart([]); }}
+            mode={storeOrderMode}
+            whatsappNumber={whatsappNumber}
+            pixKey={pixKey}
+            pixType={pixType}
+          />
+        )}
       </AnimatePresence>
     </div>
   );

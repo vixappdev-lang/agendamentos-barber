@@ -1,13 +1,14 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, Pencil, Trash2, X, Save, Gift } from "lucide-react";
+import { Plus, Pencil, Trash2, X, Save, Gift, Upload, Image } from "lucide-react";
 import { toast } from "sonner";
 
 interface SliceRow {
   id: string;
   label: string;
   icon: string;
+  image_url: string | null;
   discount_percent: number | null;
   discount_value: number | null;
   custom_prize: string | null;
@@ -16,9 +17,7 @@ interface SliceRow {
   sort_order: number;
 }
 
-const emptyForm = { label: "", icon: "🎁", discount_percent: 0, discount_value: 0, custom_prize: "", probability: 10, active: true, sort_order: 0 };
-
-const ICONS = ["🎁", "💰", "✂️", "💎", "🏆", "⭐", "🔥", "👑", "🎯", "💫", "🪒", "💈"];
+const emptyForm = { label: "", icon: "🎁", image_url: "", discount_percent: 0, discount_value: 0, custom_prize: "", probability: 10, active: true, sort_order: 0 };
 
 const PrizeWheelConfig = () => {
   const [slices, setSlices] = useState<SliceRow[]>([]);
@@ -26,6 +25,7 @@ const PrizeWheelConfig = () => {
   const [editing, setEditing] = useState<string | null>(null);
   const [form, setForm] = useState(emptyForm);
   const [wheelEnabled, setWheelEnabled] = useState(false);
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => { fetchSlices(); fetchEnabled(); }, []);
 
@@ -46,11 +46,25 @@ const PrizeWheelConfig = () => {
     toast.success(newVal ? "Roleta ativada!" : "Roleta desativada!");
   };
 
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    const ext = file.name.split(".").pop();
+    const path = `${Date.now()}.${ext}`;
+    const { error } = await supabase.storage.from("prize-wheel-images").upload(path, file);
+    if (error) { toast.error("Erro no upload"); setUploading(false); return; }
+    const { data: urlData } = supabase.storage.from("prize-wheel-images").getPublicUrl(path);
+    setForm({ ...form, image_url: urlData.publicUrl });
+    setUploading(false);
+  };
+
   const handleSave = async () => {
     if (!form.label) { toast.error("Preencha o nome do prêmio"); return; }
-    const payload = {
+    const payload: any = {
       label: form.label,
       icon: form.icon,
+      image_url: form.image_url || null,
       discount_percent: form.discount_percent || null,
       discount_value: form.discount_value || null,
       custom_prize: form.custom_prize || null,
@@ -73,7 +87,7 @@ const PrizeWheelConfig = () => {
 
   const handleEdit = (s: SliceRow) => {
     setForm({
-      label: s.label, icon: s.icon,
+      label: s.label, icon: s.icon, image_url: s.image_url || "",
       discount_percent: Number(s.discount_percent) || 0,
       discount_value: Number(s.discount_value) || 0,
       custom_prize: s.custom_prize || "",
@@ -110,8 +124,12 @@ const PrizeWheelConfig = () => {
       <div className="grid gap-3">
         {slices.map((s) => (
           <motion.div key={s.id} layout className="glass-card p-4 flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl shrink-0" style={{ background: 'hsl(245 60% 55% / 0.1)' }}>
-              {s.icon}
+            <div className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl shrink-0 overflow-hidden" style={{ background: 'hsl(245 60% 55% / 0.1)' }}>
+              {s.image_url ? (
+                <img src={s.image_url} alt={s.label} className="w-full h-full object-cover rounded-xl" />
+              ) : (
+                s.icon
+              )}
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
@@ -165,21 +183,40 @@ const PrizeWheelConfig = () => {
                   <input className="glass-input" value={form.label} onChange={(e) => setForm({ ...form, label: e.target.value })} placeholder="Ex: 10% OFF" />
                 </div>
 
+                {/* Image upload */}
                 <div>
-                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 block">Ícone</label>
-                  <div className="flex flex-wrap gap-2">
-                    {ICONS.map((icon) => (
-                      <button key={icon} onClick={() => setForm({ ...form, icon })}
-                        className="w-10 h-10 rounded-xl text-lg flex items-center justify-center transition-all"
-                        style={{
-                          background: form.icon === icon ? 'hsl(245 60% 55% / 0.2)' : 'hsl(0 0% 100% / 0.04)',
-                          border: `1px solid ${form.icon === icon ? 'hsl(245 60% 55% / 0.4)' : 'hsl(0 0% 100% / 0.08)'}`,
-                        }}>
-                        {icon}
-                      </button>
-                    ))}
+                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 block">Imagem do Prêmio</label>
+                  <div className="flex items-center gap-3">
+                    <div className="w-16 h-16 rounded-xl overflow-hidden flex items-center justify-center shrink-0"
+                      style={{ background: "hsl(0 0% 100% / 0.04)", border: "1px solid hsl(0 0% 100% / 0.08)" }}>
+                      {form.image_url ? (
+                        <img src={form.image_url} alt="" className="w-full h-full object-cover" />
+                      ) : (
+                        <span className="text-2xl">{form.icon}</span>
+                      )}
+                    </div>
+                    <div className="flex-1 space-y-1.5">
+                      <label className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold cursor-pointer transition-all"
+                        style={{ background: "hsl(245 60% 55% / 0.1)", color: "hsl(245 60% 70%)", border: "1px solid hsl(245 60% 55% / 0.2)" }}>
+                        <Upload className="w-3.5 h-3.5" />
+                        {uploading ? "Enviando..." : "Upload Imagem"}
+                        <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} disabled={uploading} />
+                      </label>
+                      {form.image_url && (
+                        <button onClick={() => setForm({ ...form, image_url: "" })} className="text-[10px] text-destructive">Remover imagem</button>
+                      )}
+                      <p className="text-[9px] text-muted-foreground">Sem imagem, o ícone emoji será usado</p>
+                    </div>
                   </div>
                 </div>
+
+                {/* Fallback icon if no image */}
+                {!form.image_url && (
+                  <div>
+                    <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 block">Ícone (fallback)</label>
+                    <input className="glass-input" value={form.icon} onChange={(e) => setForm({ ...form, icon: e.target.value })} placeholder="🎁" />
+                  </div>
+                )}
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>

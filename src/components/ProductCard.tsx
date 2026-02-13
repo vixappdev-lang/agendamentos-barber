@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { ShoppingBag, ArrowRight } from "lucide-react";
+import { ShoppingBag, Plus } from "lucide-react";
 
 interface ProductCardProps {
   product: {
@@ -41,9 +41,9 @@ const ProductCard = ({ product, onSelect, index }: ProductCardProps) => {
         <div className="flex items-center justify-between mt-3 pt-3" style={{ borderTop: '1px solid hsl(0 0% 100% / 0.06)' }}>
           <span className="gold-text text-lg sm:text-xl font-bold">R$ {Number(product.price).toFixed(2)}</span>
           <button className="flex items-center gap-1.5 px-4 py-2 text-xs sm:text-sm whitespace-nowrap rounded-xl font-semibold transition-all duration-300 uppercase tracking-wider"
-            style={{ background: 'hsl(0 0% 12%)', color: 'hsl(0 0% 65%)', border: '1px solid hsl(0 0% 18%)' }}
+            style={{ background: 'hsl(245 60% 55%)', color: 'white' }}
           >
-            Comprar <ArrowRight className="w-3.5 h-3.5" />
+            <Plus className="w-3.5 h-3.5" /> Adicionar
           </button>
         </div>
       </div>

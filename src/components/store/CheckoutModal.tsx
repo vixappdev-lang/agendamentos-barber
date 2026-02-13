@@ -1,0 +1,273 @@
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { X, Package, Truck, Store, QrCode, Copy, Check } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+
+interface CartItem {
+  id: string;
+  title: string;
+  price: number;
+  quantity: number;
+  image_url: string | null;
+}
+
+interface CheckoutModalProps {
+  items: CartItem[];
+  onClose: () => void;
+  onSuccess: () => void;
+  mode: "ifood" | "whatsapp";
+  whatsappNumber: string;
+  pixKey: string;
+  pixType: string;
+}
+
+type DeliveryMode = "delivery" | "pickup";
+type Step = "info" | "payment" | "confirmed";
+
+const CheckoutModal = ({ items, onClose, onSuccess, mode, whatsappNumber, pixKey, pixType }: CheckoutModalProps) => {
+  const [step, setStep] = useState<Step>("info");
+  const [deliveryMode, setDeliveryMode] = useState<DeliveryMode>("pickup");
+  const [form, setForm] = useState({
+    name: "", phone: "", email: "",
+    address: "", number: "", complement: "", neighborhood: "", city: "",
+    notes: "",
+  });
+  const [copied, setCopied] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+
+  const total = items.reduce((s, i) => s + i.price * i.quantity, 0);
+
+  const handleSubmit = async () => {
+    if (!form.name || !form.phone) {
+      toast.error("Preencha nome e telefone");
+      return;
+    }
+    if (deliveryMode === "delivery" && (!form.address || !form.neighborhood)) {
+      toast.error("Preencha o endereço completo");
+      return;
+    }
+
+    if (mode === "whatsapp") {
+      const itemsText = items.map(i => `• ${i.quantity}x ${i.title} - R$ ${(i.price * i.quantity).toFixed(2)}`).join("\n");
+      const deliveryText = deliveryMode === "delivery"
+        ? `\n📍 *Endereço:* ${form.address}, ${form.number} ${form.complement ? `- ${form.complement}` : ""}\n🏘️ *Bairro:* ${form.neighborhood}\n🏙️ *Cidade:* ${form.city}`
+        : "\n🏪 *Retirada no local*";
+      const msg = `🛒 *Novo Pedido*\n\n👤 *Nome:* ${form.name}\n📱 *Telefone:* ${form.phone}\n\n📦 *Itens:*\n${itemsText}\n\n💰 *Total:* R$ ${total.toFixed(2)}${deliveryText}\n\n📝 *Obs:* ${form.notes || "Nenhuma"}`;
+      window.open(`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(msg)}`, "_blank");
+      onSuccess();
+      return;
+    }
+
+    // iFood mode - save to database
+    setSubmitting(true);
+    const { data: order, error } = await supabase.from("orders").insert({
+      customer_name: form.name,
+      customer_phone: form.phone,
+      customer_email: form.email || null,
+      delivery_mode: deliveryMode,
+      address: deliveryMode === "delivery" ? form.address : null,
+      address_number: deliveryMode === "delivery" ? form.number : null,
+      address_complement: form.complement || null,
+      neighborhood: deliveryMode === "delivery" ? form.neighborhood : null,
+      city: deliveryMode === "delivery" ? form.city : null,
+      notes: form.notes || null,
+      total_price: total,
+      status: "pending",
+    }).select("id").single();
+
+    if (error || !order) {
+      toast.error("Erro ao criar pedido");
+      setSubmitting(false);
+      return;
+    }
+
+    const orderItems = items.map(i => ({
+      order_id: order.id,
+      product_id: i.id,
+      product_title: i.title,
+      product_price: i.price,
+      quantity: i.quantity,
+    }));
+
+    await supabase.from("order_items").insert(orderItems);
+    setSubmitting(false);
+    setStep("payment");
+  };
+
+  const handleCopyPix = () => {
+    navigator.clipboard.writeText(pixKey);
+    setCopied(true);
+    toast.success("Chave PIX copiada!");
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleConfirmPayment = () => {
+    setStep("confirmed");
+    toast.success("Pedido realizado com sucesso! 🎉");
+    setTimeout(() => onSuccess(), 2000);
+  };
+
+  return (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      className="fixed inset-0 z-[80] flex items-center justify-center p-4"
+      style={{ background: "hsl(0 0% 0% / 0.75)", backdropFilter: "blur(12px)" }}
+      onClick={onClose}>
+      <motion.div initial={{ scale: 0.9, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.9, opacity: 0 }}
+        className="glass-card-strong w-full max-w-md p-5 space-y-4 max-h-[90vh] overflow-y-auto scrollbar-hide"
+        onClick={(e) => e.stopPropagation()}>
+        
+        <div className="flex items-center justify-between">
+          <h2 className="text-base font-bold text-foreground">
+            {step === "info" ? "Finalizar Pedido" : step === "payment" ? "Pagamento PIX" : "Pedido Confirmado!"}
+          </h2>
+          <button onClick={onClose}><X className="w-5 h-5 text-muted-foreground" /></button>
+        </div>
+
+        {step === "info" && (
+          <div className="space-y-3">
+            {/* Order summary */}
+            <div className="p-3 rounded-xl space-y-2" style={{ background: "hsl(0 0% 100% / 0.03)", border: "1px solid hsl(0 0% 100% / 0.06)" }}>
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Resumo</p>
+              {items.map((item) => (
+                <div key={item.id} className="flex items-center justify-between text-xs">
+                  <span className="text-foreground/80">{item.quantity}x {item.title}</span>
+                  <span className="text-foreground font-semibold">R$ {(item.price * item.quantity).toFixed(2)}</span>
+                </div>
+              ))}
+              <div className="pt-2 flex items-center justify-between text-sm font-bold" style={{ borderTop: "1px solid hsl(0 0% 100% / 0.06)" }}>
+                <span className="text-foreground">Total</span>
+                <span style={{ color: "hsl(245 60% 70%)" }}>R$ {total.toFixed(2)}</span>
+              </div>
+            </div>
+
+            {/* Personal info */}
+            <div>
+              <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1 block">Nome *</label>
+              <input className="glass-input text-sm" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Seu nome completo" />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1 block">Telefone *</label>
+                <input className="glass-input text-sm" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="(11) 99999-9999" />
+              </div>
+              <div>
+                <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1 block">Email</label>
+                <input className="glass-input text-sm" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="email@email.com" />
+              </div>
+            </div>
+
+            {/* Delivery mode */}
+            <div>
+              <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2 block">Recebimento</label>
+              <div className="grid grid-cols-2 gap-2">
+                {([
+                  { id: "pickup" as DeliveryMode, label: "Retirar no local", icon: Store },
+                  { id: "delivery" as DeliveryMode, label: "Entrega", icon: Truck },
+                ] as const).map((opt) => (
+                  <button key={opt.id} onClick={() => setDeliveryMode(opt.id)}
+                    className="flex items-center gap-2 p-3 rounded-xl text-xs font-semibold transition-all"
+                    style={{
+                      background: deliveryMode === opt.id ? "hsl(245 60% 55% / 0.1)" : "hsl(0 0% 100% / 0.03)",
+                      border: `1.5px solid ${deliveryMode === opt.id ? "hsl(245 60% 55% / 0.4)" : "hsl(0 0% 100% / 0.08)"}`,
+                      color: deliveryMode === opt.id ? "hsl(245 60% 70%)" : "hsl(0 0% 55%)",
+                    }}>
+                    <opt.icon className="w-4 h-4" />
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <AnimatePresence>
+              {deliveryMode === "delivery" && (
+                <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }}
+                  className="space-y-3 overflow-hidden">
+                  <div>
+                    <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1 block">Endereço *</label>
+                    <input className="glass-input text-sm" value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} placeholder="Rua, Avenida..." />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1 block">Número</label>
+                      <input className="glass-input text-sm" value={form.number} onChange={(e) => setForm({ ...form, number: e.target.value })} placeholder="123" />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1 block">Complemento</label>
+                      <input className="glass-input text-sm" value={form.complement} onChange={(e) => setForm({ ...form, complement: e.target.value })} placeholder="Apto, Bloco..." />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1 block">Bairro *</label>
+                      <input className="glass-input text-sm" value={form.neighborhood} onChange={(e) => setForm({ ...form, neighborhood: e.target.value })} placeholder="Centro" />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1 block">Cidade</label>
+                      <input className="glass-input text-sm" value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} placeholder="São Paulo" />
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            <div>
+              <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1 block">Observações</label>
+              <textarea className="glass-input text-sm resize-none" rows={2} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} placeholder="Alguma observação..." />
+            </div>
+
+            <button onClick={handleSubmit} disabled={submitting}
+              className="w-full py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all disabled:opacity-50"
+              style={{ background: "hsl(245 60% 55%)", color: "white" }}>
+              {submitting ? (
+                <><div className="w-4 h-4 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: "white", borderTopColor: "transparent" }} /> Enviando...</>
+              ) : mode === "whatsapp" ? "📱 Enviar pelo WhatsApp" : "Confirmar Pedido"}
+            </button>
+          </div>
+        )}
+
+        {step === "payment" && (
+          <div className="space-y-4 text-center">
+            <div className="w-16 h-16 rounded-2xl mx-auto flex items-center justify-center" style={{ background: "hsl(245 60% 55% / 0.1)" }}>
+              <QrCode className="w-8 h-8" style={{ color: "hsl(245 60% 70%)" }} />
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground mb-1">Valor a pagar:</p>
+              <p className="text-2xl font-bold" style={{ color: "hsl(245 60% 70%)" }}>R$ {total.toFixed(2)}</p>
+            </div>
+            <div className="p-3 rounded-xl" style={{ background: "hsl(0 0% 100% / 0.03)", border: "1px solid hsl(0 0% 100% / 0.08)" }}>
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Chave PIX ({pixType})</p>
+              <div className="flex items-center gap-2">
+                <p className="text-sm font-mono text-foreground flex-1 truncate">{pixKey || "Não configurada"}</p>
+                {pixKey && (
+                  <button onClick={handleCopyPix} className="p-2 rounded-lg shrink-0" style={{ background: "hsl(245 60% 55% / 0.1)" }}>
+                    {copied ? <Check className="w-4 h-4" style={{ color: "hsl(140 60% 55%)" }} /> : <Copy className="w-4 h-4" style={{ color: "hsl(245 60% 70%)" }} />}
+                  </button>
+                )}
+              </div>
+            </div>
+            <p className="text-[11px] text-muted-foreground">Após realizar o pagamento, clique em confirmar abaixo.</p>
+            <button onClick={handleConfirmPayment}
+              className="w-full py-3 rounded-xl font-bold text-sm transition-all"
+              style={{ background: "hsl(140 60% 45%)", color: "white" }}>
+              ✅ Já paguei!
+            </button>
+          </div>
+        )}
+
+        {step === "confirmed" && (
+          <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="text-center space-y-3 py-4">
+            <div className="text-5xl">🎉</div>
+            <h3 className="text-lg font-bold text-foreground">Pedido Realizado!</h3>
+            <p className="text-sm text-muted-foreground">Seu pedido foi recebido e está sendo processado.</p>
+            <div className="p-3 rounded-xl" style={{ background: "hsl(245 60% 55% / 0.1)", border: "1px solid hsl(245 60% 55% / 0.2)" }}>
+              <p className="text-xs" style={{ color: "hsl(245 60% 70%)" }}>Status: Pendente</p>
+            </div>
+          </motion.div>
+        )}
+      </motion.div>
+    </motion.div>
+  );
+};
+
+export default CheckoutModal;
