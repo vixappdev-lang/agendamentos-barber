@@ -15,12 +15,14 @@ import {
   Settings,
   ShoppingBag,
   Gift,
+  Package,
 } from "lucide-react";
 
 const navItems = [
   { label: "Dashboard", path: "/admin", icon: LayoutDashboard },
   { label: "Serviços", path: "/admin/services", icon: Scissors },
   { label: "Produtos", path: "/admin/products", icon: ShoppingBag },
+  { label: "Pedidos", path: "/admin/orders", icon: Package },
   { label: "Barbeiros", path: "/admin/barbers", icon: Users },
   { label: "Agendamentos", path: "/admin/appointments", icon: CalendarDays },
   { label: "Cupons", path: "/admin/coupons", icon: Tag },

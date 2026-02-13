@@ -163,6 +163,108 @@ export type Database = {
         }
         Relationships: []
       }
+      order_items: {
+        Row: {
+          created_at: string
+          id: string
+          order_id: string
+          product_id: string | null
+          product_price: number
+          product_title: string
+          quantity: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          order_id: string
+          product_id?: string | null
+          product_price: number
+          product_title: string
+          quantity?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          order_id?: string
+          product_id?: string | null
+          product_price?: number
+          product_title?: string
+          quantity?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orders: {
+        Row: {
+          address: string | null
+          address_complement: string | null
+          address_number: string | null
+          city: string | null
+          created_at: string
+          customer_email: string | null
+          customer_name: string
+          customer_phone: string | null
+          delivery_mode: string
+          id: string
+          neighborhood: string | null
+          notes: string | null
+          payment_method: string | null
+          status: string
+          total_price: number
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          address_complement?: string | null
+          address_number?: string | null
+          city?: string | null
+          created_at?: string
+          customer_email?: string | null
+          customer_name: string
+          customer_phone?: string | null
+          delivery_mode?: string
+          id?: string
+          neighborhood?: string | null
+          notes?: string | null
+          payment_method?: string | null
+          status?: string
+          total_price?: number
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          address_complement?: string | null
+          address_number?: string | null
+          city?: string | null
+          created_at?: string
+          customer_email?: string | null
+          customer_name?: string
+          customer_phone?: string | null
+          delivery_mode?: string
+          id?: string
+          neighborhood?: string | null
+          notes?: string | null
+          payment_method?: string | null
+          status?: string
+          total_price?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       prize_wheel_slices: {
         Row: {
           active: boolean
@@ -172,6 +274,7 @@ export type Database = {
           discount_value: number | null
           icon: string
           id: string
+          image_url: string | null
           label: string
           probability: number
           sort_order: number
@@ -185,6 +288,7 @@ export type Database = {
           discount_value?: number | null
           icon?: string
           id?: string
+          image_url?: string | null
           label: string
           probability?: number
           sort_order?: number
@@ -198,6 +302,7 @@ export type Database = {
           discount_value?: number | null
           icon?: string
           id?: string
+          image_url?: string | null
           label?: string
           probability?: number
           sort_order?: number

@@ -15,6 +15,7 @@ import Coupons from "./pages/admin/Coupons";
 import Settings from "./pages/admin/Settings";
 import Products from "./pages/admin/Products";
 import PrizeWheelConfig from "./pages/admin/PrizeWheelConfig";
+import Orders from "./pages/admin/Orders";
 import Navigation from "./pages/Navigation";
 
 const queryClient = new QueryClient();
@@ -36,6 +37,7 @@ const App = () => (
             <Route path="appointments" element={<Appointments />} />
             <Route path="coupons" element={<Coupons />} />
             <Route path="products" element={<Products />} />
+            <Route path="orders" element={<Orders />} />
             <Route path="prize-wheel" element={<PrizeWheelConfig />} />
             <Route path="settings" element={<Settings />} />
           </Route>
