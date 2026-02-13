@@ -1,19 +1,19 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Volume2, VolumeX, Minus, Plus, RotateCcw } from "lucide-react";
+import { X, Plus, Minus, RotateCcw } from "lucide-react";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
-import TransportModeModal, { type TransportMode, getOsrmProfile, getModeConfig } from "@/components/navigation/TransportModeModal";
+import TransportModeModal, { type TransportMode, getModeConfig } from "@/components/navigation/TransportModeModal";
+import TurnInstruction, { type StepInstruction } from "@/components/navigation/TurnInstruction";
 
 const MAP_STYLE = "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json";
 
+// ── 3D Buildings Layer ──
 const add3DBuildings = (map: maplibregl.Map) => {
-  // Add 3D building extrusions for realistic street view
   const layers = map.getStyle().layers;
   if (!layers) return;
 
-  // Find the first symbol layer to insert buildings below labels
   let labelLayerId: string | undefined;
   for (const layer of layers) {
     if (layer.type === "symbol" && (layer as any).layout?.["text-field"]) {
@@ -22,38 +22,36 @@ const add3DBuildings = (map: maplibregl.Map) => {
     }
   }
 
-  if (map.getSource("openmaptiles")) {
-    if (!map.getLayer("3d-buildings")) {
-      map.addLayer(
-        {
-          id: "3d-buildings",
-          source: "openmaptiles",
-          "source-layer": "building",
-          type: "fill-extrusion",
-          minzoom: 14,
-          paint: {
-            "fill-extrusion-color": [
-              "interpolate", ["linear"], ["get", "render_height"],
-              0, "hsl(230, 20%, 16%)",
-              50, "hsl(230, 15%, 22%)",
-              200, "hsl(230, 12%, 28%)",
-            ],
-            "fill-extrusion-height": [
-              "interpolate", ["linear"], ["zoom"],
-              14, 0,
-              16, ["get", "render_height"],
-            ],
-            "fill-extrusion-base": [
-              "interpolate", ["linear"], ["zoom"],
-              14, 0,
-              16, ["get", "render_min_height"],
-            ],
-            "fill-extrusion-opacity": 0.75,
-          },
+  if (map.getSource("openmaptiles") && !map.getLayer("3d-buildings")) {
+    map.addLayer(
+      {
+        id: "3d-buildings",
+        source: "openmaptiles",
+        "source-layer": "building",
+        type: "fill-extrusion",
+        minzoom: 14,
+        paint: {
+          "fill-extrusion-color": [
+            "interpolate", ["linear"], ["get", "render_height"],
+            0, "hsl(230, 20%, 16%)",
+            50, "hsl(230, 15%, 22%)",
+            200, "hsl(230, 12%, 28%)",
+          ],
+          "fill-extrusion-height": [
+            "interpolate", ["linear"], ["zoom"],
+            14, 0,
+            16, ["get", "render_height"],
+          ],
+          "fill-extrusion-base": [
+            "interpolate", ["linear"], ["zoom"],
+            14, 0,
+            16, ["get", "render_min_height"],
+          ],
+          "fill-extrusion-opacity": 0.8,
         },
-        labelLayerId
-      );
-    }
+      },
+      labelLayerId
+    );
   }
 };
 
@@ -70,12 +68,17 @@ const Navigation = () => {
   const watchIdRef = useRef<number | null>(null);
   const lastBearingRef = useRef(0);
   const lastPositionRef = useRef<{ lat: number; lng: number } | null>(null);
+  const lastSpeedRef = useRef(0);
   const routeVersionRef = useRef(0);
+  const routeCoordsRef = useRef<[number, number][] | null>(null);
+  const stepsRef = useRef<any[] | null>(null);
 
   const [transportMode, setTransportMode] = useState<TransportMode | null>(null);
   const [osrmProfile, setOsrmProfile] = useState("driving");
   const [routeInfo, setRouteInfo] = useState<{ distance: string; duration: string; eta: string } | null>(null);
   const [currentStreet, setCurrentStreet] = useState<string | null>(null);
+  const [currentStep, setCurrentStep] = useState<StepInstruction | null>(null);
+  const [nextStep, setNextStep] = useState<StepInstruction | null>(null);
   const [status, setStatus] = useState<"choosing" | "locating" | "routing" | "active" | "arrived" | "error">("choosing");
   const [errorMsg, setErrorMsg] = useState("");
   const [mapReady, setMapReady] = useState(false);
@@ -101,15 +104,15 @@ const Navigation = () => {
   const createUserMarker = useCallback((map: maplibregl.Map, lat: number, lng: number) => {
     const el = document.createElement("div");
     el.innerHTML = `
-      <div style="position:relative;width:48px;height:48px;" id="nav-arrow-container">
+      <div style="position:relative;width:52px;height:52px;" id="nav-arrow-container">
         <div style="position:absolute;inset:0;background:rgba(59,130,246,0.15);border-radius:50%;animation:nav-pulse 2s ease-out infinite;"></div>
-        <div style="position:absolute;inset:6px;background:rgba(59,130,246,0.08);border-radius:50%;"></div>
-        <svg viewBox="0 0 48 48" width="48" height="48" style="position:absolute;inset:0;filter:drop-shadow(0 2px 8px rgba(59,130,246,0.5));" id="nav-arrow-svg">
-          <circle cx="24" cy="24" r="14" fill="#3b82f6" stroke="white" stroke-width="3"/>
-          <path d="M24 12 L30 28 L24 24 L18 28 Z" fill="white" transform="translate(0, 2)"/>
+        <div style="position:absolute;inset:4px;background:rgba(59,130,246,0.08);border-radius:50%;"></div>
+        <svg viewBox="0 0 48 48" width="52" height="52" style="position:absolute;inset:0;filter:drop-shadow(0 3px 10px rgba(59,130,246,0.6));" id="nav-arrow-svg">
+          <circle cx="24" cy="24" r="15" fill="#2563eb" stroke="white" stroke-width="3"/>
+          <path d="M24 10 L31 29 L24 24 L17 29 Z" fill="white"/>
         </svg>
       </div>
-      <style>@keyframes nav-pulse{0%{transform:scale(1);opacity:0.6}100%{transform:scale(2.5);opacity:0}}</style>`;
+      <style>@keyframes nav-pulse{0%{transform:scale(1);opacity:0.6}100%{transform:scale(2.8);opacity:0}}</style>`;
     return new maplibregl.Marker({ element: el, anchor: "center" }).setLngLat([lng, lat]).addTo(map);
   }, []);
 
@@ -119,7 +122,7 @@ const Navigation = () => {
     if (svg) svg.style.transform = `rotate(${bearing}deg)`;
   }, []);
 
-  // ── Calculate bearing between two points ──
+  // ── Calculate bearing ──
   const calcBearing = useCallback((from: { lat: number; lng: number }, to: { lat: number; lng: number }) => {
     const dLng = ((to.lng - from.lng) * Math.PI) / 180;
     const lat1 = (from.lat * Math.PI) / 180;
@@ -128,6 +131,45 @@ const Navigation = () => {
     const x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLng);
     return ((Math.atan2(y, x) * 180) / Math.PI + 360) % 360;
   }, []);
+
+  // ── Parse OSRM steps into instructions ──
+  const parseSteps = useCallback((steps: any[]): StepInstruction[] => {
+    return steps.map((s: any) => ({
+      maneuver: s.maneuver?.type || "straight",
+      modifier: s.maneuver?.modifier,
+      name: s.name || "",
+      distance: s.distance || 0,
+    }));
+  }, []);
+
+  // ── Find current step based on user position ──
+  const findCurrentStep = useCallback((userLat: number, userLng: number, steps: any[]) => {
+    if (!steps || steps.length === 0) return;
+
+    // Find closest step by checking maneuver locations
+    let minDist = Infinity;
+    let closestIdx = 0;
+
+    for (let i = 0; i < steps.length; i++) {
+      const loc = steps[i].maneuver?.location;
+      if (!loc) continue;
+      const d = Math.sqrt(Math.pow(userLat - loc[1], 2) + Math.pow(userLng - loc[0], 2));
+      if (d < minDist) {
+        minDist = d;
+        closestIdx = i;
+      }
+    }
+
+    // If we're very close to current step maneuver, show next step
+    const threshold = 0.0003; // ~30m
+    if (minDist < threshold && closestIdx < steps.length - 1) {
+      closestIdx++;
+    }
+
+    const parsed = parseSteps(steps);
+    setCurrentStep(parsed[closestIdx] || null);
+    setNextStep(parsed[closestIdx + 1] || null);
+  }, [parseSteps]);
 
   // ── Fetch route ──
   const fetchRoute = useCallback(async (fromLng: number, fromLat: number, profile: string) => {
@@ -143,13 +185,13 @@ const Navigation = () => {
       const now = new Date();
       now.setMinutes(now.getMinutes() + durMin);
       const eta = now.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
-      
-      // Extract current street name from first step
+
       let street: string | null = null;
-      if (route.legs?.[0]?.steps?.[0]?.name) {
-        street = route.legs[0].steps[0].name || null;
-      }
-      
+      const steps = route.legs?.[0]?.steps || [];
+      if (steps[0]?.name) street = steps[0].name || null;
+
+      stepsRef.current = steps;
+
       return {
         geometry: route.geometry,
         distance: `${distKm} km`,
@@ -157,6 +199,7 @@ const Navigation = () => {
         eta,
         street,
         distanceMeters: route.distance,
+        steps,
       };
     } catch {
       return null;
@@ -165,6 +208,7 @@ const Navigation = () => {
 
   // ── Draw route ──
   const drawRoute = useCallback((map: maplibregl.Map, coordinates: [number, number][]) => {
+    routeCoordsRef.current = coordinates;
     const geojson: GeoJSON.Feature<GeoJSON.LineString> = {
       type: "Feature",
       properties: {},
@@ -181,18 +225,52 @@ const Navigation = () => {
     map.addLayer({
       id: "nav-route-glow", type: "line", source: "nav-route",
       layout: { "line-join": "round", "line-cap": "round" },
-      paint: { "line-color": "#a78bfa", "line-width": 18, "line-opacity": 0.25, "line-blur": 8 },
+      paint: { "line-color": "#a78bfa", "line-width": 20, "line-opacity": 0.2, "line-blur": 10 },
     });
     map.addLayer({
       id: "nav-route-casing", type: "line", source: "nav-route",
       layout: { "line-join": "round", "line-cap": "round" },
-      paint: { "line-color": "#1e1b4b", "line-width": 8, "line-opacity": 0.9 },
+      paint: { "line-color": "#1e1b4b", "line-width": 9, "line-opacity": 0.9 },
     });
     map.addLayer({
       id: "nav-route-line", type: "line", source: "nav-route",
       layout: { "line-join": "round", "line-cap": "round" },
-      paint: { "line-color": "#7c3aed", "line-width": 5, "line-opacity": 1 },
+      paint: { "line-color": "#7c3aed", "line-width": 5.5, "line-opacity": 1 },
     });
+  }, []);
+
+  // ── Redraw route on style change ──
+  const redrawRouteOnStyle = useCallback((map: maplibregl.Map) => {
+    if (routeCoordsRef.current) {
+      // Force re-add source/layers
+      try { map.removeLayer("nav-route-glow"); } catch {}
+      try { map.removeLayer("nav-route-casing"); } catch {}
+      try { map.removeLayer("nav-route-line"); } catch {}
+      try { map.removeSource("nav-route"); } catch {}
+      drawRoute(map, routeCoordsRef.current);
+    }
+  }, [drawRoute]);
+
+  // ── Speed-adaptive camera parameters ──
+  const getAdaptiveCamera = useCallback((mode: TransportMode, speedMs: number) => {
+    const config = getModeConfig(mode);
+    const speedKmh = speedMs * 3.6;
+
+    // Adjust zoom: faster = zoom out slightly for better overview
+    let zoom = config.zoomLevel;
+    if (mode === "driving" || mode === "motorcycle") {
+      if (speedKmh > 60) zoom = config.zoomLevel - 0.5;
+      else if (speedKmh > 40) zoom = config.zoomLevel - 0.3;
+      else if (speedKmh < 10) zoom = config.zoomLevel + 0.3;
+    }
+
+    // Adjust offset: faster = look further ahead
+    let offsetDist = 0.0004;
+    if (speedKmh > 60) offsetDist = 0.0008;
+    else if (speedKmh > 30) offsetDist = 0.0006;
+    else if (speedKmh < 5) offsetDist = 0.0002;
+
+    return { zoom, offsetDist, pitch: config.pitch, transitionSpeed: config.transitionSpeed };
   }, []);
 
   // ── Initialize map ──
@@ -204,7 +282,7 @@ const Navigation = () => {
       style: MAP_STYLE,
       center: [destLng, destLat],
       zoom: 16,
-      pitch: 60,
+      pitch: 65,
       bearing: 0,
       attributionControl: false,
       maxPitch: 85,
@@ -219,6 +297,7 @@ const Navigation = () => {
 
     map.on("style.load", () => {
       add3DBuildings(map);
+      redrawRouteOnStyle(map);
     });
 
     return () => {
@@ -226,9 +305,9 @@ const Navigation = () => {
       map.remove();
       mapInstance.current = null;
     };
-  }, [destLat, destLng, createDestMarker]);
+  }, [destLat, destLng, createDestMarker, redrawRouteOnStyle]);
 
-  // ── Start navigation after transport mode selected ──
+  // ── Start navigation ──
   const startNavigation = useCallback(async (mode: TransportMode, profile: string) => {
     const map = mapInstance.current;
     if (!map || !navigator.geolocation) {
@@ -237,28 +316,29 @@ const Navigation = () => {
       return;
     }
 
-    const config = getModeConfig(mode);
     setStatus("locating");
-
     const isFirstFix = { value: true };
 
     const processPosition = async (pos: GeolocationPosition) => {
       const lat = pos.coords.latitude;
       const lng = pos.coords.longitude;
       const heading = pos.coords.heading;
+      const speed = pos.coords.speed || 0;
       const currentPos = { lat, lng };
 
-      // Calculate bearing — on first fix, point toward destination
+      lastSpeedRef.current = speed;
+
+      // Calculate bearing
       let bearing = lastBearingRef.current;
       if (isFirstFix.value) {
         bearing = calcBearing(currentPos, { lat: destLat, lng: destLng });
-      } else if (heading != null && !isNaN(heading)) {
+      } else if (heading != null && !isNaN(heading) && heading >= 0) {
         bearing = heading;
       } else if (lastPositionRef.current) {
         const dist = Math.sqrt(
           Math.pow(lat - lastPositionRef.current.lat, 2) + Math.pow(lng - lastPositionRef.current.lng, 2)
         );
-        if (dist > 0.00005) {
+        if (dist > 0.00003) {
           bearing = calcBearing(lastPositionRef.current, currentPos);
         }
       }
@@ -273,30 +353,29 @@ const Navigation = () => {
       }
       rotateArrow(bearing);
 
-      // Camera — first fix: dramatic flyTo into 3D driving perspective (behind-the-user view)
-      // Offset center slightly ahead of user in bearing direction for "behind" effect
-      const offsetDist = 0.0004; // ~40m ahead
+      // Adaptive camera
+      const cam = getAdaptiveCamera(mode, speed);
       const bearingRad = (bearing * Math.PI) / 180;
-      const offsetLat = lat + Math.cos(bearingRad) * offsetDist;
-      const offsetLng = lng + Math.sin(bearingRad) * offsetDist;
+      const offsetLat = lat + Math.cos(bearingRad) * cam.offsetDist;
+      const offsetLng = lng + Math.sin(bearingRad) * cam.offsetDist;
 
       if (isFirstFix.value) {
         isFirstFix.value = false;
         map.flyTo({
           center: [offsetLng, offsetLat],
-          zoom: config.zoomLevel,
-          pitch: config.pitch,
-          bearing: bearing,
-          duration: 2000,
+          zoom: cam.zoom,
+          pitch: cam.pitch,
+          bearing,
+          duration: 2500,
           essential: true,
         });
       } else {
         map.easeTo({
           center: [offsetLng, offsetLat],
-          zoom: config.zoomLevel,
-          pitch: config.pitch,
-          bearing: bearing,
-          duration: config.transitionSpeed,
+          zoom: cam.zoom,
+          pitch: cam.pitch,
+          bearing,
+          duration: cam.transitionSpeed,
           easing: (t) => t * (2 - t),
         });
       }
@@ -311,16 +390,16 @@ const Navigation = () => {
       // Fetch and draw route
       const version = ++routeVersionRef.current;
       const route = await fetchRoute(lng, lat, profile);
-      if (version !== routeVersionRef.current) return; // stale
+      if (version !== routeVersionRef.current) return;
       if (route) {
         setRouteInfo({ distance: route.distance, duration: route.duration, eta: route.eta });
         setCurrentStreet(route.street);
         setStatus("active");
         drawRoute(map, route.geometry.coordinates as [number, number][]);
+        findCurrentStep(lat, lng, route.steps);
       }
     };
 
-    // Initial position
     navigator.geolocation.getCurrentPosition(
       (pos) => processPosition(pos),
       (err) => {
@@ -330,24 +409,20 @@ const Navigation = () => {
       { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
     );
 
-    // Continuous tracking
     watchIdRef.current = navigator.geolocation.watchPosition(
       (pos) => processPosition(pos),
       () => {},
       { enableHighAccuracy: true, timeout: 15000, maximumAge: 2000 }
     );
-  }, [destLat, destLng, fetchRoute, drawRoute, createUserMarker, rotateArrow, calcBearing]);
+  }, [destLat, destLng, fetchRoute, drawRoute, createUserMarker, rotateArrow, calcBearing, getAdaptiveCamera, findCurrentStep]);
 
   // ── Transport mode selected ──
   const handleTransportSelect = (mode: TransportMode, profile: string) => {
     setTransportMode(mode);
     setOsrmProfile(profile);
-    if (mapReady) {
-      startNavigation(mode, profile);
-    }
+    if (mapReady) startNavigation(mode, profile);
   };
 
-  // Start nav when map becomes ready if mode already selected
   useEffect(() => {
     if (mapReady && transportMode && status === "choosing") {
       startNavigation(transportMode, osrmProfile);
@@ -358,11 +433,12 @@ const Navigation = () => {
     const map = mapInstance.current;
     const pos = lastPositionRef.current;
     if (!map || !pos || !transportMode) return;
-    const config = getModeConfig(transportMode);
-    map.easeTo({
-      center: [pos.lng, pos.lat],
-      zoom: config.zoomLevel,
-      pitch: config.pitch,
+    const cam = getAdaptiveCamera(transportMode, lastSpeedRef.current);
+    const bearingRad = (lastBearingRef.current * Math.PI) / 180;
+    map.flyTo({
+      center: [pos.lng + Math.sin(bearingRad) * cam.offsetDist, pos.lat + Math.cos(bearingRad) * cam.offsetDist],
+      zoom: cam.zoom,
+      pitch: cam.pitch,
       bearing: lastBearingRef.current,
       duration: 1000,
     });
@@ -376,7 +452,6 @@ const Navigation = () => {
 
   const handleClose = () => {
     window.close();
-    // fallback if window.close doesn't work
     window.location.href = "/";
   };
 
@@ -392,7 +467,6 @@ const Navigation = () => {
       {/* Fullscreen map */}
       <div ref={mapRef} className="absolute inset-0 w-full h-full" />
 
-      {/* Mobile viewport meta override */}
       <style>{`
         @viewport { width: device-width; height: device-height; }
         html, body, #root { overflow: hidden !important; height: 100dvh !important; }
@@ -403,39 +477,45 @@ const Navigation = () => {
         {!transportMode && <TransportModeModal onSelect={handleTransportSelect} />}
       </AnimatePresence>
 
-      {/* Top bar - street name + mode */}
+      {/* Top bar - turn instructions + street */}
       <AnimatePresence>
         {status === "active" && (
           <motion.div
-            initial={{ y: -60, opacity: 0 }}
+            initial={{ y: -80, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
-            exit={{ y: -60, opacity: 0 }}
+            exit={{ y: -80, opacity: 0 }}
             className="absolute top-0 left-0 right-0 z-20 safe-area-top"
           >
-            <div
-              className="mx-3 mt-3 px-4 py-3 rounded-2xl flex items-center gap-3"
-              style={{
-                background: "hsl(0 0% 0% / 0.7)",
-                backdropFilter: "blur(16px)",
-                border: "1px solid hsl(0 0% 100% / 0.08)",
-              }}
-            >
-              <div className="w-2 h-2 rounded-full shrink-0" style={{ background: "#7c3aed", boxShadow: "0 0 8px #7c3aed" }} />
-              <div className="flex-1 min-w-0">
-                {currentStreet && (
-                  <p className="text-sm font-bold text-foreground truncate">{currentStreet}</p>
-                )}
-                <p className="text-[10px] text-muted-foreground">
-                  {transportMode && modeLabel[transportMode]} · Navegando
-                </p>
-              </div>
-              <button
-                onClick={handleClose}
-                className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0"
-                style={{ background: "hsl(0 0% 100% / 0.08)" }}
+            <div className="mx-3 mt-3 space-y-2">
+              {/* Turn instruction */}
+              <TurnInstruction step={currentStep} nextStep={nextStep} />
+
+              {/* Street + mode indicator */}
+              <div
+                className="px-4 py-2.5 rounded-2xl flex items-center gap-3"
+                style={{
+                  background: "hsl(0 0% 0% / 0.65)",
+                  backdropFilter: "blur(16px)",
+                  border: "1px solid hsl(0 0% 100% / 0.06)",
+                }}
               >
-                <X className="w-4 h-4 text-foreground/70" />
-              </button>
+                <div className="w-2 h-2 rounded-full shrink-0" style={{ background: "#7c3aed", boxShadow: "0 0 8px #7c3aed" }} />
+                <div className="flex-1 min-w-0">
+                  {currentStreet && (
+                    <p className="text-sm font-bold text-foreground truncate">{currentStreet}</p>
+                  )}
+                  <p className="text-[10px] text-muted-foreground">
+                    {transportMode && modeLabel[transportMode]} · Navegando
+                  </p>
+                </div>
+                <button
+                  onClick={handleClose}
+                  className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0"
+                  style={{ background: "hsl(0 0% 100% / 0.08)" }}
+                >
+                  <X className="w-4 h-4 text-foreground/70" />
+                </button>
+              </div>
             </div>
           </motion.div>
         )}
@@ -567,7 +647,6 @@ const Navigation = () => {
         </div>
       )}
 
-      {/* Safe area CSS */}
       <style>{`
         .safe-area-top { padding-top: env(safe-area-inset-top, 0px); }
         .safe-area-bottom { padding-bottom: env(safe-area-inset-bottom, 0px); }
