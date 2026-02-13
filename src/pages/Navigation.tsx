@@ -6,7 +6,56 @@ import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import TransportModeModal, { type TransportMode, getOsrmProfile, getModeConfig } from "@/components/navigation/TransportModeModal";
 
-const DARK_STYLE = "https://tiles.openfreemap.org/styles/dark";
+const MAP_STYLE = "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json";
+
+const add3DBuildings = (map: maplibregl.Map) => {
+  // Add 3D building extrusions for realistic street view
+  const layers = map.getStyle().layers;
+  if (!layers) return;
+
+  // Find the first symbol layer to insert buildings below labels
+  let labelLayerId: string | undefined;
+  for (const layer of layers) {
+    if (layer.type === "symbol" && (layer as any).layout?.["text-field"]) {
+      labelLayerId = layer.id;
+      break;
+    }
+  }
+
+  if (map.getSource("openmaptiles")) {
+    if (!map.getLayer("3d-buildings")) {
+      map.addLayer(
+        {
+          id: "3d-buildings",
+          source: "openmaptiles",
+          "source-layer": "building",
+          type: "fill-extrusion",
+          minzoom: 14,
+          paint: {
+            "fill-extrusion-color": [
+              "interpolate", ["linear"], ["get", "render_height"],
+              0, "hsl(230, 20%, 16%)",
+              50, "hsl(230, 15%, 22%)",
+              200, "hsl(230, 12%, 28%)",
+            ],
+            "fill-extrusion-height": [
+              "interpolate", ["linear"], ["zoom"],
+              14, 0,
+              16, ["get", "render_height"],
+            ],
+            "fill-extrusion-base": [
+              "interpolate", ["linear"], ["zoom"],
+              14, 0,
+              16, ["get", "render_min_height"],
+            ],
+            "fill-extrusion-opacity": 0.75,
+          },
+        },
+        labelLayerId
+      );
+    }
+  }
+};
 
 const Navigation = () => {
   const [searchParams] = useSearchParams();
@@ -152,7 +201,7 @@ const Navigation = () => {
 
     const map = new maplibregl.Map({
       container: mapRef.current,
-      style: DARK_STYLE,
+      style: MAP_STYLE,
       center: [destLng, destLat],
       zoom: 16,
       pitch: 60,
@@ -162,9 +211,14 @@ const Navigation = () => {
     });
 
     map.on("load", () => {
+      add3DBuildings(map);
       destMarkerRef.current = createDestMarker(map);
       mapInstance.current = map;
       setMapReady(true);
+    });
+
+    map.on("style.load", () => {
+      add3DBuildings(map);
     });
 
     return () => {
