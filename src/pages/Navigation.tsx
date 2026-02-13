@@ -106,6 +106,7 @@ const Navigation = () => {
   const [errorMsg, setErrorMsg] = useState("");
   const [mapReady, setMapReady] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>("3d");
+  const viewModeRef = useRef<ViewMode>("3d");
   const [progressPercent, setProgressPercent] = useState(0);
 
   // ── Destination marker ──
@@ -220,10 +221,18 @@ const Navigation = () => {
       const data = await res.json();
       if (data.code !== "Ok" || !data.routes?.[0]) return null;
       const route = data.routes[0];
-      const distKm = (route.distance / 1000).toFixed(1);
-      const durMin = Math.ceil(route.duration / 60);
+      const distMeters = route.distance;
+      const distKm = distMeters >= 1000 ? (distMeters / 1000).toFixed(1) : `0.${Math.round(distMeters / 100)}`;
+      const distLabel = distMeters >= 1000 ? `${distKm} km` : `${Math.round(distMeters)} m`;
+
+      // OSRM returns duration in seconds for the profile used (driving/cycling/foot)
+      // Use raw duration directly — it's already profile-accurate
+      const durationSec = route.duration;
+      const durMin = Math.round(durationSec / 60);
+      const durLabel = durMin < 1 ? "< 1 min" : durMin === 1 ? "1 min" : `${durMin} min`;
+      
       const now = new Date();
-      now.setMinutes(now.getMinutes() + durMin);
+      now.setSeconds(now.getSeconds() + durationSec);
       const eta = now.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
 
       let street: string | null = null;
@@ -234,8 +243,8 @@ const Navigation = () => {
 
       return {
         geometry: route.geometry,
-        distance: `${distKm} km`,
-        duration: `${durMin} min`,
+        distance: distLabel,
+        duration: durLabel,
         eta,
         street,
         distanceMeters: route.distance,
@@ -395,7 +404,8 @@ const Navigation = () => {
   const toggleViewMode = useCallback(() => {
     const map = mapInstance.current;
     if (!map) return;
-    const newMode = viewMode === "3d" ? "2d" : "3d";
+    const newMode = viewModeRef.current === "3d" ? "2d" : "3d";
+    viewModeRef.current = newMode;
     setViewMode(newMode);
 
     if (newMode === "3d") {
@@ -405,7 +415,7 @@ const Navigation = () => {
       remove3DBuildings(map);
       map.easeTo({ pitch: 0, duration: 800 });
     }
-  }, [viewMode]);
+  }, []);
 
   // ── Start navigation ──
   const startNavigation = useCallback(async (mode: TransportMode, profile: string) => {
@@ -459,7 +469,7 @@ const Navigation = () => {
       if (status !== "arrived") setStatus("active");
 
       // Adaptive camera → set target for smooth loop
-      const cam = getAdaptiveCamera(mode, speed, viewMode);
+      const cam = getAdaptiveCamera(mode, speed, viewModeRef.current);
       const bearingRad = (bearing * Math.PI) / 180;
       const offsetLat = lat + Math.cos(bearingRad) * cam.offsetDist;
       const offsetLng = lng + Math.sin(bearingRad) * cam.offsetDist;
@@ -570,7 +580,7 @@ const Navigation = () => {
     const map = mapInstance.current;
     const pos = lastPositionRef.current;
     if (!map || !pos || !transportMode) return;
-    const cam = getAdaptiveCamera(transportMode, lastSpeedRef.current, viewMode);
+    const cam = getAdaptiveCamera(transportMode, lastSpeedRef.current, viewModeRef.current);
     const bearingRad = (lastBearingRef.current * Math.PI) / 180;
     const offsetLat = pos.lat + Math.cos(bearingRad) * cam.offsetDist;
     const offsetLng = pos.lng + Math.sin(bearingRad) * cam.offsetDist;
