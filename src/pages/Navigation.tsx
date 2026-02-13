@@ -185,15 +185,19 @@ const Navigation = () => {
     const config = getModeConfig(mode);
     setStatus("locating");
 
+    const isFirstFix = { value: true };
+
     const processPosition = async (pos: GeolocationPosition) => {
       const lat = pos.coords.latitude;
       const lng = pos.coords.longitude;
       const heading = pos.coords.heading;
       const currentPos = { lat, lng };
 
-      // Calculate bearing
+      // Calculate bearing — on first fix, point toward destination
       let bearing = lastBearingRef.current;
-      if (heading != null && !isNaN(heading)) {
+      if (isFirstFix.value) {
+        bearing = calcBearing(currentPos, { lat: destLat, lng: destLng });
+      } else if (heading != null && !isNaN(heading)) {
         bearing = heading;
       } else if (lastPositionRef.current) {
         const dist = Math.sqrt(
@@ -214,15 +218,27 @@ const Navigation = () => {
       }
       rotateArrow(bearing);
 
-      // Camera follow
-      map.easeTo({
-        center: [lng, lat],
-        zoom: config.zoomLevel,
-        pitch: config.pitch,
-        bearing: bearing,
-        duration: config.transitionSpeed,
-        easing: (t) => t * (2 - t),
-      });
+      // Camera — first fix: dramatic flyTo into 3D driving perspective
+      if (isFirstFix.value) {
+        isFirstFix.value = false;
+        map.flyTo({
+          center: [lng, lat],
+          zoom: config.zoomLevel,
+          pitch: config.pitch,
+          bearing: bearing,
+          duration: 2000,
+          essential: true,
+        });
+      } else {
+        map.easeTo({
+          center: [lng, lat],
+          zoom: config.zoomLevel,
+          pitch: config.pitch,
+          bearing: bearing,
+          duration: config.transitionSpeed,
+          easing: (t) => t * (2 - t),
+        });
+      }
 
       // Check if arrived (within 50m)
       const distToDest = Math.sqrt(Math.pow(lat - destLat, 2) + Math.pow(lng - destLng, 2)) * 111000;
