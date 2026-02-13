@@ -154,10 +154,11 @@ const Navigation = () => {
       container: mapRef.current,
       style: DARK_STYLE,
       center: [destLng, destLat],
-      zoom: 15,
-      pitch: 0,
+      zoom: 16,
+      pitch: 60,
       bearing: 0,
       attributionControl: false,
+      maxPitch: 85,
     });
 
     map.on("load", () => {
