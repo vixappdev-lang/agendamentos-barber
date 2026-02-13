@@ -21,8 +21,7 @@ import {
 const navItems = [
   { label: "Dashboard", path: "/admin", icon: LayoutDashboard },
   { label: "Serviços", path: "/admin/services", icon: Scissors },
-  { label: "Produtos", path: "/admin/products", icon: ShoppingBag },
-  { label: "Pedidos", path: "/admin/orders", icon: Package },
+  { label: "Loja", path: "/admin/store", icon: ShoppingBag },
   { label: "Barbeiros", path: "/admin/barbers", icon: Users },
   { label: "Agendamentos", path: "/admin/appointments", icon: CalendarDays },
   { label: "Cupons", path: "/admin/coupons", icon: Tag },
