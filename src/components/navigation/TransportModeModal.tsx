@@ -28,10 +28,10 @@ export const getOsrmProfile = (mode: TransportMode): string => {
 
 export const getModeConfig = (mode: TransportMode) => {
   const configs: Record<TransportMode, { avgSpeed: number; zoomLevel: number; pitch: number; cameraDistance: number; transitionSpeed: number }> = {
-    driving: { avgSpeed: 40, zoomLevel: 16, pitch: 60, cameraDistance: 200, transitionSpeed: 1500 },
-    motorcycle: { avgSpeed: 35, zoomLevel: 16.5, pitch: 58, cameraDistance: 180, transitionSpeed: 1200 },
-    cycling: { avgSpeed: 15, zoomLevel: 17, pitch: 50, cameraDistance: 120, transitionSpeed: 2000 },
-    walking: { avgSpeed: 5, zoomLevel: 18, pitch: 45, cameraDistance: 80, transitionSpeed: 2500 },
+    driving: { avgSpeed: 40, zoomLevel: 17, pitch: 72, cameraDistance: 200, transitionSpeed: 1200 },
+    motorcycle: { avgSpeed: 35, zoomLevel: 17.2, pitch: 70, cameraDistance: 180, transitionSpeed: 1000 },
+    cycling: { avgSpeed: 15, zoomLevel: 17.8, pitch: 62, cameraDistance: 120, transitionSpeed: 1800 },
+    walking: { avgSpeed: 5, zoomLevel: 18.5, pitch: 55, cameraDistance: 80, transitionSpeed: 2200 },
   };
   return configs[mode];
 };
@@ -49,14 +49,14 @@ const TransportModeModal = ({ onSelect }: TransportModeModalProps) => {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[100] flex items-center justify-center p-6"
+      className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-4 sm:p-6"
       style={{ background: "hsl(230 20% 5% / 0.95)", backdropFilter: "blur(20px)" }}
     >
       <motion.div
         initial={{ y: 40, opacity: 0, scale: 0.95 }}
         animate={{ y: 0, opacity: 1, scale: 1 }}
         transition={{ type: "spring", damping: 25, stiffness: 300 }}
-        className="w-full max-w-sm"
+        className="w-full max-w-sm pb-safe"
       >
         <div className="text-center mb-8">
           <motion.div

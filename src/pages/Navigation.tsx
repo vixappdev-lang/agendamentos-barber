@@ -218,11 +218,17 @@ const Navigation = () => {
       }
       rotateArrow(bearing);
 
-      // Camera — first fix: dramatic flyTo into 3D driving perspective
+      // Camera — first fix: dramatic flyTo into 3D driving perspective (behind-the-user view)
+      // Offset center slightly ahead of user in bearing direction for "behind" effect
+      const offsetDist = 0.0004; // ~40m ahead
+      const bearingRad = (bearing * Math.PI) / 180;
+      const offsetLat = lat + Math.cos(bearingRad) * offsetDist;
+      const offsetLng = lng + Math.sin(bearingRad) * offsetDist;
+
       if (isFirstFix.value) {
         isFirstFix.value = false;
         map.flyTo({
-          center: [lng, lat],
+          center: [offsetLng, offsetLat],
           zoom: config.zoomLevel,
           pitch: config.pitch,
           bearing: bearing,
@@ -231,7 +237,7 @@ const Navigation = () => {
         });
       } else {
         map.easeTo({
-          center: [lng, lat],
+          center: [offsetLng, offsetLat],
           zoom: config.zoomLevel,
           pitch: config.pitch,
           bearing: bearing,
@@ -327,9 +333,15 @@ const Navigation = () => {
   };
 
   return (
-    <div className="fixed inset-0 w-screen h-screen overflow-hidden" style={{ background: "hsl(230 18% 6%)" }}>
+    <div className="fixed inset-0 w-screen h-[100dvh] overflow-hidden touch-none" style={{ background: "hsl(230 18% 6%)" }}>
       {/* Fullscreen map */}
       <div ref={mapRef} className="absolute inset-0 w-full h-full" />
+
+      {/* Mobile viewport meta override */}
+      <style>{`
+        @viewport { width: device-width; height: device-height; }
+        html, body, #root { overflow: hidden !important; height: 100dvh !important; }
+      `}</style>
 
       {/* Transport mode selection */}
       <AnimatePresence>
