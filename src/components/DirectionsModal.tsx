@@ -333,7 +333,8 @@ const DirectionsModal = ({ onClose }: DirectionsModalProps) => {
   };
 
   const openGPS = () => {
-    window.open(`https://www.google.com/maps/dir/?api=1&destination=${destLat},${destLng}`, "_blank");
+    const params = new URLSearchParams({ lat: String(destLat), lng: String(destLng), address });
+    window.open(`/navegacao?${params.toString()}`, "_blank");
   };
 
   return (
