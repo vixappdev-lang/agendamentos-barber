@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Scissors, Search, ShoppingBag, Settings as SettingsIcon } from "lucide-react";
+import { Scissors, Search, ShoppingBag, Package } from "lucide-react";
 import Header from "@/components/Header";
 import ServiceCard from "@/components/ServiceCard";
 import ProductCard from "@/components/ProductCard";
@@ -9,8 +9,8 @@ import GoogleAuthModal from "@/components/GoogleAuthModal";
 import Footer from "@/components/Footer";
 import DirectionsModal from "@/components/DirectionsModal";
 import PrizeWheel from "@/components/PrizeWheel";
-import StoreConfigModal from "@/components/store/StoreConfigModal";
 import CheckoutModal from "@/components/store/CheckoutModal";
+import OrderTracker from "@/components/store/OrderTracker";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { stockImages } from "@/data/stockImages";
@@ -84,8 +84,8 @@ const Index = () => {
   const [wheelEnabled, setWheelEnabled] = useState(false);
   const [showWheel, setShowWheel] = useState(false);
   const [storeOrderMode, setStoreOrderMode] = useState<"ifood" | "whatsapp">("whatsapp");
-  const [showStoreConfig, setShowStoreConfig] = useState(false);
   const [cart, setCart] = useState<CartItem[]>([]);
+  const [showOrderTracker, setShowOrderTracker] = useState(false);
   const [showCheckout, setShowCheckout] = useState(false);
   const [whatsappNumber, setWhatsappNumber] = useState("");
   const [pixKey, setPixKey] = useState("");
@@ -253,15 +253,16 @@ const Index = () => {
             </>
           ) : (
             <>
-              {/* Store header with config */}
+              {/* Store header with order tracker */}
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mb-4 min-[375px]:mb-5">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <ShoppingBag className="w-4 h-4 text-primary" />
                     <h3 className="text-[10px] min-[375px]:text-xs font-semibold text-muted-foreground uppercase tracking-[0.2em]">Nossos Produtos</h3>
                   </div>
-                  <button onClick={() => setShowStoreConfig(true)} className="p-2 rounded-lg" style={{ background: "hsl(0 0% 100% / 0.05)" }}>
-                    <SettingsIcon className="w-4 h-4 text-muted-foreground" />
+                  <button onClick={() => setShowOrderTracker(true)} className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-[11px] font-semibold transition-all"
+                    style={{ background: "hsl(245 60% 55% / 0.1)", color: "hsl(245 60% 70%)", border: "1px solid hsl(245 60% 55% / 0.2)" }}>
+                    <Package className="w-3.5 h-3.5" /> Meus Pedidos
                   </button>
                 </div>
               </motion.div>
@@ -326,12 +327,8 @@ const Index = () => {
       </AnimatePresence>
 
       <AnimatePresence>
-        {showStoreConfig && (
-          <StoreConfigModal
-            onClose={() => setShowStoreConfig(false)}
-            currentMode={storeOrderMode}
-            onModeSelected={(mode) => setStoreOrderMode(mode)}
-          />
+        {showOrderTracker && (
+          <OrderTracker onClose={() => setShowOrderTracker(false)} customerPhone="" />
         )}
       </AnimatePresence>
 
