@@ -1,13 +1,15 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Plus, Minus, RotateCcw } from "lucide-react";
+import { X, Plus, Minus, RotateCcw, Eye } from "lucide-react";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import TransportModeModal, { type TransportMode, getModeConfig } from "@/components/navigation/TransportModeModal";
 import TurnInstruction, { type StepInstruction } from "@/components/navigation/TurnInstruction";
 
 const MAP_STYLE = "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json";
+
+type ViewMode = "3d" | "2d";
 
 // ── 3D Buildings Layer ──
 const add3DBuildings = (map: maplibregl.Map) => {
@@ -33,26 +35,42 @@ const add3DBuildings = (map: maplibregl.Map) => {
         paint: {
           "fill-extrusion-color": [
             "interpolate", ["linear"], ["get", "render_height"],
-            0, "hsl(230, 20%, 16%)",
-            50, "hsl(230, 15%, 22%)",
-            200, "hsl(230, 12%, 28%)",
+            0, "hsl(230, 22%, 18%)",
+            20, "hsl(230, 18%, 24%)",
+            50, "hsl(230, 14%, 30%)",
+            100, "hsl(225, 12%, 35%)",
+            200, "hsl(220, 10%, 40%)",
           ],
           "fill-extrusion-height": [
             "interpolate", ["linear"], ["zoom"],
             14, 0,
-            16, ["get", "render_height"],
+            15.5, ["get", "render_height"],
           ],
           "fill-extrusion-base": [
             "interpolate", ["linear"], ["zoom"],
             14, 0,
-            16, ["get", "render_min_height"],
+            15.5, ["get", "render_min_height"],
           ],
-          "fill-extrusion-opacity": 0.8,
+          "fill-extrusion-opacity": 0.88,
+          "fill-extrusion-vertical-gradient": true,
         },
       },
       labelLayerId
     );
   }
+};
+
+const remove3DBuildings = (map: maplibregl.Map) => {
+  if (map.getLayer("3d-buildings")) {
+    map.removeLayer("3d-buildings");
+  }
+};
+
+// ── Lerp helper ──
+const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
+const lerpAngle = (a: number, b: number, t: number) => {
+  let diff = ((b - a + 540) % 360) - 180;
+  return a + diff * t;
 };
 
 const Navigation = () => {
@@ -72,16 +90,23 @@ const Navigation = () => {
   const routeVersionRef = useRef(0);
   const routeCoordsRef = useRef<[number, number][] | null>(null);
   const stepsRef = useRef<any[] | null>(null);
+  const totalDistanceRef = useRef(0);
+  const smoothAnimRef = useRef<number | null>(null);
+  const targetCameraRef = useRef<{ lat: number; lng: number; bearing: number; zoom: number; pitch: number } | null>(null);
+  const currentCameraRef = useRef<{ lat: number; lng: number; bearing: number } | null>(null);
+  const offRouteCountRef = useRef(0);
 
   const [transportMode, setTransportMode] = useState<TransportMode | null>(null);
   const [osrmProfile, setOsrmProfile] = useState("driving");
-  const [routeInfo, setRouteInfo] = useState<{ distance: string; duration: string; eta: string } | null>(null);
+  const [routeInfo, setRouteInfo] = useState<{ distance: string; duration: string; eta: string; distanceMeters?: number } | null>(null);
   const [currentStreet, setCurrentStreet] = useState<string | null>(null);
   const [currentStep, setCurrentStep] = useState<StepInstruction | null>(null);
   const [nextStep, setNextStep] = useState<StepInstruction | null>(null);
-  const [status, setStatus] = useState<"choosing" | "locating" | "routing" | "active" | "arrived" | "error">("choosing");
+  const [status, setStatus] = useState<"choosing" | "locating" | "routing" | "active" | "arrived" | "recalculating" | "error">("choosing");
   const [errorMsg, setErrorMsg] = useState("");
   const [mapReady, setMapReady] = useState(false);
+  const [viewMode, setViewMode] = useState<ViewMode>("3d");
+  const [progressPercent, setProgressPercent] = useState(0);
 
   // ── Destination marker ──
   const createDestMarker = useCallback((map: maplibregl.Map) => {
@@ -145,8 +170,6 @@ const Navigation = () => {
   // ── Find current step based on user position ──
   const findCurrentStep = useCallback((userLat: number, userLng: number, steps: any[]) => {
     if (!steps || steps.length === 0) return;
-
-    // Find closest step by checking maneuver locations
     let minDist = Infinity;
     let closestIdx = 0;
 
@@ -160,8 +183,7 @@ const Navigation = () => {
       }
     }
 
-    // If we're very close to current step maneuver, show next step
-    const threshold = 0.0003; // ~30m
+    const threshold = 0.0003;
     if (minDist < threshold && closestIdx < steps.length - 1) {
       closestIdx++;
     }
@@ -170,6 +192,24 @@ const Navigation = () => {
     setCurrentStep(parsed[closestIdx] || null);
     setNextStep(parsed[closestIdx + 1] || null);
   }, [parseSteps]);
+
+  // ── Check if user is off-route ──
+  const isOffRoute = useCallback((lat: number, lng: number): boolean => {
+    const coords = routeCoordsRef.current;
+    if (!coords || coords.length < 2) return false;
+
+    // Find min distance from user to any route segment
+    let minDist = Infinity;
+    for (let i = 0; i < coords.length; i++) {
+      const dx = lng - coords[i][0];
+      const dy = lat - coords[i][1];
+      const d = Math.sqrt(dx * dx + dy * dy) * 111000; // approx meters
+      if (d < minDist) minDist = d;
+    }
+
+    // Off-route if more than 50m away
+    return minDist > 50;
+  }, []);
 
   // ── Fetch route ──
   const fetchRoute = useCallback(async (fromLng: number, fromLat: number, profile: string) => {
@@ -242,7 +282,6 @@ const Navigation = () => {
   // ── Redraw route on style change ──
   const redrawRouteOnStyle = useCallback((map: maplibregl.Map) => {
     if (routeCoordsRef.current) {
-      // Force re-add source/layers
       try { map.removeLayer("nav-route-glow"); } catch {}
       try { map.removeLayer("nav-route-casing"); } catch {}
       try { map.removeLayer("nav-route-line"); } catch {}
@@ -252,11 +291,14 @@ const Navigation = () => {
   }, [drawRoute]);
 
   // ── Speed-adaptive camera parameters ──
-  const getAdaptiveCamera = useCallback((mode: TransportMode, speedMs: number) => {
+  const getAdaptiveCamera = useCallback((mode: TransportMode, speedMs: number, currentViewMode: ViewMode) => {
     const config = getModeConfig(mode);
     const speedKmh = speedMs * 3.6;
 
-    // Adjust zoom: faster = zoom out slightly for better overview
+    if (currentViewMode === "2d") {
+      return { zoom: 16, offsetDist: 0.0002, pitch: 0, transitionSpeed: 800 };
+    }
+
     let zoom = config.zoomLevel;
     if (mode === "driving" || mode === "motorcycle") {
       if (speedKmh > 60) zoom = config.zoomLevel - 0.5;
@@ -264,13 +306,54 @@ const Navigation = () => {
       else if (speedKmh < 10) zoom = config.zoomLevel + 0.3;
     }
 
-    // Adjust offset: faster = look further ahead
     let offsetDist = 0.0004;
     if (speedKmh > 60) offsetDist = 0.0008;
     else if (speedKmh > 30) offsetDist = 0.0006;
     else if (speedKmh < 5) offsetDist = 0.0002;
 
     return { zoom, offsetDist, pitch: config.pitch, transitionSpeed: config.transitionSpeed };
+  }, []);
+
+  // ── Smooth camera animation loop ──
+  const startSmoothCamera = useCallback(() => {
+    if (smoothAnimRef.current) return;
+
+    const animate = () => {
+      const map = mapInstance.current;
+      const target = targetCameraRef.current;
+      if (!map || !target) {
+        smoothAnimRef.current = requestAnimationFrame(animate);
+        return;
+      }
+
+      if (!currentCameraRef.current) {
+        currentCameraRef.current = { lat: target.lat, lng: target.lng, bearing: target.bearing };
+      }
+
+      const t = 0.08; // smoothing factor
+      const cur = currentCameraRef.current;
+      cur.lat = lerp(cur.lat, target.lat, t);
+      cur.lng = lerp(cur.lng, target.lng, t);
+      cur.bearing = lerpAngle(cur.bearing, target.bearing, t);
+
+      map.jumpTo({
+        center: [cur.lng, cur.lat],
+        zoom: target.zoom,
+        pitch: target.pitch,
+        bearing: cur.bearing,
+      });
+
+      smoothAnimRef.current = requestAnimationFrame(animate);
+    };
+
+    smoothAnimRef.current = requestAnimationFrame(animate);
+  }, []);
+
+  const stopSmoothCamera = useCallback(() => {
+    if (smoothAnimRef.current) {
+      cancelAnimationFrame(smoothAnimRef.current);
+      smoothAnimRef.current = null;
+    }
   }, []);
 
   // ── Initialize map ──
@@ -296,16 +379,33 @@ const Navigation = () => {
     });
 
     map.on("style.load", () => {
-      add3DBuildings(map);
+      if (viewMode === "3d") add3DBuildings(map);
       redrawRouteOnStyle(map);
     });
 
     return () => {
+      stopSmoothCamera();
       if (watchIdRef.current !== null) navigator.geolocation.clearWatch(watchIdRef.current);
       map.remove();
       mapInstance.current = null;
     };
-  }, [destLat, destLng, createDestMarker, redrawRouteOnStyle]);
+  }, [destLat, destLng, createDestMarker, redrawRouteOnStyle, stopSmoothCamera]);
+
+  // ── Toggle view mode ──
+  const toggleViewMode = useCallback(() => {
+    const map = mapInstance.current;
+    if (!map) return;
+    const newMode = viewMode === "3d" ? "2d" : "3d";
+    setViewMode(newMode);
+
+    if (newMode === "3d") {
+      add3DBuildings(map);
+      map.easeTo({ pitch: 65, duration: 800 });
+    } else {
+      remove3DBuildings(map);
+      map.easeTo({ pitch: 0, duration: 800 });
+    }
+  }, [viewMode]);
 
   // ── Start navigation ──
   const startNavigation = useCallback(async (mode: TransportMode, profile: string) => {
@@ -318,6 +418,8 @@ const Navigation = () => {
 
     setStatus("locating");
     const isFirstFix = { value: true };
+
+    startSmoothCamera();
 
     const processPosition = async (pos: GeolocationPosition) => {
       const lat = pos.coords.latitude;
@@ -345,7 +447,7 @@ const Navigation = () => {
       lastBearingRef.current = bearing;
       lastPositionRef.current = currentPos;
 
-      // Update/create user marker
+      // Update/create user marker with smooth position
       if (userMarkerRef.current) {
         userMarkerRef.current.setLngLat([lng, lat]);
       } else {
@@ -353,17 +455,20 @@ const Navigation = () => {
       }
       rotateArrow(bearing);
 
-      // Set active immediately on first position fix
-      setStatus("active");
+      // Set active immediately
+      if (status !== "arrived") setStatus("active");
 
-      // Adaptive camera
-      const cam = getAdaptiveCamera(mode, speed);
+      // Adaptive camera → set target for smooth loop
+      const cam = getAdaptiveCamera(mode, speed, viewMode);
       const bearingRad = (bearing * Math.PI) / 180;
       const offsetLat = lat + Math.cos(bearingRad) * cam.offsetDist;
       const offsetLng = lng + Math.sin(bearingRad) * cam.offsetDist;
 
       if (isFirstFix.value) {
         isFirstFix.value = false;
+        // Snap immediately on first fix
+        currentCameraRef.current = { lat: offsetLat, lng: offsetLng, bearing };
+        targetCameraRef.current = { lat: offsetLat, lng: offsetLng, bearing, zoom: cam.zoom, pitch: cam.pitch };
         map.flyTo({
           center: [offsetLng, offsetLat],
           zoom: cam.zoom,
@@ -373,21 +478,26 @@ const Navigation = () => {
           essential: true,
         });
       } else {
-        map.easeTo({
-          center: [offsetLng, offsetLat],
-          zoom: cam.zoom,
-          pitch: cam.pitch,
-          bearing,
-          duration: cam.transitionSpeed,
-          easing: (t) => t * (2 - t),
-        });
+        targetCameraRef.current = { lat: offsetLat, lng: offsetLng, bearing, zoom: cam.zoom, pitch: cam.pitch };
       }
 
       // Check if arrived (within 50m)
       const distToDest = Math.sqrt(Math.pow(lat - destLat, 2) + Math.pow(lng - destLng, 2)) * 111000;
       if (distToDest < 50) {
         setStatus("arrived");
+        stopSmoothCamera();
         return;
+      }
+
+      // Off-route detection
+      if (isOffRoute(lat, lng)) {
+        offRouteCountRef.current++;
+        if (offRouteCountRef.current >= 3) {
+          setStatus("recalculating");
+          offRouteCountRef.current = 0;
+        }
+      } else {
+        offRouteCountRef.current = 0;
       }
 
       // Fetch and draw route
@@ -395,19 +505,26 @@ const Navigation = () => {
       const route = await fetchRoute(lng, lat, profile);
       if (version !== routeVersionRef.current) return;
       if (route) {
-        setRouteInfo({ distance: route.distance, duration: route.duration, eta: route.eta });
+        if (totalDistanceRef.current === 0) totalDistanceRef.current = route.distanceMeters;
+        // Calculate real progress
+        const remaining = route.distanceMeters;
+        const total = totalDistanceRef.current;
+        const pct = total > 0 ? Math.max(0, Math.min(100, ((total - remaining) / total) * 100)) : 0;
+        setProgressPercent(pct);
+
+        setRouteInfo({ distance: route.distance, duration: route.duration, eta: route.eta, distanceMeters: route.distanceMeters });
         setCurrentStreet(route.street);
+        if (status === "recalculating") setStatus("active");
         drawRoute(map, route.geometry.coordinates as [number, number][]);
         findCurrentStep(lat, lng, route.steps);
       }
     };
 
-    // Try high accuracy first, fallback to low accuracy
+    // Geolocation with fallback
     const geoOptions = { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 };
     const fallbackOptions = { enableHighAccuracy: false, timeout: 10000, maximumAge: 30000 };
 
     const onError = (err: GeolocationPositionError) => {
-      // On timeout with high accuracy, retry with low accuracy
       if (err.code === 3) {
         navigator.geolocation.getCurrentPosition(
           (pos) => processPosition(pos),
@@ -434,7 +551,7 @@ const Navigation = () => {
       () => {},
       { enableHighAccuracy: true, timeout: 20000, maximumAge: 3000 }
     );
-  }, [destLat, destLng, fetchRoute, drawRoute, createUserMarker, rotateArrow, calcBearing, getAdaptiveCamera, findCurrentStep]);
+  }, [destLat, destLng, fetchRoute, drawRoute, createUserMarker, rotateArrow, calcBearing, getAdaptiveCamera, findCurrentStep, isOffRoute, startSmoothCamera, stopSmoothCamera, viewMode, status]);
 
   // ── Transport mode selected ──
   const handleTransportSelect = (mode: TransportMode, profile: string) => {
@@ -453,10 +570,14 @@ const Navigation = () => {
     const map = mapInstance.current;
     const pos = lastPositionRef.current;
     if (!map || !pos || !transportMode) return;
-    const cam = getAdaptiveCamera(transportMode, lastSpeedRef.current);
+    const cam = getAdaptiveCamera(transportMode, lastSpeedRef.current, viewMode);
     const bearingRad = (lastBearingRef.current * Math.PI) / 180;
+    const offsetLat = pos.lat + Math.cos(bearingRad) * cam.offsetDist;
+    const offsetLng = pos.lng + Math.sin(bearingRad) * cam.offsetDist;
+    currentCameraRef.current = { lat: offsetLat, lng: offsetLng, bearing: lastBearingRef.current };
+    targetCameraRef.current = { lat: offsetLat, lng: offsetLng, bearing: lastBearingRef.current, zoom: cam.zoom, pitch: cam.pitch };
     map.flyTo({
-      center: [pos.lng + Math.sin(bearingRad) * cam.offsetDist, pos.lat + Math.cos(bearingRad) * cam.offsetDist],
+      center: [offsetLng, offsetLat],
       zoom: cam.zoom,
       pitch: cam.pitch,
       bearing: lastBearingRef.current,
@@ -471,6 +592,7 @@ const Navigation = () => {
   };
 
   const handleClose = () => {
+    stopSmoothCamera();
     window.close();
     window.location.href = "/";
   };
@@ -497,16 +619,32 @@ const Navigation = () => {
         {!transportMode && <TransportModeModal onSelect={handleTransportSelect} />}
       </AnimatePresence>
 
+      {/* Recalculating banner */}
+      <AnimatePresence>
+        {status === "recalculating" && (
+          <motion.div
+            initial={{ y: -40, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: -40, opacity: 0 }}
+            className="absolute top-0 left-0 right-0 z-30 flex items-center justify-center py-3 safe-area-top"
+            style={{ background: "hsl(30 90% 50% / 0.9)", backdropFilter: "blur(8px)" }}
+          >
+            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+            <span className="text-sm font-bold text-white">Recalculando rota...</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Top bar - turn instructions + street */}
       <AnimatePresence>
-        {status === "active" && (
+        {(status === "active" || status === "recalculating") && (
           <motion.div
             initial={{ y: -80, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: -80, opacity: 0 }}
             className="absolute top-0 left-0 right-0 z-20 safe-area-top"
           >
-            <div className="mx-3 mt-3 space-y-2">
+            <div className="mx-3 mt-3 space-y-2" style={{ marginTop: status === "recalculating" ? "48px" : undefined }}>
               {/* Turn instruction */}
               <TurnInstruction step={currentStep} nextStep={nextStep} />
 
@@ -543,7 +681,7 @@ const Navigation = () => {
 
       {/* Bottom info panel */}
       <AnimatePresence>
-        {status === "active" && routeInfo && (
+        {(status === "active" || status === "recalculating") && routeInfo && (
           <motion.div
             initial={{ y: 80, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
@@ -569,12 +707,12 @@ const Navigation = () => {
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <div className="flex-1 h-1 rounded-full overflow-hidden" style={{ background: "hsl(0 0% 100% / 0.1)" }}>
+                <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: "hsl(0 0% 100% / 0.1)" }}>
                   <motion.div
                     className="h-full rounded-full"
                     style={{ background: "linear-gradient(90deg, #7c3aed, #a78bfa)" }}
-                    initial={{ width: "0%" }}
-                    animate={{ width: "20%" }}
+                    animate={{ width: `${Math.max(2, progressPercent)}%` }}
+                    transition={{ duration: 0.8, ease: "easeOut" }}
                   />
                 </div>
                 <p className="text-[10px] text-muted-foreground truncate max-w-[120px]">{destAddress}</p>
@@ -591,11 +729,16 @@ const Navigation = () => {
             { icon: <Plus className="w-4 h-4" />, action: () => handleZoom(1) },
             { icon: <Minus className="w-4 h-4" />, action: () => handleZoom(-1) },
             { icon: <RotateCcw className="w-4 h-4" />, action: handleRecenter },
+            {
+              icon: <Eye className="w-4 h-4" />,
+              action: toggleViewMode,
+              label: viewMode === "3d" ? "2D" : "3D",
+            },
           ].map((btn, i) => (
             <button
               key={i}
               onClick={btn.action}
-              className="w-10 h-10 rounded-xl flex items-center justify-center transition-all active:scale-90"
+              className="relative w-10 h-10 rounded-xl flex items-center justify-center transition-all active:scale-90"
               style={{
                 background: "hsl(0 0% 0% / 0.55)",
                 backdropFilter: "blur(12px)",
@@ -603,6 +746,11 @@ const Navigation = () => {
               }}
             >
               <span className="text-foreground/80">{btn.icon}</span>
+              {"label" in btn && btn.label && (
+                <span className="absolute -left-1 -bottom-1 text-[8px] font-bold px-1 rounded" style={{ background: "hsl(245 60% 55%)", color: "white" }}>
+                  {btn.label}
+                </span>
+              )}
             </button>
           ))}
         </div>
