@@ -13,6 +13,7 @@ import Barbers from "./pages/admin/Barbers";
 import Appointments from "./pages/admin/Appointments";
 import Coupons from "./pages/admin/Coupons";
 import Settings from "./pages/admin/Settings";
+import Navigation from "./pages/Navigation";
 
 const queryClient = new QueryClient();
 
@@ -24,6 +25,7 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
+          <Route path="/navegacao" element={<Navigation />} />
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<Dashboard />} />
