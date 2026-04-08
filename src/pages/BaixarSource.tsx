@@ -1,16 +1,13 @@
 import { useEffect } from "react";
 import { Download, FileCode, CheckCircle } from "lucide-react";
 
-const ZIP_URL = "/barbearia-source.zip?v=20260408-1634";
+const ZIP_URL = "https://vikabbqyfduibrykikvx.supabase.co/storage/v1/object/public/public-assets/barbearia-source.zip?v=20260408-1634";
 
 const BaixarSource = () => {
   useEffect(() => {
     // Auto-download after 1.5s
     const timer = setTimeout(() => {
-      const link = document.createElement("a");
-      link.href = ZIP_URL;
-      link.download = "barbearia-source.zip";
-      link.click();
+      window.location.href = ZIP_URL;
     }, 1500);
     return () => clearTimeout(timer);
   }, []);
@@ -47,7 +44,7 @@ const BaixarSource = () => {
           ))}
         </div>
 
-        <a href={ZIP_URL} download="barbearia-source.zip"
+        <a href={ZIP_URL}
           className="w-full py-3.5 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all"
           style={{ background: "linear-gradient(135deg, hsl(245 60% 50%), hsl(265 60% 55%))", color: "white", boxShadow: "0 4px 20px hsl(245 60% 55% / 0.3)" }}>
           <Download className="w-5 h-5" /> Baixar Projeto Exato (.zip)
