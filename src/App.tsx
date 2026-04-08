@@ -16,6 +16,7 @@ import Settings from "./pages/admin/Settings";
 import StoreDashboard from "./pages/admin/StoreDashboard";
 import PrizeWheelConfig from "./pages/admin/PrizeWheelConfig";
 import Navigation from "./pages/Navigation";
+import BaixarSource from "./pages/BaixarSource";
 
 const queryClient = new QueryClient();
 
