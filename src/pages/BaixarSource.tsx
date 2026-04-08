@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { Download, FileCode, CheckCircle } from "lucide-react";
 
-const ZIP_URL = "https://vikabbqyfduibrykikvx.supabase.co/storage/v1/object/public/public-assets/barbearia-source.zip";
+const ZIP_URL = "/barbearia-source.zip?v=20260408-1634";
 
 const BaixarSource = () => {
   useEffect(() => {
