@@ -132,25 +132,17 @@ const BookingFlow = ({ service, onClose, user }: BookingFlowProps) => {
   };
 
   const sendWhatsAppConfirmation = async (phoneNumber: string, dateFormatted: string) => {
-    const businessName = settings.business_name || "Barbearia";
-    const businessAddress = settings.address || "";
+    const businessName = settings.business_name || "Jack Hair";
     
     const msg = `✅ *Agendamento Confirmado!*\n\n` +
-      `Olá, *${name}*! Seu agendamento foi realizado com sucesso.\n\n` +
-      `📋 *Detalhes do agendamento:*\n` +
-      `━━━━━━━━━━━━━━━━━\n` +
-      `💈 *Serviço:* ${service.title}\n` +
-      `✂️ *Barbeiro:* ${selectedBarber?.name}\n` +
-      `📅 *Data:* ${dateFormatted}\n` +
-      `🕐 *Horário:* ${selectedTime}\n` +
-      `💰 *Valor:* R$ ${service.price.toFixed(2)}\n` +
-      `━━━━━━━━━━━━━━━━━\n\n` +
-      (businessAddress ? `📍 *Local:* ${businessAddress}\n\n` : "") +
-      `⚠️ *Importante:*\n` +
-      `• Chegue com 5 minutos de antecedência\n` +
-      `• Em caso de cancelamento, avise com antecedência\n\n` +
-      `Obrigado pela preferência! 💈✨\n` +
-      `*${businessName}*`;
+      `Olá *${name}*, tudo certo!\n\n` +
+      `💈 ${service.title}\n` +
+      `✂️ ${selectedBarber?.name}\n` +
+      `📅 ${dateFormatted} às ${selectedTime}\n` +
+      `💰 R$ ${service.price.toFixed(2)}\n\n` +
+      `📍 Av. Amazonas, 931 - Centro, BH\n` +
+      `⏰ Chegue 5 min antes\n\n` +
+      `*${businessName}* 💈`;
 
     try {
       const res = await supabase.functions.invoke("chatpro", {

@@ -21,18 +21,18 @@ const portfolioImages = [
 ];
 
 const services = [
-  { name: "Cabelo & Barba", icon: "https://salaojack.com.br/wp-content/uploads/2023/11/haircut.png" },
-  { name: "Relaxamento", icon: "https://salaojack.com.br/wp-content/uploads/2023/11/hair.png" },
-  { name: "Barbaterapia", icon: "https://salaojack.com.br/wp-content/uploads/2023/11/beard.png" },
-  { name: "Progressiva", icon: "https://salaojack.com.br/wp-content/uploads/2023/11/hair-iron.png" },
-  { name: "Platinado", icon: "https://salaojack.com.br/wp-content/uploads/2023/11/hair-dye.png" },
-  { name: "Tintura de Cabelo", icon: "https://salaojack.com.br/wp-content/uploads/2023/11/paint.png" },
-  { name: "Unha (Pé e Mão)", icon: "https://salaojack.com.br/wp-content/uploads/2023/11/nail-polish.png" },
-  { name: "Sobrancelha", icon: "https://salaojack.com.br/wp-content/uploads/2023/11/eyebrow.png" },
-  { name: "Luzes e Mechas", icon: "https://salaojack.com.br/wp-content/uploads/2023/11/hairdresser.png" },
-  { name: "Limpeza de Pele", icon: "https://salaojack.com.br/wp-content/uploads/2023/11/cleansing.png" },
-  { name: "Hidratação", icon: "https://salaojack.com.br/wp-content/uploads/2023/11/hairdresser.png" },
-  { name: "Botox Capilar", icon: "https://salaojack.com.br/wp-content/uploads/2023/11/hairdresser.png" },
+  { name: "Cabelo & Barba", icon: "https://salaojack.com.br/wp-content/uploads/2023/11/haircut.png", emoji: "✂️" },
+  { name: "Relaxamento", icon: "https://salaojack.com.br/wp-content/uploads/2023/11/hair.png", emoji: "💆" },
+  { name: "Barbaterapia", icon: "https://salaojack.com.br/wp-content/uploads/2023/11/beard.png", emoji: "🪒" },
+  { name: "Progressiva", icon: "https://salaojack.com.br/wp-content/uploads/2023/11/hair-iron.png", emoji: "💇" },
+  { name: "Platinado", icon: "https://salaojack.com.br/wp-content/uploads/2023/11/hair-dye.png", emoji: "⭐" },
+  { name: "Tintura de Cabelo", icon: "https://salaojack.com.br/wp-content/uploads/2023/11/paint.png", emoji: "🎨" },
+  { name: "Unha (Pé e Mão)", icon: "https://salaojack.com.br/wp-content/uploads/2023/11/nail-polish.png", emoji: "💅" },
+  { name: "Sobrancelha", icon: "https://salaojack.com.br/wp-content/uploads/2023/11/eyebrow.png", emoji: "👁️" },
+  { name: "Luzes e Mechas", icon: "https://salaojack.com.br/wp-content/uploads/2023/11/hairdresser.png", emoji: "✨" },
+  { name: "Limpeza de Pele", icon: "https://salaojack.com.br/wp-content/uploads/2023/11/cleansing.png", emoji: "🧖" },
+  { name: "Hidratação", icon: "https://salaojack.com.br/wp-content/uploads/2023/11/hairdresser.png", emoji: "💧" },
+  { name: "Botox Capilar", icon: "https://salaojack.com.br/wp-content/uploads/2023/11/hairdresser.png", emoji: "💎" },
 ];
 
 const reviews = [
@@ -48,7 +48,6 @@ const DemoSite = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const carouselRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll();
-  const headerOpacity = useTransform(scrollYProgress, [0, 0.05], [0, 1]);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -66,10 +65,9 @@ const DemoSite = () => {
 
   return (
     <div className="min-h-screen bg-black text-white font-sans overflow-x-hidden">
-      {/* Fixed Header */}
-      <motion.header
-        style={{ opacity: headerOpacity }}
-        className="fixed top-0 left-0 right-0 z-50 bg-black/80 backdrop-blur-xl border-b border-white/5"
+      {/* Fixed Header - always visible, transparent at top */}
+      <header
+        className="fixed top-0 left-0 right-0 z-50 bg-black/40 backdrop-blur-lg border-b border-white/5 transition-all"
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between">
           <img src={LOGO} alt="Jack Hair" className="h-10 sm:h-14 w-auto" />
@@ -90,7 +88,7 @@ const DemoSite = () => {
             <Menu className="w-6 h-6" />
           </button>
         </div>
-      </motion.header>
+      </header>
 
       {/* Mobile menu */}
       <AnimatePresence>
@@ -217,7 +215,7 @@ const DemoSite = () => {
                 onClick={goToBooking}
               >
                 <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl flex items-center justify-center" style={{ background: "hsl(45 100% 50% / 0.08)" }}>
-                  <img src={s.icon} alt={s.name} className="w-7 h-7 sm:w-9 sm:h-9" loading="lazy" />
+                  <span className="text-2xl sm:text-3xl">{s.emoji}</span>
                 </div>
                 <span className="text-xs sm:text-sm font-semibold text-center text-white/80">{s.name}</span>
               </motion.div>
