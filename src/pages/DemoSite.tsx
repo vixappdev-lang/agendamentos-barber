@@ -89,7 +89,7 @@ const DemoSite = () => {
             <Menu className="w-6 h-6" />
           </button>
         </div>
-      </motion.header>
+      </header>
 
       {/* Mobile menu */}
       <AnimatePresence>
