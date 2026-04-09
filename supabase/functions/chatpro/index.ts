@@ -44,7 +44,10 @@ Deno.serve(async (req) => {
         return jsonResponse({ success: false, reason: "chatpro_not_configured" });
       }
 
-      const baseUrl = `${cfg.endpoint}/${cfg.instance_id}/api/v1`;
+      let endpoint = cfg.endpoint.replace(/\/$/, "");
+      const baseUrl = endpoint.includes(cfg.instance_id)
+        ? `${endpoint}/api/v1`
+        : `${endpoint}/${cfg.instance_id}/api/v1`;
       const chatproHeaders = {
         "Accept": "application/json",
         "Content-Type": "application/json",
