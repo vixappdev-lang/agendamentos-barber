@@ -19,7 +19,7 @@ const Footer = () => {
         <div className="flex flex-col items-center text-center gap-6">
           {/* Brand */}
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl gold-gradient flex items-center justify-center" style={{ boxShadow: '0 4px 16px hsl(245 60% 55% / 0.2)' }}>
+            <div className="w-9 h-9 rounded-xl gold-gradient flex items-center justify-center" style={{ boxShadow: '0 4px 16px hsl(45 100% 50% / 0.2)' }}>
               <Scissors className="w-4 h-4 text-primary-foreground" />
             </div>
             <span className="text-lg font-bold text-foreground tracking-tight">{businessName}</span>

@@ -90,7 +90,7 @@ const Header = ({ user, onSignOut, onCategorySelect, onDirections, onOpenWheel }
       }}>
         <div className="container mx-auto px-3 min-[375px]:px-4 h-14 min-[375px]:h-16 flex items-center justify-between">
           <div className="flex items-center gap-2.5 min-[375px]:gap-3">
-            <div className="w-9 h-9 min-[375px]:w-10 min-[375px]:h-10 rounded-xl gold-gradient flex items-center justify-center" style={{ boxShadow: '0 4px 20px hsl(245 60% 55% / 0.25)' }}>
+            <div className="w-9 h-9 min-[375px]:w-10 min-[375px]:h-10 rounded-xl gold-gradient flex items-center justify-center" style={{ boxShadow: '0 4px 20px hsl(45 100% 50% / 0.25)' }}>
               <Scissors className="w-4 h-4 min-[375px]:w-5 min-[375px]:h-5 text-primary-foreground" />
             </div>
             <div>
@@ -194,7 +194,7 @@ const Header = ({ user, onSignOut, onCategorySelect, onDirections, onOpenWheel }
                         >
                           <div
                             className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
-                            style={{ background: item.id === "roleta" ? 'hsl(280 55% 50% / 0.15)' : 'hsl(245 60% 55% / 0.1)' }}
+                            style={{ background: item.id === "roleta" ? 'hsl(280 55% 50% / 0.15)' : 'hsl(45 100% 50% / 0.1)' }}
                           >
                             <item.icon className="w-4 h-4 text-accent" />
                           </div>

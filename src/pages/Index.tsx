@@ -261,7 +261,7 @@ const Index = () => {
                     <h3 className="text-[10px] min-[375px]:text-xs font-semibold text-muted-foreground uppercase tracking-[0.2em]">Nossos Produtos</h3>
                   </div>
                   <button onClick={() => setShowOrderTracker(true)} className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-[11px] font-semibold transition-all"
-                    style={{ background: "hsl(245 60% 55% / 0.1)", color: "hsl(245 60% 70%)", border: "1px solid hsl(245 60% 55% / 0.2)" }}>
+                    style={{ background: "hsl(45 100% 50% / 0.1)", color: "hsl(45 100% 55%)", border: "1px solid hsl(45 100% 50% / 0.2)" }}>
                     <Package className="w-3.5 h-3.5" /> Meus Pedidos
                   </button>
                 </div>
@@ -291,7 +291,7 @@ const Index = () => {
                     className="fixed bottom-6 left-4 right-4 max-w-2xl mx-auto z-40">
                     <button onClick={() => setShowCheckout(true)}
                       className="w-full flex items-center justify-between px-5 py-4 rounded-2xl font-bold text-sm transition-all"
-                      style={{ background: "hsl(245 60% 55%)", color: "white", boxShadow: "0 8px 32px hsl(245 60% 55% / 0.4)" }}>
+                      style={{ background: "hsl(45 100% 50%)", color: "hsl(0 0% 0%)", boxShadow: "0 8px 32px hsl(45 100% 50% / 0.4)" }}>
                       <span className="flex items-center gap-2">
                         <ShoppingBag className="w-5 h-5" />
                         {cartCount} {cartCount === 1 ? "item" : "itens"}

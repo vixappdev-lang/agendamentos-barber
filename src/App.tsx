@@ -18,6 +18,7 @@ import PrizeWheelConfig from "./pages/admin/PrizeWheelConfig";
 import ChatProConfig from "./pages/admin/ChatProConfig";
 import Navigation from "./pages/Navigation";
 import BaixarSource from "./pages/BaixarSource";
+import DemoSite from "./pages/DemoSite";
 
 const queryClient = new QueryClient();
 
@@ -30,6 +31,7 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/navegacao" element={<Navigation />} />
+          <Route path="/demo-site" element={<DemoSite />} />
           <Route path="/baixar-source" element={<BaixarSource />} />
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/admin" element={<AdminLayout />}>
