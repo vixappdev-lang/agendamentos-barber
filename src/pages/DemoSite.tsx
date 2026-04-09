@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion";
-import { Scissors, MapPin, Phone, Clock, Instagram, Facebook, ChevronLeft, ChevronRight, Star, Menu, X, ArrowRight } from "lucide-react";
+import { Scissors, MapPin, Phone, Clock, Instagram, Facebook, ChevronLeft, ChevronRight, Star, Menu, X, ArrowRight, Brush, Sparkles, Palette, Hand, Eye, Highlighter, HeartPulse, Droplets, Gem, type LucideIcon } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const PHONE = "5531992268984";
@@ -20,19 +20,19 @@ const portfolioImages = [
   "https://salaojack.com.br/wp-content/uploads/2023/11/WhatsApp-Image-2023-11-13-at-16.56.40.jpeg",
 ];
 
-const services = [
-  { name: "Cabelo & Barba", icon: "https://salaojack.com.br/wp-content/uploads/2023/11/haircut.png", emoji: "✂️" },
-  { name: "Relaxamento", icon: "https://salaojack.com.br/wp-content/uploads/2023/11/hair.png", emoji: "💆" },
-  { name: "Barbaterapia", icon: "https://salaojack.com.br/wp-content/uploads/2023/11/beard.png", emoji: "🪒" },
-  { name: "Progressiva", icon: "https://salaojack.com.br/wp-content/uploads/2023/11/hair-iron.png", emoji: "💇" },
-  { name: "Platinado", icon: "https://salaojack.com.br/wp-content/uploads/2023/11/hair-dye.png", emoji: "⭐" },
-  { name: "Tintura de Cabelo", icon: "https://salaojack.com.br/wp-content/uploads/2023/11/paint.png", emoji: "🎨" },
-  { name: "Unha (Pé e Mão)", icon: "https://salaojack.com.br/wp-content/uploads/2023/11/nail-polish.png", emoji: "💅" },
-  { name: "Sobrancelha", icon: "https://salaojack.com.br/wp-content/uploads/2023/11/eyebrow.png", emoji: "👁️" },
-  { name: "Luzes e Mechas", icon: "https://salaojack.com.br/wp-content/uploads/2023/11/hairdresser.png", emoji: "✨" },
-  { name: "Limpeza de Pele", icon: "https://salaojack.com.br/wp-content/uploads/2023/11/cleansing.png", emoji: "🧖" },
-  { name: "Hidratação", icon: "https://salaojack.com.br/wp-content/uploads/2023/11/hairdresser.png", emoji: "💧" },
-  { name: "Botox Capilar", icon: "https://salaojack.com.br/wp-content/uploads/2023/11/hairdresser.png", emoji: "💎" },
+const services: { name: string; Icon: LucideIcon }[] = [
+  { name: "Cabelo & Barba", Icon: Scissors },
+  { name: "Relaxamento", Icon: HeartPulse },
+  { name: "Barbaterapia", Icon: Brush },
+  { name: "Progressiva", Icon: Sparkles },
+  { name: "Platinado", Icon: Star },
+  { name: "Tintura de Cabelo", Icon: Palette },
+  { name: "Unha (Pé e Mão)", Icon: Hand },
+  { name: "Sobrancelha", Icon: Eye },
+  { name: "Luzes e Mechas", Icon: Highlighter },
+  { name: "Limpeza de Pele", Icon: HeartPulse },
+  { name: "Hidratação", Icon: Droplets },
+  { name: "Botox Capilar", Icon: Gem },
 ];
 
 const reviews = [
@@ -64,7 +64,12 @@ const DemoSite = () => {
   const goToBooking = () => navigate("/");
 
   return (
-    <div className="min-h-screen bg-black text-white font-sans overflow-x-hidden">
+    <>
+      <style>{`
+        .demo-site-page::-webkit-scrollbar { width: 0; height: 0; }
+        .demo-site-page { scrollbar-width: none; }
+      `}</style>
+    <div className="demo-site-page min-h-screen bg-black text-white font-sans overflow-x-hidden overflow-y-auto" style={{ scrollbarWidth: "none" as any }}>
       {/* Fixed Header - always visible, transparent at top */}
       <header
         className="fixed top-0 left-0 right-0 z-50 bg-black/40 backdrop-blur-lg border-b border-white/5 transition-all"
@@ -197,7 +202,7 @@ const DemoSite = () => {
       </section>
 
       {/* Services Section */}
-      <section id="servicos" className="py-16 sm:py-24 bg-black">
+      <section id="servicos" className="py-16 sm:py-24" style={{ background: "hsl(0 0% 3%)" }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-10 sm:mb-14">
             <span className="text-sm font-bold uppercase tracking-[0.3em]" style={{ color: "hsl(45 100% 50%)" }}>Nossos Serviços</span>
@@ -210,12 +215,26 @@ const DemoSite = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.05 }}
-                whileHover={{ y: -5, borderColor: "hsl(45 100% 50% / 0.3)" }}
-                className="flex flex-col items-center gap-3 sm:gap-4 p-4 sm:p-6 rounded-2xl border border-white/5 bg-white/[0.02] cursor-pointer transition-all hover:bg-white/[0.04]"
+                whileHover={{ y: -5 }}
+                className="flex flex-col items-center gap-3 sm:gap-4 p-5 sm:p-7 rounded-2xl cursor-pointer transition-all duration-300"
+                style={{
+                  background: "hsl(0 0% 100% / 0.03)",
+                  backdropFilter: "blur(12px)",
+                  border: "1px solid hsl(0 0% 100% / 0.06)",
+                }}
                 onClick={goToBooking}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = "hsl(0 0% 100% / 0.06)";
+                  e.currentTarget.style.borderColor = "hsl(45 100% 50% / 0.2)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = "hsl(0 0% 100% / 0.03)";
+                  e.currentTarget.style.borderColor = "hsl(0 0% 100% / 0.06)";
+                }}
               >
-                <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl flex items-center justify-center" style={{ background: "hsl(45 100% 50% / 0.08)" }}>
-                  <span className="text-2xl sm:text-3xl">{s.emoji}</span>
+                <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl flex items-center justify-center"
+                  style={{ background: "hsl(45 100% 50% / 0.08)", border: "1px solid hsl(45 100% 50% / 0.1)" }}>
+                  <s.Icon className="w-6 h-6 sm:w-7 sm:h-7" style={{ color: "hsl(45 100% 55%)" }} />
                 </div>
                 <span className="text-xs sm:text-sm font-semibold text-center text-white/80">{s.name}</span>
               </motion.div>
@@ -429,6 +448,7 @@ const DemoSite = () => {
         </div>
       </footer>
     </div>
+    </>
   );
 };
 
