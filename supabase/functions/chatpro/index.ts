@@ -176,15 +176,13 @@ Deno.serve(async (req) => {
     }
 
     if (action === "reload") {
-      const res = await fetch(`${baseUrl}/reload`, { method: "GET", headers: chatproHeaders });
-      const data = await res.json();
-      return jsonResponse({ status: res.status, data });
+      const result = await safeFetch(`${baseUrl}/reload`, { method: "GET", headers: chatproHeaders });
+      return jsonResponse(result);
     }
 
     if (action === "remove_session") {
-      const res = await fetch(`${baseUrl}/remove_session`, { method: "GET", headers: chatproHeaders });
-      const data = await res.json();
-      return jsonResponse({ status: res.status, data });
+      const result = await safeFetch(`${baseUrl}/remove_session`, { method: "GET", headers: chatproHeaders });
+      return jsonResponse(result);
     }
 
     return jsonResponse({ error: "Ação inválida" }, 400);
