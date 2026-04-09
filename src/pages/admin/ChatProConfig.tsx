@@ -63,8 +63,8 @@ const ChatProConfig = () => {
       if (data?.config) {
         setInstanceId(data.config.instance_id || "");
         setEndpoint(data.config.endpoint || "https://v5.chatpro.com.br");
+        if (data.config.token) setToken(data.config.token); // masked token from server
         setConfigLoaded(true);
-        // Check status
         checkStatus();
       } else {
         setConfigLoaded(true);
