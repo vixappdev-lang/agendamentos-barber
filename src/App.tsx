@@ -15,6 +15,7 @@ import Coupons from "./pages/admin/Coupons";
 import Settings from "./pages/admin/Settings";
 import StoreDashboard from "./pages/admin/StoreDashboard";
 import PrizeWheelConfig from "./pages/admin/PrizeWheelConfig";
+import ChatProConfig from "./pages/admin/ChatProConfig";
 import Navigation from "./pages/Navigation";
 import BaixarSource from "./pages/BaixarSource";
 
@@ -39,6 +40,7 @@ const App = () => (
             <Route path="coupons" element={<Coupons />} />
             <Route path="store" element={<StoreDashboard />} />
             <Route path="prize-wheel" element={<PrizeWheelConfig />} />
+            <Route path="confg" element={<ChatProConfig />} />
             <Route path="settings" element={<Settings />} />
           </Route>
           <Route path="*" element={<NotFound />} />

@@ -16,6 +16,7 @@ import {
   ShoppingBag,
   Gift,
   Package,
+  MessageSquare,
 } from "lucide-react";
 
 const navItems = [
@@ -26,6 +27,7 @@ const navItems = [
   { label: "Agendamentos", path: "/admin/appointments", icon: CalendarDays },
   { label: "Cupons", path: "/admin/coupons", icon: Tag },
   { label: "Roleta", path: "/admin/prize-wheel", icon: Gift },
+  { label: "ChatPro", path: "/admin/confg", icon: MessageSquare },
   { label: "Configurações", path: "/admin/settings", icon: Settings },
 ];
 
