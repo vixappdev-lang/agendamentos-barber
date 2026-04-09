@@ -127,6 +127,33 @@ export type Database = {
         }
         Relationships: []
       }
+      chatpro_config: {
+        Row: {
+          created_at: string
+          endpoint: string
+          id: string
+          instance_id: string
+          token: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          endpoint?: string
+          id?: string
+          instance_id?: string
+          token?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          endpoint?: string
+          id?: string
+          instance_id?: string
+          token?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       coupons: {
         Row: {
           active: boolean | null
