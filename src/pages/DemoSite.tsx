@@ -48,7 +48,6 @@ const DemoSite = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const carouselRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll();
-  const headerOpacity = useTransform(scrollYProgress, [0, 0.05], [0, 1]);
 
   useEffect(() => {
     const timer = setInterval(() => {
