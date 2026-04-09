@@ -44,7 +44,10 @@ Deno.serve(async (req) => {
         return jsonResponse({ success: false, reason: "chatpro_not_configured" });
       }
 
-      const baseUrl = `${cfg.endpoint}/${cfg.instance_id}/api/v1`;
+      let endpoint = cfg.endpoint.replace(/\/$/, "");
+      const baseUrl = endpoint.includes(cfg.instance_id)
+        ? `${endpoint}/api/v1`
+        : `${endpoint}/${cfg.instance_id}/api/v1`;
       const chatproHeaders = {
         "Accept": "application/json",
         "Content-Type": "application/json",
@@ -136,35 +139,53 @@ Deno.serve(async (req) => {
       return jsonResponse({ error: "ChatPro não configurado. Salve a configuração primeiro." }, 400);
     }
 
-    const baseUrl = `${cfg.endpoint}/${cfg.instance_id}/api/v1`;
+    // Build base URL, avoiding duplication if endpoint already contains the instance_id
+    let endpoint = cfg.endpoint.replace(/\/$/, "");
+    if (endpoint.endsWith(cfg.instance_id)) {
+      // Endpoint already includes instance_id (e.g. https://v5.chatpro.com.br/chatpro-xxx)
+      endpoint = endpoint; // keep as-is
+    }
+    const baseUrl = endpoint.includes(cfg.instance_id)
+      ? `${endpoint}/api/v1`
+      : `${endpoint}/${cfg.instance_id}/api/v1`;
+
     const chatproHeaders = {
       "Accept": "application/json",
       "Content-Type": "application/json",
       "Authorization": cfg.token,
     };
 
+    // Helper to safely parse ChatPro response
+    const safeFetch = async (url: string, options?: RequestInit) => {
+      const res = await fetch(url, options);
+      const text = await res.text();
+      try {
+        const data = JSON.parse(text);
+        return { status: res.status, data };
+      } catch {
+        console.error("ChatPro non-JSON response:", text.substring(0, 200));
+        return { status: res.status, data: { error: "Resposta inválida da API ChatPro", raw: text.substring(0, 100) } };
+      }
+    };
+
     if (action === "test_connection" || action === "status") {
-      const res = await fetch(`${baseUrl}/status`, { headers: chatproHeaders });
-      const data = await res.json();
-      return jsonResponse({ status: res.status, data });
+      const result = await safeFetch(`${baseUrl}/status`, { headers: chatproHeaders });
+      return jsonResponse(result);
     }
 
     if (action === "generate_qrcode") {
-      const res = await fetch(`${baseUrl}/generate_qrcode`, { headers: chatproHeaders });
-      const data = await res.json();
-      return jsonResponse({ status: res.status, data });
+      const result = await safeFetch(`${baseUrl}/generate_qrcode`, { headers: chatproHeaders });
+      return jsonResponse(result);
     }
 
     if (action === "reload") {
-      const res = await fetch(`${baseUrl}/reload`, { method: "GET", headers: chatproHeaders });
-      const data = await res.json();
-      return jsonResponse({ status: res.status, data });
+      const result = await safeFetch(`${baseUrl}/reload`, { method: "GET", headers: chatproHeaders });
+      return jsonResponse(result);
     }
 
     if (action === "remove_session") {
-      const res = await fetch(`${baseUrl}/remove_session`, { method: "GET", headers: chatproHeaders });
-      const data = await res.json();
-      return jsonResponse({ status: res.status, data });
+      const result = await safeFetch(`${baseUrl}/remove_session`, { method: "GET", headers: chatproHeaders });
+      return jsonResponse(result);
     }
 
     return jsonResponse({ error: "Ação inválida" }, 400);
