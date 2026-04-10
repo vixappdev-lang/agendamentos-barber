@@ -1,5 +1,6 @@
 {
   "rewrites": [
+    { "source": "/~oauth/:path*", "destination": "https://agendamentos-barber.lovable.app/~oauth/:path*" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
