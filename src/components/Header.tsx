@@ -90,8 +90,8 @@ const Header = ({ user, onSignOut, onCategorySelect, onDirections, onOpenWheel }
       }}>
         <div className="container mx-auto px-3 min-[375px]:px-4 h-14 min-[375px]:h-16 flex items-center justify-between">
           <div className="flex items-center gap-2.5 min-[375px]:gap-3">
-            <div className="w-9 h-9 min-[375px]:w-10 min-[375px]:h-10 rounded-xl gold-gradient flex items-center justify-center" style={{ boxShadow: '0 4px 20px hsl(45 100% 50% / 0.25)' }}>
-              <Scissors className="w-4 h-4 min-[375px]:w-5 min-[375px]:h-5 text-primary-foreground" />
+            <div className="w-9 h-9 min-[375px]:w-10 min-[375px]:h-10 rounded-xl flex items-center justify-center" style={{ background: 'hsl(0 0% 90%)', boxShadow: '0 4px 16px hsl(0 0% 100% / 0.1)' }}>
+              <Scissors className="w-4 h-4 min-[375px]:w-5 min-[375px]:h-5" style={{ color: 'hsl(230 20% 7%)' }} />
             </div>
             <div>
               <h1 className="text-base min-[375px]:text-lg font-bold tracking-tight text-foreground leading-tight">{businessName}</h1>
@@ -194,9 +194,9 @@ const Header = ({ user, onSignOut, onCategorySelect, onDirections, onOpenWheel }
                         >
                           <div
                             className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
-                            style={{ background: item.id === "roleta" ? 'hsl(280 55% 50% / 0.15)' : 'hsl(45 100% 50% / 0.1)' }}
+                            style={{ background: item.id === "roleta" ? 'hsl(280 55% 50% / 0.15)' : 'hsl(0 0% 100% / 0.08)' }}
                           >
-                            <item.icon className="w-4 h-4 text-accent" />
+                            <item.icon className="w-4 h-4 text-foreground/60" />
                           </div>
                           <span className="flex-1 text-left">{item.label}</span>
                           <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/40" />
