@@ -37,9 +37,9 @@ const ServiceCard = ({ service, onSelect, index }: ServiceCardProps) => {
         <h3 className="text-base sm:text-lg font-bold text-foreground tracking-tight leading-snug">{service.title}</h3>
         <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 leading-relaxed">{service.subtitle}</p>
         <div className="flex items-center justify-between mt-3 pt-3" style={{ borderTop: '1px solid hsl(0 0% 100% / 0.06)' }}>
-          <span className="gold-text text-lg sm:text-xl font-bold">R$ {service.price}</span>
+          <span className="text-lg sm:text-xl font-bold text-foreground">R$ {service.price}</span>
           <button className="flex items-center gap-1.5 px-4 py-2 text-xs sm:text-sm whitespace-nowrap rounded-xl font-semibold transition-all duration-300 uppercase tracking-wider"
-            style={{ background: 'hsl(45 100% 50%)', color: 'hsl(0 0% 0%)', border: '1px solid hsl(45 100% 45%)' }}
+            style={{ background: 'hsl(0 0% 90%)', color: 'hsl(230 20% 7%)', border: '1px solid hsl(0 0% 85%)' }}
           >
             Agendar Aqui <ArrowRight className="w-3.5 h-3.5" />
           </button>
