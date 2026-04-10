@@ -27,11 +27,7 @@ const MemberLogin = () => {
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
 
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) navigate("/vilanova/membro", { replace: true });
-    });
-  }, [navigate]);
+  // Auth redirect is handled by LoginRedirectGuard
 
   useEffect(() => {
     const interval = setInterval(() => setSlideIndex((p) => (p + 1) % slides.length), 4000);
@@ -90,7 +86,7 @@ const MemberLogin = () => {
   return (
     <div className="min-h-screen w-full flex" style={{ background: bg, color: "hsl(0 0% 93%)", fontFamily: "'Montserrat', sans-serif" }}>
       {/* Left - Slider (desktop only) */}
-      <div className="hidden lg:flex lg:w-1/2 xl:w-[55%] relative overflow-hidden">
+      <div className="hidden lg:block lg:w-[50%] xl:w-[52%] relative overflow-hidden" style={{ minHeight: "100vh" }}>
         <AnimatePresence mode="wait">
           <motion.div
             key={slideIndex}
@@ -131,7 +127,7 @@ const MemberLogin = () => {
       </div>
 
       {/* Right - Form */}
-      <div className="flex-1 flex items-center justify-center p-6 sm:p-10">
+      <div className="flex-1 flex items-center justify-center p-6 sm:p-10 lg:pl-16 xl:pl-20">
         <div className="w-full max-w-md">
           {/* Mobile header */}
           <div className="lg:hidden flex items-center gap-2.5 mb-10">

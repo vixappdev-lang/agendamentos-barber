@@ -22,6 +22,8 @@ import DemoSite from "./pages/DemoSite";
 import VilaNova from "./pages/VilaNova";
 import MemberLogin from "./pages/MemberLogin";
 import MemberArea from "./pages/MemberArea";
+import MemberRouteGuard from "./components/MemberRouteGuard";
+import LoginRedirectGuard from "./components/LoginRedirectGuard";
 
 const queryClient = new QueryClient();
 
@@ -36,8 +38,17 @@ const App = () => (
           <Route path="/navegacao" element={<Navigation />} />
           <Route path="/demo-site" element={<DemoSite />} />
           <Route path="/vilanova" element={<VilaNova />} />
-          <Route path="/vilanova/login" element={<MemberLogin />} />
-          <Route path="/vilanova/membro" element={<MemberArea />} />
+          
+          {/* Login - redirect to member area if already authenticated */}
+          <Route element={<LoginRedirectGuard />}>
+            <Route path="/vilanova/login" element={<MemberLogin />} />
+          </Route>
+          
+          {/* Protected member area */}
+          <Route element={<MemberRouteGuard />}>
+            <Route path="/vilanova/membro" element={<MemberArea />} />
+          </Route>
+          
           <Route path="/baixar-source" element={<BaixarSource />} />
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/admin" element={<AdminLayout />}>
