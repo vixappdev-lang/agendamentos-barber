@@ -100,6 +100,8 @@ const MemberLogin = () => {
             <div className="absolute inset-0" style={{ background: "linear-gradient(135deg, hsl(220 20% 4% / 0.7) 0%, hsl(220 20% 4% / 0.3) 50%, hsl(220 20% 4% / 0.8) 100%)" }} />
           </motion.div>
         </AnimatePresence>
+        {/* Gradient fade right edge for seamless transition */}
+        <div className="absolute inset-y-0 right-0 z-20 pointer-events-none" style={{ width: "120px", background: "linear-gradient(to right, transparent, hsl(220 20% 4%))" }} />
 
         <div className="relative z-10 flex flex-col justify-between p-10 xl:p-14 w-full">
           <a href="/vilanova" className="flex items-center gap-2.5">

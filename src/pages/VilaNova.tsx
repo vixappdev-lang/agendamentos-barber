@@ -256,7 +256,7 @@ const VilaNova = () => {
     try {
       const dateFormatted = new Date(selectedDate + "T12:00:00").toLocaleDateString("pt-BR");
       const memberLink = `https://vilanova-demo.vercel.app/vilanova/membro`;
-      const msg = `✅ *Agendamento Confirmado!*\n\nOlá *${name}*, tudo certo!\n\n💈 ${selectedService!.title}\n✂️ ${selectedBarber?.name}\n📅 ${dateFormatted} às ${selectedTime}\n💰 R$ ${selectedService!.price.toFixed(2)}\n\n📍 Av. Afonso Pena, 1500 - Centro, Belo Horizonte/MG\n⏰ Chegue 5 min antes\n\n🔗 Acesse sua área de membro:\n${memberLink}\n\n*Barbearia Vila Nova* 💈`;
+      const msg = `✅ *Agendamento Confirmado!*\n\nOlá *${name}*, tudo certo!\n\n💈 ${selectedService!.title}\n✂️ ${selectedBarber?.name}\n📅 ${dateFormatted} às ${selectedTime}\n💰 R$ ${selectedService!.price.toFixed(2)}\n\n📍 Rua Benjamin Costa, 45 - Centro, Colatina/ES\n⏰ Chegue 5 min antes\n\n🔗 Acesse sua área de membro:\n${memberLink}\n\n*Barbearia Vila Nova* 💈`;
       await supabase.functions.invoke("chatpro", {
         body: { action: "send_message", phone: digitsOnly, message: msg },
       });
@@ -709,7 +709,7 @@ const VilaNova = () => {
               <h4 className="font-bold text-sm mb-5">Contato</h4>
               <div className="space-y-3">
                 <div className="flex items-center gap-2.5 text-xs" style={{ color: "hsl(0 0% 100% / 0.4)" }}>
-                  <MapPin className="w-3.5 h-3.5 shrink-0" /> Av. Afonso Pena, 1500 - Centro, Belo Horizonte/MG
+                  <MapPin className="w-3.5 h-3.5 shrink-0" /> Rua Benjamin Costa, 45 - Centro, Colatina/ES
                 </div>
                 <div className="flex items-center gap-2.5 text-xs" style={{ color: "hsl(0 0% 100% / 0.4)" }}>
                   <Phone className="w-3.5 h-3.5 shrink-0" /> (31) 99999-9999
