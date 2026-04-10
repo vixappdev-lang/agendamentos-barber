@@ -56,6 +56,8 @@ const MemberArea = () => {
       supabase.from("services").select("id, title"),
     ]);
 
+    console.log("MemberArea fetchData email:", email, "aptsRes:", aptsRes, "svcRes:", svcRes);
+
     const svcMap: Record<string, string> = {};
     if (svcRes.data) svcRes.data.forEach((s: any) => { svcMap[s.id] = s.title; });
     setServices(svcMap);
