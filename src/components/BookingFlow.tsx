@@ -155,11 +155,18 @@ const BookingFlow = ({ service, onClose, user }: BookingFlowProps) => {
         },
       });
 
-      if (res.data?.success && res.data?.reason !== "chatpro_not_configured") {
+      console.log("ChatPro response:", JSON.stringify(res.data));
+
+      if (res.error) {
+        console.error("ChatPro invoke error:", res.error);
+        return false;
+      }
+
+      if (res.data?.success) {
         console.log("WhatsApp confirmation sent via ChatPro");
         return true;
       }
-      console.log("ChatPro not available, skipping WhatsApp send:", res.data?.reason);
+      console.log("ChatPro not available:", res.data?.reason);
       return false;
     } catch (err) {
       console.error("Error sending WhatsApp:", err);
@@ -203,9 +210,12 @@ const BookingFlow = ({ service, onClose, user }: BookingFlowProps) => {
 
     if (error) { toast.error("Erro ao agendar. Tente novamente."); setSubmitting(false); return; }
 
-    // Send WhatsApp confirmation via ChatPro
     const dateFormatted = selectedDate ? new Date(selectedDate + "T12:00:00").toLocaleDateString("pt-BR") : "";
-    await sendWhatsAppConfirmation(digitsOnly, dateFormatted);
+    const whatsappSent = await sendWhatsAppConfirmation(digitsOnly, dateFormatted);
+    
+    if (!whatsappSent) {
+      console.log("WhatsApp not sent, but appointment was created successfully");
+    }
 
     setSubmitting(false);
     setShowConfirmation(true);
@@ -214,7 +224,12 @@ const BookingFlow = ({ service, onClose, user }: BookingFlowProps) => {
   const dates = generateDates();
   const slideVariants = { enter: { x: 40, opacity: 0 }, center: { x: 0, opacity: 1 }, exit: { x: -40, opacity: 0 } };
 
-  // Confirmation modal
+  // Selected state colors - white/neutral instead of gold
+  const selectedBg = "hsl(0 0% 90%)";
+  const selectedColor = "hsl(230 20% 7%)";
+  const selectedBorder = "transparent";
+  const selectedShadow = "0 4px 16px hsl(0 0% 100% / 0.12)";
+
   if (showConfirmation) {
     return (
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
@@ -261,7 +276,7 @@ const BookingFlow = ({ service, onClose, user }: BookingFlowProps) => {
           <motion.button
             onClick={onClose}
             className="w-full py-3 rounded-xl font-bold text-sm transition-all"
-            style={{ background: "hsl(45 100% 50%)", color: "hsl(0 0% 0%)", boxShadow: "0 4px 20px hsl(45 100% 50% / 0.25)" }}
+            style={{ background: selectedBg, color: selectedColor, boxShadow: selectedShadow }}
             whileTap={{ scale: 0.98 }}
           >
             Entendido ✨
@@ -290,10 +305,11 @@ const BookingFlow = ({ service, onClose, user }: BookingFlowProps) => {
           <div className="flex items-center justify-between">
             {steps.map((step, i) => (
               <div key={step} className="flex items-center">
-                <div className={`step-indicator ${i < currentStep ? "step-completed" : i === currentStep ? "step-active" : "step-inactive"}`}>
+                <div className={`step-indicator ${i < currentStep ? "step-completed" : i === currentStep ? "step-active" : "step-inactive"}`}
+                  style={i < currentStep ? { background: 'hsl(0 0% 90% / 0.15)', color: 'hsl(0 0% 80%)', border: '1px solid hsl(0 0% 100% / 0.15)' } : i === currentStep ? { background: selectedBg, color: selectedColor, boxShadow: '0 0 16px hsl(0 0% 100% / 0.1)' } : undefined}>
                   {i < currentStep ? <Check className="w-4 h-4" /> : i + 1}
                 </div>
-                {i < steps.length - 1 && <div className="hidden sm:block w-8 h-px mx-1" style={{ background: i < currentStep ? 'hsl(45 100% 50% / 0.3)' : 'hsl(0 0% 100% / 0.06)' }} />}
+                {i < steps.length - 1 && <div className="hidden sm:block w-8 h-px mx-1" style={{ background: i < currentStep ? 'hsl(0 0% 100% / 0.15)' : 'hsl(0 0% 100% / 0.06)' }} />}
               </div>
             ))}
           </div>
@@ -314,7 +330,7 @@ const BookingFlow = ({ service, onClose, user }: BookingFlowProps) => {
                     <h3 className="font-bold text-foreground">{service.title}</h3>
                     <p className="text-sm text-muted-foreground">{service.subtitle}</p>
                     <div className="flex items-center gap-4 mt-2 text-sm">
-                      <span className="gold-text font-bold text-lg">R$ {service.price}</span>
+                      <span className="font-bold text-lg text-foreground">R$ {service.price}</span>
                       <span className="flex items-center gap-1 text-muted-foreground"><Clock className="w-3 h-3" /> {service.duration}</span>
                     </div>
                   </div>
@@ -327,8 +343,8 @@ const BookingFlow = ({ service, onClose, user }: BookingFlowProps) => {
                     <button key={barber.id} onClick={() => setSelectedBarber(barber)}
                       className="w-full glass-card p-4 text-left transition-all"
                       style={{
-                        borderColor: selectedBarber?.id === barber.id ? 'hsl(45 100% 50% / 0.3)' : undefined,
-                        background: selectedBarber?.id === barber.id ? 'hsl(45 100% 50% / 0.06)' : undefined,
+                        borderColor: selectedBarber?.id === barber.id ? 'hsl(0 0% 100% / 0.2)' : undefined,
+                        background: selectedBarber?.id === barber.id ? 'hsl(0 0% 100% / 0.08)' : undefined,
                       }}>
                       <div className="flex items-center gap-3">
                         {barber.avatar_url ? (
@@ -336,15 +352,15 @@ const BookingFlow = ({ service, onClose, user }: BookingFlowProps) => {
                         ) : (
                           <div className="w-11 h-11 rounded-xl flex items-center justify-center font-bold text-sm"
                             style={{
-                              background: selectedBarber?.id === barber.id ? 'linear-gradient(135deg, hsl(45 100% 50%), hsl(40 100% 45%))' : 'hsl(0 0% 100% / 0.05)',
-                              color: selectedBarber?.id === barber.id ? 'hsl(0 0% 0%)' : 'hsl(0 0% 50%)',
+                              background: selectedBarber?.id === barber.id ? selectedBg : 'hsl(0 0% 100% / 0.05)',
+                              color: selectedBarber?.id === barber.id ? selectedColor : 'hsl(0 0% 50%)',
                             }}>{barber.name.charAt(0)}</div>
                         )}
                         <div className="flex-1">
                           <h4 className="font-semibold text-foreground">{barber.name}</h4>
                           <p className="text-sm text-muted-foreground">{barber.specialty || "Barbeiro"}</p>
                         </div>
-                        {selectedBarber?.id === barber.id && <Check className="w-5 h-5 text-primary" />}
+                        {selectedBarber?.id === barber.id && <Check className="w-5 h-5 text-foreground" />}
                       </div>
                     </button>
                   ))}
@@ -356,17 +372,17 @@ const BookingFlow = ({ service, onClose, user }: BookingFlowProps) => {
                 <div className="space-y-5">
                   <div>
                     <label className="text-sm font-semibold text-foreground flex items-center gap-2 mb-3">
-                      <Calendar className="w-4 h-4 text-primary" /> Data
+                      <Calendar className="w-4 h-4 text-foreground/60" /> Data
                     </label>
                     <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-2">
                       {dates.map((d) => (
                         <button key={d.value} onClick={() => { setSelectedDate(d.value); setSelectedTime(""); }}
                           className="shrink-0 w-16 py-3 rounded-xl text-center transition-all"
                           style={{
-                            background: selectedDate === d.value ? 'linear-gradient(135deg, hsl(45 100% 50%), hsl(40 100% 45%))' : 'hsl(0 0% 100% / 0.04)',
-                            border: `1px solid ${selectedDate === d.value ? 'transparent' : 'hsl(0 0% 100% / 0.06)'}`,
-                            color: selectedDate === d.value ? 'hsl(0 0% 0%)' : 'hsl(0 0% 55%)',
-                            boxShadow: selectedDate === d.value ? '0 4px 20px hsl(45 100% 50% / 0.25)' : 'none',
+                            background: selectedDate === d.value ? selectedBg : 'hsl(0 0% 100% / 0.04)',
+                            border: `1px solid ${selectedDate === d.value ? selectedBorder : 'hsl(0 0% 100% / 0.06)'}`,
+                            color: selectedDate === d.value ? selectedColor : 'hsl(0 0% 55%)',
+                            boxShadow: selectedDate === d.value ? selectedShadow : 'none',
                           }}>
                           <span className="block text-[10px] uppercase font-medium opacity-70">{d.weekday}</span>
                           <span className="block text-sm font-bold mt-0.5">{d.day}</span>
@@ -376,7 +392,7 @@ const BookingFlow = ({ service, onClose, user }: BookingFlowProps) => {
                   </div>
                   <div>
                     <label className="text-sm font-semibold text-foreground flex items-center gap-2 mb-3">
-                      <Clock className="w-4 h-4 text-primary" /> Horário
+                      <Clock className="w-4 h-4 text-foreground/60" /> Horário
                     </label>
                     {loadingTimes ? (
                       <div className="flex items-center justify-center py-6"><Loader2 className="w-5 h-5 animate-spin text-muted-foreground" /></div>
@@ -388,10 +404,10 @@ const BookingFlow = ({ service, onClose, user }: BookingFlowProps) => {
                             <button key={t} onClick={() => !isBooked && setSelectedTime(t)} disabled={isBooked}
                               className="py-2.5 rounded-xl text-sm font-medium transition-all disabled:opacity-30 disabled:cursor-not-allowed relative"
                               style={{
-                                background: selectedTime === t ? 'linear-gradient(135deg, hsl(45 100% 50%), hsl(40 100% 45%))' : isBooked ? 'hsl(0 60% 50% / 0.08)' : 'hsl(0 0% 100% / 0.04)',
-                                border: `1px solid ${selectedTime === t ? 'transparent' : isBooked ? 'hsl(0 60% 50% / 0.2)' : 'hsl(0 0% 100% / 0.06)'}`,
-                                color: selectedTime === t ? 'hsl(0 0% 0%)' : isBooked ? 'hsl(0 60% 55%)' : 'hsl(0 0% 55%)',
-                                boxShadow: selectedTime === t ? '0 4px 16px hsl(45 100% 50% / 0.2)' : 'none',
+                                background: selectedTime === t ? selectedBg : isBooked ? 'hsl(0 60% 50% / 0.08)' : 'hsl(0 0% 100% / 0.04)',
+                                border: `1px solid ${selectedTime === t ? selectedBorder : isBooked ? 'hsl(0 60% 50% / 0.2)' : 'hsl(0 0% 100% / 0.06)'}`,
+                                color: selectedTime === t ? selectedColor : isBooked ? 'hsl(0 60% 55%)' : 'hsl(0 0% 55%)',
+                                boxShadow: selectedTime === t ? selectedShadow : 'none',
                               }}>
                               <span style={{ textDecoration: isBooked ? 'line-through' : 'none' }}>{t}</span>
                               {isBooked && <span className="block text-[9px] font-semibold mt-0.5" style={{ color: 'hsl(0 60% 55%)' }}>Agendado</span>}
@@ -407,20 +423,20 @@ const BookingFlow = ({ service, onClose, user }: BookingFlowProps) => {
               {currentStep === 3 && (
                 <div className="space-y-4">
                   <div>
-                    <label className="text-sm font-semibold text-foreground flex items-center gap-2 mb-2"><User className="w-4 h-4 text-primary" /> Nome</label>
+                    <label className="text-sm font-semibold text-foreground flex items-center gap-2 mb-2"><User className="w-4 h-4 text-foreground/60" /> Nome</label>
                     <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Seu nome" className="glass-input" />
                   </div>
                   <div>
-                    <label className="text-sm font-semibold text-foreground flex items-center gap-2 mb-2"><User className="w-4 h-4 text-primary" /> Sobrenome</label>
+                    <label className="text-sm font-semibold text-foreground flex items-center gap-2 mb-2"><User className="w-4 h-4 text-foreground/60" /> Sobrenome</label>
                     <input type="text" value={surname} onChange={(e) => setSurname(e.target.value)} placeholder="Seu sobrenome" className="glass-input" />
                   </div>
                   <div>
-                    <label className="text-sm font-semibold text-foreground flex items-center gap-2 mb-2"><Send className="w-4 h-4 text-primary" /> WhatsApp</label>
+                    <label className="text-sm font-semibold text-foreground flex items-center gap-2 mb-2"><Send className="w-4 h-4 text-foreground/60" /> WhatsApp</label>
                     <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="(11) 99999-9999" className="glass-input" />
                   </div>
                   <div>
                     <label className="text-sm font-semibold text-foreground flex items-center gap-2 mb-2">
-                      <svg className="w-4 h-4 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                      <svg className="w-4 h-4 text-foreground/60" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
                       Senha
                     </label>
                     <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Crie uma senha" className="glass-input" />
@@ -464,7 +480,7 @@ const BookingFlow = ({ service, onClose, user }: BookingFlowProps) => {
           ) : (
             <button onClick={handleConfirm} disabled={submitting}
               className="flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold transition-all disabled:opacity-50"
-              style={{ background: 'hsl(45 100% 50%)', color: 'hsl(0 0% 0%)', boxShadow: '0 4px 20px hsl(45 100% 50% / 0.25)' }}>
+              style={{ background: selectedBg, color: selectedColor, boxShadow: selectedShadow }}>
               {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
               {submitting ? "Confirmando..." : "Confirmar Agendamento"}
             </button>

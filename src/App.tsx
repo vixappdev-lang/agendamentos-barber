@@ -19,6 +19,7 @@ import ChatProConfig from "./pages/admin/ChatProConfig";
 import Navigation from "./pages/Navigation";
 import BaixarSource from "./pages/BaixarSource";
 import DemoSite from "./pages/DemoSite";
+import VilaNova from "./pages/VilaNova";
 
 const queryClient = new QueryClient();
 
@@ -32,6 +33,7 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/navegacao" element={<Navigation />} />
           <Route path="/demo-site" element={<DemoSite />} />
+          <Route path="/vilanova" element={<VilaNova />} />
           <Route path="/baixar-source" element={<BaixarSource />} />
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/admin" element={<AdminLayout />}>
