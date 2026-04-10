@@ -291,6 +291,14 @@ const VilaNova = () => {
     { label: "Contato", href: "#contato" },
   ];
 
+  const handleGoToMember = () => {
+    if (user) {
+      window.location.href = "/vilanova/membro";
+    } else {
+      window.location.href = "/vilanova/login";
+    }
+  };
+
   return (
     <div className="min-h-screen w-full overflow-x-hidden" style={{ background: "hsl(220 20% 4%)", color: "hsl(0 0% 93%)", fontFamily: "'Montserrat', sans-serif" }}>
 
@@ -319,24 +327,26 @@ const VilaNova = () => {
                 {link.label}
               </a>
             ))}
-            {user ? (
-              <div className="flex items-center gap-3">
-                <div className="flex items-center gap-2 px-3 py-2 rounded-xl" style={{ background: "hsl(0 0% 100% / 0.06)", border: "1px solid hsl(0 0% 100% / 0.08)" }}>
+            <div className="flex items-center gap-2">
+              {user ? (
+                <button onClick={handleGoToMember} className="flex items-center gap-2 px-3 py-2 rounded-xl transition-all hover:bg-white/5"
+                  style={{ background: "hsl(0 0% 100% / 0.06)", border: "1px solid hsl(0 0% 100% / 0.08)" }}>
                   <div className="w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold" style={{ background: selBg, color: selColor }}>
                     {userName.charAt(0).toUpperCase()}
                   </div>
                   <span className="text-sm font-medium">{userName}</span>
-                </div>
-                <button onClick={handleSignOut} className="p-2 rounded-lg transition-all hover:bg-white/5" title="Sair">
-                  <LogOut className="w-4 h-4" style={{ color: "hsl(0 0% 50%)" }} />
                 </button>
-              </div>
-            ) : (
+              ) : (
+                <button onClick={handleGoToMember} className="px-4 py-2 rounded-xl text-sm font-medium transition-all hover:bg-white/5"
+                  style={{ background: "hsl(0 0% 100% / 0.06)", border: "1px solid hsl(0 0% 100% / 0.08)", color: "hsl(0 0% 70%)" }}>
+                  Minha Conta
+                </button>
+              )}
               <a href="#servicos" className="px-5 py-2.5 rounded-xl text-sm font-bold transition-all hover:translate-y-[-1px]"
                 style={{ background: selBg, color: selColor }}>
                 Agendar
               </a>
-            )}
+            </div>
           </div>
 
           {/* Mobile menu btn */}
