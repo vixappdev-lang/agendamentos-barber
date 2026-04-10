@@ -36,7 +36,9 @@ const BookingFlow = ({ service, onClose, user }: BookingFlowProps) => {
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedTime, setSelectedTime] = useState("");
   const [name, setName] = useState("");
+  const [surname, setSurname] = useState("");
   const [phone, setPhone] = useState("");
+  const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [bookedTimes, setBookedTimes] = useState<string[]>([]);
   const [settings, setSettings] = useState<Record<string, string>>({});
@@ -103,7 +105,7 @@ const BookingFlow = ({ service, onClose, user }: BookingFlowProps) => {
       case 0: return true;
       case 1: return !!selectedBarber;
       case 2: return !!selectedDate && !!selectedTime;
-      case 3: return !!name && !!phone;
+      case 3: return !!name && !!surname && !!phone && !!password;
       default: return true;
     }
   };
@@ -189,7 +191,7 @@ const BookingFlow = ({ service, onClose, user }: BookingFlowProps) => {
     setSubmitting(true);
     const { error } = await supabase.from("appointments").insert({
       service_id: service.id,
-      customer_name: name,
+      customer_name: `${name.trim()} ${surname.trim()}`,
       customer_phone: phone,
       customer_email: user?.email || null,
       barber_name: selectedBarber?.name || null,
@@ -405,12 +407,23 @@ const BookingFlow = ({ service, onClose, user }: BookingFlowProps) => {
               {currentStep === 3 && (
                 <div className="space-y-4">
                   <div>
-                    <label className="text-sm font-semibold text-foreground flex items-center gap-2 mb-2"><User className="w-4 h-4 text-primary" /> Seu nome</label>
-                    <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Digite seu nome" className="glass-input" />
+                    <label className="text-sm font-semibold text-foreground flex items-center gap-2 mb-2"><User className="w-4 h-4 text-primary" /> Nome</label>
+                    <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Seu nome" className="glass-input" />
+                  </div>
+                  <div>
+                    <label className="text-sm font-semibold text-foreground flex items-center gap-2 mb-2"><User className="w-4 h-4 text-primary" /> Sobrenome</label>
+                    <input type="text" value={surname} onChange={(e) => setSurname(e.target.value)} placeholder="Seu sobrenome" className="glass-input" />
                   </div>
                   <div>
                     <label className="text-sm font-semibold text-foreground flex items-center gap-2 mb-2"><Send className="w-4 h-4 text-primary" /> WhatsApp</label>
                     <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="(11) 99999-9999" className="glass-input" />
+                  </div>
+                  <div>
+                    <label className="text-sm font-semibold text-foreground flex items-center gap-2 mb-2">
+                      <svg className="w-4 h-4 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                      Senha
+                    </label>
+                    <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Crie uma senha" className="glass-input" />
                   </div>
                 </div>
               )}
@@ -423,7 +436,7 @@ const BookingFlow = ({ service, onClose, user }: BookingFlowProps) => {
                     { label: "Barbeiro", value: selectedBarber?.name || "" },
                     { label: "Data", value: selectedDate ? new Date(selectedDate + "T12:00:00").toLocaleDateString("pt-BR") : "" },
                     { label: "Horário", value: selectedTime },
-                    { label: "Nome", value: name },
+                    { label: "Nome", value: `${name} ${surname}` },
                     { label: "WhatsApp", value: phone },
                     { label: "Valor", value: `R$ ${service.price}` },
                   ].map((item) => (

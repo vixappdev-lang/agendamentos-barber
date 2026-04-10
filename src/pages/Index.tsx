@@ -5,7 +5,7 @@ import Header from "@/components/Header";
 import ServiceCard from "@/components/ServiceCard";
 import ProductCard from "@/components/ProductCard";
 import BookingFlow from "@/components/BookingFlow";
-import GoogleAuthModal from "@/components/GoogleAuthModal";
+
 import Footer from "@/components/Footer";
 import DirectionsModal from "@/components/DirectionsModal";
 import PrizeWheel from "@/components/PrizeWheel";
@@ -74,8 +74,6 @@ const Index = () => {
   const [services, setServices] = useState<DBService[]>([]);
   const [products, setProducts] = useState<DBProduct[]>([]);
   const [selectedService, setSelectedService] = useState<any>(null);
-  const [showAuthModal, setShowAuthModal] = useState(false);
-  const [pendingService, setPendingService] = useState<any>(null);
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState("all");
   const [showDirections, setShowDirections] = useState(false);
@@ -90,7 +88,7 @@ const Index = () => {
   const [whatsappNumber, setWhatsappNumber] = useState("");
   const [pixKey, setPixKey] = useState("");
   const [pixType, setPixType] = useState("cpf");
-  const { user, loading: authLoading, signInWithGoogle, signOut } = useAuth();
+  const { user, signOut } = useAuth();
 
   useEffect(() => {
     const fetchAll = async () => {
@@ -142,8 +140,7 @@ const Index = () => {
       id: service.id, title: service.title, subtitle: service.subtitle || "",
       price: service.price, duration: service.duration, image: resolveImageUrl(service),
     };
-    if (user) { setSelectedService(mapped); }
-    else { setPendingService(mapped); setShowAuthModal(true); }
+    setSelectedService(mapped);
   };
 
   const handleAddToCart = (product: DBProduct) => {
@@ -154,13 +151,6 @@ const Index = () => {
     });
   };
 
-  const handleGoogleSignIn = async () => { await signInWithGoogle(); };
-
-  if (user && pendingService && !selectedService) {
-    setSelectedService(pendingService);
-    setPendingService(null);
-    setShowAuthModal(false);
-  }
 
   const cartTotal = cart.reduce((s, i) => s + i.price * i.quantity, 0);
   const cartCount = cart.reduce((s, i) => s + i.quantity, 0);
@@ -312,11 +302,6 @@ const Index = () => {
         {selectedService && <BookingFlow service={selectedService} onClose={() => setSelectedService(null)} user={user} />}
       </AnimatePresence>
 
-      <AnimatePresence>
-        {showAuthModal && (
-          <GoogleAuthModal onClose={() => { setShowAuthModal(false); setPendingService(null); }} onSignIn={handleGoogleSignIn} loading={authLoading} />
-        )}
-      </AnimatePresence>
 
       <AnimatePresence>
         {showDirections && <DirectionsModal onClose={() => setShowDirections(false)} />}
