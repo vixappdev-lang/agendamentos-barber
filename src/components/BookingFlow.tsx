@@ -142,7 +142,7 @@ const BookingFlow = ({ service, onClose, user }: BookingFlowProps) => {
       `✂️ ${selectedBarber?.name}\n` +
       `📅 ${dateFormatted} às ${selectedTime}\n` +
       `💰 R$ ${service.price.toFixed(2)}\n\n` +
-      `📍 Av. Amazonas, 931 - Centro, BH\n` +
+      `📍 Rua Exemplo, 123 - Centro\n` +
       `⏰ Chegue 5 min antes\n\n` +
       `*${businessName}* 💈`;
 
