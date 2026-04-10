@@ -1,20 +1,18 @@
-import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Scissors, Clock, MapPin, Phone, Instagram, ChevronRight, Star, X, ArrowLeft, ArrowRight, Check, Calendar, User, Send, Loader2, CheckCircle } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion";
+import { Scissors, Clock, MapPin, Phone, Instagram, ChevronRight, ChevronDown, Star, X, ArrowLeft, ArrowRight, Check, Calendar, User, Send, Loader2, CheckCircle, Menu } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-const heroImages = [
-  "https://cdn.cashbarber.com.br/1733331980-673960.png",
-  "https://cdn.cashbarber.com.br/1733492970-621580.jpg",
-  "https://cdn.cashbarber.com.br/1733492971-363604.png",
-];
+import heroImg1 from "@/assets/vilanova-hero-1.jpg";
+import heroImg2 from "@/assets/vilanova-hero-2.jpg";
+import heroImg3 from "@/assets/vilanova-hero-3.jpg";
+import galleryImg1 from "@/assets/vilanova-gallery-1.jpg";
+import galleryImg2 from "@/assets/vilanova-gallery-2.jpg";
+import galleryImg3 from "@/assets/vilanova-gallery-3.jpg";
 
-const galleryImages = [
-  "https://cdn.cashbarber.com.br/1733331980-673960.png",
-  "https://cdn.cashbarber.com.br/1733492970-621580.jpg",
-  "https://cdn.cashbarber.com.br/1733492971-363604.png",
-];
+const heroImages = [heroImg1, heroImg2, heroImg3];
+const galleryImages = [heroImg1, heroImg2, heroImg3, galleryImg1, galleryImg2, galleryImg3];
 
 interface DBService {
   id: string; title: string; subtitle: string | null; price: number;
@@ -34,6 +32,8 @@ const VilaNova = () => {
   const [settings, setSettings] = useState<Record<string, string>>({});
   const [selectedService, setSelectedService] = useState<DBService | null>(null);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+  const [mobileMenu, setMobileMenu] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
 
   // Booking state
   const [currentStep, setCurrentStep] = useState(0);
@@ -49,10 +49,19 @@ const VilaNova = () => {
   const [loadingTimes, setLoadingTimes] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
 
+  const heroRef = useRef<HTMLDivElement>(null);
+  const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
+  const heroScale = useTransform(scrollYProgress, [0, 1], [1, 1.15]);
+  const heroOpacity = useTransform(scrollYProgress, [0, 0.8], [1, 0]);
+
   useEffect(() => {
-    const interval = setInterval(() => {
-      setHeroIndex((p) => (p + 1) % heroImages.length);
-    }, 5000);
+    const handleScroll = () => setScrolled(window.scrollY > 60);
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  useEffect(() => {
+    const interval = setInterval(() => setHeroIndex((p) => (p + 1) % heroImages.length), 5000);
     return () => clearInterval(interval);
   }, []);
 
@@ -79,10 +88,8 @@ const VilaNova = () => {
     const fetchBooked = async () => {
       setLoadingTimes(true);
       const { data } = await supabase
-        .from("appointments")
-        .select("appointment_time")
-        .eq("appointment_date", selectedDate)
-        .eq("barber_name", selectedBarber.name)
+        .from("appointments").select("appointment_time")
+        .eq("appointment_date", selectedDate).eq("barber_name", selectedBarber.name)
         .in("status", ["pending", "confirmed"]);
       setBookedTimes((data || []).map(a => a.appointment_time?.slice(0, 5)));
       setLoadingTimes(false);
@@ -132,7 +139,6 @@ const VilaNova = () => {
 
   const availableTimes = generateTimes();
   const dates = generateDates();
-
   const canProceed = () => {
     switch (currentStep) {
       case 0: return true;
@@ -148,7 +154,6 @@ const VilaNova = () => {
     if (!trimmedName || trimmedName.length < 2) { toast.error("Nome inválido."); return; }
     const digitsOnly = phone.replace(/\D/g, "");
     if (digitsOnly.length < 10) { toast.error("Telefone inválido."); return; }
-
     setSubmitting(true);
     const { error } = await supabase.from("appointments").insert({
       service_id: selectedService!.id,
@@ -160,160 +165,273 @@ const VilaNova = () => {
       total_price: selectedService!.price,
       status: "pending",
     });
-
     if (error) { toast.error("Erro ao agendar."); setSubmitting(false); return; }
-
-    // Send WhatsApp
     try {
       const dateFormatted = new Date(selectedDate + "T12:00:00").toLocaleDateString("pt-BR");
-      const msg = `✅ *Agendamento Confirmado!*\n\nOlá *${name}*, tudo certo!\n\n💈 ${selectedService!.title}\n✂️ ${selectedBarber?.name}\n📅 ${dateFormatted} às ${selectedTime}\n💰 R$ ${selectedService!.price.toFixed(2)}\n\n📍 Barbearia Vila Nova - Colatina/ES\n⏰ Chegue 5 min antes\n\n*Barbearia Vila Nova* 💈`;
+      const msg = `✅ *Agendamento Confirmado!*\n\nOlá *${name}*, tudo certo!\n\n💈 ${selectedService!.title}\n✂️ ${selectedBarber?.name}\n📅 ${dateFormatted} às ${selectedTime}\n💰 R$ ${selectedService!.price.toFixed(2)}\n\n📍 Rua Exemplo, 123 - Centro, Colatina/ES\n⏰ Chegue 5 min antes\n\n*Barbearia Vila Nova* 💈`;
       await supabase.functions.invoke("chatpro", {
         body: { action: "send_message", phone: digitsOnly, message: msg },
       });
-    } catch (e) {
-      console.error("WhatsApp error:", e);
-    }
-
+    } catch (e) { console.error("WhatsApp error:", e); }
     setSubmitting(false);
     setShowConfirmation(true);
   };
 
   const closeBooking = () => {
-    setSelectedService(null);
-    setCurrentStep(0);
-    setSelectedBarber(null);
-    setSelectedDate("");
-    setSelectedTime("");
-    setName("");
-    setSurname("");
-    setPhone("");
-    setPassword("");
-    setShowConfirmation(false);
+    setSelectedService(null); setCurrentStep(0); setSelectedBarber(null);
+    setSelectedDate(""); setSelectedTime(""); setName(""); setSurname("");
+    setPhone(""); setPassword(""); setShowConfirmation(false);
   };
 
-  const selBg = "hsl(0 0% 90%)";
+  const selBg = "hsl(0 0% 95%)";
   const selColor = "hsl(230 20% 7%)";
-  const selShadow = "0 4px 16px hsl(0 0% 100% / 0.12)";
+  const selShadow = "0 4px 20px hsl(0 0% 100% / 0.15)";
+
+  const navLinks = [
+    { label: "Início", href: "#" },
+    { label: "Sobre", href: "#sobre" },
+    { label: "Serviços", href: "#servicos" },
+    { label: "Galeria", href: "#galeria" },
+    { label: "Contato", href: "#contato" },
+  ];
 
   return (
-    <div className="min-h-screen" style={{ background: "hsl(230 20% 5%)", color: "hsl(0 0% 93%)", fontFamily: "'Montserrat', sans-serif" }}>
+    <div className="min-h-screen w-full overflow-x-hidden" style={{ background: "hsl(220 20% 4%)", color: "hsl(0 0% 93%)", fontFamily: "'Montserrat', sans-serif" }}>
 
-      {/* Hero Section */}
-      <section className="relative h-screen overflow-hidden">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={heroIndex}
-            initial={{ opacity: 0, scale: 1.1 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 1.2 }}
-            className="absolute inset-0 bg-cover bg-center"
-            style={{ backgroundImage: `url(${heroImages[heroIndex]})` }}
-          />
-        </AnimatePresence>
-        <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, hsl(230 20% 5% / 0.3) 0%, hsl(230 20% 5% / 0.7) 60%, hsl(230 20% 5%) 100%)" }} />
-
-        <div className="relative z-10 h-full flex flex-col justify-end pb-16 px-6 max-w-4xl mx-auto">
-          <motion.div initial={{ y: 40, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.3, duration: 0.8 }}>
-            <div className="flex items-center gap-2 mb-4">
-              <div className="w-8 h-px" style={{ background: "hsl(0 0% 100% / 0.4)" }} />
-              <span className="text-xs font-semibold uppercase tracking-[0.3em]" style={{ color: "hsl(0 0% 100% / 0.6)" }}>Barbearia</span>
+      {/* ─── NAVBAR ─── */}
+      <motion.nav
+        className="fixed top-0 left-0 right-0 z-50 transition-all duration-500"
+        style={{
+          background: scrolled ? "hsl(220 20% 4% / 0.85)" : "transparent",
+          backdropFilter: scrolled ? "blur(20px)" : "none",
+          borderBottom: scrolled ? "1px solid hsl(0 0% 100% / 0.06)" : "none",
+        }}
+      >
+        <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between">
+          <a href="#" className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: "hsl(0 0% 95%)" }}>
+              <Scissors className="w-4.5 h-4.5" style={{ color: "hsl(220 20% 7%)" }} />
             </div>
-            <h1 className="text-4xl sm:text-6xl lg:text-7xl font-extrabold leading-[0.95] tracking-tight mb-4">
+            <span className="text-lg font-extrabold tracking-tight">Vila Nova</span>
+          </a>
+
+          {/* Desktop nav */}
+          <div className="hidden md:flex items-center gap-8">
+            {navLinks.map((link) => (
+              <a key={link.label} href={link.href} className="text-sm font-medium transition-colors hover:text-white" style={{ color: "hsl(0 0% 60%)" }}>
+                {link.label}
+              </a>
+            ))}
+            <a href="#servicos" className="px-5 py-2.5 rounded-xl text-sm font-bold transition-all hover:translate-y-[-1px]"
+              style={{ background: selBg, color: selColor }}>
+              Agendar
+            </a>
+          </div>
+
+          {/* Mobile menu btn */}
+          <button onClick={() => setMobileMenu(true)} className="md:hidden p-2 rounded-lg" style={{ background: "hsl(0 0% 100% / 0.06)" }}>
+            <Menu className="w-5 h-5" />
+          </button>
+        </div>
+      </motion.nav>
+
+      {/* Mobile Menu */}
+      <AnimatePresence>
+        {mobileMenu && (
+          <>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[60]" style={{ background: "hsl(0 0% 0% / 0.6)" }} onClick={() => setMobileMenu(false)} />
+            <motion.div initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "100%" }}
+              transition={{ type: "spring", damping: 28, stiffness: 300 }}
+              className="fixed top-0 right-0 bottom-0 z-[70] w-[80vw] max-w-xs flex flex-col"
+              style={{ background: "hsl(220 18% 6%)", borderLeft: "1px solid hsl(0 0% 100% / 0.06)" }}>
+              <div className="p-5 flex justify-between items-center" style={{ borderBottom: "1px solid hsl(0 0% 100% / 0.06)" }}>
+                <span className="text-xs uppercase tracking-widest font-semibold" style={{ color: "hsl(0 0% 50%)" }}>Menu</span>
+                <button onClick={() => setMobileMenu(false)} className="p-2 rounded-lg" style={{ background: "hsl(0 0% 100% / 0.05)" }}>
+                  <X className="w-4 h-4" style={{ color: "hsl(0 0% 60%)" }} />
+                </button>
+              </div>
+              <nav className="flex-1 p-4 space-y-1">
+                {navLinks.map((link) => (
+                  <a key={link.label} href={link.href} onClick={() => setMobileMenu(false)}
+                    className="block px-4 py-3.5 rounded-xl text-sm font-medium transition-all"
+                    style={{ color: "hsl(0 0% 75%)" }}>
+                    {link.label}
+                  </a>
+                ))}
+              </nav>
+              <div className="p-4" style={{ borderTop: "1px solid hsl(0 0% 100% / 0.06)" }}>
+                <a href="#servicos" onClick={() => setMobileMenu(false)}
+                  className="block w-full text-center px-5 py-3.5 rounded-xl text-sm font-bold"
+                  style={{ background: selBg, color: selColor }}>
+                  Agendar Agora
+                </a>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* ─── HERO ─── */}
+      <section ref={heroRef} className="relative h-screen min-h-[600px] max-h-[1000px] overflow-hidden">
+        <motion.div style={{ scale: heroScale }} className="absolute inset-0">
+          <AnimatePresence mode="wait">
+            <motion.img
+              key={heroIndex}
+              src={heroImages[heroIndex]}
+              alt="Barbearia Vila Nova"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 1.2 }}
+              className="absolute inset-0 w-full h-full object-cover"
+            />
+          </AnimatePresence>
+        </motion.div>
+
+        <div className="absolute inset-0" style={{
+          background: "linear-gradient(180deg, hsl(220 20% 4% / 0.4) 0%, hsl(220 20% 4% / 0.2) 40%, hsl(220 20% 4% / 0.7) 75%, hsl(220 20% 4%) 100%)"
+        }} />
+
+        <motion.div style={{ opacity: heroOpacity }} className="relative z-10 h-full flex flex-col justify-end pb-12 sm:pb-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
+          <motion.div initial={{ y: 50, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.4, duration: 0.9 }}>
+            <div className="flex items-center gap-3 mb-5">
+              <div className="w-10 h-px" style={{ background: "hsl(0 0% 100% / 0.3)" }} />
+              <span className="text-[11px] sm:text-xs font-bold uppercase tracking-[0.35em]" style={{ color: "hsl(0 0% 100% / 0.5)" }}>
+                Barbearia Premium
+              </span>
+            </div>
+            <h1 className="text-5xl sm:text-7xl lg:text-8xl font-black leading-[0.9] tracking-tighter mb-5">
               Vila<br />Nova
             </h1>
-            <p className="text-base sm:text-lg max-w-md mb-8" style={{ color: "hsl(0 0% 100% / 0.6)" }}>
+            <p className="text-sm sm:text-base lg:text-lg max-w-lg mb-8 leading-relaxed" style={{ color: "hsl(0 0% 100% / 0.55)" }}>
               A 1ª Barbearia por Assinatura de Colatina. Tradição, estilo e conforto em cada detalhe.
             </p>
-            <a href="#servicos"
-              className="inline-flex items-center gap-3 px-8 py-4 rounded-2xl text-sm font-bold transition-all hover:translate-y-[-2px]"
-              style={{ background: selBg, color: selColor, boxShadow: selShadow }}>
-              Agendar Agora <ChevronRight className="w-4 h-4" />
-            </a>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <a href="#servicos"
+                className="inline-flex items-center justify-center gap-3 px-8 py-4 rounded-2xl text-sm font-bold transition-all hover:translate-y-[-2px] active:scale-[0.98]"
+                style={{ background: selBg, color: selColor, boxShadow: selShadow }}>
+                Agendar Agora <ChevronRight className="w-4 h-4" />
+              </a>
+              <a href="#sobre"
+                className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-2xl text-sm font-medium transition-all"
+                style={{ background: "hsl(0 0% 100% / 0.06)", border: "1px solid hsl(0 0% 100% / 0.1)", color: "hsl(0 0% 75%)" }}>
+                Saiba Mais
+              </a>
+            </div>
           </motion.div>
 
-          {/* Hero dots */}
-          <div className="flex gap-2 mt-8">
+          <div className="flex gap-2 mt-10">
             {heroImages.map((_, i) => (
               <button key={i} onClick={() => setHeroIndex(i)}
-                className="w-2 h-2 rounded-full transition-all"
-                style={{ background: i === heroIndex ? "hsl(0 0% 90%)" : "hsl(0 0% 100% / 0.2)", width: i === heroIndex ? 24 : 8 }} />
+                className="h-1 rounded-full transition-all duration-500"
+                style={{ background: i === heroIndex ? "hsl(0 0% 90%)" : "hsl(0 0% 100% / 0.15)", width: i === heroIndex ? 32 : 12 }} />
             ))}
           </div>
-        </div>
+        </motion.div>
+
+        <motion.div
+          animate={{ y: [0, 8, 0] }}
+          transition={{ repeat: Infinity, duration: 2 }}
+          className="absolute bottom-6 left-1/2 -translate-x-1/2 z-10"
+        >
+          <ChevronDown className="w-5 h-5" style={{ color: "hsl(0 0% 100% / 0.25)" }} />
+        </motion.div>
       </section>
 
-      {/* About Section */}
-      <section className="py-20 px-6">
-        <div className="max-w-4xl mx-auto">
-          <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.6 }}>
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-px" style={{ background: "hsl(0 0% 100% / 0.15)" }} />
-              <span className="text-xs font-semibold uppercase tracking-[0.3em]" style={{ color: "hsl(0 0% 100% / 0.4)" }}>Sobre nós</span>
-            </div>
-            <div className="grid md:grid-cols-2 gap-12 items-center">
+      {/* ─── ABOUT ─── */}
+      <section id="sobre" className="py-20 sm:py-28 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto">
+          <motion.div initial={{ opacity: 0, y: 40 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.7 }}>
+            <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
               <div>
-                <h2 className="text-3xl sm:text-4xl font-extrabold mb-6 leading-tight">Tradição que<br />inspira estilo</h2>
-                <p className="text-sm leading-relaxed mb-6" style={{ color: "hsl(0 0% 100% / 0.5)" }}>
-                  Buscando sempre atualizações e melhorias para o conforto do cliente. Na Vila Nova, cada corte é uma experiência única, com profissionais qualificados e ambiente acolhedor.
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-10 h-px" style={{ background: "hsl(0 0% 100% / 0.15)" }} />
+                  <span className="text-[11px] font-bold uppercase tracking-[0.35em]" style={{ color: "hsl(0 0% 100% / 0.35)" }}>Sobre nós</span>
+                </div>
+                <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black mb-6 leading-tight tracking-tight">
+                  Tradição que<br />inspira estilo
+                </h2>
+                <p className="text-sm sm:text-base leading-relaxed mb-8" style={{ color: "hsl(0 0% 100% / 0.45)" }}>
+                  Buscando sempre atualizações e melhorias para o conforto do cliente. Na Vila Nova, cada corte é uma experiência única, com profissionais qualificados e ambiente acolhedor que transformam seu visual.
                 </p>
-                <div className="flex gap-8">
+                <div className="grid grid-cols-3 gap-6">
                   {[
-                    { number: "5+", label: "Anos" },
-                    { number: "3K+", label: "Clientes" },
-                    { number: "5⭐", label: "Avaliação" },
+                    { number: "5+", label: "Anos de\nexperiência" },
+                    { number: "3K+", label: "Clientes\nsatisfeitos" },
+                    { number: "5.0", label: "Avaliação\nno Google" },
                   ].map((stat) => (
-                    <div key={stat.label}>
-                      <span className="text-2xl font-extrabold">{stat.number}</span>
-                      <p className="text-xs mt-1" style={{ color: "hsl(0 0% 100% / 0.4)" }}>{stat.label}</p>
+                    <div key={stat.label} className="text-center sm:text-left">
+                      <span className="text-3xl sm:text-4xl font-black">{stat.number}</span>
+                      <p className="text-[11px] sm:text-xs mt-1 whitespace-pre-line leading-tight" style={{ color: "hsl(0 0% 100% / 0.35)" }}>{stat.label}</p>
                     </div>
                   ))}
                 </div>
               </div>
-              <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid hsl(0 0% 100% / 0.06)" }}>
-                <img src={heroImages[1]} alt="Vila Nova" className="w-full h-80 object-cover" />
+              <div className="grid grid-cols-2 gap-3 sm:gap-4">
+                <div className="space-y-3 sm:space-y-4">
+                  <div className="rounded-2xl overflow-hidden aspect-[3/4]" style={{ border: "1px solid hsl(0 0% 100% / 0.06)" }}>
+                    <img src={heroImg2} alt="Barba" className="w-full h-full object-cover" loading="lazy" />
+                  </div>
+                  <div className="rounded-2xl overflow-hidden aspect-square" style={{ border: "1px solid hsl(0 0% 100% / 0.06)" }}>
+                    <img src={galleryImg1} alt="Ferramentas" className="w-full h-full object-cover" loading="lazy" />
+                  </div>
+                </div>
+                <div className="space-y-3 sm:space-y-4 pt-8">
+                  <div className="rounded-2xl overflow-hidden aspect-square" style={{ border: "1px solid hsl(0 0% 100% / 0.06)" }}>
+                    <img src={heroImg3} alt="Corte" className="w-full h-full object-cover" loading="lazy" />
+                  </div>
+                  <div className="rounded-2xl overflow-hidden aspect-[3/4]" style={{ border: "1px solid hsl(0 0% 100% / 0.06)" }}>
+                    <img src={galleryImg3} alt="Ambiente" className="w-full h-full object-cover" loading="lazy" />
+                  </div>
+                </div>
               </div>
             </div>
           </motion.div>
         </div>
       </section>
 
-      {/* Services Section */}
-      <section id="servicos" className="py-20 px-6" style={{ background: "hsl(230 18% 6%)" }}>
-        <div className="max-w-4xl mx-auto">
-          <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-            <div className="flex items-center gap-3 mb-6">
+      {/* ─── SERVICES ─── */}
+      <section id="servicos" className="py-20 sm:py-28 px-4 sm:px-6 lg:px-8" style={{ background: "hsl(220 18% 5%)" }}>
+        <div className="max-w-7xl mx-auto">
+          <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-12 sm:mb-16">
+            <div className="flex items-center justify-center gap-3 mb-5">
               <div className="w-10 h-px" style={{ background: "hsl(0 0% 100% / 0.15)" }} />
-              <span className="text-xs font-semibold uppercase tracking-[0.3em]" style={{ color: "hsl(0 0% 100% / 0.4)" }}>Nossos serviços</span>
+              <span className="text-[11px] font-bold uppercase tracking-[0.35em]" style={{ color: "hsl(0 0% 100% / 0.35)" }}>Nossos serviços</span>
+              <div className="w-10 h-px" style={{ background: "hsl(0 0% 100% / 0.15)" }} />
             </div>
-            <h2 className="text-3xl sm:text-4xl font-extrabold mb-12">Escolha seu serviço</h2>
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight">Escolha seu serviço</h2>
           </motion.div>
 
-          <div className="grid sm:grid-cols-2 gap-4">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {services.map((service, i) => (
               <motion.div
                 key={service.id}
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 25 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ delay: i * 0.08 }}
-                className="group rounded-2xl overflow-hidden transition-all hover:translate-y-[-3px] cursor-pointer"
+                transition={{ delay: i * 0.06 }}
+                className="group rounded-2xl overflow-hidden transition-all duration-300 hover:translate-y-[-4px] cursor-pointer"
                 style={{ background: "hsl(0 0% 100% / 0.03)", border: "1px solid hsl(0 0% 100% / 0.06)" }}
                 onClick={() => { setSelectedService(service); setCurrentStep(0); }}
               >
-                <div className="p-5 flex items-center gap-4">
-                  <div className="w-14 h-14 rounded-xl flex items-center justify-center shrink-0" style={{ background: "hsl(0 0% 100% / 0.05)" }}>
-                    <Scissors className="w-6 h-6" style={{ color: "hsl(0 0% 70%)" }} />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-bold text-foreground text-sm">{service.title}</h3>
-                    <p className="text-xs mt-0.5 truncate" style={{ color: "hsl(0 0% 100% / 0.4)" }}>{service.subtitle || service.duration}</p>
-                  </div>
-                  <div className="text-right shrink-0">
-                    <span className="text-lg font-extrabold">R$ {service.price}</span>
-                    <p className="text-[10px] mt-0.5 flex items-center gap-1 justify-end" style={{ color: "hsl(0 0% 100% / 0.35)" }}>
+                <div className="p-5 sm:p-6">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ background: "hsl(0 0% 100% / 0.06)" }}>
+                      <Scissors className="w-5 h-5" style={{ color: "hsl(0 0% 70%)" }} />
+                    </div>
+                    <div className="flex items-center gap-1 text-[11px] font-medium px-2.5 py-1 rounded-lg" style={{ background: "hsl(0 0% 100% / 0.05)", color: "hsl(0 0% 55%)" }}>
                       <Clock className="w-3 h-3" /> {service.duration}
-                    </p>
+                    </div>
+                  </div>
+                  <h3 className="font-bold text-base sm:text-lg mb-1">{service.title}</h3>
+                  <p className="text-xs mb-5 line-clamp-2" style={{ color: "hsl(0 0% 100% / 0.4)" }}>{service.subtitle || "Serviço profissional"}</p>
+                  <div className="flex items-center justify-between pt-4" style={{ borderTop: "1px solid hsl(0 0% 100% / 0.06)" }}>
+                    <span className="text-xl sm:text-2xl font-black">R$ {service.price}</span>
+                    <span className="flex items-center gap-1.5 text-xs font-semibold px-4 py-2 rounded-xl transition-all group-hover:translate-x-1"
+                      style={{ background: "hsl(0 0% 100% / 0.06)", color: "hsl(0 0% 70%)" }}>
+                      Agendar <ArrowRight className="w-3.5 h-3.5" />
+                    </span>
                   </div>
                 </div>
               </motion.div>
@@ -322,32 +440,36 @@ const VilaNova = () => {
         </div>
       </section>
 
-      {/* Gallery Section */}
-      <section className="py-20 px-6">
-        <div className="max-w-4xl mx-auto">
-          <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-            <div className="flex items-center gap-3 mb-6">
+      {/* ─── GALLERY ─── */}
+      <section id="galeria" className="py-20 sm:py-28 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto">
+          <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-12 sm:mb-16">
+            <div className="flex items-center justify-center gap-3 mb-5">
               <div className="w-10 h-px" style={{ background: "hsl(0 0% 100% / 0.15)" }} />
-              <span className="text-xs font-semibold uppercase tracking-[0.3em]" style={{ color: "hsl(0 0% 100% / 0.4)" }}>Galeria</span>
+              <span className="text-[11px] font-bold uppercase tracking-[0.35em]" style={{ color: "hsl(0 0% 100% / 0.35)" }}>Galeria</span>
+              <div className="w-10 h-px" style={{ background: "hsl(0 0% 100% / 0.15)" }} />
             </div>
-            <h2 className="text-3xl sm:text-4xl font-extrabold mb-12">Nosso trabalho</h2>
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight">Nosso trabalho</h2>
           </motion.div>
 
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-2 sm:gap-3">
             {galleryImages.map((img, i) => (
               <motion.div
                 key={i}
                 initial={{ opacity: 0, scale: 0.95 }}
                 whileInView={{ opacity: 1, scale: 1 }}
                 viewport={{ once: true }}
-                transition={{ delay: i * 0.1 }}
+                transition={{ delay: i * 0.06 }}
                 className="relative rounded-2xl overflow-hidden cursor-pointer group aspect-square"
                 style={{ border: "1px solid hsl(0 0% 100% / 0.06)" }}
                 onClick={() => setLightboxIndex(i)}
               >
-                <img src={img} alt={`Galeria ${i + 1}`} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
-                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all flex items-center justify-center">
-                  <Star className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                <img src={img} alt={`Galeria ${i + 1}`} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" loading="lazy" />
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all duration-300 flex items-center justify-center">
+                  <div className="w-12 h-12 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                    style={{ background: "hsl(0 0% 100% / 0.15)", backdropFilter: "blur(8px)" }}>
+                    <Star className="w-5 h-5 text-white" />
+                  </div>
                 </div>
               </motion.div>
             ))}
@@ -355,108 +477,147 @@ const VilaNova = () => {
         </div>
       </section>
 
-      {/* Contact / Footer */}
-      <footer className="py-16 px-6" style={{ background: "hsl(230 18% 4%)", borderTop: "1px solid hsl(0 0% 100% / 0.04)" }}>
-        <div className="max-w-4xl mx-auto">
-          <div className="grid sm:grid-cols-3 gap-8 mb-12">
-            <div>
-              <h3 className="font-bold text-lg mb-4">Vila Nova</h3>
-              <p className="text-xs leading-relaxed" style={{ color: "hsl(0 0% 100% / 0.4)" }}>
-                A 1ª Barbearia por Assinatura de Colatina. Tradição e estilo.
+      {/* ─── CTA BANNER ─── */}
+      <section className="py-16 sm:py-24 px-4 sm:px-6 lg:px-8" style={{ background: "hsl(220 18% 5%)" }}>
+        <div className="max-w-4xl mx-auto text-center">
+          <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight mb-4">Pronto para transformar<br />seu visual?</h2>
+            <p className="text-sm sm:text-base mb-8 max-w-md mx-auto" style={{ color: "hsl(0 0% 100% / 0.45)" }}>
+              Agende agora e garanta o melhor horário com nossos profissionais.
+            </p>
+            <a href="#servicos"
+              className="inline-flex items-center gap-3 px-10 py-4 rounded-2xl text-sm font-bold transition-all hover:translate-y-[-2px] active:scale-[0.98]"
+              style={{ background: selBg, color: selColor, boxShadow: selShadow }}>
+              Agendar Agora <ChevronRight className="w-4 h-4" />
+            </a>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ─── FOOTER ─── */}
+      <footer id="contato" className="py-16 sm:py-20 px-4 sm:px-6 lg:px-8" style={{ borderTop: "1px solid hsl(0 0% 100% / 0.04)" }}>
+        <div className="max-w-7xl mx-auto">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-10 mb-14">
+            <div className="sm:col-span-2 lg:col-span-1">
+              <div className="flex items-center gap-2.5 mb-4">
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: "hsl(0 0% 95%)" }}>
+                  <Scissors className="w-4 h-4" style={{ color: "hsl(220 20% 7%)" }} />
+                </div>
+                <span className="font-extrabold text-lg">Vila Nova</span>
+              </div>
+              <p className="text-xs leading-relaxed max-w-xs" style={{ color: "hsl(0 0% 100% / 0.35)" }}>
+                A 1ª Barbearia por Assinatura de Colatina. Tradição, estilo e conforto em cada detalhe.
               </p>
             </div>
             <div>
-              <h4 className="font-semibold text-sm mb-4">Contato</h4>
+              <h4 className="font-bold text-sm mb-5">Links</h4>
               <div className="space-y-3">
-                <div className="flex items-center gap-2 text-xs" style={{ color: "hsl(0 0% 100% / 0.5)" }}>
-                  <MapPin className="w-3.5 h-3.5" /> Colatina, ES
+                {navLinks.map((link) => (
+                  <a key={link.label} href={link.href} className="block text-xs transition-colors hover:text-white" style={{ color: "hsl(0 0% 100% / 0.4)" }}>
+                    {link.label}
+                  </a>
+                ))}
+              </div>
+            </div>
+            <div>
+              <h4 className="font-bold text-sm mb-5">Contato</h4>
+              <div className="space-y-3">
+                <div className="flex items-center gap-2.5 text-xs" style={{ color: "hsl(0 0% 100% / 0.4)" }}>
+                  <MapPin className="w-3.5 h-3.5 shrink-0" /> Colatina, ES
                 </div>
-                <div className="flex items-center gap-2 text-xs" style={{ color: "hsl(0 0% 100% / 0.5)" }}>
-                  <Phone className="w-3.5 h-3.5" /> (27) 99999-9999
+                <div className="flex items-center gap-2.5 text-xs" style={{ color: "hsl(0 0% 100% / 0.4)" }}>
+                  <Phone className="w-3.5 h-3.5 shrink-0" /> (27) 99999-9999
                 </div>
-                <div className="flex items-center gap-2 text-xs" style={{ color: "hsl(0 0% 100% / 0.5)" }}>
-                  <Instagram className="w-3.5 h-3.5" /> @barbeariavilanova
+                <div className="flex items-center gap-2.5 text-xs" style={{ color: "hsl(0 0% 100% / 0.4)" }}>
+                  <Instagram className="w-3.5 h-3.5 shrink-0" /> @barbeariavilanova
                 </div>
               </div>
             </div>
             <div>
-              <h4 className="font-semibold text-sm mb-4">Horários</h4>
-              <div className="space-y-2 text-xs" style={{ color: "hsl(0 0% 100% / 0.5)" }}>
+              <h4 className="font-bold text-sm mb-5">Horários</h4>
+              <div className="space-y-2 text-xs" style={{ color: "hsl(0 0% 100% / 0.4)" }}>
                 <p>Seg - Sex: 09:00 - 19:00</p>
                 <p>Sáb: 09:00 - 17:00</p>
                 <p>Dom: Fechado</p>
               </div>
             </div>
           </div>
-          <div className="pt-8 text-center text-xs" style={{ borderTop: "1px solid hsl(0 0% 100% / 0.04)", color: "hsl(0 0% 100% / 0.25)" }}>
-            © {new Date().getFullYear()} Barbearia Vila Nova. Todos os direitos reservados.
+          <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4" style={{ borderTop: "1px solid hsl(0 0% 100% / 0.04)" }}>
+            <p className="text-[11px]" style={{ color: "hsl(0 0% 100% / 0.2)" }}>
+              © {new Date().getFullYear()} Barbearia Vila Nova. Todos os direitos reservados.
+            </p>
+            <div className="flex gap-3">
+              {["Instagram", "WhatsApp"].map((s) => (
+                <span key={s} className="text-[11px] px-3 py-1.5 rounded-lg" style={{ background: "hsl(0 0% 100% / 0.04)", color: "hsl(0 0% 100% / 0.3)" }}>{s}</span>
+              ))}
+            </div>
           </div>
         </div>
       </footer>
 
-      {/* Lightbox */}
+      {/* ─── LIGHTBOX ─── */}
       <AnimatePresence>
         {lightboxIndex !== null && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             className="fixed inset-0 z-50 flex items-center justify-center p-4"
-            style={{ background: "hsl(0 0% 0% / 0.9)", backdropFilter: "blur(20px)" }}
-            onClick={() => setLightboxIndex(null)}
-          >
-            <button className="absolute top-6 right-6 p-2 rounded-xl" style={{ background: "hsl(0 0% 100% / 0.1)" }} onClick={() => setLightboxIndex(null)}>
+            style={{ background: "hsl(0 0% 0% / 0.92)", backdropFilter: "blur(20px)" }}
+            onClick={() => setLightboxIndex(null)}>
+            <button className="absolute top-5 right-5 p-2.5 rounded-xl" style={{ background: "hsl(0 0% 100% / 0.1)" }} onClick={() => setLightboxIndex(null)}>
               <X className="w-5 h-5" />
             </button>
+            <div className="absolute bottom-5 left-1/2 -translate-x-1/2 flex gap-2">
+              {galleryImages.map((_, i) => (
+                <button key={i} onClick={(e) => { e.stopPropagation(); setLightboxIndex(i); }}
+                  className="w-2 h-2 rounded-full transition-all"
+                  style={{ background: i === lightboxIndex ? "hsl(0 0% 90%)" : "hsl(0 0% 100% / 0.2)" }} />
+              ))}
+            </div>
             <img src={galleryImages[lightboxIndex]} alt="" className="max-w-full max-h-[85vh] rounded-2xl object-contain" onClick={(e) => e.stopPropagation()} />
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Booking Modal */}
+      {/* ─── BOOKING MODAL ─── */}
       <AnimatePresence>
         {selectedService && !showConfirmation && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4"
-            style={{ background: 'hsl(230 20% 5% / 0.9)', backdropFilter: 'blur(12px)' }}>
+            style={{ background: "hsl(220 20% 4% / 0.9)", backdropFilter: "blur(12px)" }}>
             <motion.div initial={{ y: 40, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 40, opacity: 0 }}
               className="w-full sm:max-w-lg max-h-[92dvh] sm:max-h-[90vh] overflow-y-auto scrollbar-hide rounded-t-2xl sm:rounded-2xl"
-              style={{ background: "hsl(0 0% 100% / 0.05)", backdropFilter: "blur(28px)", border: "1px solid hsl(0 0% 100% / 0.08)", boxShadow: "0 8px 32px hsl(0 0% 0% / 0.3)" }}>
+              style={{ background: "hsl(0 0% 100% / 0.04)", backdropFilter: "blur(28px)", border: "1px solid hsl(0 0% 100% / 0.08)", boxShadow: "0 8px 32px hsl(0 0% 0% / 0.4)" }}>
 
-              {/* Header */}
-              <div className="flex items-center justify-between p-5 sticky top-0 z-10" style={{ borderBottom: '1px solid hsl(0 0% 100% / 0.06)', background: 'hsl(0 0% 100% / 0.03)', backdropFilter: 'blur(28px)' }}>
-                <h2 className="text-xl font-bold">Agendamento</h2>
-                <button onClick={closeBooking} className="p-2 rounded-xl" style={{ background: 'hsl(0 0% 100% / 0.05)' }}>
+              <div className="flex items-center justify-between p-4 sm:p-5 sticky top-0 z-10" style={{ borderBottom: "1px solid hsl(0 0% 100% / 0.06)", background: "hsl(0 0% 100% / 0.03)", backdropFilter: "blur(28px)" }}>
+                <h2 className="text-lg sm:text-xl font-bold">Agendamento</h2>
+                <button onClick={closeBooking} className="p-2 rounded-xl" style={{ background: "hsl(0 0% 100% / 0.05)" }}>
                   <X className="w-5 h-5" style={{ color: "hsl(0 0% 60%)" }} />
                 </button>
               </div>
 
-              {/* Steps */}
-              <div className="px-5 pt-4 pb-2">
+              <div className="px-4 sm:px-5 pt-4 pb-2">
                 <div className="flex items-center justify-between">
                   {steps.map((step, i) => (
                     <div key={step} className="flex items-center">
                       <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold transition-all"
-                        style={i < currentStep ? { background: 'hsl(0 0% 90% / 0.15)', color: 'hsl(0 0% 80%)' } : i === currentStep ? { background: selBg, color: selColor } : { background: 'hsl(0 0% 100% / 0.05)', color: 'hsl(0 0% 40%)' }}>
+                        style={i < currentStep ? { background: "hsl(0 0% 90% / 0.15)", color: "hsl(0 0% 80%)" } : i === currentStep ? { background: selBg, color: selColor } : { background: "hsl(0 0% 100% / 0.05)", color: "hsl(0 0% 40%)" }}>
                         {i < currentStep ? <Check className="w-4 h-4" /> : i + 1}
                       </div>
-                      {i < steps.length - 1 && <div className="hidden sm:block w-8 h-px mx-1" style={{ background: i < currentStep ? 'hsl(0 0% 100% / 0.15)' : 'hsl(0 0% 100% / 0.06)' }} />}
+                      {i < steps.length - 1 && <div className="hidden sm:block w-6 lg:w-8 h-px mx-1" style={{ background: i < currentStep ? "hsl(0 0% 100% / 0.15)" : "hsl(0 0% 100% / 0.06)" }} />}
                     </div>
                   ))}
                 </div>
-                <p className="text-sm mt-3 font-medium" style={{ color: "hsl(0 0% 60%)" }}>{steps[currentStep]}</p>
+                <p className="text-sm mt-3 font-medium" style={{ color: "hsl(0 0% 55%)" }}>{steps[currentStep]}</p>
               </div>
 
-              {/* Content */}
-              <div className="p-5 min-h-[280px]">
+              <div className="p-4 sm:p-5 min-h-[280px]">
                 {currentStep === 0 && (
                   <div className="rounded-xl p-4 flex items-center gap-4" style={{ background: "hsl(0 0% 100% / 0.03)", border: "1px solid hsl(0 0% 100% / 0.06)" }}>
-                    <div className="w-14 h-14 rounded-xl flex items-center justify-center" style={{ background: "hsl(0 0% 100% / 0.05)" }}>
+                    <div className="w-14 h-14 rounded-xl flex items-center justify-center shrink-0" style={{ background: "hsl(0 0% 100% / 0.05)" }}>
                       <Scissors className="w-6 h-6" style={{ color: "hsl(0 0% 70%)" }} />
                     </div>
-                    <div className="flex-1">
+                    <div className="flex-1 min-w-0">
                       <h3 className="font-bold">{selectedService.title}</h3>
-                      <p className="text-xs mt-0.5" style={{ color: "hsl(0 0% 100% / 0.4)" }}>{selectedService.subtitle || selectedService.duration}</p>
+                      <p className="text-xs mt-0.5 truncate" style={{ color: "hsl(0 0% 100% / 0.4)" }}>{selectedService.subtitle || selectedService.duration}</p>
                       <div className="flex items-center gap-4 mt-2">
                         <span className="font-bold text-lg">R$ {selectedService.price}</span>
                         <span className="text-xs flex items-center gap-1" style={{ color: "hsl(0 0% 100% / 0.4)" }}><Clock className="w-3 h-3" /> {selectedService.duration}</span>
@@ -466,7 +627,7 @@ const VilaNova = () => {
                 )}
 
                 {currentStep === 1 && (
-                  <div className="space-y-3">
+                  <div className="space-y-2">
                     {barbers.map((b) => (
                       <button key={b.id} onClick={() => setSelectedBarber(b)}
                         className="w-full rounded-xl p-4 text-left transition-all"
@@ -480,11 +641,11 @@ const VilaNova = () => {
                               {b.name.charAt(0)}
                             </div>
                           )}
-                          <div className="flex-1">
+                          <div className="flex-1 min-w-0">
                             <h4 className="font-semibold">{b.name}</h4>
-                            <p className="text-xs" style={{ color: "hsl(0 0% 100% / 0.4)" }}>{b.specialty || "Barbeiro"}</p>
+                            <p className="text-xs truncate" style={{ color: "hsl(0 0% 100% / 0.4)" }}>{b.specialty || "Barbeiro"}</p>
                           </div>
-                          {selectedBarber?.id === b.id && <Check className="w-5 h-5" />}
+                          {selectedBarber?.id === b.id && <Check className="w-5 h-5 shrink-0" />}
                         </div>
                       </button>
                     ))}
@@ -494,7 +655,7 @@ const VilaNova = () => {
                 {currentStep === 2 && (
                   <div className="space-y-5">
                     <div>
-                      <label className="text-sm font-semibold flex items-center gap-2 mb-3"><Calendar className="w-4 h-4" style={{ color: "hsl(0 0% 60%)" }} /> Data</label>
+                      <label className="text-sm font-semibold flex items-center gap-2 mb-3"><Calendar className="w-4 h-4" style={{ color: "hsl(0 0% 55%)" }} /> Data</label>
                       <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-2">
                         {dates.map((d) => (
                           <button key={d.value} onClick={() => { setSelectedDate(d.value); setSelectedTime(""); }}
@@ -507,7 +668,7 @@ const VilaNova = () => {
                       </div>
                     </div>
                     <div>
-                      <label className="text-sm font-semibold flex items-center gap-2 mb-3"><Clock className="w-4 h-4" style={{ color: "hsl(0 0% 60%)" }} /> Horário</label>
+                      <label className="text-sm font-semibold flex items-center gap-2 mb-3"><Clock className="w-4 h-4" style={{ color: "hsl(0 0% 55%)" }} /> Horário</label>
                       {loadingTimes ? (
                         <div className="flex justify-center py-6"><Loader2 className="w-5 h-5 animate-spin" style={{ color: "hsl(0 0% 50%)" }} /></div>
                       ) : (
@@ -542,7 +703,7 @@ const VilaNova = () => {
                           <span style={{ color: "hsl(0 0% 55%)" }}>{field.icon}</span> {field.label}
                         </label>
                         <input type={field.type} value={field.value} onChange={(e) => field.set(e.target.value)} placeholder={field.placeholder}
-                          className="w-full rounded-xl px-4 py-3 transition-all outline-none"
+                          className="w-full rounded-xl px-4 py-3 transition-all outline-none focus:ring-2 focus:ring-white/20"
                           style={{ background: "hsl(0 0% 100% / 0.04)", border: "1px solid hsl(0 0% 100% / 0.08)", color: "hsl(0 0% 93%)" }} />
                       </div>
                     ))}
@@ -551,7 +712,7 @@ const VilaNova = () => {
 
                 {currentStep === 4 && (
                   <div className="space-y-1">
-                    <h3 className="text-lg font-bold mb-4">Resumo do Agendamento</h3>
+                    <h3 className="text-lg font-bold mb-4">Resumo</h3>
                     {[
                       { label: "Serviço", value: selectedService.title },
                       { label: "Barbeiro", value: selectedBarber?.name || "" },
@@ -562,7 +723,7 @@ const VilaNova = () => {
                       { label: "Valor", value: `R$ ${selectedService.price}` },
                     ].map((item) => (
                       <div key={item.label} className="flex justify-between py-2.5" style={{ borderBottom: "1px solid hsl(0 0% 100% / 0.04)" }}>
-                        <span className="text-sm" style={{ color: "hsl(0 0% 55%)" }}>{item.label}</span>
+                        <span className="text-sm" style={{ color: "hsl(0 0% 50%)" }}>{item.label}</span>
                         <span className="text-sm font-semibold">{item.value}</span>
                       </div>
                     ))}
@@ -570,25 +731,24 @@ const VilaNova = () => {
                 )}
               </div>
 
-              {/* Footer */}
-              <div className="p-5 flex items-center justify-between" style={{ borderTop: "1px solid hsl(0 0% 100% / 0.06)" }}>
+              <div className="p-4 sm:p-5 flex items-center justify-between" style={{ borderTop: "1px solid hsl(0 0% 100% / 0.06)" }}>
                 <button onClick={currentStep === 0 ? closeBooking : () => setCurrentStep(currentStep - 1)}
-                  className="flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-medium transition-all"
+                  className="flex items-center gap-2 px-4 sm:px-5 py-3 rounded-xl text-sm font-medium transition-all"
                   style={{ background: "hsl(0 0% 100% / 0.05)", border: "1px solid hsl(0 0% 100% / 0.08)", color: "hsl(0 0% 65%)" }}>
                   <ArrowLeft className="w-4 h-4" /> {currentStep === 0 ? "Cancelar" : "Voltar"}
                 </button>
                 {currentStep < steps.length - 1 ? (
                   <button onClick={() => canProceed() && setCurrentStep(currentStep + 1)} disabled={!canProceed()}
-                    className="flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold transition-all disabled:opacity-35"
+                    className="flex items-center gap-2 px-5 sm:px-6 py-3 rounded-xl text-sm font-semibold transition-all disabled:opacity-35"
                     style={{ background: selBg, color: selColor }}>
                     Próximo <ArrowRight className="w-4 h-4" />
                   </button>
                 ) : (
                   <button onClick={handleConfirm} disabled={submitting}
-                    className="flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold transition-all disabled:opacity-50"
+                    className="flex items-center gap-2 px-5 sm:px-6 py-3 rounded-xl text-sm font-semibold transition-all disabled:opacity-50"
                     style={{ background: selBg, color: selColor, boxShadow: selShadow }}>
                     {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
-                    {submitting ? "Confirmando..." : "Confirmar"}
+                    {submitting ? "..." : "Confirmar"}
                   </button>
                 )}
               </div>
@@ -597,15 +757,15 @@ const VilaNova = () => {
         )}
       </AnimatePresence>
 
-      {/* Confirmation Modal */}
+      {/* Confirmation */}
       <AnimatePresence>
         {showConfirmation && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             className="fixed inset-0 z-50 flex items-center justify-center p-4"
-            style={{ background: 'hsl(230 20% 5% / 0.9)', backdropFilter: 'blur(12px)' }}>
-            <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: "spring" }}
+            style={{ background: "hsl(220 20% 4% / 0.92)", backdropFilter: "blur(12px)" }}>
+            <motion.div initial={{ scale: 0.85, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: "spring" }}
               className="w-full max-w-sm p-6 text-center space-y-5 rounded-2xl"
-              style={{ background: "hsl(0 0% 100% / 0.05)", backdropFilter: "blur(28px)", border: "1px solid hsl(0 0% 100% / 0.08)" }}>
+              style={{ background: "hsl(0 0% 100% / 0.04)", backdropFilter: "blur(28px)", border: "1px solid hsl(0 0% 100% / 0.08)" }}>
               <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.2, type: "spring" }}
                 className="w-20 h-20 rounded-full mx-auto flex items-center justify-center"
                 style={{ background: "hsl(140 60% 45% / 0.12)", border: "2px solid hsl(140 60% 45% / 0.3)" }}>
@@ -613,10 +773,10 @@ const VilaNova = () => {
               </motion.div>
               <div>
                 <h3 className="text-xl font-bold">Agendamento Confirmado!</h3>
-                <p className="text-sm mt-2" style={{ color: "hsl(0 0% 60%)" }}>Confira no seu WhatsApp os detalhes.</p>
+                <p className="text-sm mt-2" style={{ color: "hsl(0 0% 55%)" }}>Confira no seu WhatsApp os detalhes.</p>
               </div>
               <motion.button onClick={closeBooking}
-                className="w-full py-3 rounded-xl font-bold text-sm"
+                className="w-full py-3.5 rounded-xl font-bold text-sm"
                 style={{ background: selBg, color: selColor }}
                 whileTap={{ scale: 0.98 }}>
                 Entendido ✨
