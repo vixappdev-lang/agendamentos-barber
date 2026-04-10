@@ -27,11 +27,7 @@ const MemberLogin = () => {
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
 
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) navigate("/vilanova/membro", { replace: true });
-    });
-  }, [navigate]);
+  // Auth redirect is handled by LoginRedirectGuard
 
   useEffect(() => {
     const interval = setInterval(() => setSlideIndex((p) => (p + 1) % slides.length), 4000);
