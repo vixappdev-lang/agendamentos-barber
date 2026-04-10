@@ -88,7 +88,7 @@ const Index = () => {
   const [whatsappNumber, setWhatsappNumber] = useState("");
   const [pixKey, setPixKey] = useState("");
   const [pixType, setPixType] = useState("cpf");
-  const { user, loading: authLoading, signInWithGoogle, signOut } = useAuth();
+  const { user, signOut } = useAuth();
 
   useEffect(() => {
     const fetchAll = async () => {
