@@ -17,10 +17,12 @@ import {
   Gift,
   Package,
   MessageSquare,
+  Wallet,
 } from "lucide-react";
 
 const navItems = [
   { label: "Dashboard", path: "/admin", icon: LayoutDashboard },
+  { label: "Financeiro", path: "/admin/finance", icon: Wallet },
   { label: "Serviços", path: "/admin/services", icon: Scissors },
   { label: "Loja", path: "/admin/store", icon: ShoppingBag },
   { label: "Barbeiros", path: "/admin/barbers", icon: Users },

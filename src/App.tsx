@@ -14,6 +14,7 @@ import Appointments from "./pages/admin/Appointments";
 import Coupons from "./pages/admin/Coupons";
 import Settings from "./pages/admin/Settings";
 import StoreDashboard from "./pages/admin/StoreDashboard";
+import Finance from "./pages/admin/Finance";
 import PrizeWheelConfig from "./pages/admin/PrizeWheelConfig";
 import ChatProConfig from "./pages/admin/ChatProConfig";
 import Navigation from "./pages/Navigation";
@@ -53,6 +54,7 @@ const App = () => (
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<Dashboard />} />
+            <Route path="finance" element={<Finance />} />
             <Route path="services" element={<Services />} />
             <Route path="barbers" element={<Barbers />} />
             <Route path="appointments" element={<Appointments />} />
