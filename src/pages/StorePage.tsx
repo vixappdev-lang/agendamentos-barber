@@ -71,7 +71,7 @@ const StorePage = () => {
     <div className="min-h-screen min-h-[100dvh]" style={{ background: "hsl(220 20% 4%)", color: "hsl(0 0% 93%)", fontFamily: "'Montserrat', sans-serif" }}>
       {/* Header */}
       <header className="sticky top-0 z-40 w-full" style={{ background: "hsl(220 20% 4% / 0.85)", backdropFilter: "blur(20px)", borderBottom: "1px solid hsl(0 0% 100% / 0.08)" }}>
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 xl:px-10 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <button onClick={() => navigate("/")} className="flex items-center gap-2 text-sm font-medium transition-colors hover:text-white" style={{ color: "hsl(0 0% 50%)" }}>
               <ArrowLeft className="w-4 h-4" /> Voltar
@@ -89,7 +89,7 @@ const StorePage = () => {
         </div>
       </header>
 
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 xl:px-10 py-8 lg:py-12">
         <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
           <h1 className="text-2xl sm:text-3xl font-black tracking-tight">Nossa Loja</h1>
           <p className="text-sm mt-1" style={{ color: "hsl(0 0% 50%)" }}>Produtos profissionais selecionados para você</p>
@@ -97,7 +97,7 @@ const StorePage = () => {
 
         {/* Search */}
         <div className="mb-6">
-          <div className="relative max-w-md">
+          <div className="relative max-w-md lg:max-w-lg">
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "hsl(0 0% 40%)" }} />
             <input type="text" placeholder="Buscar produtos..." value={search} onChange={(e) => setSearch(e.target.value)}
               className="w-full rounded-xl pl-10 pr-4 py-3 text-sm outline-none transition-all focus:ring-2 focus:ring-white/15"
@@ -106,7 +106,7 @@ const StorePage = () => {
         </div>
 
         {/* Products grid */}
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 lg:gap-5">
           {filteredProducts.length > 0 ? (
             filteredProducts.map((product, i) => (
               <ProductCard
