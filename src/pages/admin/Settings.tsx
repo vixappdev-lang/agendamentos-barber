@@ -510,7 +510,7 @@ const Settings = () => {
 
           {/* ===== BANCO DE DADOS ===== */}
           {activeTab === "database" && (
-            <div className="max-w-lg">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               <div className={cardStyle}>
                 <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
                   <Database className="w-4 h-4" style={{ color: iconColor }} /> Conexão MySQL
@@ -541,37 +541,45 @@ const Settings = () => {
                     <label className={labelStyle}>Senha</label>
                     <input type="password" className="glass-input" value={settings.db_pass || ""} onChange={(e) => updateSetting("db_pass", e.target.value)} placeholder="••••••••" />
                   </div>
+                </div>
+              </div>
 
-                  {/* Test result */}
-                  {dbTestResult && (
-                    <div
-                      className="flex items-center gap-2 p-3 rounded-xl text-xs font-medium"
-                      style={{
-                        background: dbTestResult.success ? "hsl(140 60% 50% / 0.1)" : "hsl(0 60% 50% / 0.1)",
-                        color: dbTestResult.success ? "hsl(140 60% 60%)" : "hsl(0 60% 65%)",
-                        border: `1px solid ${dbTestResult.success ? "hsl(140 60% 50% / 0.2)" : "hsl(0 60% 50% / 0.2)"}`,
-                      }}
-                    >
-                      {dbTestResult.success ? <CheckCircle className="w-4 h-4" /> : <XCircle className="w-4 h-4" />}
-                      {dbTestResult.message}
-                    </div>
-                  )}
-
-                  <div className="flex gap-3">
-                    <button
-                      onClick={handleTestDbConnection}
-                      disabled={dbTesting}
-                      className="flex-1 py-2.5 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition-all"
-                      style={{
-                        background: "hsl(200 70% 55% / 0.1)",
-                        color: "hsl(200 70% 60%)",
-                        border: "1px solid hsl(200 70% 55% / 0.2)",
-                      }}
-                    >
-                      {dbTesting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Shield className="w-3.5 h-3.5" />}
-                      {dbTesting ? "Testando..." : "Testar Conexão"}
-                    </button>
+              <div className="space-y-4">
+                {/* Test result */}
+                {dbTestResult && (
+                  <div
+                    className="flex items-center gap-2 p-4 rounded-xl text-xs font-medium"
+                    style={{
+                      background: dbTestResult.success ? "hsl(140 60% 50% / 0.1)" : "hsl(0 60% 50% / 0.1)",
+                      color: dbTestResult.success ? "hsl(140 60% 60%)" : "hsl(0 60% 65%)",
+                      border: `1px solid ${dbTestResult.success ? "hsl(140 60% 50% / 0.2)" : "hsl(0 60% 50% / 0.2)"}`,
+                    }}
+                  >
+                    {dbTestResult.success ? <CheckCircle className="w-4 h-4" /> : <XCircle className="w-4 h-4" />}
+                    {dbTestResult.message}
                   </div>
+                )}
+
+                <div className={cardStyle}>
+                  <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                    <Shield className="w-4 h-4" style={{ color: iconColor }} /> Ações
+                  </h3>
+                  <button
+                    onClick={handleTestDbConnection}
+                    disabled={dbTesting}
+                    className="w-full py-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition-all"
+                    style={{
+                      background: "hsl(200 70% 55% / 0.1)",
+                      color: "hsl(200 70% 60%)",
+                      border: "1px solid hsl(200 70% 55% / 0.2)",
+                    }}
+                  >
+                    {dbTesting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Shield className="w-3.5 h-3.5" />}
+                    {dbTesting ? "Testando..." : "Testar Conexão"}
+                  </button>
+                  <p className="text-[10px] text-muted-foreground">
+                    O teste verificará se os dados de conexão estão corretos via sua API PHP
+                  </p>
                 </div>
               </div>
             </div>
