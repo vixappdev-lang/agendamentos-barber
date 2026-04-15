@@ -348,7 +348,7 @@ const VilaNova = () => {
               ) : (
                 <button onClick={handleGoToMember} className="px-4 py-2 rounded-xl text-sm font-medium transition-all hover:bg-white/5"
                   style={{ background: "hsl(0 0% 100% / 0.06)", border: "1px solid hsl(0 0% 100% / 0.08)", color: "hsl(0 0% 70%)" }}>
-                  Minha Conta
+                  Área do Cliente
                 </button>
               )}
               <a href="#servicos" className="px-5 py-2.5 rounded-xl text-sm font-bold transition-all hover:translate-y-[-1px]"
