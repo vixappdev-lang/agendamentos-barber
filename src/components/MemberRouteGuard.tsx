@@ -3,11 +3,6 @@ import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
 
-/**
- * Protects /vilanova/membro routes:
- * - Redirects unauthenticated users to /vilanova/login
- * - Prevents authenticated member users from navigating outside /vilanova/*
- */
 const MemberRouteGuard = () => {
   const [loading, setLoading] = useState(true);
   const [authenticated, setAuthenticated] = useState(false);
@@ -38,7 +33,7 @@ const MemberRouteGuard = () => {
   }
 
   if (!authenticated) {
-    return <Navigate to="/vilanova/login" state={{ from: location }} replace />;
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
   return <Outlet />;

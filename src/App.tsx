@@ -15,7 +15,6 @@ import Coupons from "./pages/admin/Coupons";
 import Settings from "./pages/admin/Settings";
 import StoreDashboard from "./pages/admin/StoreDashboard";
 import Finance from "./pages/admin/Finance";
-import PrizeWheelConfig from "./pages/admin/PrizeWheelConfig";
 import ChatProConfig from "./pages/admin/ChatProConfig";
 import Navigation from "./pages/Navigation";
 import BaixarSource from "./pages/BaixarSource";
@@ -25,6 +24,7 @@ import MemberLogin from "./pages/MemberLogin";
 import MemberArea from "./pages/MemberArea";
 import MemberRouteGuard from "./components/MemberRouteGuard";
 import LoginRedirectGuard from "./components/LoginRedirectGuard";
+import StorePage from "./pages/StorePage";
 
 const queryClient = new QueryClient();
 
@@ -35,19 +35,26 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Index />} />
+          {/* Main site (GenesisBarber landing) */}
+          <Route path="/" element={<VilaNova />} />
+          
+          {/* Direct scheduling */}
+          <Route path="/agenda" element={<Index />} />
+          
+          {/* Store page */}
+          <Route path="/loja" element={<StorePage />} />
+          
           <Route path="/navegacao" element={<Navigation />} />
           <Route path="/demo-site" element={<DemoSite />} />
-          <Route path="/vilanova" element={<VilaNova />} />
           
           {/* Login - redirect to member area if already authenticated */}
           <Route element={<LoginRedirectGuard />}>
-            <Route path="/vilanova/login" element={<MemberLogin />} />
+            <Route path="/login" element={<MemberLogin />} />
           </Route>
           
           {/* Protected member area */}
           <Route element={<MemberRouteGuard />}>
-            <Route path="/vilanova/membro" element={<MemberArea />} />
+            <Route path="/membro" element={<MemberArea />} />
           </Route>
           
           <Route path="/baixar-source" element={<BaixarSource />} />
@@ -60,10 +67,15 @@ const App = () => (
             <Route path="appointments" element={<Appointments />} />
             <Route path="coupons" element={<Coupons />} />
             <Route path="store" element={<StoreDashboard />} />
-            <Route path="prize-wheel" element={<PrizeWheelConfig />} />
             <Route path="confg" element={<ChatProConfig />} />
             <Route path="settings" element={<Settings />} />
           </Route>
+          
+          {/* Legacy redirects */}
+          <Route path="/vilanova" element={<VilaNova />} />
+          <Route path="/vilanova/login" element={<MemberLogin />} />
+          <Route path="/vilanova/membro" element={<MemberArea />} />
+          
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

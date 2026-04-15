@@ -14,8 +14,6 @@ import {
   Users,
   Settings,
   ShoppingBag,
-  Gift,
-  Package,
   MessageSquare,
   Wallet,
 } from "lucide-react";
@@ -28,7 +26,6 @@ const navItems = [
   { label: "Barbeiros", path: "/admin/barbers", icon: Users },
   { label: "Agendamentos", path: "/admin/appointments", icon: CalendarDays },
   { label: "Cupons", path: "/admin/coupons", icon: Tag },
-  { label: "Roleta", path: "/admin/prize-wheel", icon: Gift },
   { label: "ChatPro", path: "/admin/confg", icon: MessageSquare },
   { label: "Configurações", path: "/admin/settings", icon: Settings },
 ];
