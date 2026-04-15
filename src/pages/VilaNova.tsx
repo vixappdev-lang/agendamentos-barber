@@ -774,15 +774,15 @@ const VilaNova = () => {
         {selectedService && !showConfirmation && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4"
-            style={{ background: "hsl(220 20% 4% / 0.9)", backdropFilter: "blur(12px)" }}>
+            style={{ background: t.overlayBg, backdropFilter: "blur(12px)" }}>
             <motion.div initial={{ y: 40, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 40, opacity: 0 }}
               className="w-full sm:max-w-lg max-h-[92dvh] sm:max-h-[90vh] overflow-y-auto scrollbar-hide rounded-t-2xl sm:rounded-2xl"
-              style={{ background: "hsl(0 0% 100% / 0.04)", backdropFilter: "blur(28px)", border: "1px solid hsl(0 0% 100% / 0.08)", boxShadow: "0 8px 32px hsl(0 0% 0% / 0.4)" }}>
+              style={{ background: t.modalCardBg, backdropFilter: t.isLight ? "none" : "blur(28px)", border: `1px solid ${t.border}`, boxShadow: "0 8px 32px hsl(0 0% 0% / 0.4)" }}>
 
-              <div className="flex items-center justify-between p-4 sm:p-5 sticky top-0 z-10" style={{ borderBottom: "1px solid hsl(0 0% 100% / 0.06)", background: "hsl(0 0% 100% / 0.03)", backdropFilter: "blur(28px)" }}>
-                <h2 className="text-lg sm:text-xl font-bold">Agendamento</h2>
-                <button onClick={closeBooking} className="p-2 rounded-xl" style={{ background: "hsl(0 0% 100% / 0.05)" }}>
-                  <X className="w-5 h-5" style={{ color: "hsl(0 0% 60%)" }} />
+              <div className="flex items-center justify-between p-4 sm:p-5 sticky top-0 z-10" style={{ borderBottom: `1px solid ${t.borderSubtle}`, background: t.modalCardBg, backdropFilter: t.isLight ? "none" : "blur(28px)" }}>
+                <h2 className="text-lg sm:text-xl font-bold" style={{ color: t.textPrimary }}>Agendamento</h2>
+                <button onClick={closeBooking} className="p-2 rounded-xl" style={{ background: t.cardBgSubtle }}>
+                  <X className="w-5 h-5" style={{ color: t.textMuted }} />
                 </button>
               </div>
 
@@ -791,28 +791,28 @@ const VilaNova = () => {
                   {steps.map((step, i) => (
                     <div key={step} className="flex items-center">
                       <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold transition-all"
-                        style={i < currentStep ? { background: "hsl(0 0% 90% / 0.15)", color: "hsl(0 0% 80%)" } : i === currentStep ? { background: selBg, color: selColor } : { background: "hsl(0 0% 100% / 0.05)", color: "hsl(0 0% 40%)" }}>
+                        style={i < currentStep ? { background: t.cardBgActive, color: t.textSecondary } : i === currentStep ? { background: selBg, color: selColor } : { background: t.cardBgSubtle, color: t.textMuted }}>
                         {i < currentStep ? <Check className="w-4 h-4" /> : i + 1}
                       </div>
-                      {i < steps.length - 1 && <div className="hidden sm:block w-6 lg:w-8 h-px mx-1" style={{ background: i < currentStep ? "hsl(0 0% 100% / 0.15)" : "hsl(0 0% 100% / 0.06)" }} />}
+                      {i < steps.length - 1 && <div className="hidden sm:block w-6 lg:w-8 h-px mx-1" style={{ background: i < currentStep ? t.borderStrong : t.borderSubtle }} />}
                     </div>
                   ))}
                 </div>
-                <p className="text-sm mt-3 font-medium" style={{ color: "hsl(0 0% 55%)" }}>{steps[currentStep]}</p>
+                <p className="text-sm mt-3 font-medium" style={{ color: t.textMuted }}>{steps[currentStep]}</p>
               </div>
 
               <div className="p-4 sm:p-5 min-h-[280px]">
                 {currentStep === 0 && (
-                  <div className="rounded-xl p-4 flex items-center gap-4" style={{ background: "hsl(0 0% 100% / 0.03)", border: "1px solid hsl(0 0% 100% / 0.06)" }}>
-                    <div className="w-14 h-14 rounded-xl flex items-center justify-center shrink-0" style={{ background: "hsl(0 0% 100% / 0.05)" }}>
-                      <Scissors className="w-6 h-6" style={{ color: "hsl(0 0% 70%)" }} />
+                  <div className="rounded-xl p-4 flex items-center gap-4" style={{ background: t.cardBg, border: `1px solid ${t.borderSubtle}` }}>
+                    <div className="w-14 h-14 rounded-xl flex items-center justify-center shrink-0" style={{ background: t.cardBgSubtle }}>
+                      <Scissors className="w-6 h-6" style={{ color: t.textLink }} />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-bold">{selectedService.title}</h3>
-                      <p className="text-xs mt-0.5 truncate" style={{ color: "hsl(0 0% 100% / 0.4)" }}>{selectedService.subtitle || selectedService.duration}</p>
+                      <h3 className="font-bold" style={{ color: t.textPrimary }}>{selectedService.title}</h3>
+                      <p className="text-xs mt-0.5 truncate" style={{ color: t.textSecondary }}>{selectedService.subtitle || selectedService.duration}</p>
                       <div className="flex items-center gap-4 mt-2">
-                        <span className="font-bold text-lg">R$ {selectedService.price}</span>
-                        <span className="text-xs flex items-center gap-1" style={{ color: "hsl(0 0% 100% / 0.4)" }}><Clock className="w-3 h-3" /> {selectedService.duration}</span>
+                        <span className="font-bold text-lg" style={{ color: t.textPrimary }}>R$ {selectedService.price}</span>
+                        <span className="text-xs flex items-center gap-1" style={{ color: t.textSecondary }}><Clock className="w-3 h-3" /> {selectedService.duration}</span>
                       </div>
                     </div>
                   </div>
@@ -823,19 +823,19 @@ const VilaNova = () => {
                     {barbers.map((b) => (
                       <button key={b.id} onClick={() => setSelectedBarber(b)}
                         className="w-full rounded-xl p-4 text-left transition-all"
-                        style={{ background: selectedBarber?.id === b.id ? "hsl(0 0% 100% / 0.08)" : "hsl(0 0% 100% / 0.03)", border: `1px solid ${selectedBarber?.id === b.id ? "hsl(0 0% 100% / 0.15)" : "hsl(0 0% 100% / 0.06)"}` }}>
+                        style={{ background: selectedBarber?.id === b.id ? t.cardBgActive : t.cardBg, border: `1px solid ${selectedBarber?.id === b.id ? t.borderStrong : t.borderSubtle}` }}>
                         <div className="flex items-center gap-3">
                           {b.avatar_url ? (
                             <img src={b.avatar_url} alt={b.name} className="w-11 h-11 rounded-xl object-cover" />
                           ) : (
                             <div className="w-11 h-11 rounded-xl flex items-center justify-center font-bold text-sm"
-                              style={{ background: selectedBarber?.id === b.id ? selBg : "hsl(0 0% 100% / 0.05)", color: selectedBarber?.id === b.id ? selColor : "hsl(0 0% 50%)" }}>
+                              style={{ background: selectedBarber?.id === b.id ? selBg : t.cardBgSubtle, color: selectedBarber?.id === b.id ? selColor : t.textMuted }}>
                               {b.name.charAt(0)}
                             </div>
                           )}
                           <div className="flex-1 min-w-0">
-                            <h4 className="font-semibold">{b.name}</h4>
-                            <p className="text-xs truncate" style={{ color: "hsl(0 0% 100% / 0.4)" }}>{b.specialty || "Barbeiro"}</p>
+                            <h4 className="font-semibold" style={{ color: t.textPrimary }}>{b.name}</h4>
+                            <p className="text-xs truncate" style={{ color: t.textSecondary }}>{b.specialty || "Barbeiro"}</p>
                           </div>
                           {selectedBarber?.id === b.id && <Check className="w-5 h-5 shrink-0" />}
                         </div>
@@ -847,12 +847,12 @@ const VilaNova = () => {
                 {currentStep === 2 && (
                   <div className="space-y-5">
                     <div>
-                      <label className="text-sm font-semibold flex items-center gap-2 mb-3"><Calendar className="w-4 h-4" style={{ color: "hsl(0 0% 55%)" }} /> Data</label>
+                      <label className="text-sm font-semibold flex items-center gap-2 mb-3" style={{ color: t.textPrimary }}><Calendar className="w-4 h-4" style={{ color: t.textMuted }} /> Data</label>
                       <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-2">
                         {dates.map((d) => (
                           <button key={d.value} onClick={() => { setSelectedDate(d.value); setSelectedTime(""); }}
                             className="shrink-0 w-16 py-3 rounded-xl text-center transition-all"
-                            style={{ background: selectedDate === d.value ? selBg : "hsl(0 0% 100% / 0.04)", border: `1px solid ${selectedDate === d.value ? "transparent" : "hsl(0 0% 100% / 0.06)"}`, color: selectedDate === d.value ? selColor : "hsl(0 0% 55%)" }}>
+                            style={{ background: selectedDate === d.value ? selBg : t.cardBgSubtle, border: `1px solid ${selectedDate === d.value ? "transparent" : t.borderSubtle}`, color: selectedDate === d.value ? selColor : t.textMuted }}>
                             <span className="block text-[10px] uppercase font-medium opacity-70">{d.weekday}</span>
                             <span className="block text-sm font-bold mt-0.5">{d.day}</span>
                           </button>
@@ -860,18 +860,18 @@ const VilaNova = () => {
                       </div>
                     </div>
                     <div>
-                      <label className="text-sm font-semibold flex items-center gap-2 mb-3"><Clock className="w-4 h-4" style={{ color: "hsl(0 0% 55%)" }} /> Horário</label>
+                      <label className="text-sm font-semibold flex items-center gap-2 mb-3" style={{ color: t.textPrimary }}><Clock className="w-4 h-4" style={{ color: t.textMuted }} /> Horário</label>
                       {loadingTimes ? (
-                        <div className="flex justify-center py-6"><Loader2 className="w-5 h-5 animate-spin" style={{ color: "hsl(0 0% 50%)" }} /></div>
+                        <div className="flex justify-center py-6"><Loader2 className="w-5 h-5 animate-spin" style={{ color: t.textMuted }} /></div>
                       ) : (
                         <div className="grid grid-cols-4 sm:grid-cols-5 gap-2 max-h-40 overflow-y-auto scrollbar-hide">
-                          {availableTimes.map((t) => {
-                            const isBooked = bookedTimes.includes(t);
+                          {availableTimes.map((timeSlot) => {
+                            const isBooked = bookedTimes.includes(timeSlot);
                             return (
-                              <button key={t} onClick={() => !isBooked && setSelectedTime(t)} disabled={isBooked}
+                              <button key={timeSlot} onClick={() => !isBooked && setSelectedTime(timeSlot)} disabled={isBooked}
                                 className="py-2.5 rounded-xl text-sm font-medium transition-all disabled:opacity-30 disabled:cursor-not-allowed"
-                                style={{ background: selectedTime === t ? selBg : isBooked ? "hsl(0 60% 50% / 0.08)" : "hsl(0 0% 100% / 0.04)", border: `1px solid ${selectedTime === t ? "transparent" : "hsl(0 0% 100% / 0.06)"}`, color: selectedTime === t ? selColor : isBooked ? "hsl(0 60% 55%)" : "hsl(0 0% 55%)" }}>
-                                <span style={{ textDecoration: isBooked ? "line-through" : "none" }}>{t}</span>
+                                style={{ background: selectedTime === timeSlot ? selBg : isBooked ? "hsl(0 60% 50% / 0.08)" : t.cardBgSubtle, border: `1px solid ${selectedTime === timeSlot ? "transparent" : t.borderSubtle}`, color: selectedTime === timeSlot ? selColor : isBooked ? "hsl(0 60% 55%)" : t.textMuted }}>
+                                <span style={{ textDecoration: isBooked ? "line-through" : "none" }}>{timeSlot}</span>
                                 {isBooked && <span className="block text-[9px] font-semibold mt-0.5" style={{ color: "hsl(0 60% 55%)" }}>Agendado</span>}
                               </button>
                             );
@@ -887,7 +887,7 @@ const VilaNova = () => {
                     {isLoggedIn && (
                       <div className="flex items-center gap-3 p-3 rounded-xl mb-2" style={{ background: "hsl(140 60% 45% / 0.08)", border: "1px solid hsl(140 60% 45% / 0.15)" }}>
                         <CheckCircle className="w-4 h-4 shrink-0" style={{ color: "hsl(140 60% 50%)" }} />
-                        <p className="text-xs" style={{ color: "hsl(140 60% 65%)" }}>Logado como <strong>{userName}</strong>. Seus dados foram preenchidos automaticamente.</p>
+                        <p className="text-xs" style={{ color: t.isLight ? "hsl(140 60% 35%)" : "hsl(140 60% 65%)" }}>Logado como <strong>{userName}</strong>. Seus dados foram preenchidos automaticamente.</p>
                       </div>
                     )}
                     {[
@@ -897,16 +897,16 @@ const VilaNova = () => {
                       ...(!isLoggedIn ? [{ label: "Senha", icon: <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>, type: "password", value: password, set: setPassword, placeholder: "Crie uma senha (min. 6 caracteres)" }] : []),
                     ].map((field) => (
                       <div key={field.label}>
-                        <label className="text-sm font-semibold flex items-center gap-2 mb-2" style={{ color: "hsl(0 0% 80%)" }}>
-                          <span style={{ color: "hsl(0 0% 55%)" }}>{field.icon}</span> {field.label}
+                        <label className="text-sm font-semibold flex items-center gap-2 mb-2" style={{ color: t.textPrimary }}>
+                          <span style={{ color: t.textMuted }}>{field.icon}</span> {field.label}
                         </label>
                         <input type={field.type} value={field.value} onChange={(e) => field.set(e.target.value)} placeholder={field.placeholder}
-                          className="w-full rounded-xl px-4 py-3 transition-all outline-none focus:ring-2 focus:ring-white/20"
-                          style={{ background: "hsl(0 0% 100% / 0.04)", border: "1px solid hsl(0 0% 100% / 0.08)", color: "hsl(0 0% 93%)" }} />
+                          className="w-full rounded-xl px-4 py-3 transition-all outline-none focus:ring-2"
+                          style={{ background: t.inputBg, border: `1px solid ${t.inputBorder}`, color: t.textPrimary }} />
                       </div>
                     ))}
                     {!isLoggedIn && (
-                      <p className="text-[11px] mt-1" style={{ color: "hsl(0 0% 100% / 0.3)" }}>
+                      <p className="text-[11px] mt-1" style={{ color: t.textMuted }}>
                         Ao confirmar, sua conta será criada automaticamente para futuros agendamentos.
                       </p>
                     )}
@@ -915,7 +915,7 @@ const VilaNova = () => {
 
                 {currentStep === 4 && (
                   <div className="space-y-1">
-                    <h3 className="text-lg font-bold mb-4">Resumo</h3>
+                    <h3 className="text-lg font-bold mb-4" style={{ color: t.textPrimary }}>Resumo</h3>
                     {[
                       { label: "Serviço", value: selectedService.title },
                       { label: "Barbeiro", value: selectedBarber?.name || "" },
@@ -925,19 +925,19 @@ const VilaNova = () => {
                       { label: "WhatsApp", value: phone },
                       { label: "Valor", value: `R$ ${selectedService.price}` },
                     ].map((item) => (
-                      <div key={item.label} className="flex justify-between py-2.5" style={{ borderBottom: "1px solid hsl(0 0% 100% / 0.04)" }}>
-                        <span className="text-sm" style={{ color: "hsl(0 0% 50%)" }}>{item.label}</span>
-                        <span className="text-sm font-semibold">{item.value}</span>
+                      <div key={item.label} className="flex justify-between py-2.5" style={{ borderBottom: `1px solid ${t.borderSubtle}` }}>
+                        <span className="text-sm" style={{ color: t.textSecondary }}>{item.label}</span>
+                        <span className="text-sm font-semibold" style={{ color: t.textPrimary }}>{item.value}</span>
                       </div>
                     ))}
                   </div>
                 )}
               </div>
 
-              <div className="p-4 sm:p-5 flex items-center justify-between" style={{ borderTop: "1px solid hsl(0 0% 100% / 0.06)" }}>
+              <div className="p-4 sm:p-5 flex items-center justify-between" style={{ borderTop: `1px solid ${t.borderSubtle}` }}>
                 <button onClick={currentStep === 0 ? closeBooking : () => setCurrentStep(currentStep - 1)}
                   className="flex items-center gap-2 px-4 sm:px-5 py-3 rounded-xl text-sm font-medium transition-all"
-                  style={{ background: "hsl(0 0% 100% / 0.05)", border: "1px solid hsl(0 0% 100% / 0.08)", color: "hsl(0 0% 65%)" }}>
+                  style={{ background: t.btnGhostBg, border: `1px solid ${t.btnGhostBorder}`, color: t.btnGhostColor }}>
                   <ArrowLeft className="w-4 h-4" /> {currentStep === 0 ? "Cancelar" : "Voltar"}
                 </button>
                 {currentStep < steps.length - 1 ? (
