@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Package, Clock, CheckCircle, Truck, Store, ChefHat, XCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useThemeColors } from "@/hooks/useThemeColors";
 
 interface Order {
   id: string;
@@ -34,6 +35,7 @@ interface OrderTrackerProps {
 }
 
 const OrderTracker = ({ onClose, customerPhone }: OrderTrackerProps) => {
+  const t = useThemeColors();
   const [orders, setOrders] = useState<Order[]>([]);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [items, setItems] = useState<OrderItem[]>([]);
@@ -70,42 +72,41 @@ const OrderTracker = ({ onClose, customerPhone }: OrderTrackerProps) => {
   };
 
   const getStatus = (s: string) => STATUSES.find((st) => st.id === s) || STATUSES[0];
-
   const getStepIndex = (s: string) => {
     const steps = ["pending", "confirmed", "preparing", "delivering", "completed"];
     return steps.indexOf(s);
   };
-
   const formatDate = (d: string) => new Date(d).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
       className="fixed inset-0 z-[80] flex items-center justify-center p-4"
-      style={{ background: "hsl(0 0% 0% / 0.75)", backdropFilter: "blur(12px)" }}
+      style={{ background: t.overlayBg, backdropFilter: "blur(12px)" }}
       onClick={onClose}>
       <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
-        className="glass-card-strong w-full max-w-md p-5 space-y-4 max-h-[90vh] overflow-y-auto scrollbar-hide"
+        className="w-full max-w-md p-5 space-y-4 max-h-[90vh] overflow-y-auto scrollbar-hide rounded-2xl"
+        style={{ background: t.modalCardBg, border: `1px solid ${t.border}`, boxShadow: t.cardShadowLg, backdropFilter: t.isLight ? 'none' : 'blur(28px)' }}
         onClick={(e) => e.stopPropagation()}>
 
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Package className="w-5 h-5" style={{ color: "hsl(245 60% 65%)" }} />
-            <h2 className="text-base font-bold text-foreground">
+            <Package className="w-5 h-5" style={{ color: t.accentPurple }} />
+            <h2 className="text-base font-bold" style={{ color: t.textPrimary }}>
               {selectedOrder ? "Acompanhar Pedido" : "Meus Pedidos"}
             </h2>
           </div>
           <button onClick={selectedOrder ? () => setSelectedOrder(null) : onClose}>
-            <X className="w-5 h-5 text-muted-foreground" />
+            <X className="w-5 h-5" style={{ color: t.textMuted }} />
           </button>
         </div>
 
         {!searched && (
           <div className="space-y-3">
-            <p className="text-xs text-muted-foreground">Digite seu telefone para consultar seus pedidos:</p>
-            <input className="glass-input text-sm" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="(11) 99999-9999" />
+            <p className="text-xs" style={{ color: t.textMuted }}>Digite seu telefone para consultar seus pedidos:</p>
+            <input className="w-full rounded-xl px-4 py-3 text-sm outline-none transition-all" style={{ background: t.inputBg, border: `1px solid ${t.inputBorder}`, color: t.textPrimary }} value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="(11) 99999-9999" />
             <button onClick={() => searchOrders(phone)}
               className="w-full py-3 rounded-xl font-semibold text-sm transition-all"
-              style={{ background: "hsl(245 60% 55%)", color: "white" }}>
+              style={{ background: t.btnBg, color: t.btnColor }}>
               Buscar Pedidos
             </button>
           </div>
@@ -115,16 +116,16 @@ const OrderTracker = ({ onClose, customerPhone }: OrderTrackerProps) => {
           <>
             {!loading && orders.length === 0 && (
               <div className="text-center py-6">
-                <Package className="w-8 h-8 text-muted-foreground/30 mx-auto mb-2" />
-                <p className="text-sm text-muted-foreground">Nenhum pedido encontrado</p>
-                <button onClick={() => { setSearched(false); setPhone(""); }} className="text-xs mt-2" style={{ color: "hsl(245 60% 70%)" }}>
+                <Package className="w-8 h-8 mx-auto mb-2" style={{ color: t.textSubtle }} />
+                <p className="text-sm" style={{ color: t.textMuted }}>Nenhum pedido encontrado</p>
+                <button onClick={() => { setSearched(false); setPhone(""); }} className="text-xs mt-2" style={{ color: t.accentPurple }}>
                   Tentar outro número
                 </button>
               </div>
             )}
             {loading && (
               <div className="flex justify-center py-6">
-                <div className="w-6 h-6 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: "hsl(245 60% 55%)", borderTopColor: "transparent" }} />
+                <div className="w-6 h-6 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: t.accentPurple, borderTopColor: "transparent" }} />
               </div>
             )}
             <div className="space-y-2">
@@ -132,7 +133,8 @@ const OrderTracker = ({ onClose, customerPhone }: OrderTrackerProps) => {
                 const status = getStatus(order.status);
                 return (
                   <button key={order.id} onClick={() => viewOrder(order)}
-                    className="w-full text-left glass-card p-4 flex items-center gap-3 transition-all">
+                    className="w-full text-left p-4 flex items-center gap-3 transition-all rounded-xl"
+                    style={{ background: t.cardBgSubtle, border: `1px solid ${t.borderSubtle}` }}>
                     <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: `${status.color.replace(")", " / 0.15)")}` }}>
                       <status.icon className="w-5 h-5" style={{ color: status.color }} />
                     </div>
@@ -143,8 +145,8 @@ const OrderTracker = ({ onClose, customerPhone }: OrderTrackerProps) => {
                         </span>
                       </div>
                       <div className="flex items-center gap-3 mt-1">
-                        <span className="text-xs text-muted-foreground">{formatDate(order.created_at)}</span>
-                        <span className="text-xs font-semibold" style={{ color: "hsl(245 60% 70%)" }}>R$ {Number(order.total_price).toFixed(2)}</span>
+                        <span className="text-xs" style={{ color: t.textMuted }}>{formatDate(order.created_at)}</span>
+                        <span className="text-xs font-semibold" style={{ color: t.accentPurple }}>R$ {Number(order.total_price).toFixed(2)}</span>
                       </div>
                     </div>
                   </button>
@@ -152,7 +154,7 @@ const OrderTracker = ({ onClose, customerPhone }: OrderTrackerProps) => {
               })}
             </div>
             {orders.length > 0 && (
-              <button onClick={() => { setSearched(false); setPhone(""); }} className="text-xs w-full text-center py-2" style={{ color: "hsl(245 60% 70%)" }}>
+              <button onClick={() => { setSearched(false); setPhone(""); }} className="text-xs w-full text-center py-2" style={{ color: t.accentPurple }}>
                 Buscar outro número
               </button>
             )}
@@ -161,7 +163,6 @@ const OrderTracker = ({ onClose, customerPhone }: OrderTrackerProps) => {
 
         {selectedOrder && (
           <div className="space-y-4">
-            {/* Progress steps */}
             {selectedOrder.status !== "cancelled" && (
               <div className="flex items-center justify-between px-2">
                 {["pending", "confirmed", "preparing", "delivering", "completed"].map((step, i) => {
@@ -170,10 +171,10 @@ const OrderTracker = ({ onClose, customerPhone }: OrderTrackerProps) => {
                   return (
                     <div key={step} className="flex flex-col items-center gap-1 flex-1">
                       <div className="w-8 h-8 rounded-full flex items-center justify-center transition-all"
-                        style={{ background: active ? `${st.color.replace(")", " / 0.2)")}` : "hsl(0 0% 100% / 0.05)" }}>
-                        <st.icon className="w-4 h-4" style={{ color: active ? st.color : "hsl(0 0% 30%)" }} />
+                        style={{ background: active ? `${st.color.replace(")", " / 0.2)")}` : t.cardBgSubtle }}>
+                        <st.icon className="w-4 h-4" style={{ color: active ? st.color : t.textSubtle }} />
                       </div>
-                      <span className="text-[8px] font-semibold text-center" style={{ color: active ? st.color : "hsl(0 0% 30%)" }}>
+                      <span className="text-[8px] font-semibold text-center" style={{ color: active ? st.color : t.textSubtle }}>
                         {st.label}
                       </span>
                     </div>
@@ -189,23 +190,22 @@ const OrderTracker = ({ onClose, customerPhone }: OrderTrackerProps) => {
               </div>
             )}
 
-            {/* Items */}
-            <div className="p-3 rounded-xl" style={{ background: "hsl(0 0% 100% / 0.03)", border: "1px solid hsl(0 0% 100% / 0.06)" }}>
-              <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-2 font-semibold">Itens</p>
+            <div className="p-3 rounded-xl" style={{ background: t.cardBgSubtle, border: `1px solid ${t.borderSubtle}` }}>
+              <p className="text-[10px] uppercase tracking-wider mb-2 font-semibold" style={{ color: t.textMuted }}>Itens</p>
               {items.map((item) => (
                 <div key={item.id} className="flex items-center justify-between text-xs py-1">
-                  <span className="text-foreground/80">{item.quantity}x {item.product_title}</span>
-                  <span className="text-foreground font-semibold">R$ {(item.product_price * item.quantity).toFixed(2)}</span>
+                  <span style={{ color: t.textSecondary }}>{item.quantity}x {item.product_title}</span>
+                  <span className="font-semibold" style={{ color: t.textPrimary }}>R$ {(item.product_price * item.quantity).toFixed(2)}</span>
                 </div>
               ))}
-              <div className="pt-2 mt-2 flex items-center justify-between text-sm font-bold" style={{ borderTop: "1px solid hsl(0 0% 100% / 0.06)" }}>
-                <span>Total</span>
-                <span style={{ color: "hsl(245 60% 70%)" }}>R$ {Number(selectedOrder.total_price).toFixed(2)}</span>
+              <div className="pt-2 mt-2 flex items-center justify-between text-sm font-bold" style={{ borderTop: `1px solid ${t.borderSubtle}` }}>
+                <span style={{ color: t.textPrimary }}>Total</span>
+                <span style={{ color: t.accentPurple }}>R$ {Number(selectedOrder.total_price).toFixed(2)}</span>
               </div>
             </div>
 
             <div className="text-center">
-              <p className="text-[10px] text-muted-foreground">O status atualiza automaticamente em tempo real.</p>
+              <p className="text-[10px]" style={{ color: t.textMuted }}>O status atualiza automaticamente em tempo real.</p>
             </div>
           </div>
         )}

@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, Package, Truck, Store, QrCode, Copy, Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useThemeColors } from "@/hooks/useThemeColors";
 
 interface CartItem {
   id: string;
@@ -26,6 +27,7 @@ type DeliveryMode = "delivery" | "pickup";
 type Step = "info" | "payment" | "confirmed";
 
 const CheckoutModal = ({ items, onClose, onSuccess, mode, whatsappNumber, pixKey, pixType }: CheckoutModalProps) => {
+  const t = useThemeColors();
   const [step, setStep] = useState<Step>("info");
   const [deliveryMode, setDeliveryMode] = useState<DeliveryMode>("pickup");
   const [form, setForm] = useState({
@@ -59,7 +61,6 @@ const CheckoutModal = ({ items, onClose, onSuccess, mode, whatsappNumber, pixKey
       return;
     }
 
-    // iFood mode - save to database
     setSubmitting(true);
     const { data: order, error } = await supabase.from("orders").insert({
       customer_name: form.name,
@@ -111,55 +112,53 @@ const CheckoutModal = ({ items, onClose, onSuccess, mode, whatsappNumber, pixKey
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
       className="fixed inset-0 z-[80] flex items-center justify-center p-4"
-      style={{ background: "hsl(0 0% 0% / 0.75)", backdropFilter: "blur(12px)" }}
+      style={{ background: t.overlayBg, backdropFilter: "blur(12px)" }}
       onClick={onClose}>
       <motion.div initial={{ scale: 0.9, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.9, opacity: 0 }}
-        className="glass-card-strong w-full max-w-md p-5 space-y-4 max-h-[90vh] overflow-y-auto scrollbar-hide"
+        className="w-full max-w-md p-5 space-y-4 max-h-[90vh] overflow-y-auto scrollbar-hide rounded-2xl"
+        style={{ background: t.modalCardBg, border: `1px solid ${t.border}`, boxShadow: t.cardShadowLg, backdropFilter: t.isLight ? 'none' : 'blur(28px)' }}
         onClick={(e) => e.stopPropagation()}>
         
         <div className="flex items-center justify-between">
-          <h2 className="text-base font-bold text-foreground">
+          <h2 className="text-base font-bold" style={{ color: t.textPrimary }}>
             {step === "info" ? "Finalizar Pedido" : step === "payment" ? "Pagamento PIX" : "Pedido Confirmado!"}
           </h2>
-          <button onClick={onClose}><X className="w-5 h-5 text-muted-foreground" /></button>
+          <button onClick={onClose}><X className="w-5 h-5" style={{ color: t.textMuted }} /></button>
         </div>
 
         {step === "info" && (
           <div className="space-y-3">
-            {/* Order summary */}
-            <div className="p-3 rounded-xl space-y-2" style={{ background: "hsl(0 0% 100% / 0.03)", border: "1px solid hsl(0 0% 100% / 0.06)" }}>
-              <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Resumo</p>
+            <div className="p-3 rounded-xl space-y-2" style={{ background: t.cardBgSubtle, border: `1px solid ${t.borderSubtle}` }}>
+              <p className="text-[10px] uppercase tracking-wider font-semibold" style={{ color: t.textMuted }}>Resumo</p>
               {items.map((item) => (
                 <div key={item.id} className="flex items-center justify-between text-xs">
-                  <span className="text-foreground/80">{item.quantity}x {item.title}</span>
-                  <span className="text-foreground font-semibold">R$ {(item.price * item.quantity).toFixed(2)}</span>
+                  <span style={{ color: t.textSecondary }}>{item.quantity}x {item.title}</span>
+                  <span className="font-semibold" style={{ color: t.textPrimary }}>R$ {(item.price * item.quantity).toFixed(2)}</span>
                 </div>
               ))}
-              <div className="pt-2 flex items-center justify-between text-sm font-bold" style={{ borderTop: "1px solid hsl(0 0% 100% / 0.06)" }}>
-                <span className="text-foreground">Total</span>
-                <span style={{ color: "hsl(245 60% 70%)" }}>R$ {total.toFixed(2)}</span>
+              <div className="pt-2 flex items-center justify-between text-sm font-bold" style={{ borderTop: `1px solid ${t.borderSubtle}` }}>
+                <span style={{ color: t.textPrimary }}>Total</span>
+                <span style={{ color: t.accentPurple }}>R$ {total.toFixed(2)}</span>
               </div>
             </div>
 
-            {/* Personal info */}
             <div>
-              <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1 block">Nome *</label>
-              <input className="glass-input text-sm" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Seu nome completo" />
+              <label className="text-[10px] font-semibold uppercase tracking-wider mb-1 block" style={{ color: t.textMuted }}>Nome *</label>
+              <input className="w-full rounded-xl px-4 py-3 text-sm outline-none transition-all" style={{ background: t.inputBg, border: `1px solid ${t.inputBorder}`, color: t.textPrimary }} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Seu nome completo" />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1 block">Telefone *</label>
-                <input className="glass-input text-sm" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="(11) 99999-9999" />
+                <label className="text-[10px] font-semibold uppercase tracking-wider mb-1 block" style={{ color: t.textMuted }}>Telefone *</label>
+                <input className="w-full rounded-xl px-4 py-3 text-sm outline-none transition-all" style={{ background: t.inputBg, border: `1px solid ${t.inputBorder}`, color: t.textPrimary }} value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="(11) 99999-9999" />
               </div>
               <div>
-                <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1 block">Email</label>
-                <input className="glass-input text-sm" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="email@email.com" />
+                <label className="text-[10px] font-semibold uppercase tracking-wider mb-1 block" style={{ color: t.textMuted }}>Email</label>
+                <input className="w-full rounded-xl px-4 py-3 text-sm outline-none transition-all" style={{ background: t.inputBg, border: `1px solid ${t.inputBorder}`, color: t.textPrimary }} value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="email@email.com" />
               </div>
             </div>
 
-            {/* Delivery mode */}
             <div>
-              <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2 block">Recebimento</label>
+              <label className="text-[10px] font-semibold uppercase tracking-wider mb-2 block" style={{ color: t.textMuted }}>Recebimento</label>
               <div className="grid grid-cols-2 gap-2">
                 {([
                   { id: "pickup" as DeliveryMode, label: "Retirar no local", icon: Store },
@@ -168,9 +167,9 @@ const CheckoutModal = ({ items, onClose, onSuccess, mode, whatsappNumber, pixKey
                   <button key={opt.id} onClick={() => setDeliveryMode(opt.id)}
                     className="flex items-center gap-2 p-3 rounded-xl text-xs font-semibold transition-all"
                     style={{
-                      background: deliveryMode === opt.id ? "hsl(245 60% 55% / 0.1)" : "hsl(0 0% 100% / 0.03)",
-                      border: `1.5px solid ${deliveryMode === opt.id ? "hsl(245 60% 55% / 0.4)" : "hsl(0 0% 100% / 0.08)"}`,
-                      color: deliveryMode === opt.id ? "hsl(245 60% 70%)" : "hsl(0 0% 55%)",
+                      background: deliveryMode === opt.id ? t.accentPurpleBg : t.cardBgSubtle,
+                      border: `1.5px solid ${deliveryMode === opt.id ? t.accentPurpleBorder : t.borderSubtle}`,
+                      color: deliveryMode === opt.id ? t.accentPurple : t.textMuted,
                     }}>
                     <opt.icon className="w-4 h-4" />
                     {opt.label}
@@ -184,27 +183,27 @@ const CheckoutModal = ({ items, onClose, onSuccess, mode, whatsappNumber, pixKey
                 <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }}
                   className="space-y-3 overflow-hidden">
                   <div>
-                    <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1 block">Endereço *</label>
-                    <input className="glass-input text-sm" value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} placeholder="Rua, Avenida..." />
+                    <label className="text-[10px] font-semibold uppercase tracking-wider mb-1 block" style={{ color: t.textMuted }}>Endereço *</label>
+                    <input className="w-full rounded-xl px-4 py-3 text-sm outline-none transition-all" style={{ background: t.inputBg, border: `1px solid ${t.inputBorder}`, color: t.textPrimary }} value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} placeholder="Rua, Avenida..." />
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1 block">Número</label>
-                      <input className="glass-input text-sm" value={form.number} onChange={(e) => setForm({ ...form, number: e.target.value })} placeholder="123" />
+                      <label className="text-[10px] font-semibold uppercase tracking-wider mb-1 block" style={{ color: t.textMuted }}>Número</label>
+                      <input className="w-full rounded-xl px-4 py-3 text-sm outline-none transition-all" style={{ background: t.inputBg, border: `1px solid ${t.inputBorder}`, color: t.textPrimary }} value={form.number} onChange={(e) => setForm({ ...form, number: e.target.value })} placeholder="123" />
                     </div>
                     <div>
-                      <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1 block">Complemento</label>
-                      <input className="glass-input text-sm" value={form.complement} onChange={(e) => setForm({ ...form, complement: e.target.value })} placeholder="Apto, Bloco..." />
+                      <label className="text-[10px] font-semibold uppercase tracking-wider mb-1 block" style={{ color: t.textMuted }}>Complemento</label>
+                      <input className="w-full rounded-xl px-4 py-3 text-sm outline-none transition-all" style={{ background: t.inputBg, border: `1px solid ${t.inputBorder}`, color: t.textPrimary }} value={form.complement} onChange={(e) => setForm({ ...form, complement: e.target.value })} placeholder="Apto, Bloco..." />
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1 block">Bairro *</label>
-                      <input className="glass-input text-sm" value={form.neighborhood} onChange={(e) => setForm({ ...form, neighborhood: e.target.value })} placeholder="Centro" />
+                      <label className="text-[10px] font-semibold uppercase tracking-wider mb-1 block" style={{ color: t.textMuted }}>Bairro *</label>
+                      <input className="w-full rounded-xl px-4 py-3 text-sm outline-none transition-all" style={{ background: t.inputBg, border: `1px solid ${t.inputBorder}`, color: t.textPrimary }} value={form.neighborhood} onChange={(e) => setForm({ ...form, neighborhood: e.target.value })} placeholder="Centro" />
                     </div>
                     <div>
-                      <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1 block">Cidade</label>
-                      <input className="glass-input text-sm" value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} placeholder="São Paulo" />
+                      <label className="text-[10px] font-semibold uppercase tracking-wider mb-1 block" style={{ color: t.textMuted }}>Cidade</label>
+                      <input className="w-full rounded-xl px-4 py-3 text-sm outline-none transition-all" style={{ background: t.inputBg, border: `1px solid ${t.inputBorder}`, color: t.textPrimary }} value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} placeholder="São Paulo" />
                     </div>
                   </div>
                 </motion.div>
@@ -212,15 +211,15 @@ const CheckoutModal = ({ items, onClose, onSuccess, mode, whatsappNumber, pixKey
             </AnimatePresence>
 
             <div>
-              <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1 block">Observações</label>
-              <textarea className="glass-input text-sm resize-none" rows={2} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} placeholder="Alguma observação..." />
+              <label className="text-[10px] font-semibold uppercase tracking-wider mb-1 block" style={{ color: t.textMuted }}>Observações</label>
+              <textarea className="w-full rounded-xl px-4 py-3 text-sm resize-none outline-none transition-all" rows={2} style={{ background: t.inputBg, border: `1px solid ${t.inputBorder}`, color: t.textPrimary }} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} placeholder="Alguma observação..." />
             </div>
 
             <button onClick={handleSubmit} disabled={submitting}
               className="w-full py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all disabled:opacity-50"
-              style={{ background: "hsl(245 60% 55%)", color: "white" }}>
+              style={{ background: t.btnBg, color: t.btnColor }}>
               {submitting ? (
-                <><div className="w-4 h-4 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: "white", borderTopColor: "transparent" }} /> Enviando...</>
+                <><div className="w-4 h-4 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: t.btnColor, borderTopColor: "transparent" }} /> Enviando...</>
               ) : mode === "whatsapp" ? "📱 Enviar pelo WhatsApp" : "Confirmar Pedido"}
             </button>
           </div>
@@ -228,25 +227,25 @@ const CheckoutModal = ({ items, onClose, onSuccess, mode, whatsappNumber, pixKey
 
         {step === "payment" && (
           <div className="space-y-4 text-center">
-            <div className="w-16 h-16 rounded-2xl mx-auto flex items-center justify-center" style={{ background: "hsl(245 60% 55% / 0.1)" }}>
-              <QrCode className="w-8 h-8" style={{ color: "hsl(245 60% 70%)" }} />
+            <div className="w-16 h-16 rounded-2xl mx-auto flex items-center justify-center" style={{ background: t.accentPurpleBg }}>
+              <QrCode className="w-8 h-8" style={{ color: t.accentPurple }} />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground mb-1">Valor a pagar:</p>
-              <p className="text-2xl font-bold" style={{ color: "hsl(245 60% 70%)" }}>R$ {total.toFixed(2)}</p>
+              <p className="text-sm mb-1" style={{ color: t.textMuted }}>Valor a pagar:</p>
+              <p className="text-2xl font-bold" style={{ color: t.accentPurple }}>R$ {total.toFixed(2)}</p>
             </div>
-            <div className="p-3 rounded-xl" style={{ background: "hsl(0 0% 100% / 0.03)", border: "1px solid hsl(0 0% 100% / 0.08)" }}>
-              <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Chave PIX ({pixType})</p>
+            <div className="p-3 rounded-xl" style={{ background: t.cardBgSubtle, border: `1px solid ${t.borderSubtle}` }}>
+              <p className="text-[10px] uppercase tracking-wider mb-1" style={{ color: t.textMuted }}>Chave PIX ({pixType})</p>
               <div className="flex items-center gap-2">
-                <p className="text-sm font-mono text-foreground flex-1 truncate">{pixKey || "Não configurada"}</p>
+                <p className="text-sm font-mono flex-1 truncate" style={{ color: t.textPrimary }}>{pixKey || "Não configurada"}</p>
                 {pixKey && (
-                  <button onClick={handleCopyPix} className="p-2 rounded-lg shrink-0" style={{ background: "hsl(245 60% 55% / 0.1)" }}>
-                    {copied ? <Check className="w-4 h-4" style={{ color: "hsl(140 60% 55%)" }} /> : <Copy className="w-4 h-4" style={{ color: "hsl(245 60% 70%)" }} />}
+                  <button onClick={handleCopyPix} className="p-2 rounded-lg shrink-0" style={{ background: t.accentPurpleBg }}>
+                    {copied ? <Check className="w-4 h-4" style={{ color: "hsl(140 60% 55%)" }} /> : <Copy className="w-4 h-4" style={{ color: t.accentPurple }} />}
                   </button>
                 )}
               </div>
             </div>
-            <p className="text-[11px] text-muted-foreground">Após realizar o pagamento, clique em confirmar abaixo.</p>
+            <p className="text-[11px]" style={{ color: t.textMuted }}>Após realizar o pagamento, clique em confirmar abaixo.</p>
             <button onClick={handleConfirmPayment}
               className="w-full py-3 rounded-xl font-bold text-sm transition-all"
               style={{ background: "hsl(140 60% 45%)", color: "white" }}>
@@ -258,10 +257,10 @@ const CheckoutModal = ({ items, onClose, onSuccess, mode, whatsappNumber, pixKey
         {step === "confirmed" && (
           <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="text-center space-y-3 py-4">
             <div className="text-5xl">🎉</div>
-            <h3 className="text-lg font-bold text-foreground">Pedido Realizado!</h3>
-            <p className="text-sm text-muted-foreground">Seu pedido foi recebido e está sendo processado.</p>
-            <div className="p-3 rounded-xl" style={{ background: "hsl(245 60% 55% / 0.1)", border: "1px solid hsl(245 60% 55% / 0.2)" }}>
-              <p className="text-xs" style={{ color: "hsl(245 60% 70%)" }}>Status: Pendente</p>
+            <h3 className="text-lg font-bold" style={{ color: t.textPrimary }}>Pedido Realizado!</h3>
+            <p className="text-sm" style={{ color: t.textMuted }}>Seu pedido foi recebido e está sendo processado.</p>
+            <div className="p-3 rounded-xl" style={{ background: t.accentPurpleBg, border: `1px solid ${t.accentPurpleBorder}` }}>
+              <p className="text-xs" style={{ color: t.accentPurple }}>Status: Pendente</p>
             </div>
           </motion.div>
         )}

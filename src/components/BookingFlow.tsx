@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, ArrowRight, Check, Calendar, User, Clock, Send, X, Loader2, CheckCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useThemeColors } from "@/hooks/useThemeColors";
 import type { User as AuthUser } from "@supabase/supabase-js";
 
 interface BookingService {
@@ -30,6 +31,7 @@ interface DBBarber {
 const steps = ["Serviço", "Barbeiro", "Data & Hora", "Seus Dados", "Confirmar"];
 
 const BookingFlow = ({ service, onClose, user }: BookingFlowProps) => {
+  const t = useThemeColors();
   const [currentStep, setCurrentStep] = useState(0);
   const [barbers, setBarbers] = useState<DBBarber[]>([]);
   const [selectedBarber, setSelectedBarber] = useState<DBBarber | null>(null);
@@ -234,7 +236,7 @@ const BookingFlow = ({ service, onClose, user }: BookingFlowProps) => {
     return (
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
         className="fixed inset-0 z-50 flex items-center justify-center p-4"
-        style={{ background: 'hsl(230 20% 7% / 0.85)', backdropFilter: 'blur(12px)' }}>
+        style={{ background: t.overlayBg, backdropFilter: 'blur(12px)' }}>
         <motion.div
           initial={{ scale: 0.8, opacity: 0, y: 20 }}
           animate={{ scale: 1, opacity: 1, y: 0 }}
@@ -258,7 +260,7 @@ const BookingFlow = ({ service, onClose, user }: BookingFlowProps) => {
             </p>
           </div>
 
-          <div className="p-4 rounded-xl space-y-2" style={{ background: "hsl(0 0% 100% / 0.03)", border: "1px solid hsl(0 0% 100% / 0.06)" }}>
+          <div className="p-4 rounded-xl space-y-2" style={{ background: t.cardBgSubtle, border: `1px solid ${t.borderSubtle}` }}>
             {[
               { icon: "💈", text: service.title },
               { icon: "✂️", text: selectedBarber?.name || "" },
@@ -289,13 +291,13 @@ const BookingFlow = ({ service, onClose, user }: BookingFlowProps) => {
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
       className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4"
-      style={{ background: 'hsl(230 20% 7% / 0.85)', backdropFilter: 'blur(12px)' }}>
+      style={{ background: t.overlayBg, backdropFilter: 'blur(12px)' }}>
       <motion.div initial={{ y: 40, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 40, opacity: 0 }}
         className="glass-card-strong w-full sm:max-w-lg max-h-[92dvh] sm:max-h-[90vh] overflow-y-auto scrollbar-hide rounded-t-2xl sm:rounded-2xl">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 min-[375px]:p-5 sticky top-0 z-10" style={{ borderBottom: '1px solid hsl(0 0% 100% / 0.06)', background: 'hsl(0 0% 100% / 0.04)', backdropFilter: 'blur(28px)' }}>
+        <div className="flex items-center justify-between p-4 min-[375px]:p-5 sticky top-0 z-10" style={{ borderBottom: `1px solid ${t.borderSubtle}`, background: t.cardBgSubtle, backdropFilter: 'blur(28px)' }}>
           <h2 className="text-lg min-[375px]:text-xl font-bold text-foreground">Agendamento</h2>
-          <button onClick={onClose} className="p-2 rounded-xl transition-colors" style={{ background: 'hsl(0 0% 100% / 0.05)' }}>
+          <button onClick={onClose} className="p-2 rounded-xl transition-colors" style={{ background: t.cardBgSubtle }}>
             <X className="w-5 h-5 text-muted-foreground" />
           </button>
         </div>
