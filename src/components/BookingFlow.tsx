@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, ArrowRight, Check, Calendar, User, Clock, Send, X, Loader2, CheckCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useThemeColors } from "@/hooks/useThemeColors";
 import type { User as AuthUser } from "@supabase/supabase-js";
 
 interface BookingService {
