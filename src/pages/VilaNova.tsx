@@ -182,7 +182,7 @@ const VilaNova = () => {
 
   const handleSignUp = async (): Promise<boolean> => {
     const digitsOnly = phone.replace(/\D/g, "");
-    const email = `${digitsOnly}@vilanova.barber`;
+    const email = `${digitsOnly}@genesis.barber`;
     const fullName = `${name.trim()} ${surname.trim()}`;
 
     // Try sign up
@@ -240,7 +240,7 @@ const VilaNova = () => {
       if (!authOk) { setSubmitting(false); return; }
     }
 
-    const customerEmail = `${digitsOnly}@vilanova.barber`;
+    const customerEmail = `${digitsOnly}@genesis.barber`;
     const { error } = await supabase.from("appointments").insert({
       service_id: selectedService!.id,
       customer_name: `${name.trim()} ${surname.trim()}`,
@@ -255,8 +255,9 @@ const VilaNova = () => {
     if (error) { toast.error("Erro ao agendar."); setSubmitting(false); return; }
     try {
       const dateFormatted = new Date(selectedDate + "T12:00:00").toLocaleDateString("pt-BR");
-      const memberLink = `https://vilanova-demo.vercel.app/vilanova/membro`;
-      const msg = `✅ *Agendamento Confirmado!*\n\nOlá *${name}*, tudo certo!\n\n💈 ${selectedService!.title}\n✂️ ${selectedBarber?.name}\n📅 ${dateFormatted} às ${selectedTime}\n💰 R$ ${selectedService!.price.toFixed(2)}\n\n📍 Rua Benjamin Costa, 45 - Centro, Colatina/ES\n⏰ Chegue 5 min antes\n\n🔗 Acesse sua área de membro:\n${memberLink}\n\n*Barbearia Vila Nova* 💈`;
+      const memberLink = `${window.location.origin}/membro`;
+      const bName = settings.business_name || "GenesisBarber";
+      const msg = `✅ *Agendamento Confirmado!*\n\nOlá *${name}*, tudo certo!\n\n💈 ${selectedService!.title}\n✂️ ${selectedBarber?.name}\n📅 ${dateFormatted} às ${selectedTime}\n💰 R$ ${selectedService!.price.toFixed(2)}\n\n📍 ${settings.address || "Endereço"}\n⏰ Chegue 5 min antes\n\n🔗 Acesse sua área de membro:\n${memberLink}\n\n*${bName}* 💈`;
       await supabase.functions.invoke("chatpro", {
         body: { action: "send_message", phone: digitsOnly, message: msg },
       });
