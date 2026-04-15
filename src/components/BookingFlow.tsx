@@ -31,6 +31,7 @@ interface DBBarber {
 const steps = ["Serviço", "Barbeiro", "Data & Hora", "Seus Dados", "Confirmar"];
 
 const BookingFlow = ({ service, onClose, user }: BookingFlowProps) => {
+  const t = useThemeColors();
   const [currentStep, setCurrentStep] = useState(0);
   const [barbers, setBarbers] = useState<DBBarber[]>([]);
   const [selectedBarber, setSelectedBarber] = useState<DBBarber | null>(null);
