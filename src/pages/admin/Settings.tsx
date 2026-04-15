@@ -80,7 +80,10 @@ const Settings = () => {
     setSaving(true);
     setSaved(false);
 
-    const promises = Object.entries(settings).map(([key, value]) =>
+    // Merge pix_qr_configs into settings before saving
+    const allSettings = { ...settings, pix_qr_configs: JSON.stringify(pixQrConfigs) };
+
+    const promises = Object.entries(allSettings).map(([key, value]) =>
       supabase.from("business_settings").upsert({ key, value }, { onConflict: "key" })
     );
     await Promise.all(promises);
