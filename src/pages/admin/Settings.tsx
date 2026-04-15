@@ -5,20 +5,21 @@ import {
   Save, Store, Phone, Clock, MapPin, CalendarOff, Map, Image, Palette,
   Database, Calendar, Settings2, Globe, Shield, Upload, CheckCircle,
   XCircle, Loader2, Eye, ChevronRight, Mail, Instagram, Type,
-  AlarmClock, Timer, Ban, FileText
+  AlarmClock, Timer, Ban, FileText, CreditCard, QrCode, Copy, Plus, Trash2
 } from "lucide-react";
 import { toast } from "sonner";
 import LocationPickerModal from "@/components/LocationPickerModal";
 
 const dayLabels = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 
-type SettingsTab = "business" | "branding" | "hours" | "scheduling" | "database" | "general";
+type SettingsTab = "business" | "branding" | "hours" | "scheduling" | "payments" | "database" | "general";
 
 const tabs: { id: SettingsTab; label: string; icon: typeof Store }[] = [
   { id: "business", label: "Dados", icon: Store },
   { id: "branding", label: "Visual", icon: Palette },
   { id: "hours", label: "Horários", icon: Clock },
   { id: "scheduling", label: "Agendamento", icon: Calendar },
+  { id: "payments", label: "PIX / Pagamentos", icon: CreditCard },
   { id: "database", label: "Banco de Dados", icon: Database },
   { id: "general", label: "Geral", icon: Settings2 },
 ];
