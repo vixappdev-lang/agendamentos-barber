@@ -407,7 +407,7 @@ const VilaNova = () => {
                 <button onClick={() => { setMobileMenu(false); handleGoToMember(); }}
                   className="block w-full text-center px-5 py-3 rounded-xl text-sm font-medium"
                   style={{ background: "hsl(0 0% 100% / 0.06)", border: "1px solid hsl(0 0% 100% / 0.08)", color: "hsl(0 0% 70%)" }}>
-                  {user ? `👤 ${userName}` : "Minha Conta"}
+                  {user ? `👤 ${userName}` : "Área do Cliente"}
                 </button>
                 <a href="#servicos" onClick={() => setMobileMenu(false)}
                   className="block w-full text-center px-5 py-3.5 rounded-xl text-sm font-bold"
