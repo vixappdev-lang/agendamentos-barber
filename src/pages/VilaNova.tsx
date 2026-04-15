@@ -492,20 +492,20 @@ const VilaNova = () => {
             
             {/* Section label */}
             <div className="flex items-center gap-3 mb-10 lg:mb-14">
-              <div className="w-10 h-px" style={{ background: "hsl(0 0% 100% / 0.15)" }} />
-              <span className="text-[11px] font-bold uppercase tracking-[0.35em]" style={{ color: "hsl(0 0% 100% / 0.35)" }}>Sobre nós</span>
+              <div className="w-10 h-px" style={{ background: t.borderSubtle }} />
+              <span className="text-[11px] font-bold uppercase tracking-[0.35em]" style={{ color: t.textMuted }}>Sobre nós</span>
             </div>
 
             <div className="grid lg:grid-cols-12 gap-12 lg:gap-16 items-start">
               {/* Text content - takes 5 columns on desktop */}
               <div className="lg:col-span-5">
-                <h2 className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-black mb-8 leading-[1.05] tracking-tight">
+                <h2 className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-black mb-8 leading-[1.05] tracking-tight" style={{ color: t.textPrimary }}>
                   {settings.about_title || "Onde estilo\nencontra atitude"}
                 </h2>
-                <p className="text-sm sm:text-base leading-relaxed mb-6" style={{ color: "hsl(0 0% 100% / 0.5)" }}>
+                <p className="text-sm sm:text-base leading-relaxed mb-6" style={{ color: t.textSecondary }}>
                   {settings.about_description || "Não somos apenas uma barbearia — somos um espaço de transformação masculina. Aqui, cada detalhe é pensado para elevar seu visual e sua confiança ao máximo nível."}
                 </p>
-                <p className="text-sm sm:text-base leading-relaxed mb-10" style={{ color: "hsl(0 0% 100% / 0.4)" }}>
+                <p className="text-sm sm:text-base leading-relaxed mb-10" style={{ color: t.textMuted }}>
                   Profissionais especializados, técnicas atualizadas e um ambiente que você não vai querer sair. Desde o corte clássico até o estilo mais ousado, entregamos resultado com precisão.
                 </p>
 
@@ -517,13 +517,13 @@ const VilaNova = () => {
                     { icon: Heart, title: "Ambiente de Alto Padrão", desc: "Espaço premium projetado para o seu conforto" },
                   ].map((feat) => (
                     <div key={feat.title} className="flex gap-4 items-start p-4 rounded-2xl transition-all"
-                      style={{ background: "hsl(0 0% 100% / 0.02)", border: "1px solid hsl(0 0% 100% / 0.04)" }}>
-                      <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: "hsl(0 0% 100% / 0.06)" }}>
-                        <feat.icon className="w-5 h-5" style={{ color: "hsl(0 0% 70%)" }} />
+                      style={{ background: t.cardBg, border: `1px solid ${t.borderSubtle}` }}>
+                      <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: t.cardBgSubtle }}>
+                        <feat.icon className="w-5 h-5" style={{ color: t.textLink }} />
                       </div>
                       <div>
-                        <h4 className="text-sm font-bold mb-0.5">{feat.title}</h4>
-                        <p className="text-xs leading-relaxed" style={{ color: "hsl(0 0% 100% / 0.4)" }}>{feat.desc}</p>
+                        <h4 className="text-sm font-bold mb-0.5" style={{ color: t.textPrimary }}>{feat.title}</h4>
+                        <p className="text-xs leading-relaxed" style={{ color: t.textMuted }}>{feat.desc}</p>
                       </div>
                     </div>
                   ))}
@@ -536,9 +536,9 @@ const VilaNova = () => {
                     { number: "3K+", label: "Clientes" },
                     { number: "5.0", label: "Avaliação" },
                   ].map((stat) => (
-                    <div key={stat.label} className="text-center p-4 rounded-xl" style={{ background: "hsl(0 0% 100% / 0.02)", border: "1px solid hsl(0 0% 100% / 0.04)" }}>
-                      <span className="text-2xl sm:text-3xl font-black block">{stat.number}</span>
-                      <p className="text-[10px] sm:text-xs mt-1 font-medium" style={{ color: "hsl(0 0% 100% / 0.35)" }}>{stat.label}</p>
+                    <div key={stat.label} className="text-center p-4 rounded-xl" style={{ background: t.cardBg, border: `1px solid ${t.borderSubtle}` }}>
+                      <span className="text-2xl sm:text-3xl font-black block" style={{ color: t.textPrimary }}>{stat.number}</span>
+                      <p className="text-[10px] sm:text-xs mt-1 font-medium" style={{ color: t.textMuted }}>{stat.label}</p>
                     </div>
                   ))}
                 </div>
@@ -547,28 +547,25 @@ const VilaNova = () => {
               {/* Image grid - takes 7 columns on desktop */}
               <div className="lg:col-span-7">
                 <div className="grid grid-cols-12 gap-3 sm:gap-4">
-                  {/* Large featured image */}
-                  <div className="col-span-7 rounded-2xl overflow-hidden" style={{ border: "1px solid hsl(0 0% 100% / 0.06)" }}>
+                  <div className="col-span-7 rounded-2xl overflow-hidden" style={{ border: `1px solid ${t.borderSubtle}` }}>
                     <div className="aspect-[3/4]">
                       <img src={heroImg1} alt="Interior" className="w-full h-full object-cover" loading="lazy" />
                     </div>
                   </div>
-                  {/* Right column with 2 stacked images */}
                   <div className="col-span-5 flex flex-col gap-3 sm:gap-4">
-                    <div className="rounded-2xl overflow-hidden flex-1" style={{ border: "1px solid hsl(0 0% 100% / 0.06)" }}>
+                    <div className="rounded-2xl overflow-hidden flex-1" style={{ border: `1px solid ${t.borderSubtle}` }}>
                       <img src={heroImg2} alt="Barba profissional" className="w-full h-full object-cover" loading="lazy" />
                     </div>
-                    <div className="rounded-2xl overflow-hidden flex-1" style={{ border: "1px solid hsl(0 0% 100% / 0.06)" }}>
+                    <div className="rounded-2xl overflow-hidden flex-1" style={{ border: `1px solid ${t.borderSubtle}` }}>
                       <img src={galleryImg1} alt="Ferramentas profissionais" className="w-full h-full object-cover" loading="lazy" />
                     </div>
                   </div>
-                  {/* Bottom row with 2 images */}
-                  <div className="col-span-5 rounded-2xl overflow-hidden" style={{ border: "1px solid hsl(0 0% 100% / 0.06)" }}>
+                  <div className="col-span-5 rounded-2xl overflow-hidden" style={{ border: `1px solid ${t.borderSubtle}` }}>
                     <div className="aspect-[4/3]">
                       <img src={heroImg3} alt="Corte moderno" className="w-full h-full object-cover" loading="lazy" />
                     </div>
                   </div>
-                  <div className="col-span-7 rounded-2xl overflow-hidden" style={{ border: "1px solid hsl(0 0% 100% / 0.06)" }}>
+                  <div className="col-span-7 rounded-2xl overflow-hidden" style={{ border: `1px solid ${t.borderSubtle}` }}>
                     <div className="aspect-[4/3]">
                       <img src={galleryImg3} alt="Ambiente acolhedor" className="w-full h-full object-cover" loading="lazy" />
                     </div>
@@ -581,16 +578,16 @@ const VilaNova = () => {
       </section>
 
       {/* ─── SERVICES ─── */}
-      <section id="servicos" className="py-20 sm:py-28 px-4 sm:px-6 lg:px-8" style={{ background: "hsl(220 18% 5%)" }}>
+      <section id="servicos" className="py-20 sm:py-28 px-4 sm:px-6 lg:px-8" style={{ background: t.isLight ? "hsl(220 12% 95%)" : "hsl(220 18% 5%)" }}>
         <div className="max-w-[1600px] mx-auto">
           <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-12 sm:mb-16">
             <div className="flex items-center justify-center gap-3 mb-5">
-              <div className="w-10 h-px" style={{ background: "hsl(0 0% 100% / 0.15)" }} />
-              <span className="text-[11px] font-bold uppercase tracking-[0.35em]" style={{ color: "hsl(0 0% 100% / 0.35)" }}>Nossos serviços</span>
-              <div className="w-10 h-px" style={{ background: "hsl(0 0% 100% / 0.15)" }} />
+              <div className="w-10 h-px" style={{ background: t.borderSubtle }} />
+              <span className="text-[11px] font-bold uppercase tracking-[0.35em]" style={{ color: t.textMuted }}>Nossos serviços</span>
+              <div className="w-10 h-px" style={{ background: t.borderSubtle }} />
             </div>
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight">Escolha seu serviço</h2>
-            <p className="text-sm sm:text-base mt-4 max-w-md mx-auto" style={{ color: "hsl(0 0% 100% / 0.4)" }}>
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight" style={{ color: t.textPrimary }}>Escolha seu serviço</h2>
+            <p className="text-sm sm:text-base mt-4 max-w-md mx-auto" style={{ color: t.textSecondary }}>
               Selecione o serviço desejado e agende no melhor horário para você.
             </p>
           </motion.div>
@@ -604,24 +601,24 @@ const VilaNova = () => {
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.06 }}
                 className="group rounded-2xl overflow-hidden transition-all duration-300 hover:translate-y-[-4px] cursor-pointer"
-                style={{ background: "hsl(0 0% 100% / 0.03)", border: "1px solid hsl(0 0% 100% / 0.06)" }}
+                style={{ background: t.cardBg, border: `1px solid ${t.borderSubtle}`, boxShadow: t.cardShadow }}
                 onClick={() => { setSelectedService(service); setCurrentStep(0); }}
               >
                 <div className="p-5 sm:p-6">
                   <div className="flex items-start justify-between mb-4">
-                    <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ background: "hsl(0 0% 100% / 0.06)" }}>
-                      <Scissors className="w-5 h-5" style={{ color: "hsl(0 0% 70%)" }} />
+                    <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ background: t.cardBgSubtle }}>
+                      <Scissors className="w-5 h-5" style={{ color: t.textLink }} />
                     </div>
-                    <div className="flex items-center gap-1 text-[11px] font-medium px-2.5 py-1 rounded-lg" style={{ background: "hsl(0 0% 100% / 0.05)", color: "hsl(0 0% 55%)" }}>
+                    <div className="flex items-center gap-1 text-[11px] font-medium px-2.5 py-1 rounded-lg" style={{ background: t.cardBgSubtle, color: t.textMuted }}>
                       <Clock className="w-3 h-3" /> {service.duration}
                     </div>
                   </div>
-                  <h3 className="font-bold text-base sm:text-lg mb-1">{service.title}</h3>
-                  <p className="text-xs mb-5 line-clamp-2" style={{ color: "hsl(0 0% 100% / 0.4)" }}>{service.subtitle || "Serviço profissional"}</p>
-                  <div className="flex items-center justify-between pt-4" style={{ borderTop: "1px solid hsl(0 0% 100% / 0.06)" }}>
-                    <span className="text-xl sm:text-2xl font-black">R$ {service.price}</span>
+                  <h3 className="font-bold text-base sm:text-lg mb-1" style={{ color: t.textPrimary }}>{service.title}</h3>
+                  <p className="text-xs mb-5 line-clamp-2" style={{ color: t.textSecondary }}>{service.subtitle || "Serviço profissional"}</p>
+                  <div className="flex items-center justify-between pt-4" style={{ borderTop: `1px solid ${t.borderSubtle}` }}>
+                    <span className="text-xl sm:text-2xl font-black" style={{ color: t.textPrimary }}>R$ {service.price}</span>
                     <span className="flex items-center gap-1.5 text-xs font-semibold px-4 py-2 rounded-xl transition-all group-hover:translate-x-1"
-                      style={{ background: "hsl(0 0% 100% / 0.06)", color: "hsl(0 0% 70%)" }}>
+                      style={{ background: t.btnGhostBg, color: t.btnGhostColor }}>
                       Agendar <ArrowRight className="w-3.5 h-3.5" />
                     </span>
                   </div>
@@ -637,11 +634,11 @@ const VilaNova = () => {
         <div className="max-w-[1600px] mx-auto">
           <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-12 sm:mb-16">
             <div className="flex items-center justify-center gap-3 mb-5">
-              <div className="w-10 h-px" style={{ background: "hsl(0 0% 100% / 0.15)" }} />
-              <span className="text-[11px] font-bold uppercase tracking-[0.35em]" style={{ color: "hsl(0 0% 100% / 0.35)" }}>Galeria</span>
-              <div className="w-10 h-px" style={{ background: "hsl(0 0% 100% / 0.15)" }} />
+              <div className="w-10 h-px" style={{ background: t.borderSubtle }} />
+              <span className="text-[11px] font-bold uppercase tracking-[0.35em]" style={{ color: t.textMuted }}>Galeria</span>
+              <div className="w-10 h-px" style={{ background: t.borderSubtle }} />
             </div>
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight">Nosso trabalho</h2>
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight" style={{ color: t.textPrimary }}>Nosso trabalho</h2>
           </motion.div>
 
           <div className="grid grid-cols-2 md:grid-cols-3 gap-2 sm:gap-3 lg:gap-4">
@@ -653,7 +650,7 @@ const VilaNova = () => {
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.06 }}
                 className="relative rounded-2xl overflow-hidden cursor-pointer group aspect-square"
-                style={{ border: "1px solid hsl(0 0% 100% / 0.06)" }}
+                style={{ border: `1px solid ${t.borderSubtle}` }}
                 onClick={() => setLightboxIndex(i)}
               >
                 <img src={img} alt={`Galeria ${i + 1}`} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" loading="lazy" />
@@ -670,11 +667,11 @@ const VilaNova = () => {
       </section>
 
       {/* ─── CTA BANNER ─── */}
-      <section className="py-16 sm:py-24 px-4 sm:px-6 lg:px-8" style={{ background: "hsl(220 18% 5%)" }}>
+      <section className="py-16 sm:py-24 px-4 sm:px-6 lg:px-8" style={{ background: t.isLight ? "hsl(220 12% 95%)" : "hsl(220 18% 5%)" }}>
         <div className="max-w-4xl mx-auto text-center">
           <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight mb-4">Pronto para elevar<br />seu estilo?</h2>
-            <p className="text-sm sm:text-base mb-8 max-w-md mx-auto" style={{ color: "hsl(0 0% 100% / 0.45)" }}>
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight mb-4" style={{ color: t.textPrimary }}>Pronto para elevar<br />seu estilo?</h2>
+            <p className="text-sm sm:text-base mb-8 max-w-md mx-auto" style={{ color: t.textSecondary }}>
               Agende agora e descubra por que somos a escolha número 1. Vagas limitadas.
             </p>
             <a href="#servicos"
@@ -687,63 +684,63 @@ const VilaNova = () => {
       </section>
 
       {/* ─── FOOTER ─── */}
-      <footer id="contato" className="py-16 sm:py-20 px-4 sm:px-6 lg:px-8" style={{ borderTop: "1px solid hsl(0 0% 100% / 0.04)" }}>
+      <footer id="contato" className="py-16 sm:py-20 px-4 sm:px-6 lg:px-8" style={{ borderTop: `1px solid ${t.borderSubtle}` }}>
         <div className="max-w-[1600px] mx-auto">
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-10 mb-14">
             <div className="sm:col-span-2 lg:col-span-1">
               <div className="flex items-center gap-2.5 mb-4">
-                <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: "hsl(0 0% 95%)" }}>
-                  <Scissors className="w-4 h-4" style={{ color: "hsl(220 20% 7%)" }} />
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: t.btnBg }}>
+                  <Scissors className="w-4 h-4" style={{ color: t.btnColor }} />
                 </div>
-                <span className="font-extrabold text-lg">{settings.business_name || "GenesisBarber"}</span>
+                <span className="font-extrabold text-lg" style={{ color: t.textPrimary }}>{settings.business_name || "GenesisBarber"}</span>
               </div>
-              <p className="text-xs leading-relaxed max-w-xs" style={{ color: "hsl(0 0% 100% / 0.35)" }}>
+              <p className="text-xs leading-relaxed max-w-xs" style={{ color: t.textMuted }}>
                 Excelência em cuidado masculino. Estilo, precisão e confiança — tudo em um só lugar.
               </p>
             </div>
             <div>
-              <h4 className="font-bold text-sm mb-5">Navegação</h4>
+              <h4 className="font-bold text-sm mb-5" style={{ color: t.textPrimary }}>Navegação</h4>
               <div className="space-y-3">
                 {navLinks.filter(l => !l.external).map((link) => (
-                  <a key={link.label} href={link.href} className="block text-xs transition-colors hover:text-white" style={{ color: "hsl(0 0% 100% / 0.4)" }}>
+                  <a key={link.label} href={link.href} className="block text-xs transition-colors" style={{ color: t.textSecondary }}>
                     {link.label}
                   </a>
                 ))}
-                <a href="/loja" className="block text-xs transition-colors hover:text-white" style={{ color: "hsl(0 0% 100% / 0.4)" }}>Loja</a>
-                <a href="/login" className="block text-xs transition-colors hover:text-white" style={{ color: "hsl(0 0% 100% / 0.4)" }}>Área do Cliente</a>
+                <a href="/loja" className="block text-xs transition-colors" style={{ color: t.textSecondary }}>Loja</a>
+                <a href="/login" className="block text-xs transition-colors" style={{ color: t.textSecondary }}>Área do Cliente</a>
               </div>
             </div>
             <div>
-              <h4 className="font-bold text-sm mb-5">Contato</h4>
+              <h4 className="font-bold text-sm mb-5" style={{ color: t.textPrimary }}>Contato</h4>
               <div className="space-y-3">
-                <div className="flex items-center gap-2.5 text-xs" style={{ color: "hsl(0 0% 100% / 0.4)" }}>
+                <div className="flex items-center gap-2.5 text-xs" style={{ color: t.textSecondary }}>
                   <MapPin className="w-3.5 h-3.5 shrink-0" /> {settings.address || "Endereço da barbearia"}
                 </div>
-                <div className="flex items-center gap-2.5 text-xs" style={{ color: "hsl(0 0% 100% / 0.4)" }}>
+                <div className="flex items-center gap-2.5 text-xs" style={{ color: t.textSecondary }}>
                   <Phone className="w-3.5 h-3.5 shrink-0" /> {settings.whatsapp_number || "(00) 00000-0000"}
                 </div>
                 {settings.instagram && (
-                  <div className="flex items-center gap-2.5 text-xs" style={{ color: "hsl(0 0% 100% / 0.4)" }}>
+                  <div className="flex items-center gap-2.5 text-xs" style={{ color: t.textSecondary }}>
                     <Instagram className="w-3.5 h-3.5 shrink-0" /> {settings.instagram}
                   </div>
                 )}
               </div>
             </div>
             <div>
-              <h4 className="font-bold text-sm mb-5">Horários</h4>
-              <div className="space-y-2 text-xs" style={{ color: "hsl(0 0% 100% / 0.4)" }}>
+              <h4 className="font-bold text-sm mb-5" style={{ color: t.textPrimary }}>Horários</h4>
+              <div className="space-y-2 text-xs" style={{ color: t.textSecondary }}>
                 <p>Seg - Sex: {settings.opening_time || "09:00"} - {settings.closing_time || "19:00"}</p>
                 <p>Intervalo: {settings.lunch_start || "12:00"} - {settings.lunch_end || "13:00"}</p>
               </div>
             </div>
           </div>
-          <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4" style={{ borderTop: "1px solid hsl(0 0% 100% / 0.04)" }}>
-            <p className="text-[11px]" style={{ color: "hsl(0 0% 100% / 0.2)" }}>
+          <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4" style={{ borderTop: `1px solid ${t.borderSubtle}` }}>
+            <p className="text-[11px]" style={{ color: t.textMuted }}>
               © {new Date().getFullYear()} {settings.business_name || "GenesisBarber"}. Todos os direitos reservados.
             </p>
             <div className="flex gap-3">
               {["Instagram", "WhatsApp"].map((s) => (
-                <span key={s} className="text-[11px] px-3 py-1.5 rounded-lg" style={{ background: "hsl(0 0% 100% / 0.04)", color: "hsl(0 0% 100% / 0.3)" }}>{s}</span>
+                <span key={s} className="text-[11px] px-3 py-1.5 rounded-lg" style={{ background: t.cardBgSubtle, color: t.textMuted }}>{s}</span>
               ))}
             </div>
           </div>
