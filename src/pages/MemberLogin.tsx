@@ -34,7 +34,7 @@ const MemberLogin = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const getEmail = (ph: string) => `${ph.replace(/\D/g, "")}@vilanova.barber`;
+  const getEmail = (ph: string) => `${ph.replace(/\D/g, "")}@genesis.barber`;
 
   const handleLogin = async () => {
     const digits = phone.replace(/\D/g, "");
@@ -44,7 +44,7 @@ const MemberLogin = () => {
     const { error } = await supabase.auth.signInWithPassword({ email: getEmail(phone), password });
     if (error) { toast.error("Telefone ou senha incorretos."); setLoading(false); return; }
     toast.success("Bem-vindo de volta!");
-    navigate("/vilanova/membro", { replace: true });
+    navigate("/membro", { replace: true });
     setLoading(false);
   };
 
@@ -72,7 +72,7 @@ const MemberLogin = () => {
     }
     if (data.user) {
       toast.success("Conta criada com sucesso! Bem-vindo!");
-      navigate("/vilanova/membro", { replace: true });
+      navigate("/membro", { replace: true });
     }
     setLoading(false);
   };
@@ -104,11 +104,11 @@ const MemberLogin = () => {
         <div className="absolute inset-y-0 right-0 z-20 pointer-events-none" style={{ width: "120px", background: "linear-gradient(to right, transparent, hsl(220 20% 4%))" }} />
 
         <div className="relative z-10 flex flex-col justify-between p-10 xl:p-14 w-full">
-          <a href="/vilanova" className="flex items-center gap-2.5">
+          <a href="/" className="flex items-center gap-2.5">
             <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: btnBg }}>
               <Scissors className="w-4 h-4" style={{ color: btnColor }} />
             </div>
-            <span className="text-lg font-extrabold tracking-tight">Vila Nova</span>
+            <span className="text-lg font-extrabold tracking-tight">GenesisBarber</span>
           </a>
 
           <div>
@@ -133,15 +133,15 @@ const MemberLogin = () => {
         <div className="w-full max-w-md">
           {/* Mobile header */}
           <div className="lg:hidden flex items-center gap-2.5 mb-10">
-            <a href="/vilanova" className="flex items-center gap-2.5">
+            <a href="/" className="flex items-center gap-2.5">
               <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: btnBg }}>
                 <Scissors className="w-4 h-4" style={{ color: btnColor }} />
               </div>
-              <span className="text-lg font-extrabold tracking-tight">Vila Nova</span>
+              <span className="text-lg font-extrabold tracking-tight">GenesisBarber</span>
             </a>
           </div>
 
-          <a href="/vilanova" className="inline-flex items-center gap-1.5 text-xs font-medium mb-8 transition-colors hover:text-white"
+          <a href="/" className="inline-flex items-center gap-1.5 text-xs font-medium mb-8 transition-colors hover:text-white"
             style={{ color: "hsl(0 0% 50%)" }}>
             <ChevronLeft className="w-3.5 h-3.5" /> Voltar ao site
           </a>
