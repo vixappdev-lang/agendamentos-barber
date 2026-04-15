@@ -698,48 +698,51 @@ const VilaNova = () => {
                 <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: "hsl(0 0% 95%)" }}>
                   <Scissors className="w-4 h-4" style={{ color: "hsl(220 20% 7%)" }} />
                 </div>
-                <span className="font-extrabold text-lg">Vila Nova</span>
+                <span className="font-extrabold text-lg">{settings.business_name || "GenesisBarber"}</span>
               </div>
               <p className="text-xs leading-relaxed max-w-xs" style={{ color: "hsl(0 0% 100% / 0.35)" }}>
-                A 1ª Barbearia por Assinatura de Colatina. Tradição, estilo e conforto em cada detalhe.
+                Excelência em cuidado masculino. Estilo, precisão e confiança — tudo em um só lugar.
               </p>
             </div>
             <div>
-              <h4 className="font-bold text-sm mb-5">Links</h4>
+              <h4 className="font-bold text-sm mb-5">Navegação</h4>
               <div className="space-y-3">
-                {navLinks.map((link) => (
+                {navLinks.filter(l => !l.external).map((link) => (
                   <a key={link.label} href={link.href} className="block text-xs transition-colors hover:text-white" style={{ color: "hsl(0 0% 100% / 0.4)" }}>
                     {link.label}
                   </a>
                 ))}
+                <a href="/loja" className="block text-xs transition-colors hover:text-white" style={{ color: "hsl(0 0% 100% / 0.4)" }}>Loja</a>
+                <a href="/login" className="block text-xs transition-colors hover:text-white" style={{ color: "hsl(0 0% 100% / 0.4)" }}>Área do Cliente</a>
               </div>
             </div>
             <div>
               <h4 className="font-bold text-sm mb-5">Contato</h4>
               <div className="space-y-3">
                 <div className="flex items-center gap-2.5 text-xs" style={{ color: "hsl(0 0% 100% / 0.4)" }}>
-                  <MapPin className="w-3.5 h-3.5 shrink-0" /> Rua Benjamin Costa, 45 - Centro, Colatina/ES
+                  <MapPin className="w-3.5 h-3.5 shrink-0" /> {settings.address || "Endereço da barbearia"}
                 </div>
                 <div className="flex items-center gap-2.5 text-xs" style={{ color: "hsl(0 0% 100% / 0.4)" }}>
-                  <Phone className="w-3.5 h-3.5 shrink-0" /> (31) 99999-9999
+                  <Phone className="w-3.5 h-3.5 shrink-0" /> {settings.whatsapp_number || "(00) 00000-0000"}
                 </div>
-                <div className="flex items-center gap-2.5 text-xs" style={{ color: "hsl(0 0% 100% / 0.4)" }}>
-                  <Instagram className="w-3.5 h-3.5 shrink-0" /> barbeariavilanova
-                </div>
+                {settings.instagram && (
+                  <div className="flex items-center gap-2.5 text-xs" style={{ color: "hsl(0 0% 100% / 0.4)" }}>
+                    <Instagram className="w-3.5 h-3.5 shrink-0" /> {settings.instagram}
+                  </div>
+                )}
               </div>
             </div>
             <div>
               <h4 className="font-bold text-sm mb-5">Horários</h4>
               <div className="space-y-2 text-xs" style={{ color: "hsl(0 0% 100% / 0.4)" }}>
-                <p>Seg - Sex: 09:00 - 19:00</p>
-                <p>Sáb: 09:00 - 17:00</p>
-                <p>Dom: Fechado</p>
+                <p>Seg - Sex: {settings.opening_time || "09:00"} - {settings.closing_time || "19:00"}</p>
+                <p>Intervalo: {settings.lunch_start || "12:00"} - {settings.lunch_end || "13:00"}</p>
               </div>
             </div>
           </div>
           <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4" style={{ borderTop: "1px solid hsl(0 0% 100% / 0.04)" }}>
             <p className="text-[11px]" style={{ color: "hsl(0 0% 100% / 0.2)" }}>
-              © {new Date().getFullYear()} Barbearia Vila Nova. Todos os direitos reservados.
+              © {new Date().getFullYear()} {settings.business_name || "GenesisBarber"}. Todos os direitos reservados.
             </p>
             <div className="flex gap-3">
               {["Instagram", "WhatsApp"].map((s) => (
