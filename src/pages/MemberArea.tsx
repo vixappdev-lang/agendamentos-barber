@@ -204,8 +204,8 @@ const MemberArea = () => {
     try {
       const digitsOnly = phone.replace(/\D/g, "");
       const dateFormatted = new Date(selectedDate + "T12:00:00").toLocaleDateString("pt-BR");
-      const memberLink = `https://vilanova-demo.vercel.app/vilanova/membro`;
-      const msg = `✅ *Agendamento Confirmado!*\n\nOlá *${fullName.split(" ")[0]}*, tudo certo!\n\n💈 ${selectedService.title}\n✂️ ${selectedBarber?.name}\n📅 ${dateFormatted} às ${selectedTime}\n💰 R$ ${selectedService.price.toFixed(2)}\n\n📍 Rua Benjamin Costa, 45 - Centro, Colatina/ES\n⏰ Chegue 5 min antes\n\n🔗 Acesse sua área de membro:\n${memberLink}\n\n*Barbearia Vila Nova* 💈`;
+      const memberLink = `${window.location.origin}/membro`;
+      const msg = `✅ *Agendamento Confirmado!*\n\nOlá *${fullName.split(" ")[0]}*, tudo certo!\n\n💈 ${selectedService.title}\n✂️ ${selectedBarber?.name}\n📅 ${dateFormatted} às ${selectedTime}\n💰 R$ ${selectedService.price.toFixed(2)}\n\n⏰ Chegue 5 min antes\n\n🔗 Acesse sua área de membro:\n${memberLink}\n\n*GenesisBarber* 💈`;
       if (digitsOnly.length >= 10) {
         await supabase.functions.invoke("chatpro", {
           body: { action: "send_message", phone: digitsOnly, message: msg },
