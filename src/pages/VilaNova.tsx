@@ -316,7 +316,7 @@ const VilaNova = () => {
           borderBottom: scrolled ? "1px solid hsl(0 0% 100% / 0.06)" : "none",
         }}
       >
-        <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between">
+        <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between">
           <a href="#" className="flex items-center gap-2.5">
             <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: "hsl(0 0% 95%)" }}>
               <Scissors className="w-4 h-4" style={{ color: "hsl(220 20% 7%)" }} />
@@ -441,7 +441,7 @@ const VilaNova = () => {
           background: "linear-gradient(180deg, hsl(220 20% 4% / 0.4) 0%, hsl(220 20% 4% / 0.2) 40%, hsl(220 20% 4% / 0.7) 75%, hsl(220 20% 4%) 100%)"
         }} />
 
-        <motion.div style={{ opacity: heroOpacity }} className="relative z-10 h-full flex flex-col justify-end pb-12 sm:pb-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
+        <motion.div style={{ opacity: heroOpacity }} className="relative z-10 h-full flex flex-col justify-end pb-12 sm:pb-20 px-4 sm:px-6 lg:px-8 max-w-[1600px] mx-auto w-full">
           <motion.div initial={{ y: 50, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.4, duration: 0.9 }}>
             <div className="flex items-center gap-3 mb-5">
               <div className="w-10 h-px" style={{ background: "hsl(0 0% 100% / 0.3)" }} />
@@ -491,7 +491,7 @@ const VilaNova = () => {
 
       {/* ─── ABOUT ─── */}
       <section id="sobre" className="py-20 sm:py-28 lg:py-36 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto">
+        <div className="max-w-[1600px] mx-auto">
           <motion.div initial={{ opacity: 0, y: 40 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.7 }}>
             
             {/* Section label */}
@@ -586,7 +586,7 @@ const VilaNova = () => {
 
       {/* ─── SERVICES ─── */}
       <section id="servicos" className="py-20 sm:py-28 px-4 sm:px-6 lg:px-8" style={{ background: "hsl(220 18% 5%)" }}>
-        <div className="max-w-7xl mx-auto">
+        <div className="max-w-[1600px] mx-auto">
           <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-12 sm:mb-16">
             <div className="flex items-center justify-center gap-3 mb-5">
               <div className="w-10 h-px" style={{ background: "hsl(0 0% 100% / 0.15)" }} />
@@ -638,7 +638,7 @@ const VilaNova = () => {
 
       {/* ─── GALLERY ─── */}
       <section id="galeria" className="py-20 sm:py-28 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto">
+        <div className="max-w-[1600px] mx-auto">
           <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-12 sm:mb-16">
             <div className="flex items-center justify-center gap-3 mb-5">
               <div className="w-10 h-px" style={{ background: "hsl(0 0% 100% / 0.15)" }} />
@@ -692,7 +692,7 @@ const VilaNova = () => {
 
       {/* ─── FOOTER ─── */}
       <footer id="contato" className="py-16 sm:py-20 px-4 sm:px-6 lg:px-8" style={{ borderTop: "1px solid hsl(0 0% 100% / 0.04)" }}>
-        <div className="max-w-7xl mx-auto">
+        <div className="max-w-[1600px] mx-auto">
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-10 mb-14">
             <div className="sm:col-span-2 lg:col-span-1">
               <div className="flex items-center gap-2.5 mb-4">
