@@ -40,6 +40,7 @@ const bookingSteps = ["Serviço", "Barbeiro", "Data & Hora", "Confirmar"];
 
 const MemberArea = () => {
   const navigate = useNavigate();
+  const t = useThemeColors();
   const [user, setUser] = useState<AuthUser | null>(null);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [allServices, setAllServices] = useState<DBService[]>([]);
