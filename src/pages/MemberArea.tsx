@@ -4,6 +4,7 @@ import { Scissors, Calendar, Clock, LogOut, Loader2, CheckCircle, XCircle, Alert
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { useThemeColors } from "@/hooks/useThemeColors";
 import type { User as AuthUser } from "@supabase/supabase-js";
 
 interface Appointment {
