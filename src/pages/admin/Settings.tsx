@@ -508,6 +508,152 @@ const Settings = () => {
             </div>
           )}
 
+          {/* ===== PIX / PAGAMENTOS ===== */}
+          {activeTab === "payments" && (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <div className={cardStyle}>
+                <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                  <CreditCard className="w-4 h-4" style={{ color: iconColor }} /> Chave PIX
+                </h3>
+                <p className="text-[10px] text-muted-foreground">
+                  Configure sua chave PIX para receber pagamentos dos clientes
+                </p>
+                <div className="grid gap-4">
+                  <div>
+                    <label className={labelStyle}>Tipo de Chave</label>
+                    <div className="flex gap-2 flex-wrap">
+                      {[
+                        { value: "cpf", label: "CPF" },
+                        { value: "cnpj", label: "CNPJ" },
+                        { value: "phone", label: "Telefone" },
+                        { value: "email", label: "E-mail" },
+                        { value: "random", label: "Aleatória" },
+                      ].map((opt) => (
+                        <button key={opt.value} onClick={() => updateSetting("pix_type", opt.value)}
+                          className="px-3 py-2 rounded-xl text-xs font-semibold transition-all"
+                          style={{
+                            background: (settings.pix_type || "cpf") === opt.value ? "hsl(245 60% 55% / 0.15)" : "hsl(0 0% 100% / 0.04)",
+                            color: (settings.pix_type || "cpf") === opt.value ? "hsl(245 60% 70%)" : "hsl(0 0% 55%)",
+                            border: `1px solid ${(settings.pix_type || "cpf") === opt.value ? "hsl(245 60% 55% / 0.3)" : "hsl(0 0% 100% / 0.06)"}`,
+                          }}>
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <label className={labelStyle}>Chave PIX</label>
+                    <input className="glass-input" value={settings.pix_key || ""} onChange={(e) => updateSetting("pix_key", e.target.value)}
+                      placeholder={
+                        (settings.pix_type || "cpf") === "cpf" ? "000.000.000-00" :
+                        (settings.pix_type || "cpf") === "cnpj" ? "00.000.000/0000-00" :
+                        (settings.pix_type || "cpf") === "phone" ? "5527999999999" :
+                        (settings.pix_type || "cpf") === "email" ? "email@exemplo.com" :
+                        "Chave aleatória"
+                      } />
+                  </div>
+                  <div>
+                    <label className={labelStyle}>Nome do Beneficiário</label>
+                    <input className="glass-input" value={settings.pix_name || ""} onChange={(e) => updateSetting("pix_name", e.target.value)} placeholder="Nome completo" />
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div className={cardStyle}>
+                  <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                    <QrCode className="w-4 h-4" style={{ color: iconColor }} /> QR Codes por Valor
+                  </h3>
+                  <p className="text-[10px] text-muted-foreground">
+                    Cadastre QR codes fixos para valores específicos. Seus clientes selecionam o valor do corte e recebem o QR code correspondente.
+                  </p>
+                  
+                  {/* Add new QR config */}
+                  <div className="flex gap-2">
+                    <input className="glass-input flex-1" type="number" placeholder="Valor (R$)" value={newPixValue}
+                      onChange={(e) => setNewPixValue(e.target.value)} min="0" step="0.01" />
+                    <button onClick={() => {
+                      if (!newPixValue || parseFloat(newPixValue) <= 0) { toast.error("Informe um valor válido"); return; }
+                      setPixQrConfigs(prev => [...prev, { id: crypto.randomUUID(), value: newPixValue, qr_image_url: "" }]);
+                      setNewPixValue("");
+                    }} className="px-4 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 shrink-0 transition-all"
+                      style={{ background: "hsl(245 60% 55% / 0.1)", color: "hsl(245 60% 70%)", border: "1px solid hsl(245 60% 55% / 0.2)" }}>
+                      <Plus className="w-3.5 h-3.5" /> Adicionar
+                    </button>
+                  </div>
+
+                  {/* QR list */}
+                  <div className="space-y-3 max-h-[300px] overflow-y-auto scrollbar-hide">
+                    {pixQrConfigs.length === 0 ? (
+                      <div className="text-center py-6 rounded-xl" style={{ background: "hsl(0 0% 100% / 0.02)", border: "1px solid hsl(0 0% 100% / 0.04)" }}>
+                        <QrCode className="w-8 h-8 mx-auto mb-2" style={{ color: "hsl(0 0% 30%)" }} />
+                        <p className="text-xs" style={{ color: "hsl(0 0% 45%)" }}>Nenhum QR code cadastrado</p>
+                      </div>
+                    ) : (
+                      pixQrConfigs.map((config) => (
+                        <div key={config.id} className="flex items-center gap-3 p-3 rounded-xl" style={{ background: "hsl(0 0% 100% / 0.03)", border: "1px solid hsl(0 0% 100% / 0.06)" }}>
+                          <div className="w-12 h-12 rounded-lg flex items-center justify-center shrink-0" style={{ background: "hsl(0 0% 100% / 0.05)" }}>
+                            {config.qr_image_url ? (
+                              <img src={config.qr_image_url} alt="QR" className="w-full h-full object-contain rounded-lg" />
+                            ) : (
+                              <QrCode className="w-5 h-5" style={{ color: "hsl(0 0% 40%)" }} />
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-bold">R$ {parseFloat(config.value).toFixed(2)}</p>
+                            <label className="text-[10px] text-muted-foreground cursor-pointer hover:text-foreground transition-colors flex items-center gap-1">
+                              <Upload className="w-3 h-3" /> Upload QR code
+                              <input type="file" accept="image/*" className="hidden" onChange={async (e) => {
+                                const file = e.target.files?.[0];
+                                if (!file) return;
+                                try {
+                                  const ext = file.name.split(".").pop();
+                                  const fileName = `pix-qr-${config.id}.${ext}`;
+                                  await supabase.storage.from("public-assets").upload(fileName, file, { upsert: true });
+                                  const { data: urlData } = supabase.storage.from("public-assets").getPublicUrl(fileName);
+                                  setPixQrConfigs(prev => prev.map(c => c.id === config.id ? { ...c, qr_image_url: urlData.publicUrl } : c));
+                                  updateSetting("pix_qr_configs", JSON.stringify(pixQrConfigs.map(c => c.id === config.id ? { ...c, qr_image_url: urlData.publicUrl } : c)));
+                                  toast.success("QR code enviado!");
+                                } catch { toast.error("Erro ao enviar QR code"); }
+                              }} />
+                            </label>
+                          </div>
+                          <button onClick={() => setPixQrConfigs(prev => prev.filter(c => c.id !== config.id))}
+                            className="p-2 rounded-lg transition-all hover:bg-white/5" title="Remover">
+                            <Trash2 className="w-4 h-4" style={{ color: "hsl(0 60% 55%)" }} />
+                          </button>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+
+                <div className={cardStyle}>
+                  <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                    <Globe className="w-4 h-4" style={{ color: iconColor }} /> Mercado Pago (Opcional)
+                  </h3>
+                  <p className="text-[10px] text-muted-foreground">
+                    Conecte com Mercado Pago para gerar PIX dinâmicos automaticamente (copia e cola)
+                  </p>
+                  <div className="grid gap-4">
+                    <div>
+                      <label className={labelStyle}>Access Token</label>
+                      <input type="password" className="glass-input" value={settings.mp_access_token || ""} onChange={(e) => updateSetting("mp_access_token", e.target.value)}
+                        placeholder="APP_USR-000000000000-000000-abcdefghij..." />
+                      <p className="text-[10px] text-muted-foreground mt-1">
+                        Encontre em: Mercado Pago → Seu Negócio → Configurações → Credenciais
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2 p-3 rounded-xl text-xs" style={{ background: "hsl(40 80% 50% / 0.08)", border: "1px solid hsl(40 80% 50% / 0.15)", color: "hsl(40 80% 60%)" }}>
+                      <AlertCircle className="w-4 h-4 shrink-0" />
+                      Quando configurado, o sistema gera PIX automaticamente com valor exato
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* ===== BANCO DE DADOS ===== */}
           {activeTab === "database" && (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
