@@ -446,16 +446,16 @@ const VilaNova = () => {
             <div className="flex items-center gap-3 mb-5">
               <div className="w-10 h-px" style={{ background: "hsl(0 0% 100% / 0.3)" }} />
               <span className="text-[11px] sm:text-xs font-bold uppercase tracking-[0.35em]" style={{ color: "hsl(0 0% 100% / 0.5)" }}>
-                Barbearia Premium
+                {settings.hero_subtitle || "Barbearia Premium"}
               </span>
             </div>
             <h1 className="text-5xl sm:text-7xl lg:text-8xl font-black leading-[0.9] tracking-tighter mb-5">
-              {(settings.business_name || "Genesis").split(" ").map((word, i) => (
+              {(settings.hero_title || settings.business_name || "Genesis").split(" ").map((word, i) => (
                 <span key={i}>{word}<br /></span>
               ))}
             </h1>
             <p className="text-sm sm:text-base lg:text-lg max-w-lg mb-8 leading-relaxed" style={{ color: "hsl(0 0% 100% / 0.55)" }}>
-              Mais do que um corte — uma experiência de transformação. Estilo, precisão e confiança em cada detalhe.
+              {settings.hero_description || "Mais do que um corte — uma experiência de transformação. Estilo, precisão e confiança em cada detalhe."}
             </p>
             <div className="flex flex-col sm:flex-row gap-3">
               <a href="#servicos"
