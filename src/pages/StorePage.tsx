@@ -6,6 +6,7 @@ import CheckoutModal from "@/components/store/CheckoutModal";
 import OrderTracker from "@/components/store/OrderTracker";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
+import { useThemeColors } from "@/hooks/useThemeColors";
 
 interface DBProduct {
   id: string; title: string; description: string | null; price: number;
@@ -18,6 +19,7 @@ interface CartItem {
 
 const StorePage = () => {
   const navigate = useNavigate();
+  const t = useThemeColors();
   const [products, setProducts] = useState<DBProduct[]>([]);
   const [search, setSearch] = useState("");
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -68,22 +70,22 @@ const StorePage = () => {
   const cartCount = cart.reduce((s, i) => s + i.quantity, 0);
 
   return (
-    <div className="min-h-screen min-h-[100dvh]" style={{ background: "hsl(220 20% 4%)", color: "hsl(0 0% 93%)", fontFamily: "'Montserrat', sans-serif" }}>
+    <div className="min-h-screen min-h-[100dvh]" style={{ background: t.pageBg, color: t.textPrimary, fontFamily: "'Montserrat', sans-serif" }}>
       {/* Header */}
-      <header className="sticky top-0 z-40 w-full" style={{ background: "hsl(220 20% 4% / 0.85)", backdropFilter: "blur(20px)", borderBottom: "1px solid hsl(0 0% 100% / 0.08)" }}>
+      <header className="sticky top-0 z-40 w-full" style={{ background: t.headerBg, backdropFilter: "blur(20px)", borderBottom: `1px solid ${t.border}` }}>
         <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-10 xl:px-16 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <button onClick={() => navigate("/")} className="flex items-center gap-2 text-sm font-medium transition-colors hover:text-white" style={{ color: "hsl(0 0% 50%)" }}>
+            <button onClick={() => navigate("/")} className="flex items-center gap-2 text-sm font-medium transition-colors hover:opacity-80" style={{ color: t.textSecondary }}>
               <ArrowLeft className="w-4 h-4" /> Voltar
             </button>
-            <div className="w-px h-5" style={{ background: "hsl(0 0% 100% / 0.08)" }} />
+            <div className="w-px h-5" style={{ background: t.border }} />
             <div className="flex items-center gap-2">
-              <ShoppingBag className="w-4 h-4" style={{ color: "hsl(0 0% 60%)" }} />
+              <ShoppingBag className="w-4 h-4" style={{ color: t.textLink }} />
               <span className="text-sm font-bold">Loja</span>
             </div>
           </div>
           <button onClick={() => setShowOrderTracker(true)} className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-[11px] font-semibold transition-all"
-            style={{ background: "hsl(0 0% 100% / 0.06)", color: "hsl(0 0% 70%)", border: "1px solid hsl(0 0% 100% / 0.1)" }}>
+            style={{ background: t.btnGhostBg, color: t.btnGhostColor, border: `1px solid ${t.btnGhostBorder}` }}>
             <Package className="w-3.5 h-3.5" /> Meus Pedidos
           </button>
         </div>
@@ -92,16 +94,16 @@ const StorePage = () => {
       <main className="w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-10 xl:px-16 py-8 lg:py-12">
         <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
           <h1 className="text-2xl sm:text-3xl font-black tracking-tight">Nossa Loja</h1>
-          <p className="text-sm mt-1" style={{ color: "hsl(0 0% 50%)" }}>Produtos profissionais selecionados para você</p>
+          <p className="text-sm mt-1" style={{ color: t.textSecondary }}>Produtos profissionais selecionados para você</p>
         </motion.div>
 
         {/* Search */}
         <div className="mb-6">
           <div className="relative max-w-md lg:max-w-lg">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "hsl(0 0% 40%)" }} />
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: t.textMuted }} />
             <input type="text" placeholder="Buscar produtos..." value={search} onChange={(e) => setSearch(e.target.value)}
-              className="w-full rounded-xl pl-10 pr-4 py-3 text-sm outline-none transition-all focus:ring-2 focus:ring-white/15"
-              style={{ background: "hsl(0 0% 100% / 0.04)", border: "1px solid hsl(0 0% 100% / 0.08)", color: "hsl(0 0% 93%)" }} />
+              className="w-full rounded-xl pl-10 pr-4 py-3 text-sm outline-none transition-all focus:ring-2 focus:ring-foreground/15"
+              style={{ background: t.inputBg, border: `1px solid ${t.inputBorder}`, color: t.textPrimary }} />
           </div>
         </div>
 
@@ -117,9 +119,9 @@ const StorePage = () => {
               />
             ))
           ) : (
-            <div className="col-span-full rounded-2xl p-12 text-center" style={{ background: "hsl(0 0% 100% / 0.03)", border: "1px solid hsl(0 0% 100% / 0.06)" }}>
-              <ShoppingBag className="w-10 h-10 mx-auto mb-3" style={{ color: "hsl(0 0% 30%)" }} />
-              <p className="text-sm font-medium" style={{ color: "hsl(0 0% 50%)" }}>Nenhum produto encontrado.</p>
+            <div className="col-span-full rounded-2xl p-12 text-center" style={{ background: t.cardBg, border: `1px solid ${t.borderSubtle}` }}>
+              <ShoppingBag className="w-10 h-10 mx-auto mb-3" style={{ color: t.textMuted }} />
+              <p className="text-sm font-medium" style={{ color: t.textSecondary }}>Nenhum produto encontrado.</p>
             </div>
           )}
         </div>
@@ -132,7 +134,7 @@ const StorePage = () => {
             className="fixed bottom-6 left-4 right-4 max-w-lg mx-auto z-40">
             <button onClick={() => setShowCheckout(true)}
               className="w-full flex items-center justify-between px-5 py-4 rounded-2xl font-bold text-sm transition-all"
-              style={{ background: "hsl(0 0% 90%)", color: "hsl(0 0% 0%)", boxShadow: "0 8px 32px hsl(0 0% 100% / 0.15)" }}>
+              style={{ background: t.btnBg, color: t.btnColor, boxShadow: t.btnShadow }}>
               <span className="flex items-center gap-2">
                 <ShoppingBag className="w-5 h-5" />
                 {cartCount} {cartCount === 1 ? "item" : "itens"}

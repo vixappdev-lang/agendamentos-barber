@@ -16,6 +16,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
+import { useThemeColors } from "@/hooks/useThemeColors";
 
 const COLORS = [
   "hsl(245 60% 55%)",
@@ -27,6 +28,7 @@ const COLORS = [
 ];
 
 const Dashboard = () => {
+  const t = useThemeColors();
   const [stats, setStats] = useState({
     totalAppointments: 0,
     totalRevenue: 0,
@@ -39,7 +41,6 @@ const Dashboard = () => {
   useEffect(() => {
     fetchDashboardData();
 
-    // Realtime subscription
     const channel = supabase
       .channel('dashboard-realtime')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'appointments' }, () => {
@@ -71,7 +72,6 @@ const Dashboard = () => {
       todayAppointments: todayApps.length,
     });
 
-    // Weekly data (last 7 days + next 7 days = 14 days range)
     const days = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
     const weekly = Array.from({ length: 14 }, (_, i) => {
       const d = new Date();
@@ -88,7 +88,6 @@ const Dashboard = () => {
     });
     setWeeklyData(weekly);
 
-    // Service distribution
     const serviceCounts: Record<string, number> = {};
     for (const app of appointments) {
       const svc = services.find((s) => s.id === app.service_id);
@@ -134,7 +133,6 @@ const Dashboard = () => {
 
       {/* Charts */}
       <div className="grid lg:grid-cols-2 gap-4">
-        {/* Area chart */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -151,14 +149,14 @@ const Dashboard = () => {
                     <stop offset="100%" stopColor="hsl(245 60% 55%)" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <XAxis dataKey="day" tick={{ fill: 'hsl(0 0% 50%)', fontSize: 11 }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fill: 'hsl(0 0% 50%)', fontSize: 11 }} axisLine={false} tickLine={false} />
+                <XAxis dataKey="day" tick={{ fill: t.textSecondary, fontSize: 11 }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fill: t.textSecondary, fontSize: 11 }} axisLine={false} tickLine={false} />
                 <Tooltip
                   contentStyle={{
-                    background: 'hsl(230 18% 11%)',
-                    border: '1px solid hsl(0 0% 100% / 0.1)',
+                    background: t.tooltipBg,
+                    border: `1px solid ${t.tooltipBorder}`,
                     borderRadius: '12px',
-                    color: 'hsl(0 0% 90%)',
+                    color: t.tooltipColor,
                     fontSize: 12,
                   }}
                 />
@@ -168,7 +166,6 @@ const Dashboard = () => {
           </div>
         </motion.div>
 
-        {/* Area chart - Receita */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -185,14 +182,14 @@ const Dashboard = () => {
                     <stop offset="100%" stopColor="hsl(200 70% 50%)" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <XAxis dataKey="day" tick={{ fill: 'hsl(0 0% 50%)', fontSize: 11 }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fill: 'hsl(0 0% 50%)', fontSize: 11 }} axisLine={false} tickLine={false} />
+                <XAxis dataKey="day" tick={{ fill: t.textSecondary, fontSize: 11 }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fill: t.textSecondary, fontSize: 11 }} axisLine={false} tickLine={false} />
                 <Tooltip
                   contentStyle={{
-                    background: 'hsl(230 18% 11%)',
-                    border: '1px solid hsl(0 0% 100% / 0.1)',
+                    background: t.tooltipBg,
+                    border: `1px solid ${t.tooltipBorder}`,
                     borderRadius: '12px',
-                    color: 'hsl(0 0% 90%)',
+                    color: t.tooltipColor,
                     fontSize: 12,
                   }}
                 />
@@ -203,7 +200,7 @@ const Dashboard = () => {
         </motion.div>
       </div>
 
-      {/* Pie chart */}
+      {/* Service distribution */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -225,7 +222,7 @@ const Dashboard = () => {
                     <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: COLORS[index % COLORS.length] }} />
                     <span className="text-sm text-foreground flex-1 truncate">{item.name}</span>
                     <span className="text-xs text-muted-foreground">{item.value} ({percent.toFixed(0)}%)</span>
-                    <div className="w-24 h-1.5 rounded-full overflow-hidden" style={{ background: 'hsl(0 0% 100% / 0.06)' }}>
+                    <div className="w-24 h-1.5 rounded-full overflow-hidden" style={{ background: t.cardBgSubtle }}>
                       <div className="h-full rounded-full" style={{ width: `${percent}%`, background: COLORS[index % COLORS.length] }} />
                     </div>
                   </div>
