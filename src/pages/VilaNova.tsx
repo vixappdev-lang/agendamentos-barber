@@ -282,9 +282,9 @@ const VilaNova = () => {
     setMobileMenu(false);
   };
 
-  const selBg = settings.btn_primary_bg || "hsl(0 0% 95%)";
-  const selColor = settings.btn_primary_text || "hsl(230 20% 7%)";
-  const selShadow = "0 4px 20px hsl(0 0% 100% / 0.15)";
+  const selBg = settings.btn_primary_bg || (t.isLight ? "hsl(220 20% 12%)" : "hsl(0 0% 95%)");
+  const selColor = settings.btn_primary_text || (t.isLight ? "hsl(0 0% 98%)" : "hsl(230 20% 7%)");
+  const selShadow = t.isLight ? "0 2px 8px hsl(220 15% 20% / 0.15)" : "0 4px 20px hsl(0 0% 100% / 0.15)";
 
   const userName = user?.user_metadata?.full_name?.split(" ")[0] || name || "Usuário";
 
