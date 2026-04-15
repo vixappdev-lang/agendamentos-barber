@@ -386,17 +386,17 @@ const MemberArea = () => {
           <div className="space-y-4">
             <div className="rounded-2xl p-5 sm:p-6" style={{ background: cardBg, border: `1px solid ${borderColor}` }}>
               <h3 className="text-base font-bold mb-1 flex items-center gap-2">
-                <QrCode className="w-5 h-5" style={{ color: "hsl(0 0% 60%)" }} /> Pagamento via PIX
+                <QrCode className="w-5 h-5" style={{ color: t.textMuted }} /> Pagamento via PIX
               </h3>
-              <p className="text-xs mb-5" style={{ color: "hsl(0 0% 50%)" }}>
+              <p className="text-xs mb-5" style={{ color: t.textMuted }}>
                 Digite o valor do serviço para gerar o QR code de pagamento
               </p>
 
               <div className="flex gap-3 mb-5">
                 <div className="relative flex-1">
-                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm font-bold" style={{ color: "hsl(0 0% 50%)" }}>R$</span>
+                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm font-bold" style={{ color: t.textMuted }}>R$</span>
                   <input type="number" className="w-full rounded-xl pl-10 pr-4 py-3.5 text-lg font-bold outline-none transition-all focus:ring-2 focus:ring-white/15"
-                    style={{ background: "hsl(0 0% 100% / 0.04)", border: "1px solid hsl(0 0% 100% / 0.08)", color: "hsl(0 0% 93%)" }}
+                    style={{ background: t.cardBgSubtle, border: `1px solid ${t.border}`, color: t.textPrimary }}
                     placeholder="0,00" value={pixAmount} onChange={(e) => {
                       setPixAmount(e.target.value);
                       const val = parseFloat(e.target.value);
@@ -422,18 +422,18 @@ const MemberArea = () => {
                   )}
                   
                   {pixKey && (
-                    <div className="rounded-xl p-4" style={{ background: "hsl(0 0% 100% / 0.03)", border: "1px solid hsl(0 0% 100% / 0.06)" }}>
-                      <p className="text-[10px] font-semibold uppercase tracking-wider mb-2" style={{ color: "hsl(0 0% 45%)" }}>
+                    <div className="rounded-xl p-4" style={{ background: t.cardBgSubtle, border: `1px solid ${t.borderSubtle}` }}>
+                      <p className="text-[10px] font-semibold uppercase tracking-wider mb-2" style={{ color: t.textMuted }}>
                         Chave PIX ({pixType === "cpf" ? "CPF" : pixType === "cnpj" ? "CNPJ" : pixType === "phone" ? "Telefone" : pixType === "email" ? "E-mail" : "Aleatória"})
                       </p>
                       <div className="flex items-center gap-2">
                         <code className="flex-1 text-sm font-mono font-bold break-all">{pixKey}</code>
                         <button onClick={() => { navigator.clipboard.writeText(pixKey); toast.success("Chave PIX copiada!"); }}
-                          className="p-2.5 rounded-xl shrink-0 transition-all hover:bg-white/5" style={{ background: "hsl(0 0% 100% / 0.05)", border: "1px solid hsl(0 0% 100% / 0.08)" }}>
+                          className="p-2.5 rounded-xl shrink-0 transition-all hover:bg-white/5" style={{ background: t.cardBgSubtle, border: `1px solid ${t.border}` }}>
                           <Copy className="w-4 h-4" />
                         </button>
                       </div>
-                      {pixName && <p className="text-xs mt-2" style={{ color: "hsl(0 0% 50%)" }}>Beneficiário: {pixName}</p>}
+                      {pixName && <p className="text-xs mt-2" style={{ color: t.textMuted }}>Beneficiário: {pixName}</p>}
                     </div>
                   )}
 
@@ -450,24 +450,24 @@ const MemberArea = () => {
                         <AlertCircle className="w-4 h-4 shrink-0" />
                         QR code não cadastrado para este valor. Use a chave PIX abaixo:
                       </div>
-                      <div className="rounded-xl p-4" style={{ background: "hsl(0 0% 100% / 0.03)", border: "1px solid hsl(0 0% 100% / 0.06)" }}>
-                        <p className="text-[10px] font-semibold uppercase tracking-wider mb-2" style={{ color: "hsl(0 0% 45%)" }}>
+                      <div className="rounded-xl p-4" style={{ background: t.cardBgSubtle, border: `1px solid ${t.borderSubtle}` }}>
+                        <p className="text-[10px] font-semibold uppercase tracking-wider mb-2" style={{ color: t.textMuted }}>
                           Chave PIX ({pixType === "cpf" ? "CPF" : pixType === "cnpj" ? "CNPJ" : pixType === "phone" ? "Telefone" : pixType === "email" ? "E-mail" : "Aleatória"})
                         </p>
                         <div className="flex items-center gap-2">
                           <code className="flex-1 text-sm font-mono font-bold break-all">{pixKey}</code>
                           <button onClick={() => { navigator.clipboard.writeText(pixKey); toast.success("Chave PIX copiada!"); }}
-                            className="p-2.5 rounded-xl shrink-0 transition-all hover:bg-white/5" style={{ background: "hsl(0 0% 100% / 0.05)", border: "1px solid hsl(0 0% 100% / 0.08)" }}>
+                            className="p-2.5 rounded-xl shrink-0 transition-all hover:bg-white/5" style={{ background: t.cardBgSubtle, border: `1px solid ${t.border}` }}>
                             <Copy className="w-4 h-4" />
                           </button>
                         </div>
-                        {pixName && <p className="text-xs mt-2" style={{ color: "hsl(0 0% 50%)" }}>Beneficiário: {pixName}</p>}
+                        {pixName && <p className="text-xs mt-2" style={{ color: t.textMuted }}>Beneficiário: {pixName}</p>}
                       </div>
                     </motion.div>
                   ) : (
-                    <div className="text-center py-8 rounded-xl" style={{ background: "hsl(0 0% 100% / 0.02)", border: "1px solid hsl(0 0% 100% / 0.04)" }}>
-                      <CreditCard className="w-8 h-8 mx-auto mb-2" style={{ color: "hsl(0 0% 30%)" }} />
-                      <p className="text-xs" style={{ color: "hsl(0 0% 45%)" }}>PIX não configurado. Consulte a barbearia.</p>
+                    <div className="text-center py-8 rounded-xl" style={{ background: "hsl(0 0% 100% / 0.02)", border: `1px solid ${t.borderSubtle}` }}>
+                      <CreditCard className="w-8 h-8 mx-auto mb-2" style={{ color: t.textSubtle }} />
+                      <p className="text-xs" style={{ color: t.textMuted }}>PIX não configurado. Consulte a barbearia.</p>
                     </div>
                   )}
                 </div>
@@ -477,7 +477,7 @@ const MemberArea = () => {
             {/* Quick values */}
             {pixQrConfigs.length > 0 && (
               <div className="rounded-2xl p-5" style={{ background: cardBg, border: `1px solid ${borderColor}` }}>
-                <p className="text-xs font-semibold mb-3" style={{ color: "hsl(0 0% 50%)" }}>Valores disponíveis:</p>
+                <p className="text-xs font-semibold mb-3" style={{ color: t.textMuted }}>Valores disponíveis:</p>
                 <div className="flex gap-2 flex-wrap">
                   {pixQrConfigs.map((c) => (
                     <button key={c.id} onClick={() => {
@@ -502,15 +502,15 @@ const MemberArea = () => {
         {/* List */}
         {tab !== "pix" && (loading ? (
           <div className="flex items-center justify-center py-20">
-            <Loader2 className="w-6 h-6 animate-spin" style={{ color: "hsl(0 0% 40%)" }} />
+            <Loader2 className="w-6 h-6 animate-spin" style={{ color: t.textSubtle }} />
           </div>
         ) : (
           <div className="space-y-3">
             {(tab === "upcoming" ? upcoming : history).length === 0 ? (
               <div className="text-center py-16 rounded-2xl" style={{ background: cardBg, border: `1px solid ${borderColor}` }}>
-                <Calendar className="w-10 h-10 mx-auto mb-3" style={{ color: "hsl(0 0% 30%)" }} />
+                <Calendar className="w-10 h-10 mx-auto mb-3" style={{ color: t.textSubtle }} />
                 <p className="font-semibold text-sm mb-1">{tab === "upcoming" ? "Nenhum agendamento próximo" : "Sem histórico ainda"}</p>
-                <p className="text-xs" style={{ color: "hsl(0 0% 40%)" }}>
+                <p className="text-xs" style={{ color: t.textSubtle }}>
                   {tab === "upcoming" ? "Agende um horário para aparecer aqui." : "Seus agendamentos passados aparecerão aqui."}
                 </p>
                 {tab === "upcoming" && (
@@ -535,16 +535,16 @@ const MemberArea = () => {
         {showBooking && !showConfirmation && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4"
-            style={{ background: "hsl(220 20% 4% / 0.9)", backdropFilter: "blur(12px)" }}>
+            style={{ background: t.overlayBg, backdropFilter: "blur(12px)" }}>
             <motion.div initial={{ y: 40, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 40, opacity: 0 }}
               className="w-full sm:max-w-lg max-h-[92dvh] sm:max-h-[90vh] overflow-y-auto scrollbar-hide rounded-t-2xl sm:rounded-2xl"
-              style={{ background: "hsl(0 0% 100% / 0.04)", backdropFilter: "blur(28px)", border: "1px solid hsl(0 0% 100% / 0.08)", boxShadow: "0 8px 32px hsl(0 0% 0% / 0.4)" }}>
+              style={{ background: t.cardBgSubtle, backdropFilter: "blur(28px)", border: `1px solid ${t.border}`, boxShadow: "0 8px 32px hsl(0 0% 0% / 0.4)" }}>
 
               {/* Header */}
-              <div className="flex items-center justify-between p-4 sm:p-5 sticky top-0 z-10" style={{ borderBottom: "1px solid hsl(0 0% 100% / 0.06)", background: "hsl(0 0% 100% / 0.03)", backdropFilter: "blur(28px)" }}>
+              <div className="flex items-center justify-between p-4 sm:p-5 sticky top-0 z-10" style={{ borderBottom: `1px solid ${t.borderSubtle}`, background: t.cardBgSubtle, backdropFilter: "blur(28px)" }}>
                 <h2 className="text-lg sm:text-xl font-bold">Novo Agendamento</h2>
-                <button onClick={closeBooking} className="p-2 rounded-xl" style={{ background: "hsl(0 0% 100% / 0.05)" }}>
-                  <X className="w-5 h-5" style={{ color: "hsl(0 0% 60%)" }} />
+                <button onClick={closeBooking} className="p-2 rounded-xl" style={{ background: t.cardBgSubtle }}>
+                  <X className="w-5 h-5" style={{ color: t.textMuted }} />
                 </button>
               </div>
 
@@ -554,14 +554,14 @@ const MemberArea = () => {
                   {bookingSteps.map((step, i) => (
                     <div key={step} className="flex items-center">
                       <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold transition-all"
-                        style={i < bookingStep ? { background: "hsl(0 0% 90% / 0.15)", color: "hsl(0 0% 80%)" } : i === bookingStep ? { background: btnBg, color: btnColor } : { background: "hsl(0 0% 100% / 0.05)", color: "hsl(0 0% 40%)" }}>
+                        style={i < bookingStep ? { background: "hsl(0 0% 90% / 0.15)", color: t.textSecondary } : i === bookingStep ? { background: btnBg, color: btnColor } : { background: t.cardBgSubtle, color: t.textSubtle }}>
                         {i < bookingStep ? <Check className="w-4 h-4" /> : i + 1}
                       </div>
                       {i < bookingSteps.length - 1 && <div className="hidden sm:block w-6 lg:w-8 h-px mx-1" style={{ background: i < bookingStep ? "hsl(0 0% 100% / 0.15)" : "hsl(0 0% 100% / 0.06)" }} />}
                     </div>
                   ))}
                 </div>
-                <p className="text-sm mt-3 font-medium" style={{ color: "hsl(0 0% 55%)" }}>{bookingSteps[bookingStep]}</p>
+                <p className="text-sm mt-3 font-medium" style={{ color: t.textMuted }}>{bookingSteps[bookingStep]}</p>
               </div>
 
               {/* Content */}
@@ -575,7 +575,7 @@ const MemberArea = () => {
                         <div className="flex items-center justify-between">
                           <div>
                             <h4 className="font-semibold text-sm">{svc.title}</h4>
-                            <p className="text-xs mt-0.5" style={{ color: "hsl(0 0% 50%)" }}>{svc.duration}</p>
+                            <p className="text-xs mt-0.5" style={{ color: t.textMuted }}>{svc.duration}</p>
                           </div>
                           <div className="flex items-center gap-2">
                             <span className="font-bold">R$ {svc.price}</span>
@@ -604,7 +604,7 @@ const MemberArea = () => {
                           )}
                           <div className="flex-1 min-w-0">
                             <h4 className="font-semibold">{b.name}</h4>
-                            <p className="text-xs truncate" style={{ color: "hsl(0 0% 50%)" }}>{b.specialty || "Barbeiro"}</p>
+                            <p className="text-xs truncate" style={{ color: t.textMuted }}>{b.specialty || "Barbeiro"}</p>
                           </div>
                           {selectedBarber?.id === b.id && <Check className="w-5 h-5 shrink-0" />}
                         </div>
@@ -616,7 +616,7 @@ const MemberArea = () => {
                 {bookingStep === 2 && (
                   <div className="space-y-5">
                     <div>
-                      <label className="text-sm font-semibold flex items-center gap-2 mb-3"><Calendar className="w-4 h-4" style={{ color: "hsl(0 0% 55%)" }} /> Data</label>
+                      <label className="text-sm font-semibold flex items-center gap-2 mb-3"><Calendar className="w-4 h-4" style={{ color: t.textMuted }} /> Data</label>
                       <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-2">
                         {dates.map((d) => (
                           <button key={d.value} onClick={() => { setSelectedDate(d.value); setSelectedTime(""); }}
@@ -629,9 +629,9 @@ const MemberArea = () => {
                       </div>
                     </div>
                     <div>
-                      <label className="text-sm font-semibold flex items-center gap-2 mb-3"><Clock className="w-4 h-4" style={{ color: "hsl(0 0% 55%)" }} /> Horário</label>
+                      <label className="text-sm font-semibold flex items-center gap-2 mb-3"><Clock className="w-4 h-4" style={{ color: t.textMuted }} /> Horário</label>
                       {loadingTimes ? (
-                        <div className="flex justify-center py-6"><Loader2 className="w-5 h-5 animate-spin" style={{ color: "hsl(0 0% 50%)" }} /></div>
+                        <div className="flex justify-center py-6"><Loader2 className="w-5 h-5 animate-spin" style={{ color: t.textMuted }} /></div>
                       ) : (
                         <div className="grid grid-cols-4 sm:grid-cols-5 gap-2 max-h-40 overflow-y-auto scrollbar-hide">
                           {availableTimes.map((t) => {
@@ -663,7 +663,7 @@ const MemberArea = () => {
                       { label: "Valor", value: selectedService ? `R$ ${selectedService.price}` : "" },
                     ].map((item) => (
                       <div key={item.label} className="flex justify-between py-2.5" style={{ borderBottom: "1px solid hsl(0 0% 100% / 0.04)" }}>
-                        <span className="text-sm" style={{ color: "hsl(0 0% 50%)" }}>{item.label}</span>
+                        <span className="text-sm" style={{ color: t.textMuted }}>{item.label}</span>
                         <span className="text-sm font-semibold">{item.value}</span>
                       </div>
                     ))}
@@ -672,10 +672,10 @@ const MemberArea = () => {
               </div>
 
               {/* Footer */}
-              <div className="p-4 sm:p-5 flex items-center justify-between" style={{ borderTop: "1px solid hsl(0 0% 100% / 0.06)" }}>
+              <div className="p-4 sm:p-5 flex items-center justify-between" style={{ borderTop: `1px solid ${t.borderSubtle}` }}>
                 <button onClick={bookingStep === 0 ? closeBooking : () => setBookingStep(bookingStep - 1)}
                   className="flex items-center gap-2 px-4 sm:px-5 py-3 rounded-xl text-sm font-medium transition-all"
-                  style={{ background: "hsl(0 0% 100% / 0.05)", border: "1px solid hsl(0 0% 100% / 0.08)", color: "hsl(0 0% 65%)" }}>
+                  style={{ background: t.cardBgSubtle, border: `1px solid ${t.border}`, color: t.textSecondary }}>
                   <ArrowLeft className="w-4 h-4" /> {bookingStep === 0 ? "Cancelar" : "Voltar"}
                 </button>
                 {bookingStep < bookingSteps.length - 1 ? (
@@ -703,10 +703,10 @@ const MemberArea = () => {
         {showConfirmation && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             className="fixed inset-0 z-50 flex items-center justify-center p-4"
-            style={{ background: "hsl(220 20% 4% / 0.92)", backdropFilter: "blur(12px)" }}>
+            style={{ background: t.overlayBg, backdropFilter: "blur(12px)" }}>
             <motion.div initial={{ scale: 0.85, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: "spring" }}
               className="w-full max-w-sm p-7 text-center space-y-5 rounded-2xl"
-              style={{ background: "hsl(0 0% 100% / 0.04)", backdropFilter: "blur(28px)", border: "1px solid hsl(0 0% 100% / 0.08)" }}>
+              style={{ background: t.cardBgSubtle, backdropFilter: "blur(28px)", border: `1px solid ${t.border}` }}>
               <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.2, type: "spring" }}
                 className="w-20 h-20 rounded-full mx-auto flex items-center justify-center"
                 style={{ background: "hsl(140 60% 45% / 0.12)", border: "2px solid hsl(140 60% 45% / 0.3)" }}>
@@ -715,12 +715,12 @@ const MemberArea = () => {
               <div>
                 <h3 className="text-2xl font-black tracking-tight">Tudo Certo! 🎉</h3>
                 <p className="text-base font-semibold mt-2">Seu agendamento foi confirmado!</p>
-                <p className="text-sm mt-2" style={{ color: "hsl(0 0% 55%)" }}>
+                <p className="text-sm mt-2" style={{ color: t.textMuted }}>
                   Você receberá uma confirmação no seu WhatsApp com todos os detalhes.
                 </p>
               </div>
 
-              <div className="p-4 rounded-xl space-y-2 text-left" style={{ background: "hsl(0 0% 100% / 0.03)", border: "1px solid hsl(0 0% 100% / 0.06)" }}>
+              <div className="p-4 rounded-xl space-y-2 text-left" style={{ background: t.cardBgSubtle, border: `1px solid ${t.borderSubtle}` }}>
                 {[
                   { icon: "💈", text: selectedService?.title },
                   { icon: "✂️", text: selectedBarber?.name },
@@ -730,7 +730,7 @@ const MemberArea = () => {
                 ].filter(item => item.text).map((item, i) => (
                   <div key={i} className="flex items-center gap-2.5 text-sm">
                     <span>{item.icon}</span>
-                    <span style={{ color: "hsl(0 0% 80%)" }}>{item.text}</span>
+                    <span style={{ color: t.textSecondary }}>{item.text}</span>
                   </div>
                 ))}
               </div>
