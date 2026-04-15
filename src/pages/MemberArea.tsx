@@ -269,11 +269,11 @@ const MemberArea = () => {
   const firstName = userName.split(" ")[0];
   const initials = userName.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase();
 
-  const bg = "hsl(220 20% 4%)";
-  const cardBg = "hsl(0 0% 100% / 0.03)";
-  const borderColor = "hsl(0 0% 100% / 0.08)";
-  const btnBg = "hsl(0 0% 95%)";
-  const btnColor = "hsl(220 20% 7%)";
+  const bg = t.pageBg;
+  const cardBg = t.cardBg;
+  const borderColor = t.border;
+  const btnBg = t.btnBg;
+  const btnColor = t.btnColor;
 
   const AppointmentCard = ({ apt }: { apt: Appointment }) => {
     const status = statusMap[apt.status || "pending"] || statusMap.pending;
