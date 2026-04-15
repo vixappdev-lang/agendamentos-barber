@@ -525,7 +525,7 @@ const MemberArea = () => {
               ))
             )}
           </div>
-        )}
+        ))}
       </main>
 
       {/* ─── BOOKING MODAL ─── */}
