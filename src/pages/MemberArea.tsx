@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Scissors, Calendar, Clock, LogOut, Loader2, CheckCircle, XCircle, AlertCircle, Plus, LayoutDashboard, ArrowLeft, ArrowRight, Check, User, Send, X } from "lucide-react";
+import { Scissors, Calendar, Clock, LogOut, Loader2, CheckCircle, XCircle, AlertCircle, Plus, LayoutDashboard, ArrowLeft, ArrowRight, Check, User, Send, X, CreditCard, QrCode, Copy } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -44,7 +44,15 @@ const MemberArea = () => {
   const [allServices, setAllServices] = useState<DBService[]>([]);
   const [serviceMap, setServiceMap] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState<"upcoming" | "history">("upcoming");
+  const [tab, setTab] = useState<"upcoming" | "history" | "pix">("upcoming");
+
+  // PIX state
+  const [pixAmount, setPixAmount] = useState("");
+  const [pixQrConfigs, setPixQrConfigs] = useState<{ id: string; value: string; qr_image_url?: string }[]>([]);
+  const [pixKey, setPixKey] = useState("");
+  const [pixType, setPixType] = useState("cpf");
+  const [pixName, setPixName] = useState("");
+  const [matchedQr, setMatchedQr] = useState<{ value: string; qr_image_url?: string } | null>(null);
 
   // Booking modal state
   const [showBooking, setShowBooking] = useState(false);
