@@ -370,17 +370,135 @@ const MemberArea = () => {
 
         {/* Tabs */}
         <div className="flex gap-1 p-1 rounded-xl mb-6" style={{ background: "hsl(0 0% 100% / 0.03)", border: `1px solid ${borderColor}` }}>
-          {(["upcoming", "history"] as const).map((t) => (
+          {(["upcoming", "history", "pix"] as const).map((t) => (
             <button key={t} onClick={() => setTab(t)}
-              className="flex-1 py-2.5 rounded-lg text-xs font-semibold transition-all"
+              className="flex-1 py-2.5 rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-1.5"
               style={{ background: tab === t ? btnBg : "transparent", color: tab === t ? btnColor : "hsl(0 0% 50%)" }}>
-              {t === "upcoming" ? `Próximos (${upcoming.length})` : `Histórico (${history.length})`}
+              {t === "upcoming" ? `Próximos (${upcoming.length})` : t === "history" ? `Histórico (${history.length})` : <><CreditCard className="w-3.5 h-3.5" /> PIX</>}
             </button>
           ))}
         </div>
 
+        {/* PIX Tab */}
+        {tab === "pix" && (
+          <div className="space-y-4">
+            <div className="rounded-2xl p-5 sm:p-6" style={{ background: cardBg, border: `1px solid ${borderColor}` }}>
+              <h3 className="text-base font-bold mb-1 flex items-center gap-2">
+                <QrCode className="w-5 h-5" style={{ color: "hsl(0 0% 60%)" }} /> Pagamento via PIX
+              </h3>
+              <p className="text-xs mb-5" style={{ color: "hsl(0 0% 50%)" }}>
+                Digite o valor do serviço para gerar o QR code de pagamento
+              </p>
+
+              <div className="flex gap-3 mb-5">
+                <div className="relative flex-1">
+                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm font-bold" style={{ color: "hsl(0 0% 50%)" }}>R$</span>
+                  <input type="number" className="w-full rounded-xl pl-10 pr-4 py-3.5 text-lg font-bold outline-none transition-all focus:ring-2 focus:ring-white/15"
+                    style={{ background: "hsl(0 0% 100% / 0.04)", border: "1px solid hsl(0 0% 100% / 0.08)", color: "hsl(0 0% 93%)" }}
+                    placeholder="0,00" value={pixAmount} onChange={(e) => {
+                      setPixAmount(e.target.value);
+                      const val = parseFloat(e.target.value);
+                      if (!isNaN(val) && val > 0) {
+                        const match = pixQrConfigs.find(c => Math.abs(parseFloat(c.value) - val) < 0.01);
+                        setMatchedQr(match || null);
+                      } else {
+                        setMatchedQr(null);
+                      }
+                    }} min="0" step="0.01" />
+                </div>
+              </div>
+
+              {/* QR code result */}
+              {matchedQr ? (
+                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
+                  {matchedQr.qr_image_url && (
+                    <div className="flex justify-center">
+                      <div className="w-48 h-48 rounded-2xl overflow-hidden p-3" style={{ background: "white" }}>
+                        <img src={matchedQr.qr_image_url} alt="QR Code PIX" className="w-full h-full object-contain" />
+                      </div>
+                    </div>
+                  )}
+                  
+                  {pixKey && (
+                    <div className="rounded-xl p-4" style={{ background: "hsl(0 0% 100% / 0.03)", border: "1px solid hsl(0 0% 100% / 0.06)" }}>
+                      <p className="text-[10px] font-semibold uppercase tracking-wider mb-2" style={{ color: "hsl(0 0% 45%)" }}>
+                        Chave PIX ({pixType === "cpf" ? "CPF" : pixType === "cnpj" ? "CNPJ" : pixType === "phone" ? "Telefone" : pixType === "email" ? "E-mail" : "Aleatória"})
+                      </p>
+                      <div className="flex items-center gap-2">
+                        <code className="flex-1 text-sm font-mono font-bold break-all">{pixKey}</code>
+                        <button onClick={() => { navigator.clipboard.writeText(pixKey); toast.success("Chave PIX copiada!"); }}
+                          className="p-2.5 rounded-xl shrink-0 transition-all hover:bg-white/5" style={{ background: "hsl(0 0% 100% / 0.05)", border: "1px solid hsl(0 0% 100% / 0.08)" }}>
+                          <Copy className="w-4 h-4" />
+                        </button>
+                      </div>
+                      {pixName && <p className="text-xs mt-2" style={{ color: "hsl(0 0% 50%)" }}>Beneficiário: {pixName}</p>}
+                    </div>
+                  )}
+
+                  <div className="flex items-center gap-2 p-3 rounded-xl text-xs" style={{ background: "hsl(140 60% 50% / 0.08)", border: "1px solid hsl(140 60% 50% / 0.15)", color: "hsl(140 60% 55%)" }}>
+                    <CheckCircle className="w-4 h-4 shrink-0" />
+                    Valor: R$ {parseFloat(matchedQr.value).toFixed(2)} — Escaneie o QR code ou copie a chave PIX
+                  </div>
+                </motion.div>
+              ) : pixAmount && parseFloat(pixAmount) > 0 ? (
+                <div className="space-y-4">
+                  {pixKey ? (
+                    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
+                      <div className="flex items-center gap-2 p-3 rounded-xl text-xs" style={{ background: "hsl(40 80% 50% / 0.08)", border: "1px solid hsl(40 80% 50% / 0.15)", color: "hsl(40 80% 60%)" }}>
+                        <AlertCircle className="w-4 h-4 shrink-0" />
+                        QR code não cadastrado para este valor. Use a chave PIX abaixo:
+                      </div>
+                      <div className="rounded-xl p-4" style={{ background: "hsl(0 0% 100% / 0.03)", border: "1px solid hsl(0 0% 100% / 0.06)" }}>
+                        <p className="text-[10px] font-semibold uppercase tracking-wider mb-2" style={{ color: "hsl(0 0% 45%)" }}>
+                          Chave PIX ({pixType === "cpf" ? "CPF" : pixType === "cnpj" ? "CNPJ" : pixType === "phone" ? "Telefone" : pixType === "email" ? "E-mail" : "Aleatória"})
+                        </p>
+                        <div className="flex items-center gap-2">
+                          <code className="flex-1 text-sm font-mono font-bold break-all">{pixKey}</code>
+                          <button onClick={() => { navigator.clipboard.writeText(pixKey); toast.success("Chave PIX copiada!"); }}
+                            className="p-2.5 rounded-xl shrink-0 transition-all hover:bg-white/5" style={{ background: "hsl(0 0% 100% / 0.05)", border: "1px solid hsl(0 0% 100% / 0.08)" }}>
+                            <Copy className="w-4 h-4" />
+                          </button>
+                        </div>
+                        {pixName && <p className="text-xs mt-2" style={{ color: "hsl(0 0% 50%)" }}>Beneficiário: {pixName}</p>}
+                      </div>
+                    </motion.div>
+                  ) : (
+                    <div className="text-center py-8 rounded-xl" style={{ background: "hsl(0 0% 100% / 0.02)", border: "1px solid hsl(0 0% 100% / 0.04)" }}>
+                      <CreditCard className="w-8 h-8 mx-auto mb-2" style={{ color: "hsl(0 0% 30%)" }} />
+                      <p className="text-xs" style={{ color: "hsl(0 0% 45%)" }}>PIX não configurado. Consulte a barbearia.</p>
+                    </div>
+                  )}
+                </div>
+              ) : null}
+            </div>
+
+            {/* Quick values */}
+            {pixQrConfigs.length > 0 && (
+              <div className="rounded-2xl p-5" style={{ background: cardBg, border: `1px solid ${borderColor}` }}>
+                <p className="text-xs font-semibold mb-3" style={{ color: "hsl(0 0% 50%)" }}>Valores disponíveis:</p>
+                <div className="flex gap-2 flex-wrap">
+                  {pixQrConfigs.map((c) => (
+                    <button key={c.id} onClick={() => {
+                      setPixAmount(c.value);
+                      setMatchedQr(c);
+                    }}
+                      className="px-4 py-2.5 rounded-xl text-sm font-bold transition-all"
+                      style={{
+                        background: matchedQr?.id === c.id ? btnBg : "hsl(0 0% 100% / 0.04)",
+                        color: matchedQr?.id === c.id ? btnColor : "hsl(0 0% 70%)",
+                        border: `1px solid ${matchedQr?.id === c.id ? "transparent" : "hsl(0 0% 100% / 0.06)"}`,
+                      }}>
+                      R$ {parseFloat(c.value).toFixed(2)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* List */}
-        {loading ? (
+        {tab !== "pix" && (loading ? (
           <div className="flex items-center justify-center py-20">
             <Loader2 className="w-6 h-6 animate-spin" style={{ color: "hsl(0 0% 40%)" }} />
           </div>
