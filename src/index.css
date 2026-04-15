@@ -202,6 +202,12 @@
     box-shadow: 0 16px 48px -12px hsl(45 100% 50% / 0.08), 0 8px 24px -4px hsl(0 0% 0% / 0.2);
   }
 
+  .light-theme .hover-lift:hover {
+    background: hsl(0 0% 100%);
+    border-color: hsl(220 12% 85%);
+    box-shadow: 0 8px 24px hsl(220 15% 20% / 0.08);
+  }
+
   /* ───── Step Indicators ───── */
   .step-indicator {
     @apply w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold transition-all duration-300;
@@ -231,6 +237,12 @@
     box-shadow: 0 4px 16px hsl(0 0% 100% / 0.1);
   }
 
+  .light-theme .btn-primary {
+    background: hsl(220 20% 12%);
+    color: hsl(0 0% 98%);
+    box-shadow: 0 2px 8px hsl(220 15% 20% / 0.12);
+  }
+
   .btn-primary:hover {
     box-shadow: 0 8px 28px hsl(0 0% 100% / 0.12);
     transform: translateY(-1px);
@@ -251,6 +263,13 @@
     backdrop-filter: blur(8px);
   }
 
+  .light-theme .btn-secondary {
+    background: hsl(220 10% 95%);
+    border: 1px solid hsl(220 12% 88%);
+    color: hsl(220 15% 35%);
+    backdrop-filter: none;
+  }
+
   .btn-secondary:hover {
     background: hsl(0 0% 100% / 0.08);
     border-color: hsl(0 0% 100% / 0.12);
@@ -265,6 +284,10 @@
     background: hsl(0 0% 100% / 0.05);
   }
 
+  .light-theme .btn-ghost:hover {
+    background: hsl(220 10% 94%);
+  }
+
   /* ───── Glassmorphism Inputs ───── */
   .glass-input {
     @apply w-full rounded-xl px-4 py-3 text-foreground transition-all duration-300;
@@ -273,8 +296,19 @@
     backdrop-filter: blur(8px);
   }
 
+  .light-theme .glass-input {
+    background: hsl(220 15% 97%);
+    border: 1px solid hsl(220 12% 87%);
+    backdrop-filter: none;
+    color: hsl(220 20% 12%);
+  }
+
   .glass-input::placeholder {
     color: hsl(220 10% 40%);
+  }
+
+  .light-theme .glass-input::placeholder {
+    color: hsl(220 10% 55%);
   }
 
   .glass-input:focus {
@@ -284,10 +318,22 @@
     background: hsl(0 0% 100% / 0.06);
   }
 
+  .light-theme .glass-input:focus {
+    border-color: hsl(245 60% 55% / 0.4);
+    box-shadow: 0 0 0 3px hsl(245 60% 55% / 0.1);
+    background: hsl(0 0% 100%);
+  }
+
   /* ───── Glass Chip / Tag ───── */
   .glass-chip {
     background: hsl(0 0% 100% / 0.06);
     border: 1px solid hsl(0 0% 100% / 0.1);
     backdrop-filter: blur(8px);
+  }
+
+  .light-theme .glass-chip {
+    background: hsl(220 10% 95%);
+    border: 1px solid hsl(220 12% 88%);
+    backdrop-filter: none;
   }
 }
