@@ -182,7 +182,7 @@ const VilaNova = () => {
 
   const handleSignUp = async (): Promise<boolean> => {
     const digitsOnly = phone.replace(/\D/g, "");
-    const email = `${digitsOnly}@vilanova.barber`;
+    const email = `${digitsOnly}@genesis.barber`;
     const fullName = `${name.trim()} ${surname.trim()}`;
 
     // Try sign up
@@ -240,7 +240,7 @@ const VilaNova = () => {
       if (!authOk) { setSubmitting(false); return; }
     }
 
-    const customerEmail = `${digitsOnly}@vilanova.barber`;
+    const customerEmail = `${digitsOnly}@genesis.barber`;
     const { error } = await supabase.from("appointments").insert({
       service_id: selectedService!.id,
       customer_name: `${name.trim()} ${surname.trim()}`,
@@ -255,8 +255,9 @@ const VilaNova = () => {
     if (error) { toast.error("Erro ao agendar."); setSubmitting(false); return; }
     try {
       const dateFormatted = new Date(selectedDate + "T12:00:00").toLocaleDateString("pt-BR");
-      const memberLink = `https://vilanova-demo.vercel.app/vilanova/membro`;
-      const msg = `✅ *Agendamento Confirmado!*\n\nOlá *${name}*, tudo certo!\n\n💈 ${selectedService!.title}\n✂️ ${selectedBarber?.name}\n📅 ${dateFormatted} às ${selectedTime}\n💰 R$ ${selectedService!.price.toFixed(2)}\n\n📍 Rua Benjamin Costa, 45 - Centro, Colatina/ES\n⏰ Chegue 5 min antes\n\n🔗 Acesse sua área de membro:\n${memberLink}\n\n*Barbearia Vila Nova* 💈`;
+      const memberLink = `${window.location.origin}/membro`;
+      const bName = settings.business_name || "GenesisBarber";
+      const msg = `✅ *Agendamento Confirmado!*\n\nOlá *${name}*, tudo certo!\n\n💈 ${selectedService!.title}\n✂️ ${selectedBarber?.name}\n📅 ${dateFormatted} às ${selectedTime}\n💰 R$ ${selectedService!.price.toFixed(2)}\n\n📍 ${settings.address || "Endereço"}\n⏰ Chegue 5 min antes\n\n🔗 Acesse sua área de membro:\n${memberLink}\n\n*${bName}* 💈`;
       await supabase.functions.invoke("chatpro", {
         body: { action: "send_message", phone: digitsOnly, message: msg },
       });
@@ -290,14 +291,15 @@ const VilaNova = () => {
     { label: "Sobre", href: "#sobre" },
     { label: "Serviços", href: "#servicos" },
     { label: "Galeria", href: "#galeria" },
+    { label: "Loja", href: "/loja", external: true },
     { label: "Contato", href: "#contato" },
   ];
 
   const handleGoToMember = () => {
     if (user) {
-      window.location.href = "/vilanova/membro";
+      window.location.href = "/membro";
     } else {
-      window.location.href = "/vilanova/login";
+      window.location.href = "/login";
     }
   };
 
@@ -319,15 +321,21 @@ const VilaNova = () => {
             <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: "hsl(0 0% 95%)" }}>
               <Scissors className="w-4 h-4" style={{ color: "hsl(220 20% 7%)" }} />
             </div>
-            <span className="text-lg font-extrabold tracking-tight">Vila Nova</span>
+            <span className="text-lg font-extrabold tracking-tight">{settings.business_name || "GenesisBarber"}</span>
           </a>
 
           {/* Desktop nav */}
           <div className="hidden md:flex items-center gap-6 lg:gap-8">
             {navLinks.map((link) => (
-              <a key={link.label} href={link.href} className="text-sm font-medium transition-colors hover:text-white" style={{ color: "hsl(0 0% 60%)" }}>
-                {link.label}
-              </a>
+              link.external ? (
+                <a key={link.label} href={link.href} className="text-sm font-medium transition-colors hover:text-white" style={{ color: "hsl(0 0% 60%)" }}>
+                  {link.label}
+                </a>
+              ) : (
+                <a key={link.label} href={link.href} className="text-sm font-medium transition-colors hover:text-white" style={{ color: "hsl(0 0% 60%)" }}>
+                  {link.label}
+                </a>
+              )
             ))}
             <div className="flex items-center gap-2">
               {user ? (
@@ -341,7 +349,7 @@ const VilaNova = () => {
               ) : (
                 <button onClick={handleGoToMember} className="px-4 py-2 rounded-xl text-sm font-medium transition-all hover:bg-white/5"
                   style={{ background: "hsl(0 0% 100% / 0.06)", border: "1px solid hsl(0 0% 100% / 0.08)", color: "hsl(0 0% 70%)" }}>
-                  Minha Conta
+                  Área do Cliente
                 </button>
               )}
               <a href="#servicos" className="px-5 py-2.5 rounded-xl text-sm font-bold transition-all hover:translate-y-[-1px]"
@@ -399,7 +407,7 @@ const VilaNova = () => {
                 <button onClick={() => { setMobileMenu(false); handleGoToMember(); }}
                   className="block w-full text-center px-5 py-3 rounded-xl text-sm font-medium"
                   style={{ background: "hsl(0 0% 100% / 0.06)", border: "1px solid hsl(0 0% 100% / 0.08)", color: "hsl(0 0% 70%)" }}>
-                  {user ? `👤 ${userName}` : "Minha Conta"}
+                  {user ? `👤 ${userName}` : "Área do Cliente"}
                 </button>
                 <a href="#servicos" onClick={() => setMobileMenu(false)}
                   className="block w-full text-center px-5 py-3.5 rounded-xl text-sm font-bold"
@@ -442,10 +450,12 @@ const VilaNova = () => {
               </span>
             </div>
             <h1 className="text-5xl sm:text-7xl lg:text-8xl font-black leading-[0.9] tracking-tighter mb-5">
-              Vila<br />Nova
+              {(settings.business_name || "Genesis").split(" ").map((word, i) => (
+                <span key={i}>{word}<br /></span>
+              ))}
             </h1>
             <p className="text-sm sm:text-base lg:text-lg max-w-lg mb-8 leading-relaxed" style={{ color: "hsl(0 0% 100% / 0.55)" }}>
-              A 1ª Barbearia por Assinatura de Colatina. Tradição, estilo e conforto em cada detalhe.
+              Mais do que um corte — uma experiência de transformação. Estilo, precisão e confiança em cada detalhe.
             </p>
             <div className="flex flex-col sm:flex-row gap-3">
               <a href="#servicos"
@@ -494,21 +504,21 @@ const VilaNova = () => {
               {/* Text content - takes 5 columns on desktop */}
               <div className="lg:col-span-5">
                 <h2 className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-black mb-8 leading-[1.05] tracking-tight">
-                  Tradição que<br />inspira estilo
+                  Onde estilo<br />encontra atitude
                 </h2>
                 <p className="text-sm sm:text-base leading-relaxed mb-6" style={{ color: "hsl(0 0% 100% / 0.5)" }}>
-                  Buscando sempre atualizações e melhorias para o conforto do cliente. Na Vila Nova, cada corte é uma experiência única, com profissionais qualificados e ambiente acolhedor.
+                  Não somos apenas uma barbearia — somos um espaço de transformação masculina. Aqui, cada detalhe é pensado para elevar seu visual e sua confiança ao máximo nível.
                 </p>
                 <p className="text-sm sm:text-base leading-relaxed mb-10" style={{ color: "hsl(0 0% 100% / 0.4)" }}>
-                  Nosso espaço foi pensado para oferecer o melhor em cuidado masculino. Desde cortes clássicos até os estilos mais modernos, nossa equipe domina todas as técnicas para transformar seu visual.
+                  Profissionais especializados, técnicas atualizadas e um ambiente que você não vai querer sair. Desde o corte clássico até o estilo mais ousado, entregamos resultado com precisão.
                 </p>
 
                 {/* Features */}
                 <div className="space-y-4 mb-10">
                   {[
-                    { icon: Award, title: "Profissionais Certificados", desc: "Equipe treinada e sempre atualizada com as tendências" },
-                    { icon: Users, title: "Atendimento Personalizado", desc: "Cada cliente recebe atenção exclusiva e dedicada" },
-                    { icon: Heart, title: "Ambiente Premium", desc: "Espaço confortável, moderno e acolhedor para relaxar" },
+                    { icon: Award, title: "Excelência Garantida", desc: "Equipe certificada com técnicas de ponta atualizadas" },
+                    { icon: Users, title: "Experiência Exclusiva", desc: "Atendimento VIP com atenção total a cada detalhe" },
+                    { icon: Heart, title: "Ambiente de Alto Padrão", desc: "Espaço premium projetado para o seu conforto" },
                   ].map((feat) => (
                     <div key={feat.title} className="flex gap-4 items-start p-4 rounded-2xl transition-all"
                       style={{ background: "hsl(0 0% 100% / 0.02)", border: "1px solid hsl(0 0% 100% / 0.04)" }}>
@@ -544,7 +554,7 @@ const VilaNova = () => {
                   {/* Large featured image */}
                   <div className="col-span-7 rounded-2xl overflow-hidden" style={{ border: "1px solid hsl(0 0% 100% / 0.06)" }}>
                     <div className="aspect-[3/4]">
-                      <img src={heroImg1} alt="Barbearia Vila Nova Interior" className="w-full h-full object-cover" loading="lazy" />
+                      <img src={heroImg1} alt="Interior" className="w-full h-full object-cover" loading="lazy" />
                     </div>
                   </div>
                   {/* Right column with 2 stacked images */}
@@ -667,9 +677,9 @@ const VilaNova = () => {
       <section className="py-16 sm:py-24 px-4 sm:px-6 lg:px-8" style={{ background: "hsl(220 18% 5%)" }}>
         <div className="max-w-4xl mx-auto text-center">
           <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight mb-4">Pronto para transformar<br />seu visual?</h2>
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight mb-4">Pronto para elevar<br />seu estilo?</h2>
             <p className="text-sm sm:text-base mb-8 max-w-md mx-auto" style={{ color: "hsl(0 0% 100% / 0.45)" }}>
-              Agende agora e garanta o melhor horário com nossos profissionais.
+              Agende agora e descubra por que somos a escolha número 1. Vagas limitadas.
             </p>
             <a href="#servicos"
               className="inline-flex items-center gap-3 px-10 py-4 rounded-2xl text-sm font-bold transition-all hover:translate-y-[-2px] active:scale-[0.98]"
@@ -689,48 +699,51 @@ const VilaNova = () => {
                 <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: "hsl(0 0% 95%)" }}>
                   <Scissors className="w-4 h-4" style={{ color: "hsl(220 20% 7%)" }} />
                 </div>
-                <span className="font-extrabold text-lg">Vila Nova</span>
+                <span className="font-extrabold text-lg">{settings.business_name || "GenesisBarber"}</span>
               </div>
               <p className="text-xs leading-relaxed max-w-xs" style={{ color: "hsl(0 0% 100% / 0.35)" }}>
-                A 1ª Barbearia por Assinatura de Colatina. Tradição, estilo e conforto em cada detalhe.
+                Excelência em cuidado masculino. Estilo, precisão e confiança — tudo em um só lugar.
               </p>
             </div>
             <div>
-              <h4 className="font-bold text-sm mb-5">Links</h4>
+              <h4 className="font-bold text-sm mb-5">Navegação</h4>
               <div className="space-y-3">
-                {navLinks.map((link) => (
+                {navLinks.filter(l => !l.external).map((link) => (
                   <a key={link.label} href={link.href} className="block text-xs transition-colors hover:text-white" style={{ color: "hsl(0 0% 100% / 0.4)" }}>
                     {link.label}
                   </a>
                 ))}
+                <a href="/loja" className="block text-xs transition-colors hover:text-white" style={{ color: "hsl(0 0% 100% / 0.4)" }}>Loja</a>
+                <a href="/login" className="block text-xs transition-colors hover:text-white" style={{ color: "hsl(0 0% 100% / 0.4)" }}>Área do Cliente</a>
               </div>
             </div>
             <div>
               <h4 className="font-bold text-sm mb-5">Contato</h4>
               <div className="space-y-3">
                 <div className="flex items-center gap-2.5 text-xs" style={{ color: "hsl(0 0% 100% / 0.4)" }}>
-                  <MapPin className="w-3.5 h-3.5 shrink-0" /> Rua Benjamin Costa, 45 - Centro, Colatina/ES
+                  <MapPin className="w-3.5 h-3.5 shrink-0" /> {settings.address || "Endereço da barbearia"}
                 </div>
                 <div className="flex items-center gap-2.5 text-xs" style={{ color: "hsl(0 0% 100% / 0.4)" }}>
-                  <Phone className="w-3.5 h-3.5 shrink-0" /> (31) 99999-9999
+                  <Phone className="w-3.5 h-3.5 shrink-0" /> {settings.whatsapp_number || "(00) 00000-0000"}
                 </div>
-                <div className="flex items-center gap-2.5 text-xs" style={{ color: "hsl(0 0% 100% / 0.4)" }}>
-                  <Instagram className="w-3.5 h-3.5 shrink-0" /> barbeariavilanova
-                </div>
+                {settings.instagram && (
+                  <div className="flex items-center gap-2.5 text-xs" style={{ color: "hsl(0 0% 100% / 0.4)" }}>
+                    <Instagram className="w-3.5 h-3.5 shrink-0" /> {settings.instagram}
+                  </div>
+                )}
               </div>
             </div>
             <div>
               <h4 className="font-bold text-sm mb-5">Horários</h4>
               <div className="space-y-2 text-xs" style={{ color: "hsl(0 0% 100% / 0.4)" }}>
-                <p>Seg - Sex: 09:00 - 19:00</p>
-                <p>Sáb: 09:00 - 17:00</p>
-                <p>Dom: Fechado</p>
+                <p>Seg - Sex: {settings.opening_time || "09:00"} - {settings.closing_time || "19:00"}</p>
+                <p>Intervalo: {settings.lunch_start || "12:00"} - {settings.lunch_end || "13:00"}</p>
               </div>
             </div>
           </div>
           <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4" style={{ borderTop: "1px solid hsl(0 0% 100% / 0.04)" }}>
             <p className="text-[11px]" style={{ color: "hsl(0 0% 100% / 0.2)" }}>
-              © {new Date().getFullYear()} Barbearia Vila Nova. Todos os direitos reservados.
+              © {new Date().getFullYear()} {settings.business_name || "GenesisBarber"}. Todos os direitos reservados.
             </p>
             <div className="flex gap-3">
               {["Instagram", "WhatsApp"].map((s) => (

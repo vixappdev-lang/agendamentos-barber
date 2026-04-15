@@ -3,9 +3,6 @@ import { Navigate, Outlet } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
 
-/**
- * If user is already authenticated, redirect from login to member area.
- */
 const LoginRedirectGuard = () => {
   const [loading, setLoading] = useState(true);
   const [authenticated, setAuthenticated] = useState(false);
@@ -26,7 +23,7 @@ const LoginRedirectGuard = () => {
   }
 
   if (authenticated) {
-    return <Navigate to="/vilanova/membro" replace />;
+    return <Navigate to="/membro" replace />;
   }
 
   return <Outlet />;
