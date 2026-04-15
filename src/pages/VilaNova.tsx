@@ -329,17 +329,9 @@ const VilaNova = () => {
           {/* Desktop nav */}
           <div className="hidden md:flex items-center gap-6 lg:gap-8">
             {navLinks.map((link) => (
-              link.external ? (
-                <a key={link.label} href={link.href} className="text-sm font-medium transition-colors hover:text-foreground" style={{ color: t.textLink }}>
-                  {link.label}
-                </a>
-              ) : (
-                <a key={link.label} href={link.href} className="text-sm font-medium transition-colors hover:text-foreground" style={{ color: t.textLink }}>
-                  {link.label}
-                </a>
-              )
-            ))}
-              )
+              <a key={link.label} href={link.external ? link.href : link.href} className="text-sm font-medium transition-colors hover:text-foreground" style={{ color: t.textLink }}>
+                {link.label}
+              </a>
             ))}
             <div className="flex items-center gap-2">
               {user ? (
