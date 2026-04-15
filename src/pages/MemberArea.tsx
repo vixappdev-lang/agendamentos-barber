@@ -287,12 +287,12 @@ const MemberArea = () => {
         style={{ background: cardBg, border: `1px solid ${borderColor}`, opacity: isPast ? 0.6 : 1 }}>
         <div className="flex items-start justify-between mb-3">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "hsl(0 0% 100% / 0.05)" }}>
-              <Scissors className="w-5 h-5" style={{ color: "hsl(0 0% 60%)" }} />
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: t.cardBgSubtle }}>
+              <Scissors className="w-5 h-5" style={{ color: t.textMuted }} />
             </div>
             <div>
               <h4 className="font-bold text-sm">{apt.service_title || "Serviço"}</h4>
-              {apt.barber_name && <p className="text-xs" style={{ color: "hsl(0 0% 50%)" }}>com {apt.barber_name}</p>}
+              {apt.barber_name && <p className="text-xs" style={{ color: t.textMuted }}>com {apt.barber_name}</p>}
             </div>
           </div>
           <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold"
@@ -300,19 +300,19 @@ const MemberArea = () => {
             <StatusIcon className="w-3 h-3" /> {status.label}
           </div>
         </div>
-        <div className="flex items-center gap-4 text-xs" style={{ color: "hsl(0 0% 55%)" }}>
+        <div className="flex items-center gap-4 text-xs" style={{ color: t.textMuted }}>
           <span className="flex items-center gap-1.5"><Calendar className="w-3.5 h-3.5" /> {dateStr}</span>
           <span className="flex items-center gap-1.5"><Clock className="w-3.5 h-3.5" /> {apt.appointment_time?.slice(0, 5)}</span>
-          {apt.total_price && <span className="font-semibold" style={{ color: "hsl(0 0% 75%)" }}>R$ {Number(apt.total_price).toFixed(2)}</span>}
+          {apt.total_price && <span className="font-semibold" style={{ color: t.textSecondary }}>R$ {Number(apt.total_price).toFixed(2)}</span>}
         </div>
       </motion.div>
     );
   };
 
   return (
-    <div className="min-h-screen w-full" style={{ background: bg, color: "hsl(0 0% 93%)", fontFamily: "'Montserrat', sans-serif" }}>
+    <div className="min-h-screen w-full" style={{ background: bg, color: t.textPrimary, fontFamily: "'Montserrat', sans-serif" }}>
       {/* Header */}
-      <header className="sticky top-0 z-40 w-full" style={{ background: "hsl(220 20% 4% / 0.85)", backdropFilter: "blur(20px)", borderBottom: `1px solid ${borderColor}` }}>
+      <header className="sticky top-0 z-40 w-full" style={{ background: t.headerBg, backdropFilter: "blur(20px)", borderBottom: `1px solid ${borderColor}` }}>
         <div className="max-w-[1600px] mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <a href="/" className="flex items-center gap-2">
@@ -322,19 +322,19 @@ const MemberArea = () => {
               <span className="text-sm font-extrabold tracking-tight hidden sm:block">GenesisBarber</span>
             </a>
             <div className="w-px h-5" style={{ background: borderColor }} />
-            <div className="flex items-center gap-1.5 text-xs font-medium" style={{ color: "hsl(0 0% 50%)" }}>
+            <div className="flex items-center gap-1.5 text-xs font-medium" style={{ color: t.textMuted }}>
               <LayoutDashboard className="w-3.5 h-3.5" /> Área do Cliente
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl" style={{ background: "hsl(0 0% 100% / 0.05)", border: `1px solid ${borderColor}` }}>
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl" style={{ background: t.btnGhostBg, border: `1px solid ${borderColor}` }}>
               <div className="w-7 h-7 rounded-lg flex items-center justify-center text-[11px] font-bold" style={{ background: btnBg, color: btnColor }}>
                 {initials}
               </div>
               <span className="text-xs font-medium hidden sm:block">{firstName}</span>
             </div>
-            <button onClick={handleSignOut} className="p-2 rounded-lg transition-all hover:bg-white/5" title="Sair">
-              <LogOut className="w-4 h-4" style={{ color: "hsl(0 0% 50%)" }} />
+            <button onClick={handleSignOut} className="p-2 rounded-lg transition-all" style={{ }} title="Sair">
+              <LogOut className="w-4 h-4" style={{ color: t.textMuted }} />
             </button>
           </div>
         </div>
@@ -344,8 +344,8 @@ const MemberArea = () => {
         {/* Welcome */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-black tracking-tight">Olá, {firstName}! 👋</h1>
-            <p className="text-sm mt-1" style={{ color: "hsl(0 0% 50%)" }}>Gerencie seus agendamentos aqui.</p>
+            <h1 className="text-2xl sm:text-3xl font-black tracking-tight" style={{ color: t.textPrimary }}>Olá, {firstName}! 👋</h1>
+            <p className="text-sm mt-1" style={{ color: t.textMuted }}>Gerencie seus agendamentos aqui.</p>
           </div>
           <button onClick={() => { setShowBooking(true); setBookingStep(0); }}
             className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-sm font-bold transition-all hover:translate-y-[-1px]"
@@ -363,20 +363,20 @@ const MemberArea = () => {
             { label: "Cancelados", value: appointments.filter(a => a.status === "cancelled").length, icon: XCircle },
           ].map((stat) => (
             <div key={stat.label} className="rounded-2xl p-4 sm:p-5" style={{ background: cardBg, border: `1px solid ${borderColor}` }}>
-              <stat.icon className="w-4 h-4 mb-2" style={{ color: "hsl(0 0% 45%)" }} />
-              <p className="text-xl sm:text-2xl font-black">{stat.value}</p>
-              <p className="text-[11px] font-medium mt-0.5" style={{ color: "hsl(0 0% 45%)" }}>{stat.label}</p>
+              <stat.icon className="w-4 h-4 mb-2" style={{ color: t.textMuted }} />
+              <p className="text-xl sm:text-2xl font-black" style={{ color: t.textPrimary }}>{stat.value}</p>
+              <p className="text-[11px] font-medium mt-0.5" style={{ color: t.textMuted }}>{stat.label}</p>
             </div>
           ))}
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-1 p-1 rounded-xl mb-6" style={{ background: "hsl(0 0% 100% / 0.03)", border: `1px solid ${borderColor}` }}>
-          {(["upcoming", "history", "pix"] as const).map((t) => (
-            <button key={t} onClick={() => setTab(t)}
+        <div className="flex gap-1 p-1 rounded-xl mb-6" style={{ background: t.cardBgSubtle, border: `1px solid ${borderColor}` }}>
+          {(["upcoming", "history", "pix"] as const).map((tabKey) => (
+            <button key={tabKey} onClick={() => setTab(tabKey)}
               className="flex-1 py-2.5 rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-1.5"
-              style={{ background: tab === t ? btnBg : "transparent", color: tab === t ? btnColor : "hsl(0 0% 50%)" }}>
-              {t === "upcoming" ? `Próximos (${upcoming.length})` : t === "history" ? `Histórico (${history.length})` : <><CreditCard className="w-3.5 h-3.5" /> PIX</>}
+              style={{ background: tab === tabKey ? btnBg : "transparent", color: tab === tabKey ? btnColor : t.textMuted }}>
+              {tabKey === "upcoming" ? `Próximos (${upcoming.length})` : tabKey === "history" ? `Histórico (${history.length})` : <><CreditCard className="w-3.5 h-3.5" /> PIX</>}
             </button>
           ))}
         </div>
