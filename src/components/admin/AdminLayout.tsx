@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useLocation, Outlet, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { motion, AnimatePresence } from "framer-motion";
+import { useThemeColors } from "@/hooks/useThemeColors";
 import {
   LayoutDashboard,
   Scissors,
@@ -35,6 +36,7 @@ const AdminLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+  const t = useThemeColors();
 
   useEffect(() => {
     const checkAdmin = async () => {
@@ -51,14 +53,14 @@ const AdminLayout = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: 'hsl(230 20% 5%)' }}>
+      <div className="min-h-screen flex items-center justify-center" style={{ background: t.pageBgAlt }}>
         <div className="w-8 h-8 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: 'hsl(245 60% 55%)', borderTopColor: 'transparent' }} />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex" style={{ background: 'hsl(230 20% 5%)' }}>
+    <div className="min-h-screen flex" style={{ background: t.pageBgAlt }}>
       <AnimatePresence>
         {sidebarOpen && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
@@ -68,8 +70,8 @@ const AdminLayout = () => {
 
       <motion.aside
         className={`fixed lg:sticky top-0 left-0 z-50 h-screen w-64 flex flex-col transition-transform lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}
-        style={{ background: 'hsl(230 18% 8%)', borderRight: '1px solid hsl(0 0% 100% / 0.06)' }}>
-        <div className="p-5 flex items-center justify-between" style={{ borderBottom: '1px solid hsl(0 0% 100% / 0.06)' }}>
+        style={{ background: t.sidebarBg, borderRight: `1px solid ${t.border}` }}>
+        <div className="p-5 flex items-center justify-between" style={{ borderBottom: `1px solid ${t.border}` }}>
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg flex items-center justify-center"
               style={{ background: 'hsl(245 60% 55% / 0.15)', border: '1px solid hsl(245 60% 55% / 0.3)' }}>
@@ -95,7 +97,7 @@ const AdminLayout = () => {
           })}
         </nav>
 
-        <div className="p-3" style={{ borderTop: '1px solid hsl(0 0% 100% / 0.06)' }}>
+        <div className="p-3" style={{ borderTop: `1px solid ${t.border}` }}>
           <button onClick={handleLogout}
             className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-muted-foreground hover:text-destructive transition-all duration-200"
             style={{ border: '1px solid transparent' }}>
@@ -106,7 +108,7 @@ const AdminLayout = () => {
 
       <div className="flex-1 flex flex-col min-w-0">
         <header className="sticky top-0 z-30 flex items-center gap-3 px-4 sm:px-6 py-4"
-          style={{ background: 'hsl(230 20% 5% / 0.8)', backdropFilter: 'blur(12px)', borderBottom: '1px solid hsl(0 0% 100% / 0.06)' }}>
+          style={{ background: t.headerBg, backdropFilter: 'blur(12px)', borderBottom: `1px solid ${t.border}` }}>
           <button className="lg:hidden" onClick={() => setSidebarOpen(true)}><Menu className="w-5 h-5 text-foreground" /></button>
           <h1 className="text-lg sm:text-xl font-bold text-foreground">
             {location.pathname === "/admin" ? (() => {

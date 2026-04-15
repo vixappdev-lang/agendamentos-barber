@@ -6,10 +6,11 @@ import {
   Database, Calendar, Settings2, Globe, Shield, Upload, CheckCircle,
   XCircle, Loader2, Eye, ChevronRight, Mail, Instagram, Type,
   AlarmClock, Timer, Ban, FileText, CreditCard, QrCode, Copy, Plus, Trash2,
-  AlertCircle, Wand2, ToggleLeft, Layout, ImageIcon
+  AlertCircle, Wand2, ToggleLeft, Layout, ImageIcon, Sun, Moon, Monitor
 } from "lucide-react";
 import { toast } from "sonner";
 import LocationPickerModal from "@/components/LocationPickerModal";
+import { useThemeColors } from "@/hooks/useThemeColors";
 
 const dayLabels = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 
@@ -520,6 +521,92 @@ const Settings = () => {
           {activeTab === "personalization" && (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               <div className="space-y-4">
+                {/* ── Tema / Aparência ── */}
+                <div className={cardStyle}>
+                  <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                    <Sun className="w-4 h-4" style={{ color: iconColor }} /> Tema / Aparência
+                  </h3>
+                  <p className="text-[10px] text-muted-foreground">
+                    Ative o modo claro para áreas específicas da plataforma
+                  </p>
+                  
+                  {/* Master toggle */}
+                  <button
+                    onClick={() => updateSetting("theme_mode", (settings.theme_mode || "dark") === "dark" ? "light" : "dark")}
+                    className="w-full flex items-center justify-between p-4 rounded-xl transition-all"
+                    style={{
+                      background: (settings.theme_mode || "dark") === "light" ? "hsl(245 60% 55% / 0.1)" : "hsl(0 0% 100% / 0.03)",
+                      border: `1px solid ${(settings.theme_mode || "dark") === "light" ? "hsl(245 60% 55% / 0.25)" : "hsl(0 0% 100% / 0.06)"}`,
+                    }}
+                  >
+                    <div className="flex items-center gap-3">
+                      {(settings.theme_mode || "dark") === "light" ? (
+                        <Sun className="w-5 h-5" style={{ color: "hsl(40 80% 50%)" }} />
+                      ) : (
+                        <Moon className="w-5 h-5" style={{ color: "hsl(0 0% 50%)" }} />
+                      )}
+                      <div className="text-left">
+                        <p className="text-sm font-semibold">Modo Claro</p>
+                        <p className="text-[11px]" style={{ color: "hsl(0 0% 50%)" }}>
+                          {(settings.theme_mode || "dark") === "light" ? "Ativado" : "Desativado"}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="w-12 h-6 rounded-full flex items-center px-0.5 transition-all"
+                      style={{
+                        background: (settings.theme_mode || "dark") === "light" ? "hsl(245 60% 55%)" : "hsl(0 0% 25%)",
+                        justifyContent: (settings.theme_mode || "dark") === "light" ? "flex-end" : "flex-start",
+                      }}>
+                      <div className="w-5 h-5 rounded-full bg-white transition-all" />
+                    </div>
+                  </button>
+
+                  {/* Area checkboxes */}
+                  {(settings.theme_mode || "dark") === "light" && (
+                    <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} className="space-y-2">
+                      <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                        Aplicar modo claro em:
+                      </p>
+                      {[
+                        { key: "site", label: "Site Público", desc: "Landing page, loja, agendamento", icon: Globe },
+                        { key: "admin", label: "Painel Admin", desc: "Dashboard, configurações, relatórios", icon: Monitor },
+                        { key: "member", label: "Área do Cliente", desc: "Login, área de membro, PIX", icon: Eye },
+                      ].map((area) => {
+                        const currentAreas: string[] = (() => {
+                          try { return JSON.parse(settings.theme_areas || "[]"); } catch { return []; }
+                        })();
+                        const isActive = currentAreas.includes(area.key);
+                        return (
+                          <button key={area.key}
+                            onClick={() => {
+                              const updated = isActive
+                                ? currentAreas.filter((a: string) => a !== area.key)
+                                : [...currentAreas, area.key];
+                              updateSetting("theme_areas", JSON.stringify(updated));
+                            }}
+                            className="w-full flex items-center gap-3 p-3 rounded-xl transition-all text-left"
+                            style={{
+                              background: isActive ? "hsl(245 60% 55% / 0.08)" : "hsl(0 0% 100% / 0.02)",
+                              border: `1px solid ${isActive ? "hsl(245 60% 55% / 0.2)" : "hsl(0 0% 100% / 0.05)"}`,
+                            }}>
+                            <div className="w-5 h-5 rounded border-2 flex items-center justify-center shrink-0"
+                              style={{
+                                borderColor: isActive ? "hsl(245 60% 65%)" : "hsl(0 0% 30%)",
+                                background: isActive ? "hsl(245 60% 55%)" : "transparent",
+                              }}>
+                              {isActive && <CheckCircle className="w-3 h-3 text-white" />}
+                            </div>
+                            <area.icon className="w-4 h-4 shrink-0" style={{ color: isActive ? "hsl(245 60% 65%)" : "hsl(0 0% 45%)" }} />
+                            <div className="min-w-0">
+                              <p className="text-xs font-semibold">{area.label}</p>
+                              <p className="text-[10px]" style={{ color: "hsl(0 0% 45%)" }}>{area.desc}</p>
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </motion.div>
+                  )}
+                </div>
                 <div className={cardStyle}>
                   <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
                     <Layout className="w-4 h-4" style={{ color: iconColor }} /> Modo do Site

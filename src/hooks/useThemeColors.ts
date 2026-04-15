@@ -1,0 +1,59 @@
+import { useIsLightMode } from "@/contexts/ThemeContext";
+
+export const useThemeColors = () => {
+  const isLight = useIsLightMode();
+
+  return {
+    isLight,
+    // Page backgrounds
+    pageBg: isLight ? "hsl(220 15% 97%)" : "hsl(220 20% 4%)",
+    pageBgAlt: isLight ? "hsl(220 12% 95%)" : "hsl(220 18% 5%)",
+    // Card
+    cardBg: isLight ? "hsl(0 0% 100%)" : "hsl(0 0% 100% / 0.03)",
+    cardBgSubtle: isLight ? "hsl(0 0% 100%)" : "hsl(0 0% 100% / 0.04)",
+    cardBgHover: isLight ? "hsl(220 12% 97%)" : "hsl(0 0% 100% / 0.06)",
+    cardBgActive: isLight ? "hsl(220 12% 95%)" : "hsl(0 0% 100% / 0.08)",
+    // Borders
+    border: isLight ? "hsl(220 12% 88%)" : "hsl(0 0% 100% / 0.08)",
+    borderSubtle: isLight ? "hsl(220 12% 90%)" : "hsl(0 0% 100% / 0.06)",
+    borderStrong: isLight ? "hsl(220 12% 82%)" : "hsl(0 0% 100% / 0.12)",
+    // Text
+    textPrimary: isLight ? "hsl(220 20% 12%)" : "hsl(0 0% 93%)",
+    textSecondary: isLight ? "hsl(220 10% 42%)" : "hsl(0 0% 50%)",
+    textMuted: isLight ? "hsl(220 10% 55%)" : "hsl(0 0% 40%)",
+    textSubtle: isLight ? "hsl(220 10% 65%)" : "hsl(0 0% 100% / 0.35)",
+    textLink: isLight ? "hsl(220 15% 30%)" : "hsl(0 0% 60%)",
+    textInverse: isLight ? "hsl(0 0% 98%)" : "hsl(220 20% 7%)",
+    // Buttons
+    btnBg: isLight ? "hsl(220 20% 12%)" : "hsl(0 0% 95%)",
+    btnColor: isLight ? "hsl(0 0% 98%)" : "hsl(220 20% 7%)",
+    btnShadow: isLight ? "0 2px 8px hsl(220 15% 20% / 0.12)" : "0 4px 20px hsl(0 0% 100% / 0.15)",
+    btnGhostBg: isLight ? "hsl(220 10% 94%)" : "hsl(0 0% 100% / 0.06)",
+    btnGhostBorder: isLight ? "hsl(220 12% 88%)" : "hsl(0 0% 100% / 0.08)",
+    btnGhostColor: isLight ? "hsl(220 10% 42%)" : "hsl(0 0% 70%)",
+    // Glass overlay (for modals/headers)
+    headerBg: isLight ? "hsl(220 15% 97% / 0.92)" : "hsl(220 20% 4% / 0.85)",
+    modalBg: isLight ? "hsl(220 15% 97% / 0.95)" : "hsl(220 20% 4% / 0.9)",
+    modalCardBg: isLight ? "hsl(0 0% 100%)" : "hsl(0 0% 100% / 0.04)",
+    // Sidebar (admin)
+    sidebarBg: isLight ? "hsl(0 0% 100%)" : "hsl(230 18% 8%)",
+    sidebarHeaderBorder: isLight ? "hsl(220 12% 90%)" : "hsl(0 0% 100% / 0.06)",
+    // Input specific  
+    inputBg: isLight ? "hsl(220 15% 97%)" : "hsl(0 0% 100% / 0.04)",
+    inputBorder: isLight ? "hsl(220 12% 87%)" : "hsl(0 0% 100% / 0.08)",
+    // Shadows
+    cardShadow: isLight ? "0 1px 3px hsl(220 15% 20% / 0.06)" : "none",
+    // Status-specific (unchanged between themes)
+    accentPurple: "hsl(245 60% 55%)",
+    accentPurpleLight: "hsl(245 60% 65%)",
+    accentPurpleBg: isLight ? "hsl(245 60% 55% / 0.08)" : "hsl(245 60% 55% / 0.1)",
+    accentPurpleBorder: isLight ? "hsl(245 60% 55% / 0.15)" : "hsl(245 60% 55% / 0.2)",
+    // Drawer/menu
+    drawerBg: isLight ? "hsl(0 0% 100%)" : "hsl(220 18% 6%)",
+    overlayBg: isLight ? "hsl(0 0% 0% / 0.3)" : "hsl(0 0% 0% / 0.6)",
+    // Chart tooltips
+    tooltipBg: isLight ? "hsl(0 0% 100%)" : "hsl(230 18% 11%)",
+    tooltipBorder: isLight ? "hsl(220 12% 88%)" : "hsl(0 0% 100% / 0.1)",
+    tooltipColor: isLight ? "hsl(220 20% 12%)" : "hsl(0 0% 90%)",
+  };
+};
