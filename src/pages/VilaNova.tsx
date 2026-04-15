@@ -517,8 +517,8 @@ const VilaNova = () => {
                     { icon: Heart, title: "Ambiente de Alto Padrão", desc: "Espaço premium projetado para o seu conforto" },
                   ].map((feat) => (
                     <div key={feat.title} className="flex gap-4 items-start p-4 rounded-2xl transition-all"
-                      style={{ background: t.cardBg, border: `1px solid ${t.borderSubtle}` }}>
-                      <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: t.cardBgSubtle }}>
+                      style={{ background: t.cardBg, border: `1px solid ${t.isLight ? 'hsl(220 12% 88%)' : t.borderSubtle}`, boxShadow: t.isLight ? '0 1px 3px hsl(220 15% 20% / 0.04)' : 'none' }}>
+                      <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: t.isLight ? 'hsl(220 12% 94%)' : t.cardBgSubtle }}>
                         <feat.icon className="w-5 h-5" style={{ color: t.textLink }} />
                       </div>
                       <div>
@@ -536,7 +536,7 @@ const VilaNova = () => {
                     { number: "3K+", label: "Clientes" },
                     { number: "5.0", label: "Avaliação" },
                   ].map((stat) => (
-                    <div key={stat.label} className="text-center p-4 rounded-xl" style={{ background: t.cardBg, border: `1px solid ${t.borderSubtle}` }}>
+                    <div key={stat.label} className="text-center p-4 rounded-xl" style={{ background: t.cardBg, border: `1px solid ${t.isLight ? 'hsl(220 12% 88%)' : t.borderSubtle}`, boxShadow: t.isLight ? '0 1px 3px hsl(220 15% 20% / 0.04)' : 'none' }}>
                       <span className="text-2xl sm:text-3xl font-black block" style={{ color: t.textPrimary }}>{stat.number}</span>
                       <p className="text-[10px] sm:text-xs mt-1 font-medium" style={{ color: t.textMuted }}>{stat.label}</p>
                     </div>
