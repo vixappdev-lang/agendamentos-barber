@@ -290,14 +290,15 @@ const VilaNova = () => {
     { label: "Sobre", href: "#sobre" },
     { label: "Serviços", href: "#servicos" },
     { label: "Galeria", href: "#galeria" },
+    { label: "Loja", href: "/loja", external: true },
     { label: "Contato", href: "#contato" },
   ];
 
   const handleGoToMember = () => {
     if (user) {
-      window.location.href = "/vilanova/membro";
+      window.location.href = "/membro";
     } else {
-      window.location.href = "/vilanova/login";
+      window.location.href = "/login";
     }
   };
 
@@ -319,15 +320,21 @@ const VilaNova = () => {
             <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: "hsl(0 0% 95%)" }}>
               <Scissors className="w-4 h-4" style={{ color: "hsl(220 20% 7%)" }} />
             </div>
-            <span className="text-lg font-extrabold tracking-tight">Vila Nova</span>
+            <span className="text-lg font-extrabold tracking-tight">{settings.business_name || "GenesisBarber"}</span>
           </a>
 
           {/* Desktop nav */}
           <div className="hidden md:flex items-center gap-6 lg:gap-8">
             {navLinks.map((link) => (
-              <a key={link.label} href={link.href} className="text-sm font-medium transition-colors hover:text-white" style={{ color: "hsl(0 0% 60%)" }}>
-                {link.label}
-              </a>
+              link.external ? (
+                <a key={link.label} href={link.href} className="text-sm font-medium transition-colors hover:text-white" style={{ color: "hsl(0 0% 60%)" }}>
+                  {link.label}
+                </a>
+              ) : (
+                <a key={link.label} href={link.href} className="text-sm font-medium transition-colors hover:text-white" style={{ color: "hsl(0 0% 60%)" }}>
+                  {link.label}
+                </a>
+              )
             ))}
             <div className="flex items-center gap-2">
               {user ? (
