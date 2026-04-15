@@ -311,7 +311,7 @@ const MemberArea = () => {
     <div className="min-h-screen w-full" style={{ background: bg, color: "hsl(0 0% 93%)", fontFamily: "'Montserrat', sans-serif" }}>
       {/* Header */}
       <header className="sticky top-0 z-40 w-full" style={{ background: "hsl(220 20% 4% / 0.85)", backdropFilter: "blur(20px)", borderBottom: `1px solid ${borderColor}` }}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+        <div className="max-w-[1600px] mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <a href="/" className="flex items-center gap-2">
               <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: btnBg }}>
@@ -338,7 +338,7 @@ const MemberArea = () => {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
+      <main className="max-w-[1600px] mx-auto px-4 sm:px-6 py-8 sm:py-12">
         {/* Welcome */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
           <div>

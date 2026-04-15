@@ -6,18 +6,19 @@ import {
   Database, Calendar, Settings2, Globe, Shield, Upload, CheckCircle,
   XCircle, Loader2, Eye, ChevronRight, Mail, Instagram, Type,
   AlarmClock, Timer, Ban, FileText, CreditCard, QrCode, Copy, Plus, Trash2,
-  AlertCircle
+  AlertCircle, Wand2, ToggleLeft, Layout, ImageIcon
 } from "lucide-react";
 import { toast } from "sonner";
 import LocationPickerModal from "@/components/LocationPickerModal";
 
 const dayLabels = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 
-type SettingsTab = "business" | "branding" | "hours" | "scheduling" | "payments" | "database" | "general";
+type SettingsTab = "business" | "branding" | "hours" | "scheduling" | "payments" | "personalization" | "database" | "general";
 
 const tabs: { id: SettingsTab; label: string; icon: typeof Store }[] = [
   { id: "business", label: "Dados", icon: Store },
   { id: "branding", label: "Visual", icon: Palette },
+  { id: "personalization", label: "Personalização", icon: Wand2 },
   { id: "hours", label: "Horários", icon: Clock },
   { id: "scheduling", label: "Agendamento", icon: Calendar },
   { id: "payments", label: "PIX / Pagamentos", icon: CreditCard },
@@ -509,6 +510,211 @@ const Settings = () => {
                       onChange={(e) => updateSetting("late_policy", e.target.value)}
                       placeholder="Ex: Tolerância de 10 minutos. Após isso, o horário será liberado"
                     />
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ===== PERSONALIZAÇÃO ===== */}
+          {activeTab === "personalization" && (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <div className="space-y-4">
+                <div className={cardStyle}>
+                  <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                    <Layout className="w-4 h-4" style={{ color: iconColor }} /> Modo do Site
+                  </h3>
+                  <p className="text-[10px] text-muted-foreground">
+                    Escolha como seu site será exibido para os clientes
+                  </p>
+                  <div className="grid gap-2">
+                    {[
+                      { value: "full", label: "Site Completo", desc: "Landing page + agendamento + loja + área do cliente" },
+                      { value: "booking", label: "Agendamento Direto", desc: "Apenas tela de agendamento sem landing page" },
+                    ].map((mode) => (
+                      <button key={mode.value} onClick={() => updateSetting("site_mode", mode.value)}
+                        className="w-full text-left p-4 rounded-xl transition-all"
+                        style={{
+                          background: (settings.site_mode || "full") === mode.value ? "hsl(245 60% 55% / 0.1)" : "hsl(0 0% 100% / 0.03)",
+                          border: `1px solid ${(settings.site_mode || "full") === mode.value ? "hsl(245 60% 55% / 0.25)" : "hsl(0 0% 100% / 0.06)"}`,
+                        }}>
+                        <div className="flex items-center gap-3">
+                          <div className="w-5 h-5 rounded-full border-2 flex items-center justify-center"
+                            style={{ borderColor: (settings.site_mode || "full") === mode.value ? "hsl(245 60% 65%)" : "hsl(0 0% 30%)" }}>
+                            {(settings.site_mode || "full") === mode.value && (
+                              <div className="w-2.5 h-2.5 rounded-full" style={{ background: "hsl(245 60% 65%)" }} />
+                            )}
+                          </div>
+                          <div>
+                            <p className="text-sm font-semibold">{mode.label}</p>
+                            <p className="text-[11px]" style={{ color: "hsl(0 0% 50%)" }}>{mode.desc}</p>
+                          </div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className={cardStyle}>
+                  <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                    <Type className="w-4 h-4" style={{ color: iconColor }} /> Textos do Site
+                  </h3>
+                  <div className="grid gap-4">
+                    <div>
+                      <label className={labelStyle}>Título Principal (Hero)</label>
+                      <input className="glass-input" value={settings.hero_title || ""} onChange={(e) => updateSetting("hero_title", e.target.value)}
+                        placeholder="Ex: GenesisBarber" />
+                    </div>
+                    <div>
+                      <label className={labelStyle}>Subtítulo do Hero</label>
+                      <input className="glass-input" value={settings.hero_subtitle || ""} onChange={(e) => updateSetting("hero_subtitle", e.target.value)}
+                        placeholder="Ex: Barbearia Premium" />
+                    </div>
+                    <div>
+                      <label className={labelStyle}>Descrição do Hero</label>
+                      <textarea className="glass-input min-h-[70px] resize-none" value={settings.hero_description || ""} onChange={(e) => updateSetting("hero_description", e.target.value)}
+                        placeholder="Ex: Mais do que um corte — uma experiência de transformação." />
+                    </div>
+                    <div>
+                      <label className={labelStyle}>Título da Seção Sobre</label>
+                      <input className="glass-input" value={settings.about_title || ""} onChange={(e) => updateSetting("about_title", e.target.value)}
+                        placeholder="Ex: Onde estilo encontra atitude" />
+                    </div>
+                    <div>
+                      <label className={labelStyle}>Descrição Sobre</label>
+                      <textarea className="glass-input min-h-[70px] resize-none" value={settings.about_description || ""} onChange={(e) => updateSetting("about_description", e.target.value)}
+                        placeholder="Texto descritivo sobre a barbearia" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div className={cardStyle}>
+                  <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                    <Palette className="w-4 h-4" style={{ color: iconColor }} /> Cores dos Botões
+                  </h3>
+                  <div className="grid gap-4">
+                    <div>
+                      <label className={labelStyle}>Botão Principal (Background)</label>
+                      <div className="flex items-center gap-3">
+                        <input type="color" value={settings.btn_primary_bg || "#F2F2F2"} onChange={(e) => updateSetting("btn_primary_bg", e.target.value)}
+                          className="w-10 h-10 rounded-lg cursor-pointer border-0 bg-transparent" />
+                        <input className="glass-input flex-1" value={settings.btn_primary_bg || "#F2F2F2"} onChange={(e) => updateSetting("btn_primary_bg", e.target.value)} />
+                      </div>
+                    </div>
+                    <div>
+                      <label className={labelStyle}>Botão Principal (Texto)</label>
+                      <div className="flex items-center gap-3">
+                        <input type="color" value={settings.btn_primary_text || "#111111"} onChange={(e) => updateSetting("btn_primary_text", e.target.value)}
+                          className="w-10 h-10 rounded-lg cursor-pointer border-0 bg-transparent" />
+                        <input className="glass-input flex-1" value={settings.btn_primary_text || "#111111"} onChange={(e) => updateSetting("btn_primary_text", e.target.value)} />
+                      </div>
+                    </div>
+                    <div>
+                      <label className={labelStyle}>Botão Secundário (Cor)</label>
+                      <div className="flex items-center gap-3">
+                        <input type="color" value={settings.btn_secondary_color || "#6C5CE7"} onChange={(e) => updateSetting("btn_secondary_color", e.target.value)}
+                          className="w-10 h-10 rounded-lg cursor-pointer border-0 bg-transparent" />
+                        <input className="glass-input flex-1" value={settings.btn_secondary_color || "#6C5CE7"} onChange={(e) => updateSetting("btn_secondary_color", e.target.value)} />
+                      </div>
+                    </div>
+                    {/* Preview */}
+                    <div>
+                      <label className={labelStyle}>Pré-visualização</label>
+                      <div className="flex gap-3 items-center p-4 rounded-xl" style={{ background: "hsl(0 0% 100% / 0.03)" }}>
+                        <button className="px-5 py-2.5 rounded-xl text-sm font-bold"
+                          style={{ background: settings.btn_primary_bg || "#F2F2F2", color: settings.btn_primary_text || "#111111" }}>
+                          Agendar
+                        </button>
+                        <button className="px-5 py-2.5 rounded-xl text-sm font-bold text-white"
+                          style={{ background: settings.btn_secondary_color || "#6C5CE7" }}>
+                          Adicionar
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className={cardStyle}>
+                  <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                    <ImageIcon className="w-4 h-4" style={{ color: iconColor }} /> Imagens do Slider (Hero)
+                  </h3>
+                  <p className="text-[10px] text-muted-foreground">
+                    Envie até 3 imagens para o slider principal do site. Recomendado: 1920x1080px
+                  </p>
+                  <div className="grid gap-3">
+                    {[1, 2, 3].map((i) => {
+                      const key = `hero_image_${i}`;
+                      return (
+                        <div key={i} className="flex items-center gap-3 p-3 rounded-xl" style={{ background: "hsl(0 0% 100% / 0.03)", border: "1px solid hsl(0 0% 100% / 0.06)" }}>
+                          <div className="w-16 h-10 rounded-lg overflow-hidden shrink-0 flex items-center justify-center" style={{ background: "hsl(0 0% 100% / 0.05)" }}>
+                            {settings[key] ? (
+                              <img src={settings[key]} alt={`Hero ${i}`} className="w-full h-full object-cover" />
+                            ) : (
+                              <ImageIcon className="w-4 h-4" style={{ color: "hsl(0 0% 35%)" }} />
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-semibold">Imagem {i}</p>
+                            <p className="text-[10px] truncate" style={{ color: "hsl(0 0% 45%)" }}>
+                              {settings[key] ? "Imagem configurada" : "Nenhuma imagem"}
+                            </p>
+                          </div>
+                          <label className="px-3 py-1.5 rounded-lg text-[10px] font-semibold cursor-pointer transition-all shrink-0"
+                            style={{ background: "hsl(245 60% 55% / 0.1)", color: "hsl(245 60% 70%)", border: "1px solid hsl(245 60% 55% / 0.2)" }}>
+                            <Upload className="w-3 h-3 inline mr-1" /> Upload
+                            <input type="file" accept="image/*" className="hidden" onChange={async (e) => {
+                              const file = e.target.files?.[0];
+                              if (!file) return;
+                              try {
+                                const ext = file.name.split(".").pop();
+                                const fileName = `hero-${i}-${Date.now()}.${ext}`;
+                                await supabase.storage.from("public-assets").upload(fileName, file, { upsert: true });
+                                const { data: urlData } = supabase.storage.from("public-assets").getPublicUrl(fileName);
+                                updateSetting(key, urlData.publicUrl);
+                                toast.success(`Imagem ${i} enviada!`);
+                              } catch { toast.error("Erro ao enviar imagem"); }
+                            }} />
+                          </label>
+                          {settings[key] && (
+                            <button onClick={() => updateSetting(key, "")} className="p-1.5 rounded-lg hover:bg-white/5">
+                              <Trash2 className="w-3.5 h-3.5" style={{ color: "hsl(0 60% 55%)" }} />
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className={cardStyle}>
+                  <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                    <ToggleLeft className="w-4 h-4" style={{ color: iconColor }} /> Módulos Visíveis
+                  </h3>
+                  <p className="text-[10px] text-muted-foreground">
+                    Ative ou desative seções do site
+                  </p>
+                  <div className="grid gap-2">
+                    {[
+                      { key: "show_gallery", label: "Galeria de Fotos" },
+                      { key: "show_about", label: "Seção Sobre" },
+                      { key: "show_store", label: "Loja (menu)" },
+                      { key: "show_cta", label: "Banner CTA" },
+                    ].map((mod) => (
+                      <button key={mod.key} onClick={() => updateSetting(mod.key, (settings[mod.key] || "true") === "true" ? "false" : "true")}
+                        className="flex items-center justify-between p-3 rounded-xl transition-all"
+                        style={{ background: "hsl(0 0% 100% / 0.03)", border: "1px solid hsl(0 0% 100% / 0.06)" }}>
+                        <span className="text-xs font-medium">{mod.label}</span>
+                        <div className="w-10 h-5 rounded-full flex items-center px-0.5 transition-all"
+                          style={{
+                            background: (settings[mod.key] || "true") === "true" ? "hsl(140 60% 45%)" : "hsl(0 0% 25%)",
+                            justifyContent: (settings[mod.key] || "true") === "true" ? "flex-end" : "flex-start",
+                          }}>
+                          <div className="w-4 h-4 rounded-full bg-white transition-all" />
+                        </div>
+                      </button>
+                    ))}
                   </div>
                 </div>
               </div>

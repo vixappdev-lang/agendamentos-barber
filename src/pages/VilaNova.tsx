@@ -280,8 +280,8 @@ const VilaNova = () => {
     setMobileMenu(false);
   };
 
-  const selBg = "hsl(0 0% 95%)";
-  const selColor = "hsl(230 20% 7%)";
+  const selBg = settings.btn_primary_bg || "hsl(0 0% 95%)";
+  const selColor = settings.btn_primary_text || "hsl(230 20% 7%)";
   const selShadow = "0 4px 20px hsl(0 0% 100% / 0.15)";
 
   const userName = user?.user_metadata?.full_name?.split(" ")[0] || name || "Usuário";
@@ -316,7 +316,7 @@ const VilaNova = () => {
           borderBottom: scrolled ? "1px solid hsl(0 0% 100% / 0.06)" : "none",
         }}
       >
-        <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between">
+        <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-10 xl:px-16 h-16 sm:h-20 flex items-center justify-between">
           <a href="#" className="flex items-center gap-2.5">
             <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: "hsl(0 0% 95%)" }}>
               <Scissors className="w-4 h-4" style={{ color: "hsl(220 20% 7%)" }} />
@@ -441,21 +441,21 @@ const VilaNova = () => {
           background: "linear-gradient(180deg, hsl(220 20% 4% / 0.4) 0%, hsl(220 20% 4% / 0.2) 40%, hsl(220 20% 4% / 0.7) 75%, hsl(220 20% 4%) 100%)"
         }} />
 
-        <motion.div style={{ opacity: heroOpacity }} className="relative z-10 h-full flex flex-col justify-end pb-12 sm:pb-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
+        <motion.div style={{ opacity: heroOpacity }} className="relative z-10 h-full flex flex-col justify-end pb-12 sm:pb-20 px-4 sm:px-6 lg:px-8 max-w-[1600px] mx-auto w-full">
           <motion.div initial={{ y: 50, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.4, duration: 0.9 }}>
             <div className="flex items-center gap-3 mb-5">
               <div className="w-10 h-px" style={{ background: "hsl(0 0% 100% / 0.3)" }} />
               <span className="text-[11px] sm:text-xs font-bold uppercase tracking-[0.35em]" style={{ color: "hsl(0 0% 100% / 0.5)" }}>
-                Barbearia Premium
+                {settings.hero_subtitle || "Barbearia Premium"}
               </span>
             </div>
             <h1 className="text-5xl sm:text-7xl lg:text-8xl font-black leading-[0.9] tracking-tighter mb-5">
-              {(settings.business_name || "Genesis").split(" ").map((word, i) => (
+              {(settings.hero_title || settings.business_name || "Genesis").split(" ").map((word, i) => (
                 <span key={i}>{word}<br /></span>
               ))}
             </h1>
             <p className="text-sm sm:text-base lg:text-lg max-w-lg mb-8 leading-relaxed" style={{ color: "hsl(0 0% 100% / 0.55)" }}>
-              Mais do que um corte — uma experiência de transformação. Estilo, precisão e confiança em cada detalhe.
+              {settings.hero_description || "Mais do que um corte — uma experiência de transformação. Estilo, precisão e confiança em cada detalhe."}
             </p>
             <div className="flex flex-col sm:flex-row gap-3">
               <a href="#servicos"
@@ -491,7 +491,7 @@ const VilaNova = () => {
 
       {/* ─── ABOUT ─── */}
       <section id="sobre" className="py-20 sm:py-28 lg:py-36 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto">
+        <div className="max-w-[1600px] mx-auto">
           <motion.div initial={{ opacity: 0, y: 40 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.7 }}>
             
             {/* Section label */}
@@ -504,10 +504,10 @@ const VilaNova = () => {
               {/* Text content - takes 5 columns on desktop */}
               <div className="lg:col-span-5">
                 <h2 className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-black mb-8 leading-[1.05] tracking-tight">
-                  Onde estilo<br />encontra atitude
+                  {settings.about_title || "Onde estilo\nencontra atitude"}
                 </h2>
                 <p className="text-sm sm:text-base leading-relaxed mb-6" style={{ color: "hsl(0 0% 100% / 0.5)" }}>
-                  Não somos apenas uma barbearia — somos um espaço de transformação masculina. Aqui, cada detalhe é pensado para elevar seu visual e sua confiança ao máximo nível.
+                  {settings.about_description || "Não somos apenas uma barbearia — somos um espaço de transformação masculina. Aqui, cada detalhe é pensado para elevar seu visual e sua confiança ao máximo nível."}
                 </p>
                 <p className="text-sm sm:text-base leading-relaxed mb-10" style={{ color: "hsl(0 0% 100% / 0.4)" }}>
                   Profissionais especializados, técnicas atualizadas e um ambiente que você não vai querer sair. Desde o corte clássico até o estilo mais ousado, entregamos resultado com precisão.
@@ -586,7 +586,7 @@ const VilaNova = () => {
 
       {/* ─── SERVICES ─── */}
       <section id="servicos" className="py-20 sm:py-28 px-4 sm:px-6 lg:px-8" style={{ background: "hsl(220 18% 5%)" }}>
-        <div className="max-w-7xl mx-auto">
+        <div className="max-w-[1600px] mx-auto">
           <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-12 sm:mb-16">
             <div className="flex items-center justify-center gap-3 mb-5">
               <div className="w-10 h-px" style={{ background: "hsl(0 0% 100% / 0.15)" }} />
@@ -638,7 +638,7 @@ const VilaNova = () => {
 
       {/* ─── GALLERY ─── */}
       <section id="galeria" className="py-20 sm:py-28 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto">
+        <div className="max-w-[1600px] mx-auto">
           <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-12 sm:mb-16">
             <div className="flex items-center justify-center gap-3 mb-5">
               <div className="w-10 h-px" style={{ background: "hsl(0 0% 100% / 0.15)" }} />
@@ -692,7 +692,7 @@ const VilaNova = () => {
 
       {/* ─── FOOTER ─── */}
       <footer id="contato" className="py-16 sm:py-20 px-4 sm:px-6 lg:px-8" style={{ borderTop: "1px solid hsl(0 0% 100% / 0.04)" }}>
-        <div className="max-w-7xl mx-auto">
+        <div className="max-w-[1600px] mx-auto">
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-10 mb-14">
             <div className="sm:col-span-2 lg:col-span-1">
               <div className="flex items-center gap-2.5 mb-4">
