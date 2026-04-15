@@ -5,7 +5,8 @@ import {
   Save, Store, Phone, Clock, MapPin, CalendarOff, Map, Image, Palette,
   Database, Calendar, Settings2, Globe, Shield, Upload, CheckCircle,
   XCircle, Loader2, Eye, ChevronRight, Mail, Instagram, Type,
-  AlarmClock, Timer, Ban, FileText, CreditCard, QrCode, Copy, Plus, Trash2
+  AlarmClock, Timer, Ban, FileText, CreditCard, QrCode, Copy, Plus, Trash2,
+  AlertCircle
 } from "lucide-react";
 import { toast } from "sonner";
 import LocationPickerModal from "@/components/LocationPickerModal";
