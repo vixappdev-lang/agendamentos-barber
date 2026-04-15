@@ -7,6 +7,7 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import type { User } from "@supabase/supabase-js";
 import { useBusinessSettings } from "@/hooks/useBusinessSettings";
+import { useThemeColors } from "@/hooks/useThemeColors";
 import { supabase } from "@/integrations/supabase/client";
 
 interface HeaderProps {
@@ -40,6 +41,7 @@ const menuSections = [
 const Header = ({ user, onSignOut, onCategorySelect, onDirections, onOpenWheel }: HeaderProps) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const { settings } = useBusinessSettings();
+  const t = useThemeColors();
   const businessName = settings.business_name || "Barbearia";
   const [wheelEnabled, setWheelEnabled] = useState(false);
 
@@ -66,7 +68,6 @@ const Header = ({ user, onSignOut, onCategorySelect, onDirections, onOpenWheel }
 
   const firstName = user?.user_metadata?.full_name?.split(" ")[0] || "Usuário";
 
-  // Build dynamic menu sections
   const dynamicMenuSections = menuSections.map((section) => {
     if (section.label === "Menu" && wheelEnabled) {
       return {
@@ -83,27 +84,27 @@ const Header = ({ user, onSignOut, onCategorySelect, onDirections, onOpenWheel }
   return (
     <>
       <header className="w-full sticky top-0 z-50" style={{
-        background: 'hsl(0 0% 100% / 0.03)',
+        background: t.headerBg,
         backdropFilter: 'blur(24px)',
         WebkitBackdropFilter: 'blur(24px)',
-        borderBottom: '1px solid hsl(0 0% 100% / 0.06)',
+        borderBottom: `1px solid ${t.border}`,
       }}>
         <div className="container mx-auto px-3 min-[375px]:px-4 h-14 min-[375px]:h-16 flex items-center justify-between">
           <div className="flex items-center gap-2.5 min-[375px]:gap-3">
-            <div className="w-9 h-9 min-[375px]:w-10 min-[375px]:h-10 rounded-xl flex items-center justify-center" style={{ background: 'hsl(0 0% 90%)', boxShadow: '0 4px 16px hsl(0 0% 100% / 0.1)' }}>
-              <Scissors className="w-4 h-4 min-[375px]:w-5 min-[375px]:h-5" style={{ color: 'hsl(230 20% 7%)' }} />
+            <div className="w-9 h-9 min-[375px]:w-10 min-[375px]:h-10 rounded-xl flex items-center justify-center" style={{ background: t.btnBg, boxShadow: t.cardShadow }}>
+              <Scissors className="w-4 h-4 min-[375px]:w-5 min-[375px]:h-5" style={{ color: t.btnColor }} />
             </div>
             <div>
-              <h1 className="text-base min-[375px]:text-lg font-bold tracking-tight text-foreground leading-tight">{businessName}</h1>
-              <p className="text-[9px] min-[375px]:text-[10px] text-muted-foreground tracking-[0.2em] uppercase -mt-0.5">Premium Grooming</p>
+              <h1 className="text-base min-[375px]:text-lg font-bold tracking-tight leading-tight" style={{ color: t.textPrimary }}>{businessName}</h1>
+              <p className="text-[9px] min-[375px]:text-[10px] tracking-[0.2em] uppercase -mt-0.5" style={{ color: t.textMuted }}>Premium Grooming</p>
             </div>
           </div>
 
           {user && (
             <button
               onClick={() => setMenuOpen(true)}
-              className="flex items-center gap-2 px-2.5 min-[375px]:px-3 py-1.5 min-[375px]:py-2 rounded-xl text-xs text-muted-foreground transition-all"
-              style={{ background: 'hsl(0 0% 100% / 0.04)', border: '1px solid hsl(0 0% 100% / 0.06)' }}
+              className="flex items-center gap-2 px-2.5 min-[375px]:px-3 py-1.5 min-[375px]:py-2 rounded-xl text-xs transition-all"
+              style={{ background: t.btnGhostBg, border: `1px solid ${t.btnGhostBorder}`, color: t.textMuted }}
             >
               <img
                 src={user.user_metadata?.avatar_url}
@@ -126,7 +127,7 @@ const Header = ({ user, onSignOut, onCategorySelect, onDirections, onOpenWheel }
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               className="fixed inset-0 z-[60]"
-              style={{ background: 'hsl(0 0% 0% / 0.6)', backdropFilter: 'blur(6px)' }}
+              style={{ background: t.overlayBg, backdropFilter: 'blur(6px)' }}
               onClick={() => setMenuOpen(false)}
             />
             <motion.div
@@ -136,16 +137,16 @@ const Header = ({ user, onSignOut, onCategorySelect, onDirections, onOpenWheel }
               transition={{ type: 'spring', damping: 28, stiffness: 320 }}
               className="fixed top-0 right-0 bottom-0 z-[70] w-[80vw] max-w-xs flex flex-col overflow-y-auto scrollbar-hide"
               style={{
-                background: 'hsl(230 18% 9%)',
-                borderLeft: '1px solid hsl(0 0% 100% / 0.08)',
+                background: t.drawerBg,
+                borderLeft: `1px solid ${t.border}`,
               }}
             >
               {/* User Profile Header */}
-              <div className="p-4 min-[375px]:p-5" style={{ borderBottom: '1px solid hsl(0 0% 100% / 0.06)' }}>
+              <div className="p-4 min-[375px]:p-5" style={{ borderBottom: `1px solid ${t.border}` }}>
                 <div className="flex items-center justify-between mb-4">
-                  <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-medium">Menu</span>
-                  <button onClick={() => setMenuOpen(false)} className="p-1.5 rounded-lg" style={{ background: 'hsl(0 0% 100% / 0.05)' }}>
-                    <X className="w-4 h-4 text-muted-foreground" />
+                  <span className="text-[10px] uppercase tracking-widest font-medium" style={{ color: t.textMuted }}>Menu</span>
+                  <button onClick={() => setMenuOpen(false)} className="p-1.5 rounded-lg" style={{ background: t.cardBgSubtle }}>
+                    <X className="w-4 h-4" style={{ color: t.textMuted }} />
                   </button>
                 </div>
 
@@ -154,21 +155,21 @@ const Header = ({ user, onSignOut, onCategorySelect, onDirections, onOpenWheel }
                     <img
                       src={user.user_metadata?.avatar_url}
                       alt=""
-                      className="w-12 h-12 rounded-2xl object-cover ring-2 ring-accent/30"
+                      className="w-12 h-12 rounded-2xl object-cover"
                       onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                     />
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm font-bold text-foreground truncate">
+                      <p className="text-sm font-bold truncate" style={{ color: t.textPrimary }}>
                         Olá, {firstName}!
                       </p>
-                      <p className="text-[11px] text-muted-foreground truncate">
+                      <p className="text-[11px] truncate" style={{ color: t.textMuted }}>
                         {user.email}
                       </p>
                     </div>
                   </div>
                 ) : (
-                  <div className="glass-card p-3 text-center">
-                    <p className="text-sm text-muted-foreground">Faça login para agendar</p>
+                  <div className="rounded-xl p-3 text-center" style={{ background: t.cardBgSubtle, border: `1px solid ${t.border}` }}>
+                    <p className="text-sm" style={{ color: t.textMuted }}>Faça login para agendar</p>
                   </div>
                 )}
               </div>
@@ -177,7 +178,7 @@ const Header = ({ user, onSignOut, onCategorySelect, onDirections, onOpenWheel }
               <nav className="flex-1 p-3 space-y-4">
                 {dynamicMenuSections.map((section) => (
                   <div key={section.label}>
-                    <p className="px-3 mb-1.5 text-[10px] uppercase tracking-widest text-muted-foreground/60 font-medium">
+                    <p className="px-3 mb-1.5 text-[10px] uppercase tracking-widest font-medium" style={{ color: t.textSubtle }}>
                       {section.label}
                     </p>
                     <div className="space-y-0.5">
@@ -185,21 +186,17 @@ const Header = ({ user, onSignOut, onCategorySelect, onDirections, onOpenWheel }
                         <button
                           key={item.id}
                           onClick={() => handleMenuClick(item.id)}
-                          className="w-full flex items-center gap-3 px-3 py-2.5 min-[375px]:py-3 rounded-xl text-[13px] min-[375px]:text-sm font-medium text-foreground/75 transition-all active:scale-[0.98]"
-                          style={{ WebkitTapHighlightColor: 'transparent' }}
-                          onTouchStart={(e) => { e.currentTarget.style.background = 'hsl(0 0% 100% / 0.05)'; }}
-                          onTouchEnd={(e) => { e.currentTarget.style.background = 'transparent'; }}
-                          onMouseEnter={(e) => { e.currentTarget.style.background = 'hsl(0 0% 100% / 0.05)'; }}
-                          onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
+                          className="w-full flex items-center gap-3 px-3 py-2.5 min-[375px]:py-3 rounded-xl text-[13px] min-[375px]:text-sm font-medium transition-all active:scale-[0.98]"
+                          style={{ color: t.textSecondary, WebkitTapHighlightColor: 'transparent' }}
                         >
                           <div
                             className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
-                            style={{ background: item.id === "roleta" ? 'hsl(280 55% 50% / 0.15)' : 'hsl(0 0% 100% / 0.08)' }}
+                            style={{ background: item.id === "roleta" ? 'hsl(280 55% 50% / 0.15)' : t.cardBgSubtle }}
                           >
-                            <item.icon className="w-4 h-4 text-foreground/60" />
+                            <item.icon className="w-4 h-4" style={{ color: t.textMuted }} />
                           </div>
                           <span className="flex-1 text-left">{item.label}</span>
-                          <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/40" />
+                          <ChevronRight className="w-3.5 h-3.5" style={{ color: t.textSubtle }} />
                         </button>
                       ))}
                     </div>
@@ -208,7 +205,7 @@ const Header = ({ user, onSignOut, onCategorySelect, onDirections, onOpenWheel }
               </nav>
 
               {/* Info + Sign Out */}
-              <div className="p-4 space-y-3" style={{ borderTop: '1px solid hsl(0 0% 100% / 0.06)' }}>
+              <div className="p-4 space-y-3" style={{ borderTop: `1px solid ${t.border}` }}>
                 {user && (
                   <button
                     onClick={() => { onSignOut?.(); setMenuOpen(false); }}
@@ -224,7 +221,7 @@ const Header = ({ user, onSignOut, onCategorySelect, onDirections, onOpenWheel }
                   </button>
                 )}
 
-                <p className="text-[10px] text-center text-muted-foreground/30">
+                <p className="text-[10px] text-center" style={{ color: t.textSubtle }}>
                   © {new Date().getFullYear()} {businessName}
                 </p>
               </div>
