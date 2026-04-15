@@ -24,6 +24,12 @@ const tabs: { id: SettingsTab; label: string; icon: typeof Store }[] = [
   { id: "general", label: "Geral", icon: Settings2 },
 ];
 
+interface PixQrConfig {
+  id: string;
+  value: string;
+  qr_image_url?: string;
+}
+
 const Settings = () => {
   const [settings, setSettings] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
@@ -32,6 +38,8 @@ const Settings = () => {
   const [activeTab, setActiveTab] = useState<SettingsTab>("business");
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [pixQrConfigs, setPixQrConfigs] = useState<PixQrConfig[]>([]);
+  const [newPixValue, setNewPixValue] = useState("");
 
   // Database connection test
   const [dbTesting, setDbTesting] = useState(false);
