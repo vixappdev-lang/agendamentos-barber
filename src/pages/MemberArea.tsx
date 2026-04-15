@@ -63,14 +63,14 @@ const MemberArea = () => {
   useEffect(() => {
     const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user) { navigate("/vilanova/login", { replace: true }); return; }
+      if (!session?.user) { navigate("/login", { replace: true }); return; }
       setUser(session.user);
       await fetchData(session.user.email!);
     };
     checkAuth();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (!session?.user) navigate("/vilanova/login", { replace: true });
+      if (!session?.user) navigate("/login", { replace: true });
     });
     return () => subscription.unsubscribe();
   }, [navigate]);
@@ -241,7 +241,7 @@ const MemberArea = () => {
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
-    navigate("/vilanova", { replace: true });
+    navigate("/", { replace: true });
   };
 
   const today = new Date().toISOString().split("T")[0];
@@ -299,11 +299,11 @@ const MemberArea = () => {
       <header className="sticky top-0 z-40 w-full" style={{ background: "hsl(220 20% 4% / 0.85)", backdropFilter: "blur(20px)", borderBottom: `1px solid ${borderColor}` }}>
         <div className="max-w-5xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <a href="/vilanova" className="flex items-center gap-2">
+            <a href="/" className="flex items-center gap-2">
               <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: btnBg }}>
                 <Scissors className="w-3.5 h-3.5" style={{ color: btnColor }} />
               </div>
-              <span className="text-sm font-extrabold tracking-tight hidden sm:block">Vila Nova</span>
+              <span className="text-sm font-extrabold tracking-tight hidden sm:block">GenesisBarber</span>
             </a>
             <div className="w-px h-5" style={{ background: borderColor }} />
             <div className="flex items-center gap-1.5 text-xs font-medium" style={{ color: "hsl(0 0% 50%)" }}>
