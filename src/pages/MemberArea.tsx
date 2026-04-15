@@ -103,6 +103,12 @@ const MemberArea = () => {
       const map: Record<string, string> = {};
       for (const r of settingsRes.data) map[r.key] = r.value || "";
       setSettings(map);
+      if (map.pix_key) setPixKey(map.pix_key);
+      if (map.pix_type) setPixType(map.pix_type);
+      if (map.pix_name) setPixName(map.pix_name);
+      if (map.pix_qr_configs) {
+        try { setPixQrConfigs(JSON.parse(map.pix_qr_configs)); } catch {}
+      }
     }
 
     if (aptsRes.data) {
