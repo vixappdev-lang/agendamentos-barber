@@ -280,8 +280,8 @@ const VilaNova = () => {
     setMobileMenu(false);
   };
 
-  const selBg = "hsl(0 0% 95%)";
-  const selColor = "hsl(230 20% 7%)";
+  const selBg = settings.btn_primary_bg || "hsl(0 0% 95%)";
+  const selColor = settings.btn_primary_text || "hsl(230 20% 7%)";
   const selShadow = "0 4px 20px hsl(0 0% 100% / 0.15)";
 
   const userName = user?.user_metadata?.full_name?.split(" ")[0] || name || "Usuário";
