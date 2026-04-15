@@ -449,10 +449,12 @@ const VilaNova = () => {
               </span>
             </div>
             <h1 className="text-5xl sm:text-7xl lg:text-8xl font-black leading-[0.9] tracking-tighter mb-5">
-              Vila<br />Nova
+              {(settings.business_name || "Genesis").split(" ").map((word, i) => (
+                <span key={i}>{word}<br /></span>
+              ))}
             </h1>
             <p className="text-sm sm:text-base lg:text-lg max-w-lg mb-8 leading-relaxed" style={{ color: "hsl(0 0% 100% / 0.55)" }}>
-              A 1ª Barbearia por Assinatura de Colatina. Tradição, estilo e conforto em cada detalhe.
+              Mais do que um corte — uma experiência de transformação. Estilo, precisão e confiança em cada detalhe.
             </p>
             <div className="flex flex-col sm:flex-row gap-3">
               <a href="#servicos"
@@ -501,21 +503,21 @@ const VilaNova = () => {
               {/* Text content - takes 5 columns on desktop */}
               <div className="lg:col-span-5">
                 <h2 className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-black mb-8 leading-[1.05] tracking-tight">
-                  Tradição que<br />inspira estilo
+                  Onde estilo<br />encontra atitude
                 </h2>
                 <p className="text-sm sm:text-base leading-relaxed mb-6" style={{ color: "hsl(0 0% 100% / 0.5)" }}>
-                  Buscando sempre atualizações e melhorias para o conforto do cliente. Na Vila Nova, cada corte é uma experiência única, com profissionais qualificados e ambiente acolhedor.
+                  Não somos apenas uma barbearia — somos um espaço de transformação masculina. Aqui, cada detalhe é pensado para elevar seu visual e sua confiança ao máximo nível.
                 </p>
                 <p className="text-sm sm:text-base leading-relaxed mb-10" style={{ color: "hsl(0 0% 100% / 0.4)" }}>
-                  Nosso espaço foi pensado para oferecer o melhor em cuidado masculino. Desde cortes clássicos até os estilos mais modernos, nossa equipe domina todas as técnicas para transformar seu visual.
+                  Profissionais especializados, técnicas atualizadas e um ambiente que você não vai querer sair. Desde o corte clássico até o estilo mais ousado, entregamos resultado com precisão.
                 </p>
 
                 {/* Features */}
                 <div className="space-y-4 mb-10">
                   {[
-                    { icon: Award, title: "Profissionais Certificados", desc: "Equipe treinada e sempre atualizada com as tendências" },
-                    { icon: Users, title: "Atendimento Personalizado", desc: "Cada cliente recebe atenção exclusiva e dedicada" },
-                    { icon: Heart, title: "Ambiente Premium", desc: "Espaço confortável, moderno e acolhedor para relaxar" },
+                    { icon: Award, title: "Excelência Garantida", desc: "Equipe certificada com técnicas de ponta atualizadas" },
+                    { icon: Users, title: "Experiência Exclusiva", desc: "Atendimento VIP com atenção total a cada detalhe" },
+                    { icon: Heart, title: "Ambiente de Alto Padrão", desc: "Espaço premium projetado para o seu conforto" },
                   ].map((feat) => (
                     <div key={feat.title} className="flex gap-4 items-start p-4 rounded-2xl transition-all"
                       style={{ background: "hsl(0 0% 100% / 0.02)", border: "1px solid hsl(0 0% 100% / 0.04)" }}>
