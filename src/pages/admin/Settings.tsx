@@ -57,6 +57,9 @@ const Settings = () => {
       for (const row of data) map[row.key] = row.value || "";
       setSettings(map);
       if (map.logo_url) setLogoPreview(map.logo_url);
+      if (map.pix_qr_configs) {
+        try { setPixQrConfigs(JSON.parse(map.pix_qr_configs)); } catch {}
+      }
     }
   };
 
