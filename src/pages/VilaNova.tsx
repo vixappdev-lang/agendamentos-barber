@@ -553,7 +553,7 @@ const VilaNova = () => {
                   {/* Large featured image */}
                   <div className="col-span-7 rounded-2xl overflow-hidden" style={{ border: "1px solid hsl(0 0% 100% / 0.06)" }}>
                     <div className="aspect-[3/4]">
-                      <img src={heroImg1} alt="Barbearia Vila Nova Interior" className="w-full h-full object-cover" loading="lazy" />
+                      <img src={heroImg1} alt="Interior" className="w-full h-full object-cover" loading="lazy" />
                     </div>
                   </div>
                   {/* Right column with 2 stacked images */}
@@ -676,9 +676,9 @@ const VilaNova = () => {
       <section className="py-16 sm:py-24 px-4 sm:px-6 lg:px-8" style={{ background: "hsl(220 18% 5%)" }}>
         <div className="max-w-4xl mx-auto text-center">
           <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight mb-4">Pronto para transformar<br />seu visual?</h2>
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight mb-4">Pronto para elevar<br />seu estilo?</h2>
             <p className="text-sm sm:text-base mb-8 max-w-md mx-auto" style={{ color: "hsl(0 0% 100% / 0.45)" }}>
-              Agende agora e garanta o melhor horário com nossos profissionais.
+              Agende agora e descubra por que somos a escolha número 1. Vagas limitadas.
             </p>
             <a href="#servicos"
               className="inline-flex items-center gap-3 px-10 py-4 rounded-2xl text-sm font-bold transition-all hover:translate-y-[-2px] active:scale-[0.98]"
