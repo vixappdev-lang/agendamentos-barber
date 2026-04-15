@@ -42,7 +42,9 @@ export const useThemeColors = () => {
     inputBg: isLight ? "hsl(220 15% 97%)" : "hsl(0 0% 100% / 0.04)",
     inputBorder: isLight ? "hsl(220 12% 87%)" : "hsl(0 0% 100% / 0.08)",
     // Shadows
-    cardShadow: isLight ? "0 1px 3px hsl(220 15% 20% / 0.06)" : "none",
+    cardShadow: isLight ? "0 1px 3px hsl(220 15% 20% / 0.06), 0 1px 2px hsl(220 15% 20% / 0.04)" : "none",
+    cardShadowMd: isLight ? "0 4px 12px hsl(220 15% 20% / 0.08), 0 1px 3px hsl(220 15% 20% / 0.06)" : "none",
+    cardShadowLg: isLight ? "0 8px 24px hsl(220 15% 20% / 0.1), 0 2px 6px hsl(220 15% 20% / 0.06)" : "none",
     // Status-specific (unchanged between themes)
     accentPurple: "hsl(245 60% 55%)",
     accentPurpleLight: "hsl(245 60% 65%)",
