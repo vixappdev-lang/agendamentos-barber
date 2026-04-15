@@ -965,25 +965,25 @@ const VilaNova = () => {
         {showConfirmation && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             className="fixed inset-0 z-50 flex items-center justify-center p-4"
-            style={{ background: "hsl(220 20% 4% / 0.92)", backdropFilter: "blur(12px)" }}>
+            style={{ background: t.overlayBg, backdropFilter: "blur(12px)" }}>
             <motion.div initial={{ scale: 0.85, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: "spring" }}
               className="w-full max-w-sm p-7 text-center space-y-5 rounded-2xl"
-              style={{ background: "hsl(0 0% 100% / 0.04)", backdropFilter: "blur(28px)", border: "1px solid hsl(0 0% 100% / 0.08)" }}>
+              style={{ background: t.modalCardBg, backdropFilter: t.isLight ? "none" : "blur(28px)", border: `1px solid ${t.border}` }}>
               <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.2, type: "spring" }}
                 className="w-20 h-20 rounded-full mx-auto flex items-center justify-center"
                 style={{ background: "hsl(140 60% 45% / 0.12)", border: "2px solid hsl(140 60% 45% / 0.3)" }}>
                 <CheckCircle className="w-10 h-10" style={{ color: "hsl(140 60% 50%)" }} />
               </motion.div>
               <div>
-                <h3 className="text-2xl font-black tracking-tight">Tudo Certo! 🎉</h3>
-                <p className="text-base font-semibold mt-2">Seu agendamento foi confirmado!</p>
-                <p className="text-sm mt-2" style={{ color: "hsl(0 0% 55%)" }}>
+                <h3 className="text-2xl font-black tracking-tight" style={{ color: t.textPrimary }}>Tudo Certo! 🎉</h3>
+                <p className="text-base font-semibold mt-2" style={{ color: t.textPrimary }}>Seu agendamento foi confirmado!</p>
+                <p className="text-sm mt-2" style={{ color: t.textSecondary }}>
                   Você receberá uma confirmação no seu WhatsApp com todos os detalhes.
                 </p>
               </div>
 
               {/* Appointment summary */}
-              <div className="p-4 rounded-xl space-y-2 text-left" style={{ background: "hsl(0 0% 100% / 0.03)", border: "1px solid hsl(0 0% 100% / 0.06)" }}>
+              <div className="p-4 rounded-xl space-y-2 text-left" style={{ background: t.cardBg, border: `1px solid ${t.borderSubtle}` }}>
                 {[
                   { icon: "💈", text: selectedService?.title },
                   { icon: "✂️", text: selectedBarber?.name },
@@ -993,7 +993,7 @@ const VilaNova = () => {
                 ].filter(item => item.text).map((item, i) => (
                   <div key={i} className="flex items-center gap-2.5 text-sm">
                     <span>{item.icon}</span>
-                    <span style={{ color: "hsl(0 0% 80%)" }}>{item.text}</span>
+                    <span style={{ color: t.textSecondary }}>{item.text}</span>
                   </div>
                 ))}
               </div>
