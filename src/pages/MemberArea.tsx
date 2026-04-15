@@ -52,7 +52,7 @@ const MemberArea = () => {
   const [pixKey, setPixKey] = useState("");
   const [pixType, setPixType] = useState("cpf");
   const [pixName, setPixName] = useState("");
-  const [matchedQr, setMatchedQr] = useState<{ value: string; qr_image_url?: string } | null>(null);
+  const [matchedQr, setMatchedQr] = useState<{ id: string; value: string; qr_image_url?: string } | null>(null);
 
   // Booking modal state
   const [showBooking, setShowBooking] = useState(false);
