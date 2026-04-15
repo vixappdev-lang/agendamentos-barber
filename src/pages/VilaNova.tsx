@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion";
 import { Scissors, Clock, MapPin, Phone, Instagram, ChevronRight, ChevronDown, Star, X, ArrowLeft, ArrowRight, Check, Calendar, User, Send, Loader2, CheckCircle, Menu, LogOut, Award, Users, Heart } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useThemeColors } from "@/hooks/useThemeColors";
 import { toast } from "sonner";
 import type { User as AuthUser } from "@supabase/supabase-js";
 
@@ -27,6 +28,7 @@ interface DBBarber {
 const steps = ["Serviço", "Barbeiro", "Data & Hora", "Seus Dados", "Confirmar"];
 
 const VilaNova = () => {
+  const t = useThemeColors();
   const [heroIndex, setHeroIndex] = useState(0);
   const [services, setServices] = useState<DBService[]>([]);
   const [barbers, setBarbers] = useState<DBBarber[]>([]);
@@ -304,16 +306,16 @@ const VilaNova = () => {
   };
 
   return (
-    <div className="min-h-screen w-full overflow-x-hidden" style={{ background: "hsl(220 20% 4%)", color: "hsl(0 0% 93%)", fontFamily: "'Montserrat', sans-serif" }}>
+    <div className="min-h-screen w-full overflow-x-hidden" style={{ background: t.pageBg, color: t.textPrimary, fontFamily: "'Montserrat', sans-serif" }}>
 
       {/* ─── NAVBAR ─── */}
       <motion.nav
         className="fixed top-0 left-0 right-0 z-50 transition-all duration-500"
         style={{
-          background: scrolled ? "hsl(220 20% 4% / 0.85)" : "transparent",
+          background: scrolled ? t.headerBg : "transparent",
           backdropFilter: scrolled ? "blur(20px)" : "none",
           WebkitBackdropFilter: scrolled ? "blur(20px)" : "none",
-          borderBottom: scrolled ? "1px solid hsl(0 0% 100% / 0.06)" : "none",
+          borderBottom: scrolled ? `1px solid ${t.border}` : "none",
         }}
       >
         <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-10 xl:px-16 h-16 sm:h-20 flex items-center justify-between">
@@ -328,27 +330,29 @@ const VilaNova = () => {
           <div className="hidden md:flex items-center gap-6 lg:gap-8">
             {navLinks.map((link) => (
               link.external ? (
-                <a key={link.label} href={link.href} className="text-sm font-medium transition-colors hover:text-white" style={{ color: "hsl(0 0% 60%)" }}>
+                <a key={link.label} href={link.href} className="text-sm font-medium transition-colors hover:text-foreground" style={{ color: t.textLink }}>
                   {link.label}
                 </a>
               ) : (
-                <a key={link.label} href={link.href} className="text-sm font-medium transition-colors hover:text-white" style={{ color: "hsl(0 0% 60%)" }}>
+                <a key={link.label} href={link.href} className="text-sm font-medium transition-colors hover:text-foreground" style={{ color: t.textLink }}>
                   {link.label}
                 </a>
               )
             ))}
+              )
+            ))}
             <div className="flex items-center gap-2">
               {user ? (
-                <button onClick={handleGoToMember} className="flex items-center gap-2 px-3 py-2 rounded-xl transition-all hover:bg-white/5"
-                  style={{ background: "hsl(0 0% 100% / 0.06)", border: "1px solid hsl(0 0% 100% / 0.08)" }}>
+                <button onClick={handleGoToMember} className="flex items-center gap-2 px-3 py-2 rounded-xl transition-all hover:bg-foreground/5"
+                  style={{ background: t.btnGhostBg, border: `1px solid ${t.btnGhostBorder}` }}>
                   <div className="w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold" style={{ background: selBg, color: selColor }}>
                     {userName.charAt(0).toUpperCase()}
                   </div>
                   <span className="text-sm font-medium">{userName}</span>
                 </button>
               ) : (
-                <button onClick={handleGoToMember} className="px-4 py-2 rounded-xl text-sm font-medium transition-all hover:bg-white/5"
-                  style={{ background: "hsl(0 0% 100% / 0.06)", border: "1px solid hsl(0 0% 100% / 0.08)", color: "hsl(0 0% 70%)" }}>
+                <button onClick={handleGoToMember} className="px-4 py-2 rounded-xl text-sm font-medium transition-all hover:bg-foreground/5"
+                  style={{ background: t.btnGhostBg, border: `1px solid ${t.btnGhostBorder}`, color: t.btnGhostColor }}>
                   Área do Cliente
                 </button>
               )}
@@ -360,8 +364,8 @@ const VilaNova = () => {
           </div>
 
           {/* Mobile menu btn */}
-          <button onClick={() => setMobileMenu(true)} className="md:hidden p-2 rounded-lg" style={{ background: "hsl(0 0% 100% / 0.06)" }}>
-            <Menu className="w-5 h-5" />
+          <button onClick={() => setMobileMenu(true)} className="md:hidden p-2 rounded-lg" style={{ background: t.btnGhostBg }}>
+            <Menu className="w-5 h-5" style={{ color: t.textPrimary }} />
           </button>
         </div>
       </motion.nav>
@@ -371,12 +375,12 @@ const VilaNova = () => {
         {mobileMenu && (
           <>
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              className="fixed inset-0 z-[60]" style={{ background: "hsl(0 0% 0% / 0.6)" }} onClick={() => setMobileMenu(false)} />
+              className="fixed inset-0 z-[60]" style={{ background: t.overlayBg }} onClick={() => setMobileMenu(false)} />
             <motion.div initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "100%" }}
               transition={{ type: "spring", damping: 28, stiffness: 300 }}
               className="fixed top-0 right-0 bottom-0 z-[70] w-[80vw] max-w-xs flex flex-col"
-              style={{ background: "hsl(220 18% 6%)", borderLeft: "1px solid hsl(0 0% 100% / 0.06)" }}>
-              <div className="p-5 flex justify-between items-center" style={{ borderBottom: "1px solid hsl(0 0% 100% / 0.06)" }}>
+              style={{ background: t.drawerBg, borderLeft: `1px solid ${t.border}` }}>
+              <div className="p-5 flex justify-between items-center" style={{ borderBottom: `1px solid ${t.border}` }}>
                 {user ? (
                   <div className="flex items-center gap-2.5">
                     <div className="w-9 h-9 rounded-xl flex items-center justify-center text-sm font-bold" style={{ background: selBg, color: selColor }}>
@@ -384,29 +388,29 @@ const VilaNova = () => {
                     </div>
                     <div>
                       <p className="text-sm font-bold">{userName}</p>
-                      <p className="text-[10px]" style={{ color: "hsl(0 0% 50%)" }}>Cliente</p>
+                      <p className="text-[10px]" style={{ color: t.textSecondary }}>Cliente</p>
                     </div>
                   </div>
                 ) : (
-                  <span className="text-xs uppercase tracking-widest font-semibold" style={{ color: "hsl(0 0% 50%)" }}>Menu</span>
+                  <span className="text-xs uppercase tracking-widest font-semibold" style={{ color: t.textSecondary }}>Menu</span>
                 )}
-                <button onClick={() => setMobileMenu(false)} className="p-2 rounded-lg" style={{ background: "hsl(0 0% 100% / 0.05)" }}>
-                  <X className="w-4 h-4" style={{ color: "hsl(0 0% 60%)" }} />
+                <button onClick={() => setMobileMenu(false)} className="p-2 rounded-lg" style={{ background: t.cardBgSubtle }}>
+                  <X className="w-4 h-4" style={{ color: t.textLink }} />
                 </button>
               </div>
               <nav className="flex-1 p-4 space-y-1">
                 {navLinks.map((link) => (
                   <a key={link.label} href={link.href} onClick={() => setMobileMenu(false)}
                     className="block px-4 py-3.5 rounded-xl text-sm font-medium transition-all"
-                    style={{ color: "hsl(0 0% 75%)" }}>
+                    style={{ color: t.btnGhostColor }}>
                     {link.label}
                   </a>
                 ))}
               </nav>
-              <div className="p-4 space-y-3" style={{ borderTop: "1px solid hsl(0 0% 100% / 0.06)" }}>
+              <div className="p-4 space-y-3" style={{ borderTop: `1px solid ${t.border}` }}>
                 <button onClick={() => { setMobileMenu(false); handleGoToMember(); }}
                   className="block w-full text-center px-5 py-3 rounded-xl text-sm font-medium"
-                  style={{ background: "hsl(0 0% 100% / 0.06)", border: "1px solid hsl(0 0% 100% / 0.08)", color: "hsl(0 0% 70%)" }}>
+                  style={{ background: t.btnGhostBg, border: `1px solid ${t.btnGhostBorder}`, color: t.btnGhostColor }}>
                   {user ? `👤 ${userName}` : "Área do Cliente"}
                 </button>
                 <a href="#servicos" onClick={() => setMobileMenu(false)}
