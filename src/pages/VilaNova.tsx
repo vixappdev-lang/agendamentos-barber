@@ -510,7 +510,7 @@ const VilaNova = () => {
                   {settings.about_title || "Onde estilo\nencontra atitude"}
                 </h2>
                 <p className="text-sm sm:text-base leading-relaxed mb-6" style={{ color: t.textSecondary }}>
-                  {settings.about_description || "Não somos apenas uma barbearia — somos um espaço de transformação masculina. Aqui, cada detalhe é pensado para elevar seu visual e sua confiança ao máximo nível."}
+                  {settings.about_description || "Não somos apenas uma barbearia, somos um espaço de transformação masculina. Aqui, cada detalhe é pensado para elevar seu visual e sua confiança ao máximo nível."}
                 </p>
                 <p className="text-sm sm:text-base leading-relaxed mb-10" style={{ color: t.textMuted }}>
                   Profissionais especializados, técnicas atualizadas e um ambiente que você não vai querer sair. Desde o corte clássico até o estilo mais ousado, entregamos resultado com precisão.
