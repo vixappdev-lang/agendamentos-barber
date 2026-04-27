@@ -691,6 +691,12 @@ const VilaNova = () => {
         </div>
       </section>
 
+      {/* ─── DEPOIMENTOS ─── */}
+      <TestimonialsSection />
+
+      {/* ─── FAQ ─── */}
+      <FAQSection />
+
       {/* ─── CTA BANNER ─── */}
       <section className="py-16 sm:py-24 px-4 sm:px-6 lg:px-8" style={{ background: t.isLight ? "hsl(220 12% 95%)" : "hsl(220 18% 5%)" }}>
         <div className="max-w-4xl mx-auto text-center">
