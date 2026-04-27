@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import type { User as AuthUser } from "@supabase/supabase-js";
 import { findStockImage } from "@/data/stockImages";
 import { TeamSection, TestimonialsSection, FAQSection } from "@/components/landing/LandingExtras";
+import DirectionsModalSimple from "@/components/DirectionsModalSimple";
 
 import heroImg1 from "@/assets/vilanova-hero-1.jpg";
 import heroImg2 from "@/assets/vilanova-hero-2.jpg";
@@ -39,6 +40,7 @@ const VilaNova = () => {
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [mobileMenu, setMobileMenu] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [directionsOpen, setDirectionsOpen] = useState(false);
 
   // Auth state
   const [user, setUser] = useState<AuthUser | null>(null);
@@ -612,13 +614,23 @@ const VilaNova = () => {
                 onClick={() => { setSelectedService(service); setCurrentStep(0); }}
               >
                 {(() => {
-                  const fallback = !service.image_url ? findStockImage(service.title)?.src : null;
-                  const imgSrc = service.image_url || fallback;
+                  const stock = findStockImage(service.title)?.src || null;
+                  const imgSrc = service.image_url || stock;
                   return imgSrc ? (
-                    <div className="relative w-full h-40 sm:h-44 overflow-hidden">
-                      <img src={imgSrc} alt={service.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
-                      <div className="absolute top-3 right-3 flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-bold" style={{ background: 'hsl(0 0% 0% / 0.55)', backdropFilter: 'blur(8px)', color: 'hsl(0 0% 95%)' }}>
+                    <div className="relative w-full h-44 sm:h-48 overflow-hidden" style={{ background: t.cardBgSubtle }}>
+                      <img
+                        src={imgSrc}
+                        alt={service.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        loading="lazy"
+                        onError={(e) => {
+                          const el = e.currentTarget as HTMLImageElement;
+                          if (stock && el.src !== stock) el.src = stock;
+                          else el.style.display = 'none';
+                        }}
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-transparent" />
+                      <div className="absolute top-3 right-3 flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-bold" style={{ background: 'hsl(0 0% 0% / 0.6)', backdropFilter: 'blur(8px)', color: 'hsl(0 0% 95%)' }}>
                         <Clock className="w-3 h-3" /> {service.duration}
                       </div>
                     </div>
@@ -717,8 +729,8 @@ const VilaNova = () => {
       {/* ─── FOOTER ─── */}
       <footer id="contato" className="py-16 sm:py-20 px-4 sm:px-6 lg:px-8" style={{ borderTop: `1px solid ${t.borderSubtle}` }}>
         <div className="max-w-[1600px] mx-auto">
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-10 mb-14">
-            <div className="sm:col-span-2 lg:col-span-1">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-10 mb-14">
+            <div>
               <div className="flex items-center gap-2.5 mb-4">
                 <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: t.btnBg }}>
                   <Scissors className="w-4 h-4" style={{ color: t.btnColor }} />
@@ -730,23 +742,19 @@ const VilaNova = () => {
               </p>
             </div>
             <div>
-              <h4 className="font-bold text-sm mb-5" style={{ color: t.textPrimary }}>Navegação</h4>
-              <div className="space-y-3">
-                {navLinks.filter(l => !l.external).map((link) => (
-                  <a key={link.label} href={link.href} className="block text-xs transition-colors" style={{ color: t.textSecondary }}>
-                    {link.label}
-                  </a>
-                ))}
-                <a href="/loja" className="block text-xs transition-colors" style={{ color: t.textSecondary }}>Loja</a>
-                <a href="/login" className="block text-xs transition-colors" style={{ color: t.textSecondary }}>Área do Cliente</a>
-              </div>
-            </div>
-            <div>
               <h4 className="font-bold text-sm mb-5" style={{ color: t.textPrimary }}>Contato</h4>
               <div className="space-y-3">
-                <div className="flex items-center gap-2.5 text-xs" style={{ color: t.textSecondary }}>
-                  <MapPin className="w-3.5 h-3.5 shrink-0" /> {settings.address || "Endereço da barbearia"}
-                </div>
+                {settings.address && (() => {
+                  // Shorten long address: keep first 2 segments (street + neighborhood)
+                  const parts = settings.address.split(",").map(s => s.trim()).filter(Boolean);
+                  const short = parts.length > 3 ? `${parts[1] || parts[0]}, ${parts[0]} — ${parts[parts.length - 4] || parts[2] || ""}`.trim() : settings.address;
+                  return (
+                    <div className="flex items-start gap-2.5 text-xs" style={{ color: t.textSecondary }}>
+                      <MapPin className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                      <span className="line-clamp-2 leading-relaxed">{short.replace(/,\s*—\s*$/, "")}</span>
+                    </div>
+                  );
+                })()}
                 <div className="flex items-center gap-2.5 text-xs" style={{ color: t.textSecondary }}>
                   <Phone className="w-3.5 h-3.5 shrink-0" /> {settings.whatsapp_number || "(00) 00000-0000"}
                 </div>
@@ -754,6 +762,15 @@ const VilaNova = () => {
                   <div className="flex items-center gap-2.5 text-xs" style={{ color: t.textSecondary }}>
                     <Instagram className="w-3.5 h-3.5 shrink-0" /> {settings.instagram}
                   </div>
+                )}
+                {settings.address && (
+                  <button
+                    onClick={() => setDirectionsOpen(true)}
+                    className="mt-2 inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all hover:translate-y-[-1px] active:scale-[0.98]"
+                    style={{ background: t.btnBg, color: t.btnColor, boxShadow: t.cardShadow }}
+                  >
+                    <MapPin className="w-3.5 h-3.5" /> Como chegar?
+                  </button>
                 )}
               </div>
             </div>
@@ -777,6 +794,14 @@ const VilaNova = () => {
           </div>
         </div>
       </footer>
+
+      {/* ─── DIRECTIONS MODAL ─── */}
+      <DirectionsModalSimple
+        open={directionsOpen}
+        onClose={() => setDirectionsOpen(false)}
+        address={settings.address || ""}
+        businessName={settings.business_name}
+      />
 
       {/* ─── LIGHTBOX ─── */}
       <AnimatePresence>
