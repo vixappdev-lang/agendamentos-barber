@@ -611,17 +611,21 @@ const VilaNova = () => {
                 style={{ background: t.cardBg, border: `1px solid ${t.isLight ? 'hsl(220 12% 88%)' : t.borderSubtle}`, boxShadow: t.isLight ? '0 2px 8px hsl(220 15% 20% / 0.06), 0 1px 3px hsl(220 15% 20% / 0.04)' : 'none' }}
                 onClick={() => { setSelectedService(service); setCurrentStep(0); }}
               >
-                {service.image_url && (
-                  <div className="relative w-full h-40 sm:h-44 overflow-hidden">
-                    <img src={service.image_url} alt={service.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
-                    <div className="absolute top-3 right-3 flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-bold" style={{ background: 'hsl(0 0% 0% / 0.55)', backdropFilter: 'blur(8px)', color: 'hsl(0 0% 95%)' }}>
-                      <Clock className="w-3 h-3" /> {service.duration}
+                {(() => {
+                  const fallback = !service.image_url ? findStockImage(service.title)?.src : null;
+                  const imgSrc = service.image_url || fallback;
+                  return imgSrc ? (
+                    <div className="relative w-full h-40 sm:h-44 overflow-hidden">
+                      <img src={imgSrc} alt={service.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
+                      <div className="absolute top-3 right-3 flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-bold" style={{ background: 'hsl(0 0% 0% / 0.55)', backdropFilter: 'blur(8px)', color: 'hsl(0 0% 95%)' }}>
+                        <Clock className="w-3 h-3" /> {service.duration}
+                      </div>
                     </div>
-                  </div>
-                )}
+                  ) : null;
+                })()}
                 <div className="p-5 sm:p-6">
-                  {!service.image_url && (
+                  {!service.image_url && !findStockImage(service.title) && (
                     <div className="flex items-start justify-between mb-4">
                       <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ background: t.isLight ? 'hsl(220 12% 94%)' : t.cardBgSubtle }}>
                         <Scissors className="w-5 h-5" style={{ color: t.textLink }} />
