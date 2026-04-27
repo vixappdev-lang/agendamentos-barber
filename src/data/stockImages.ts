@@ -76,8 +76,20 @@ export const stockImages: StockImage[] = [
   {
     id: "corte-infantil",
     label: "Corte Infantil",
-    keywords: ["infantil", "criança", "kids", "child", "children"],
+    keywords: ["infantil", "criança", "crianca", "kids", "child", "children"],
     src: stockCorteInfantil,
+  },
+  {
+    id: "navalha",
+    label: "Navalha",
+    keywords: ["navalha", "razor", "lamina", "lâmina", "barbear"],
+    src: stockNavalha,
+  },
+  {
+    id: "platinado",
+    label: "Platinado",
+    keywords: ["platinado", "platinum", "loiro", "louro", "descoloracao", "descoloração"],
+    src: stockPlatinado,
   },
 ];
 
