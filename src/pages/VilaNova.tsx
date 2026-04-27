@@ -40,6 +40,7 @@ const VilaNova = () => {
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [mobileMenu, setMobileMenu] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [directionsOpen, setDirectionsOpen] = useState(false);
 
   // Auth state
   const [user, setUser] = useState<AuthUser | null>(null);
