@@ -614,13 +614,23 @@ const VilaNova = () => {
                 onClick={() => { setSelectedService(service); setCurrentStep(0); }}
               >
                 {(() => {
-                  const fallback = !service.image_url ? findStockImage(service.title)?.src : null;
-                  const imgSrc = service.image_url || fallback;
+                  const stock = findStockImage(service.title)?.src || null;
+                  const imgSrc = service.image_url || stock;
                   return imgSrc ? (
-                    <div className="relative w-full h-40 sm:h-44 overflow-hidden">
-                      <img src={imgSrc} alt={service.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
-                      <div className="absolute top-3 right-3 flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-bold" style={{ background: 'hsl(0 0% 0% / 0.55)', backdropFilter: 'blur(8px)', color: 'hsl(0 0% 95%)' }}>
+                    <div className="relative w-full h-44 sm:h-48 overflow-hidden" style={{ background: t.cardBgSubtle }}>
+                      <img
+                        src={imgSrc}
+                        alt={service.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        loading="lazy"
+                        onError={(e) => {
+                          const el = e.currentTarget as HTMLImageElement;
+                          if (stock && el.src !== stock) el.src = stock;
+                          else el.style.display = 'none';
+                        }}
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-transparent" />
+                      <div className="absolute top-3 right-3 flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-bold" style={{ background: 'hsl(0 0% 0% / 0.6)', backdropFilter: 'blur(8px)', color: 'hsl(0 0% 95%)' }}>
                         <Clock className="w-3 h-3" /> {service.duration}
                       </div>
                     </div>
