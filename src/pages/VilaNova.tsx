@@ -713,7 +713,7 @@ const VilaNova = () => {
                 <span className="font-extrabold text-lg" style={{ color: t.textPrimary }}>{settings.business_name || "GenesisBarber"}</span>
               </div>
               <p className="text-xs leading-relaxed max-w-xs" style={{ color: t.textMuted }}>
-                Excelência em cuidado masculino. Estilo, precisão e confiança — tudo em um só lugar.
+                Excelência em cuidado masculino. Estilo, precisão e confiança, tudo em um só lugar.
               </p>
             </div>
             <div>
