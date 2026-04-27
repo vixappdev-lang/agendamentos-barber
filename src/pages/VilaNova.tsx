@@ -651,6 +651,9 @@ const VilaNova = () => {
         </div>
       </section>
 
+      {/* ─── EQUIPE ─── */}
+      <TeamSection barbers={barbers} />
+
       {/* ─── GALLERY ─── */}
       <section id="galeria" className="py-20 sm:py-28 px-4 sm:px-6 lg:px-8">
         <div className="max-w-[1600px] mx-auto">
