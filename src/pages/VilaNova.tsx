@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import type { User as AuthUser } from "@supabase/supabase-js";
 import { findStockImage } from "@/data/stockImages";
 import { TeamSection, TestimonialsSection, FAQSection } from "@/components/landing/LandingExtras";
+import DirectionsModalSimple from "@/components/DirectionsModalSimple";
 
 import heroImg1 from "@/assets/vilanova-hero-1.jpg";
 import heroImg2 from "@/assets/vilanova-hero-2.jpg";
