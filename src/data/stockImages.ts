@@ -1,13 +1,15 @@
 import stockCorteMasculino from "@/assets/stock/corte-masculino.jpg";
 import stockBarba from "@/assets/stock/barba.jpg";
-import stockDegrade from "@/assets/stock/degrade.jpg";
+import stockDegrade from "@/assets/service-degrade.jpg";
 import stockSobrancelha from "@/assets/stock/sobrancelha.jpg";
 import stockHidratacao from "@/assets/stock/hidratacao.jpg";
 import stockDiaDoNoivo from "@/assets/stock/dia-do-noivo.jpg";
 import stockCorteBarba from "@/assets/stock/corte-barba.jpg";
 import stockToalhaQuente from "@/assets/stock/toalha-quente.jpg";
 import stockColoracao from "@/assets/stock/coloracao.jpg";
-import stockCorteInfantil from "@/assets/stock/corte-infantil.jpg";
+import stockCorteInfantil from "@/assets/service-infantil.jpg";
+import stockNavalha from "@/assets/service-navalha.jpg";
+import stockPlatinado from "@/assets/service-platinado.jpg";
 
 export interface StockImage {
   id: string;
@@ -74,8 +76,20 @@ export const stockImages: StockImage[] = [
   {
     id: "corte-infantil",
     label: "Corte Infantil",
-    keywords: ["infantil", "criança", "kids", "child", "children"],
+    keywords: ["infantil", "criança", "crianca", "kids", "child", "children"],
     src: stockCorteInfantil,
+  },
+  {
+    id: "navalha",
+    label: "Navalha",
+    keywords: ["navalha", "razor", "lamina", "lâmina", "barbear"],
+    src: stockNavalha,
+  },
+  {
+    id: "platinado",
+    label: "Platinado",
+    keywords: ["platinado", "platinum", "loiro", "louro", "descoloracao", "descoloração"],
+    src: stockPlatinado,
   },
 ];
 

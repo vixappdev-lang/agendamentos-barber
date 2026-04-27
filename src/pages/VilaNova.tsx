@@ -5,6 +5,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useThemeColors } from "@/hooks/useThemeColors";
 import { toast } from "sonner";
 import type { User as AuthUser } from "@supabase/supabase-js";
+import { findStockImage } from "@/data/stockImages";
+import { TeamSection, TestimonialsSection, FAQSection } from "@/components/landing/LandingExtras";
 
 import heroImg1 from "@/assets/vilanova-hero-1.jpg";
 import heroImg2 from "@/assets/vilanova-hero-2.jpg";
@@ -292,7 +294,9 @@ const VilaNova = () => {
     { label: "Início", href: "#" },
     { label: "Sobre", href: "#sobre" },
     { label: "Serviços", href: "#servicos" },
+    { label: "Equipe", href: "#equipe" },
     { label: "Galeria", href: "#galeria" },
+    { label: "FAQ", href: "#faq" },
     { label: "Loja", href: "/loja", external: true },
     { label: "Contato", href: "#contato" },
   ];
@@ -318,7 +322,8 @@ const VilaNova = () => {
           borderBottom: scrolled ? `1px solid ${t.border}` : "none",
         }}
       >
-        <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-10 xl:px-16 h-16 sm:h-20 flex items-center justify-between">
+        <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-10 xl:px-16 h-16 sm:h-20 grid grid-cols-[auto_1fr_auto] items-center gap-6">
+          {/* Logo */}
           <a href="#" className="flex items-center gap-2.5">
             <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: "hsl(0 0% 95%)" }}>
               <Scissors className="w-4 h-4" style={{ color: "hsl(220 20% 7%)" }} />
@@ -326,37 +331,39 @@ const VilaNova = () => {
             <span className="text-lg font-extrabold tracking-tight">{settings.business_name || "GenesisBarber"}</span>
           </a>
 
-          {/* Desktop nav */}
-          <div className="hidden md:flex items-center gap-6 lg:gap-8">
+          {/* Desktop nav — centralizado */}
+          <div className="hidden md:flex items-center justify-center gap-6 lg:gap-8">
             {navLinks.map((link) => (
-              <a key={link.label} href={link.external ? link.href : link.href} className="text-sm font-medium transition-colors hover:text-foreground" style={{ color: t.textLink }}>
+              <a key={link.label} href={link.href} className="text-sm font-medium transition-colors hover:opacity-80" style={{ color: t.textLink }}>
                 {link.label}
               </a>
             ))}
-            <div className="flex items-center gap-2">
-              {user ? (
-                <button onClick={handleGoToMember} className="flex items-center gap-2 px-3 py-2 rounded-xl transition-all hover:bg-foreground/5"
-                  style={{ background: t.btnGhostBg, border: `1px solid ${t.btnGhostBorder}` }}>
-                  <div className="w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold" style={{ background: selBg, color: selColor }}>
-                    {userName.charAt(0).toUpperCase()}
-                  </div>
-                  <span className="text-sm font-medium">{userName}</span>
-                </button>
-              ) : (
-                <button onClick={handleGoToMember} className="px-4 py-2 rounded-xl text-sm font-medium transition-all hover:bg-foreground/5"
-                  style={{ background: t.btnGhostBg, border: `1px solid ${t.btnGhostBorder}`, color: t.btnGhostColor }}>
-                  Área do Cliente
-                </button>
-              )}
-              <a href="#servicos" className="px-5 py-2.5 rounded-xl text-sm font-bold transition-all hover:translate-y-[-1px]"
-                style={{ background: selBg, color: selColor }}>
-                Agendar
-              </a>
-            </div>
+          </div>
+
+          {/* Right actions */}
+          <div className="hidden md:flex items-center gap-2 justify-end">
+            {user ? (
+              <button onClick={handleGoToMember} className="flex items-center gap-2 px-3 py-2 rounded-xl transition-all hover:opacity-90"
+                style={{ background: t.btnGhostBg, border: `1px solid ${t.btnGhostBorder}` }}>
+                <div className="w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold" style={{ background: selBg, color: selColor }}>
+                  {userName.charAt(0).toUpperCase()}
+                </div>
+                <span className="text-sm font-medium">{userName}</span>
+              </button>
+            ) : (
+              <button onClick={handleGoToMember} className="px-4 py-2 rounded-xl text-sm font-medium transition-all hover:opacity-90"
+                style={{ background: t.btnGhostBg, border: `1px solid ${t.btnGhostBorder}`, color: t.btnGhostColor }}>
+                Área do Cliente
+              </button>
+            )}
+            <a href="#servicos" className="px-5 py-2.5 rounded-xl text-sm font-bold transition-all hover:translate-y-[-1px]"
+              style={{ background: selBg, color: selColor }}>
+              Agendar
+            </a>
           </div>
 
           {/* Mobile menu btn */}
-          <button onClick={() => setMobileMenu(true)} className="md:hidden p-2 rounded-lg" style={{ background: t.btnGhostBg }}>
+          <button onClick={() => setMobileMenu(true)} className="md:hidden p-2 rounded-lg justify-self-end col-start-3" style={{ background: t.btnGhostBg }}>
             <Menu className="w-5 h-5" style={{ color: t.textPrimary }} />
           </button>
         </div>
@@ -451,7 +458,7 @@ const VilaNova = () => {
               ))}
             </h1>
             <p className="text-sm sm:text-base lg:text-lg max-w-lg mb-8 leading-relaxed" style={{ color: "hsl(0 0% 100% / 0.55)" }}>
-              {settings.hero_description || "Mais do que um corte — uma experiência de transformação. Estilo, precisão e confiança em cada detalhe."}
+              {settings.hero_description || "Mais do que um corte, uma experiência de transformação. Estilo, precisão e confiança em cada detalhe."}
             </p>
             <div className="flex flex-col sm:flex-row gap-3">
               <a href="#servicos"
@@ -503,7 +510,7 @@ const VilaNova = () => {
                   {settings.about_title || "Onde estilo\nencontra atitude"}
                 </h2>
                 <p className="text-sm sm:text-base leading-relaxed mb-6" style={{ color: t.textSecondary }}>
-                  {settings.about_description || "Não somos apenas uma barbearia — somos um espaço de transformação masculina. Aqui, cada detalhe é pensado para elevar seu visual e sua confiança ao máximo nível."}
+                  {settings.about_description || "Não somos apenas uma barbearia, somos um espaço de transformação masculina. Aqui, cada detalhe é pensado para elevar seu visual e sua confiança ao máximo nível."}
                 </p>
                 <p className="text-sm sm:text-base leading-relaxed mb-10" style={{ color: t.textMuted }}>
                   Profissionais especializados, técnicas atualizadas e um ambiente que você não vai querer sair. Desde o corte clássico até o estilo mais ousado, entregamos resultado com precisão.
@@ -604,17 +611,21 @@ const VilaNova = () => {
                 style={{ background: t.cardBg, border: `1px solid ${t.isLight ? 'hsl(220 12% 88%)' : t.borderSubtle}`, boxShadow: t.isLight ? '0 2px 8px hsl(220 15% 20% / 0.06), 0 1px 3px hsl(220 15% 20% / 0.04)' : 'none' }}
                 onClick={() => { setSelectedService(service); setCurrentStep(0); }}
               >
-                {service.image_url && (
-                  <div className="relative w-full h-40 sm:h-44 overflow-hidden">
-                    <img src={service.image_url} alt={service.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
-                    <div className="absolute top-3 right-3 flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-bold" style={{ background: 'hsl(0 0% 0% / 0.55)', backdropFilter: 'blur(8px)', color: 'hsl(0 0% 95%)' }}>
-                      <Clock className="w-3 h-3" /> {service.duration}
+                {(() => {
+                  const fallback = !service.image_url ? findStockImage(service.title)?.src : null;
+                  const imgSrc = service.image_url || fallback;
+                  return imgSrc ? (
+                    <div className="relative w-full h-40 sm:h-44 overflow-hidden">
+                      <img src={imgSrc} alt={service.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
+                      <div className="absolute top-3 right-3 flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-bold" style={{ background: 'hsl(0 0% 0% / 0.55)', backdropFilter: 'blur(8px)', color: 'hsl(0 0% 95%)' }}>
+                        <Clock className="w-3 h-3" /> {service.duration}
+                      </div>
                     </div>
-                  </div>
-                )}
+                  ) : null;
+                })()}
                 <div className="p-5 sm:p-6">
-                  {!service.image_url && (
+                  {!service.image_url && !findStockImage(service.title) && (
                     <div className="flex items-start justify-between mb-4">
                       <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ background: t.isLight ? 'hsl(220 12% 94%)' : t.cardBgSubtle }}>
                         <Scissors className="w-5 h-5" style={{ color: t.textLink }} />
@@ -639,6 +650,9 @@ const VilaNova = () => {
           </div>
         </div>
       </section>
+
+      {/* ─── EQUIPE ─── */}
+      <TeamSection barbers={barbers} />
 
       {/* ─── GALLERY ─── */}
       <section id="galeria" className="py-20 sm:py-28 px-4 sm:px-6 lg:px-8">
@@ -677,6 +691,12 @@ const VilaNova = () => {
         </div>
       </section>
 
+      {/* ─── DEPOIMENTOS ─── */}
+      <TestimonialsSection />
+
+      {/* ─── FAQ ─── */}
+      <FAQSection />
+
       {/* ─── CTA BANNER ─── */}
       <section className="py-16 sm:py-24 px-4 sm:px-6 lg:px-8" style={{ background: t.isLight ? "hsl(220 12% 95%)" : "hsl(220 18% 5%)" }}>
         <div className="max-w-4xl mx-auto text-center">
@@ -706,7 +726,7 @@ const VilaNova = () => {
                 <span className="font-extrabold text-lg" style={{ color: t.textPrimary }}>{settings.business_name || "GenesisBarber"}</span>
               </div>
               <p className="text-xs leading-relaxed max-w-xs" style={{ color: t.textMuted }}>
-                Excelência em cuidado masculino. Estilo, precisão e confiança — tudo em um só lugar.
+                Excelência em cuidado masculino. Estilo, precisão e confiança, tudo em um só lugar.
               </p>
             </div>
             <div>
