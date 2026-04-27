@@ -458,7 +458,7 @@ const VilaNova = () => {
               ))}
             </h1>
             <p className="text-sm sm:text-base lg:text-lg max-w-lg mb-8 leading-relaxed" style={{ color: "hsl(0 0% 100% / 0.55)" }}>
-              {settings.hero_description || "Mais do que um corte — uma experiência de transformação. Estilo, precisão e confiança em cada detalhe."}
+              {settings.hero_description || "Mais do que um corte, uma experiência de transformação. Estilo, precisão e confiança em cada detalhe."}
             </p>
             <div className="flex flex-col sm:flex-row gap-3">
               <a href="#servicos"
