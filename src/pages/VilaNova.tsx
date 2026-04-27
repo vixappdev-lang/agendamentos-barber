@@ -322,7 +322,8 @@ const VilaNova = () => {
           borderBottom: scrolled ? `1px solid ${t.border}` : "none",
         }}
       >
-        <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-10 xl:px-16 h-16 sm:h-20 flex items-center justify-between">
+        <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-10 xl:px-16 h-16 sm:h-20 grid grid-cols-[auto_1fr_auto] items-center gap-6">
+          {/* Logo */}
           <a href="#" className="flex items-center gap-2.5">
             <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: "hsl(0 0% 95%)" }}>
               <Scissors className="w-4 h-4" style={{ color: "hsl(220 20% 7%)" }} />
@@ -330,37 +331,39 @@ const VilaNova = () => {
             <span className="text-lg font-extrabold tracking-tight">{settings.business_name || "GenesisBarber"}</span>
           </a>
 
-          {/* Desktop nav */}
-          <div className="hidden md:flex items-center gap-6 lg:gap-8">
+          {/* Desktop nav — centralizado */}
+          <div className="hidden md:flex items-center justify-center gap-6 lg:gap-8">
             {navLinks.map((link) => (
-              <a key={link.label} href={link.external ? link.href : link.href} className="text-sm font-medium transition-colors hover:text-foreground" style={{ color: t.textLink }}>
+              <a key={link.label} href={link.href} className="text-sm font-medium transition-colors hover:opacity-80" style={{ color: t.textLink }}>
                 {link.label}
               </a>
             ))}
-            <div className="flex items-center gap-2">
-              {user ? (
-                <button onClick={handleGoToMember} className="flex items-center gap-2 px-3 py-2 rounded-xl transition-all hover:bg-foreground/5"
-                  style={{ background: t.btnGhostBg, border: `1px solid ${t.btnGhostBorder}` }}>
-                  <div className="w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold" style={{ background: selBg, color: selColor }}>
-                    {userName.charAt(0).toUpperCase()}
-                  </div>
-                  <span className="text-sm font-medium">{userName}</span>
-                </button>
-              ) : (
-                <button onClick={handleGoToMember} className="px-4 py-2 rounded-xl text-sm font-medium transition-all hover:bg-foreground/5"
-                  style={{ background: t.btnGhostBg, border: `1px solid ${t.btnGhostBorder}`, color: t.btnGhostColor }}>
-                  Área do Cliente
-                </button>
-              )}
-              <a href="#servicos" className="px-5 py-2.5 rounded-xl text-sm font-bold transition-all hover:translate-y-[-1px]"
-                style={{ background: selBg, color: selColor }}>
-                Agendar
-              </a>
-            </div>
+          </div>
+
+          {/* Right actions */}
+          <div className="hidden md:flex items-center gap-2 justify-end">
+            {user ? (
+              <button onClick={handleGoToMember} className="flex items-center gap-2 px-3 py-2 rounded-xl transition-all hover:opacity-90"
+                style={{ background: t.btnGhostBg, border: `1px solid ${t.btnGhostBorder}` }}>
+                <div className="w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold" style={{ background: selBg, color: selColor }}>
+                  {userName.charAt(0).toUpperCase()}
+                </div>
+                <span className="text-sm font-medium">{userName}</span>
+              </button>
+            ) : (
+              <button onClick={handleGoToMember} className="px-4 py-2 rounded-xl text-sm font-medium transition-all hover:opacity-90"
+                style={{ background: t.btnGhostBg, border: `1px solid ${t.btnGhostBorder}`, color: t.btnGhostColor }}>
+                Área do Cliente
+              </button>
+            )}
+            <a href="#servicos" className="px-5 py-2.5 rounded-xl text-sm font-bold transition-all hover:translate-y-[-1px]"
+              style={{ background: selBg, color: selColor }}>
+              Agendar
+            </a>
           </div>
 
           {/* Mobile menu btn */}
-          <button onClick={() => setMobileMenu(true)} className="md:hidden p-2 rounded-lg" style={{ background: t.btnGhostBg }}>
+          <button onClick={() => setMobileMenu(true)} className="md:hidden p-2 rounded-lg justify-self-end col-start-3" style={{ background: t.btnGhostBg }}>
             <Menu className="w-5 h-5" style={{ color: t.textPrimary }} />
           </button>
         </div>
