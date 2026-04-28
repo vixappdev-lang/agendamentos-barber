@@ -79,6 +79,7 @@ const AdminLayout = () => {
       void import("@/pages/admin/StoreDashboard");
       void import("@/pages/admin/Finance");
       void import("@/pages/admin/ChatProConfig");
+      void import("@/pages/admin/Reviews");
       void import("@/pages/admin/Settings");
       if (isSuperAdmin(userEmail)) {
         void import("@/pages/admin/Barbershops");
