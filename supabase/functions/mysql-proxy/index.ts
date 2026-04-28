@@ -259,8 +259,19 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    const email = (userData.user.email as string | undefined) || "";
-    if (email.toLowerCase() !== SUPER_ADMIN_EMAIL.toLowerCase()) {
+    const authEmail = (userData.user.email as string | undefined) || "";
+    const body = await req.json();
+    const { action, profile_id, table, values, where, columns, order, limit, sql_text } =
+      body as Record<string, any>;
+
+    const isSuperAdminRequest = authEmail.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase();
+    const isMysqlSessionRequest = action !== "save_profile" && action !== "login" && Boolean(body.mysql_session);
+    let mysqlSession: MysqlAdminSession | null = null;
+    if (isMysqlSessionRequest) {
+      mysqlSession = await verifySession(body.mysql_session);
+      if (profile_id && profile_id !== mysqlSession.profile_id) throw new Error("Perfil MySQL inválido para esta sessão");
+      body.profile_id = mysqlSession.profile_id;
+    } else if (!isSuperAdminRequest) {
       return new Response(
         JSON.stringify({ success: false, error: "Only the super admin can use MySQL" }),
         {
@@ -275,10 +286,6 @@ Deno.serve(async (req: Request) => {
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
-
-    const body = await req.json();
-    const { action, profile_id, table, values, where, columns, order, limit, sql_text } =
-      body as Record<string, any>;
 
     if (!action) throw new Error("Missing action");
 
@@ -346,7 +353,75 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    const profile = await getProfile(admin, profile_id);
+    if (action === "login") {
+      const email = requireText(body.email, "E-mail", 255).toLowerCase();
+      const passwordInput = requireText(body.password, "Senha", 255);
+      const slug = String(body.slug || "").trim().toLowerCase();
+      const barbershopId = body.barbershop_id ? String(body.barbershop_id) : "";
+
+      let barbershopQuery = admin
+        .from("barbershop_profiles")
+        .select("id, slug, name, owner_email, mysql_profile_id, is_active, is_cloud")
+        .eq("is_active", true)
+        .eq("is_cloud", false)
+        .not("mysql_profile_id", "is", null);
+      if (barbershopId) barbershopQuery = barbershopQuery.eq("id", barbershopId);
+      else if (slug) barbershopQuery = barbershopQuery.eq("slug", slug);
+      const { data: shops, error: shopsErr } = await barbershopQuery.limit(25);
+      if (shopsErr) throw new Error(`Profile lookup failed: ${shopsErr.message}`);
+
+      for (const shop of shops || []) {
+        const linkedProfile = await getProfile(admin, shop.mysql_profile_id);
+        const linkedPassword = await decryptPassword(admin, linkedProfile.password_encrypted);
+        let loginConn: any = null;
+        try {
+          loginConn = await connectMysql(linkedProfile, linkedPassword);
+          const [rows] = await loginConn.query(
+            "SELECT id, email, password_hash, name, role, active FROM `users` WHERE LOWER(`email`) = LOWER(?) LIMIT 1",
+            [email],
+          );
+          const user = (rows as any[])[0];
+          if (!user || Number(user.active) !== 1 || user.role !== "admin") continue;
+          const ok = await bcrypt.compare(passwordInput, String(user.password_hash || ""));
+          if (!ok) continue;
+          await loginConn.query("UPDATE `users` SET `last_login_at` = CURRENT_TIMESTAMP WHERE `id` = ?", [user.id]);
+          const token = await signSession({
+            profile_id: linkedProfile.id,
+            barbershop_id: shop.id,
+            user_id: String(user.id),
+            email: String(user.email),
+            role: String(user.role),
+          });
+          return new Response(
+            JSON.stringify({
+              success: true,
+              data: {
+                token,
+                profile_id: linkedProfile.id,
+                barbershop_id: shop.id,
+                name: user.name || shop.name,
+                email: user.email,
+                role: user.role,
+                source: "mysql",
+              },
+            }),
+            { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+          );
+        } catch (loginErr) {
+          console.error("[mysql-proxy] login profile failed", linkedProfile.id, loginErr instanceof Error ? loginErr.message : String(loginErr));
+        } finally {
+          try { await loginConn?.end(); } catch { /* ignore */ }
+        }
+      }
+
+      return new Response(JSON.stringify({ success: false, error: "Credenciais inválidas", code: "INVALID_LOGIN" }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const effectiveProfileId = mysqlSession?.profile_id || profile_id;
+    const profile = await getProfile(admin, effectiveProfileId);
     const password = await decryptPassword(admin, profile.password_encrypted);
 
     let conn;
