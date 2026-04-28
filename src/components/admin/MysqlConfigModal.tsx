@@ -138,10 +138,17 @@ export const MysqlConfigModal = ({ open, onOpenChange, barbershop }: Props) => {
       toast({ title: "Conexão MySQL salva" });
       setExistingProfileId(profileId);
       return profileId;
-    } catch (e) {
+    } catch (e: any) {
+      const description =
+        e?.message ||
+        e?.error_description ||
+        e?.error ||
+        e?.hint ||
+        e?.details ||
+        (typeof e === "string" ? e : JSON.stringify(e));
       toast({
         title: "Erro ao salvar",
-        description: e instanceof Error ? e.message : String(e),
+        description,
         variant: "destructive",
       });
       return null;
