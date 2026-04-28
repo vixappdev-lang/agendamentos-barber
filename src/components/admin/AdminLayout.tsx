@@ -43,6 +43,7 @@ const navItems: NavItem[] = [
 
 const AdminLayout = () => {
   const [loading, setLoading] = useState(true);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
@@ -54,10 +55,13 @@ const AdminLayout = () => {
       if (!session) { navigate("/admin/login"); return; }
       const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", session.user.id).eq("role", "admin");
       if (!roles || roles.length === 0) { await supabase.auth.signOut(); navigate("/admin/login"); return; }
+      setUserEmail(session.user.email ?? null);
       setLoading(false);
     };
     checkAdmin();
   }, [navigate]);
+
+  const visibleNavItems = navItems.filter((it) => !it.superAdminOnly || isSuperAdmin(userEmail));
 
   const handleLogout = async () => { await supabase.auth.signOut(); navigate("/admin/login"); };
 
@@ -93,7 +97,7 @@ const AdminLayout = () => {
         </div>
 
         <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
-          {navItems.map((item) => {
+          {visibleNavItems.map((item) => {
             const isActive = location.pathname === item.path;
             return (
               <Link key={item.path} to={item.path} onClick={() => setSidebarOpen(false)}
