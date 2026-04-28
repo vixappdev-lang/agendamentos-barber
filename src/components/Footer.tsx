@@ -1,4 +1,4 @@
-import { Scissors, Phone, Clock } from "lucide-react";
+import { Scissors, Phone, Clock, MapPin } from "lucide-react";
 import { useBusinessSettings } from "@/hooks/useBusinessSettings";
 import { useThemeColors } from "@/hooks/useThemeColors";
 
@@ -9,6 +9,9 @@ const Footer = () => {
   const businessName = settings.business_name || "Barbearia";
   const phone = formatPhone();
   const schedule = formatSchedule();
+  const mapsLink =
+    settings.google_maps_link?.trim() ||
+    (settings.address ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(settings.address)}` : "");
 
   return (
     <footer className="mt-16" style={{
@@ -38,6 +41,18 @@ const Footer = () => {
                   <Clock className="w-3 h-3" style={{ color: t.textMuted }} />
                   {schedule}
                 </span>
+              )}
+              {mapsLink && (
+                <a
+                  href={mapsLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs glass-surface transition-opacity hover:opacity-80"
+                  style={{ color: t.textSecondary }}
+                >
+                  <MapPin className="w-3 h-3" style={{ color: t.textMuted }} />
+                  Como chegar
+                </a>
               )}
             </div>
           )}
