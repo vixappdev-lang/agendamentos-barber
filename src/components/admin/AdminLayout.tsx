@@ -17,9 +17,18 @@ import {
   ShoppingBag,
   MessageSquare,
   Wallet,
+  Building2,
 } from "lucide-react";
+import { isSuperAdmin } from "@/lib/superAdmin";
 
-const navItems = [
+interface NavItem {
+  label: string;
+  path: string;
+  icon: typeof LayoutDashboard;
+  superAdminOnly?: boolean;
+}
+
+const navItems: NavItem[] = [
   { label: "Dashboard", path: "/admin", icon: LayoutDashboard },
   { label: "Financeiro", path: "/admin/finance", icon: Wallet },
   { label: "Serviços", path: "/admin/services", icon: Scissors },
@@ -28,11 +37,13 @@ const navItems = [
   { label: "Agendamentos", path: "/admin/appointments", icon: CalendarDays },
   { label: "Cupons", path: "/admin/coupons", icon: Tag },
   { label: "ChatPro", path: "/admin/confg", icon: MessageSquare },
+  { label: "Perfis Barbearias", path: "/admin/barbershops", icon: Building2, superAdminOnly: true },
   { label: "Configurações", path: "/admin/settings", icon: Settings },
 ];
 
 const AdminLayout = () => {
   const [loading, setLoading] = useState(true);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
@@ -44,10 +55,13 @@ const AdminLayout = () => {
       if (!session) { navigate("/admin/login"); return; }
       const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", session.user.id).eq("role", "admin");
       if (!roles || roles.length === 0) { await supabase.auth.signOut(); navigate("/admin/login"); return; }
+      setUserEmail(session.user.email ?? null);
       setLoading(false);
     };
     checkAdmin();
   }, [navigate]);
+
+  const visibleNavItems = navItems.filter((it) => !it.superAdminOnly || isSuperAdmin(userEmail));
 
   const handleLogout = async () => { await supabase.auth.signOut(); navigate("/admin/login"); };
 
@@ -83,7 +97,7 @@ const AdminLayout = () => {
         </div>
 
         <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
-          {navItems.map((item) => {
+          {visibleNavItems.map((item) => {
             const isActive = location.pathname === item.path;
             return (
               <Link key={item.path} to={item.path} onClick={() => setSidebarOpen(false)}

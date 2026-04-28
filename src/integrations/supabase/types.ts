@@ -103,6 +103,65 @@ export type Database = {
         }
         Relationships: []
       }
+      barbershop_profiles: {
+        Row: {
+          address: string | null
+          created_at: string
+          id: string
+          is_active: boolean
+          is_cloud: boolean
+          is_locked: boolean
+          mysql_profile_id: string | null
+          name: string
+          owner_email: string
+          owner_name: string | null
+          owner_password: string
+          phone: string | null
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          is_cloud?: boolean
+          is_locked?: boolean
+          mysql_profile_id?: string | null
+          name: string
+          owner_email: string
+          owner_name?: string | null
+          owner_password: string
+          phone?: string | null
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          is_cloud?: boolean
+          is_locked?: boolean
+          mysql_profile_id?: string | null
+          name?: string
+          owner_email?: string
+          owner_name?: string | null
+          owner_password?: string
+          phone?: string | null
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "barbershop_profiles_mysql_profile_id_fkey"
+            columns: ["mysql_profile_id"]
+            isOneToOne: false
+            referencedRelation: "mysql_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       business_settings: {
         Row: {
           created_at: string
@@ -500,6 +559,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      hash_owner_password: { Args: { _plain: string }; Returns: string }
     }
     Enums: {
       app_role: "admin" | "user"
