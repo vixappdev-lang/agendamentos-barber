@@ -180,8 +180,9 @@ export const MysqlConfigModal = ({ open, onOpenChange, barbershop }: Props) => {
         ok: true,
         msg: `Conectado! MySQL ${data.data?.version ?? "?"} • banco ${data.data?.database}`,
       });
-    } catch (e) {
-      setTestResult({ ok: false, msg: e instanceof Error ? e.message : String(e) });
+    } catch (e: any) {
+      const msg = e?.message || e?.error_description || e?.error || (typeof e === "string" ? e : JSON.stringify(e));
+      setTestResult({ ok: false, msg });
     } finally {
       setTesting(false);
     }
