@@ -202,7 +202,16 @@ export const MysqlConfigModal = ({ open, onOpenChange, barbershop }: Props) => {
           <div className="grid grid-cols-3 gap-3">
             <div className="col-span-2">
               <Label htmlFor="host">Host *</Label>
-              <Input id="host" value={form.host} onChange={(e) => setForm((p) => ({ ...p, host: e.target.value }))} placeholder="ex: mysql.cliente.com.br" />
+              <Input
+                id="host"
+                value={form.host}
+                onChange={(e) => setForm((p) => ({ ...p, host: e.target.value }))}
+                onBlur={(e) => setForm((p) => ({ ...p, host: sanitizeHost(e.target.value) }))}
+                placeholder="ex: mysql.cliente.com.br"
+              />
+              <p className="text-[10px] text-muted-foreground mt-1">
+                Apenas o domínio — sem <code>https://</code> ou <code>/</code>.
+              </p>
             </div>
             <div>
               <Label htmlFor="port">Porta *</Label>
