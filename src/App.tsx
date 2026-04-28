@@ -10,6 +10,7 @@ import { Loader2 } from "lucide-react";
 import VilaNova from "./pages/VilaNova"; // landing eager (LCP)
 import MemberRouteGuard from "./components/MemberRouteGuard";
 import LoginRedirectGuard from "./components/LoginRedirectGuard";
+import { installAdminMysqlBridge } from "./lib/adminMysqlSession";
 
 // Lazy: rotas secundárias e admin
 const NotFound = lazy(() => import("./pages/NotFound"));
@@ -47,6 +48,8 @@ const queryClient = new QueryClient({
     },
   },
 });
+
+installAdminMysqlBridge();
 
 const PageLoader = () => (
   <div className="min-h-screen w-full flex items-center justify-center bg-background">
