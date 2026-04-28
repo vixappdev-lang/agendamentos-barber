@@ -289,7 +289,7 @@ const Settings = () => {
         >
           {/* ===== DADOS DA BARBEARIA ===== */}
           {activeTab === "business" && (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-stretch">
               {/* Coluna esquerda — Identidade + Endereço */}
               <div className="space-y-4 flex flex-col">
                 <div className={cardStyle}>
@@ -558,7 +558,7 @@ const Settings = () => {
 
           {/* ===== AGENDAMENTO ===== */}
           {activeTab === "scheduling" && (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-stretch">
               {/* ---------- COLUNA ESQUERDA ---------- */}
               <div className="space-y-4 flex flex-col">
                 {/* Modo de Confirmação */}
