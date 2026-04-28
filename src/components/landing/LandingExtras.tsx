@@ -2,6 +2,9 @@ import { motion } from "framer-motion";
 import { useState } from "react";
 import { ChevronDown, Quote, Star, Award } from "lucide-react";
 import { useThemeColors } from "@/hooks/useThemeColors";
+import { usePublicReviews } from "@/hooks/useReviews";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 interface DBBarber {
   id: string;
