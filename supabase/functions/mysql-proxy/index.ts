@@ -515,9 +515,12 @@ Deno.serve(async (req: Request) => {
             : "*";
         const w = buildWhere(where);
         let sql = `SELECT ${cols} FROM ${ident(table)}${w.sql}`;
-        const firstOrder = Array.isArray(order) ? order[0] : order;
-        if (firstOrder && firstOrder.column) {
-          sql += ` ORDER BY ${ident(firstOrder.column)} ${firstOrder.ascending === false ? "DESC" : "ASC"}`;
+        const orderList = Array.isArray(order) ? order : order ? [order] : [];
+        if (orderList.length) {
+          sql += ` ORDER BY ${orderList
+            .filter((o: any) => o?.column)
+            .map((o: any) => `${ident(o.column)} ${o.ascending === false ? "DESC" : "ASC"}`)
+            .join(", ")}`;
         }
         if (limit && Number.isFinite(Number(limit))) {
           sql += ` LIMIT ${Number(limit)}`;
