@@ -313,15 +313,24 @@ Deno.serve(async (req: Request) => {
       });
     }
 
+    const isMysqlSessionRequest = action !== "save_profile" && Boolean(body.mysql_session);
+    let mysqlSession: MysqlAdminSession | null = null;
+    if (isMysqlSessionRequest) {
+      mysqlSession = await verifySession(body.mysql_session);
+      if (profile_id && profile_id !== mysqlSession.profile_id) throw new Error("Perfil MySQL inválido para esta sessão");
+      body.profile_id = mysqlSession.profile_id;
+    }
+
     // Auth
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader?.startsWith("Bearer ")) {
+    if (!mysqlSession && !authHeader?.startsWith("Bearer ")) {
       return new Response(JSON.stringify({ success: false, error: "Unauthorized" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
+    if (!mysqlSession) {
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_ANON_KEY")!,
@@ -340,13 +349,7 @@ Deno.serve(async (req: Request) => {
     const authEmail = (userData.user.email as string | undefined) || "";
 
     const isSuperAdminRequest = authEmail.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase();
-    const isMysqlSessionRequest = action !== "save_profile" && action !== "login" && Boolean(body.mysql_session);
-    let mysqlSession: MysqlAdminSession | null = null;
-    if (isMysqlSessionRequest) {
-      mysqlSession = await verifySession(body.mysql_session);
-      if (profile_id && profile_id !== mysqlSession.profile_id) throw new Error("Perfil MySQL inválido para esta sessão");
-      body.profile_id = mysqlSession.profile_id;
-    } else if (!isSuperAdminRequest) {
+    if (!isSuperAdminRequest) {
       return new Response(
         JSON.stringify({ success: false, error: "Only the super admin can use MySQL" }),
         {
@@ -354,6 +357,7 @@ Deno.serve(async (req: Request) => {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         },
       );
+    }
     }
 
     if (action === "save_profile") {
