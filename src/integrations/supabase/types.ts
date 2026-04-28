@@ -14,6 +14,21 @@ export type Database = {
   }
   public: {
     Tables: {
+      _mysql_crypto_key: {
+        Row: {
+          id: number
+          key: string
+        }
+        Insert: {
+          id?: number
+          key: string
+        }
+        Update: {
+          id?: number
+          key?: string
+        }
+        Relationships: []
+      }
       appointments: {
         Row: {
           appointment_date: string
