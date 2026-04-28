@@ -32,6 +32,7 @@ const Settings = lazy(() => import("./pages/admin/Settings"));
 const StoreDashboard = lazy(() => import("./pages/admin/StoreDashboard"));
 const Finance = lazy(() => import("./pages/admin/Finance"));
 const ChatProConfig = lazy(() => import("./pages/admin/ChatProConfig"));
+const Barbershops = lazy(() => import("./pages/admin/Barbershops"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -84,6 +85,7 @@ const App = () => (
                 <Route path="coupons" element={<Coupons />} />
                 <Route path="store" element={<StoreDashboard />} />
                 <Route path="confg" element={<ChatProConfig />} />
+                <Route path="barbershops" element={<Barbershops />} />
                 <Route path="settings" element={<Settings />} />
               </Route>
 

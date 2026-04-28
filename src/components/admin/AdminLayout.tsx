@@ -17,9 +17,18 @@ import {
   ShoppingBag,
   MessageSquare,
   Wallet,
+  Building2,
 } from "lucide-react";
+import { isSuperAdmin } from "@/lib/superAdmin";
 
-const navItems = [
+interface NavItem {
+  label: string;
+  path: string;
+  icon: typeof LayoutDashboard;
+  superAdminOnly?: boolean;
+}
+
+const navItems: NavItem[] = [
   { label: "Dashboard", path: "/admin", icon: LayoutDashboard },
   { label: "Financeiro", path: "/admin/finance", icon: Wallet },
   { label: "Serviços", path: "/admin/services", icon: Scissors },
@@ -28,6 +37,7 @@ const navItems = [
   { label: "Agendamentos", path: "/admin/appointments", icon: CalendarDays },
   { label: "Cupons", path: "/admin/coupons", icon: Tag },
   { label: "ChatPro", path: "/admin/confg", icon: MessageSquare },
+  { label: "Perfis Barbearias", path: "/admin/barbershops", icon: Building2, superAdminOnly: true },
   { label: "Configurações", path: "/admin/settings", icon: Settings },
 ];
 
