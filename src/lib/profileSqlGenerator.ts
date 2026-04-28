@@ -7,6 +7,7 @@
  */
 
 import type { BarbershopProfile } from "@/hooks/useBarbershops";
+import { ALL_PERMISSION_KEYS, sanitizePermissions } from "@/lib/barbershopPermissions";
 
 // gera UUID v4 sem dependências externas
 const uuid = (): string => {
@@ -262,6 +263,47 @@ CREATE TABLE \`prize_wheel_slices\` (
   PRIMARY KEY (\`id\`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- ---------------------------------------------------------------------
+-- Tabela: reviews (avaliações de clientes)
+-- ---------------------------------------------------------------------
+DROP TABLE IF EXISTS \`reviews\`;
+CREATE TABLE \`reviews\` (
+  \`id\` CHAR(36) NOT NULL,
+  \`customer_name\` VARCHAR(255) NOT NULL,
+  \`customer_phone\` VARCHAR(50) DEFAULT NULL,
+  \`rating\` TINYINT NOT NULL,
+  \`comment\` TEXT,
+  \`status\` ENUM('pending','approved','rejected') NOT NULL DEFAULT 'approved',
+  \`appointment_id\` CHAR(36) DEFAULT NULL,
+  \`review_token\` VARCHAR(64) DEFAULT NULL,
+  \`is_public\` TINYINT(1) NOT NULL DEFAULT 1,
+  \`created_at\` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  \`updated_at\` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (\`id\`),
+  UNIQUE KEY \`uq_reviews_token\` (\`review_token\`),
+  KEY \`idx_reviews_status\` (\`status\`),
+  KEY \`idx_reviews_rating\` (\`rating\`),
+  CONSTRAINT \`chk_reviews_rating\` CHECK (\`rating\` BETWEEN 1 AND 5)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ---------------------------------------------------------------------
+-- Tabela: user_permissions (permissões de acesso ao painel)
+-- ---------------------------------------------------------------------
+DROP TABLE IF EXISTS \`user_permissions\`;
+CREATE TABLE \`user_permissions\` (
+  \`id\` CHAR(36) NOT NULL,
+  \`user_id\` CHAR(36) NOT NULL,
+  \`permission_key\` VARCHAR(60) NOT NULL,
+  \`enabled\` TINYINT(1) NOT NULL DEFAULT 1,
+  \`created_at\` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  \`updated_at\` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (\`id\`),
+  UNIQUE KEY \`uq_user_permission\` (\`user_id\`, \`permission_key\`),
+  KEY \`idx_user_permissions_user\` (\`user_id\`),
+  CONSTRAINT \`fk_user_permissions_user\` FOREIGN KEY (\`user_id\`)
+    REFERENCES \`users\` (\`id\`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 SET FOREIGN_KEY_CHECKS = 1;
 `;
 
@@ -280,6 +322,14 @@ const buildSeeds = (p: BarbershopProfile): string => {
     .map(([k, v]) => `  (${esc(uuid())}, ${esc(k)}, ${esc(v)})`)
     .join(",\n");
 
+  const perms = sanitizePermissions(p.permissions);
+  const permissionsValues = ALL_PERMISSION_KEYS
+    .map(
+      (k) =>
+        `  (${esc(uuid())}, ${esc(userId)}, ${esc(k)}, ${perms[k] ? 1 : 0})`,
+    )
+    .join(",\n");
+
   return `
 -- =====================================================================
 -- SEEDS personalizados deste perfil
@@ -288,6 +338,10 @@ const buildSeeds = (p: BarbershopProfile): string => {
 -- Login do dono (senha bcrypt — mesma definida no painel admin)
 INSERT INTO \`users\` (\`id\`, \`email\`, \`password_hash\`, \`name\`, \`role\`)
 VALUES (${esc(userId)}, ${esc(p.owner_email)}, ${esc(p.owner_password)}, ${esc(p.owner_name ?? "Admin")}, 'admin');
+
+-- Permissões granulares do painel (pode ser lido por qualquer linguagem do backend)
+INSERT INTO \`user_permissions\` (\`id\`, \`user_id\`, \`permission_key\`, \`enabled\`) VALUES
+${permissionsValues};
 
 -- Configurações da barbearia
 INSERT INTO \`business_settings\` (\`id\`, \`key\`, \`value\`) VALUES
