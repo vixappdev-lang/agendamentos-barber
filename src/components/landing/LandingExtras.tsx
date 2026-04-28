@@ -120,6 +120,18 @@ export const TeamSection = ({ barbers }: { barbers: DBBarber[] }) => {
 
 export const TestimonialsSection = () => {
   const t = useThemeColors();
+  const { data: reviews = [] } = usePublicReviews(6);
+
+  const items = reviews.length
+    ? reviews.map((r) => ({
+        name: r.customer_name,
+        role: format(new Date(r.created_at), "MMMM yyyy", { locale: ptBR }),
+        text: r.comment || "Excelente atendimento!",
+        rating: r.rating,
+      }))
+    : testimonials;
+
+  if (!items.length) return null;
 
   return (
     <section className="py-20 sm:py-28 px-4 sm:px-6 lg:px-8" style={{ background: t.pageBgAlt }}>
@@ -136,7 +148,7 @@ export const TestimonialsSection = () => {
         </motion.div>
 
         <div className="grid md:grid-cols-3 gap-5">
-          {testimonials.map((t2, i) => (
+          {items.slice(0, 6).map((t2, i) => (
             <motion.div
               key={i}
               initial={{ opacity: 0, y: 25 }}
