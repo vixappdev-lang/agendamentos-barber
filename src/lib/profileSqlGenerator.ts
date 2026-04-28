@@ -293,9 +293,7 @@ VALUES (${esc(userId)}, ${esc(p.owner_email)}, ${esc(p.owner_password)}, ${esc(p
 INSERT INTO \`business_settings\` (\`id\`, \`key\`, \`value\`) VALUES
 ${settingsValues};
 
--- ChatPro placeholder (ajuste no painel)
-INSERT INTO \`chatpro_config\` (\`id\`, \`endpoint\`, \`token\`, \`instance_id\`)
-VALUES (${esc(uuid())}, 'https://v5.chatpro.com.br', '', '');
+-- (ChatPro NÃO é semeado — cada barbearia configura o seu próprio no painel)
 
 -- =====================================================================
 -- Fim do schema. Banco pronto. Login no painel:
