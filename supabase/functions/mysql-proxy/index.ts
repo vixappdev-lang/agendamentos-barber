@@ -499,7 +499,55 @@ Deno.serve(async (req: Request) => {
             stats[t] = -1; // table missing
           }
         }
-        return new Response(JSON.stringify({ success: true, data: stats }), {
+
+        // Detalhes adicionais (best-effort, ignora se tabela não existir)
+        const extras: Record<string, number> = {
+          appointments_today: 0,
+          appointments_pending: 0,
+          appointments_completed: 0,
+          appointments_cancelled: 0,
+          orders_pending: 0,
+          orders_completed: 0,
+          revenue_total: 0,
+          revenue_today: 0,
+          reviews_avg: 0,
+          users_total: 0,
+        };
+        const safe = async (sql: string, key: string, mapper: (v: any) => number = (v) => Number(v) || 0) => {
+          try {
+            const [rows] = await conn.query(sql);
+            extras[key] = mapper((rows as any[])[0]);
+          } catch { /* ignore */ }
+        };
+        await safe(`SELECT COUNT(*) AS c FROM appointments WHERE appointment_date = CURDATE()`, "appointments_today", (r) => Number(r?.c) || 0);
+        await safe(`SELECT COUNT(*) AS c FROM appointments WHERE status = 'pending'`, "appointments_pending", (r) => Number(r?.c) || 0);
+        await safe(`SELECT COUNT(*) AS c FROM appointments WHERE status = 'completed'`, "appointments_completed", (r) => Number(r?.c) || 0);
+        await safe(`SELECT COUNT(*) AS c FROM appointments WHERE status = 'cancelled'`, "appointments_cancelled", (r) => Number(r?.c) || 0);
+        await safe(`SELECT COUNT(*) AS c FROM orders WHERE status = 'pending'`, "orders_pending", (r) => Number(r?.c) || 0);
+        await safe(`SELECT COUNT(*) AS c FROM orders WHERE status = 'completed'`, "orders_completed", (r) => Number(r?.c) || 0);
+        await safe(`SELECT COALESCE(SUM(total_price),0) AS s FROM appointments WHERE status = 'completed'`, "revenue_total", (r) => Number(r?.s) || 0);
+        await safe(`SELECT COALESCE(SUM(total_price),0) AS s FROM appointments WHERE status = 'completed' AND appointment_date = CURDATE()`, "revenue_today", (r) => Number(r?.s) || 0);
+        await safe(`SELECT COALESCE(AVG(rating),0) AS s FROM reviews`, "reviews_avg", (r) => Number(r?.s) || 0);
+        await safe(`SELECT COUNT(*) AS c FROM users`, "users_total", (r) => Number(r?.c) || 0);
+
+        // Versão MySQL e nome do banco para info
+        let mysql_version = "";
+        try {
+          const [vr] = await conn.query(`SELECT VERSION() AS v`);
+          mysql_version = String((vr as any[])[0]?.v ?? "");
+        } catch { /* ignore */ }
+
+        return new Response(JSON.stringify({
+          success: true,
+          data: stats,
+          extras,
+          info: {
+            mysql_version,
+            database: profile.database_name,
+            host: profile.host,
+            checked_at: new Date().toISOString(),
+          },
+        }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
