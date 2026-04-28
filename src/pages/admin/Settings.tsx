@@ -218,9 +218,10 @@ const Settings = () => {
         >
           {/* ===== DADOS DA BARBEARIA ===== */}
           {activeTab === "business" && (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-stretch">
-              <div className="space-y-4 h-full flex flex-col">
-                <div className={`${cardStyle} flex-1`}>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
+              {/* Coluna esquerda — Identidade + Endereço */}
+              <div className="space-y-4">
+                <div className={cardStyle}>
                   <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
                     <Store className="w-4 h-4" style={{ color: iconColor }} /> Informações Básicas
                   </h3>
@@ -235,29 +236,7 @@ const Settings = () => {
                     </div>
                     <div>
                       <label className={labelStyle}>Descrição</label>
-                      <textarea className="glass-input min-h-[120px] resize-none" value={settings.description || ""} onChange={(e) => updateSetting("description", e.target.value)} placeholder="Breve descrição da barbearia" />
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                <div className={cardStyle}>
-                  <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                    <Phone className="w-4 h-4" style={{ color: iconColor }} /> Contato
-                  </h3>
-                  <div className="grid gap-4">
-                    <div>
-                      <label className={`${labelStyle} flex items-center gap-1`}><Phone className="w-3 h-3" /> WhatsApp (com DDI+DDD)</label>
-                      <input className="glass-input" value={settings.whatsapp_number || ""} onChange={(e) => updateSetting("whatsapp_number", e.target.value)} placeholder="5527999999999" />
-                    </div>
-                    <div>
-                      <label className={`${labelStyle} flex items-center gap-1`}><Mail className="w-3 h-3" /> Email</label>
-                      <input className="glass-input" type="email" value={settings.email || ""} onChange={(e) => updateSetting("email", e.target.value)} placeholder="contato@barbearia.com" />
-                    </div>
-                    <div>
-                      <label className={`${labelStyle} flex items-center gap-1`}><Instagram className="w-3 h-3" /> Instagram</label>
-                      <input className="glass-input" value={settings.instagram || ""} onChange={(e) => updateSetting("instagram", e.target.value)} placeholder="@suabarbearia" />
+                      <textarea className="glass-input min-h-[110px] resize-none" value={settings.description || ""} onChange={(e) => updateSetting("description", e.target.value)} placeholder="Breve descrição da barbearia" />
                     </div>
                   </div>
                 </div>
@@ -298,6 +277,53 @@ const Settings = () => {
                             : "Clique para selecionar no mapa"}
                         </span>
                       </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Coluna direita — Contato + Redes & Links */}
+              <div className="space-y-4">
+                <div className={cardStyle}>
+                  <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                    <Phone className="w-4 h-4" style={{ color: iconColor }} /> Contato
+                  </h3>
+                  <div className="grid gap-4">
+                    <div>
+                      <label className={`${labelStyle} flex items-center gap-1`}><Phone className="w-3 h-3" /> WhatsApp (com DDI+DDD)</label>
+                      <input className="glass-input" value={settings.whatsapp_number || ""} onChange={(e) => updateSetting("whatsapp_number", e.target.value)} placeholder="5527999999999" />
+                    </div>
+                    <div>
+                      <label className={`${labelStyle} flex items-center gap-1`}><Phone className="w-3 h-3" /> Telefone Fixo (opcional)</label>
+                      <input className="glass-input" value={settings.phone_number || ""} onChange={(e) => updateSetting("phone_number", e.target.value)} placeholder="(27) 3333-3333" />
+                    </div>
+                    <div>
+                      <label className={`${labelStyle} flex items-center gap-1`}><Mail className="w-3 h-3" /> Email</label>
+                      <input className="glass-input" type="email" value={settings.email || ""} onChange={(e) => updateSetting("email", e.target.value)} placeholder="contato@barbearia.com" />
+                    </div>
+                  </div>
+                </div>
+
+                <div className={cardStyle}>
+                  <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                    <Globe className="w-4 h-4" style={{ color: iconColor }} /> Redes Sociais & Links
+                  </h3>
+                  <div className="grid gap-4">
+                    <div>
+                      <label className={`${labelStyle} flex items-center gap-1`}><Instagram className="w-3 h-3" /> Instagram</label>
+                      <input className="glass-input" value={settings.instagram || ""} onChange={(e) => updateSetting("instagram", e.target.value)} placeholder="@suabarbearia" />
+                    </div>
+                    <div>
+                      <label className={`${labelStyle} flex items-center gap-1`}><Globe className="w-3 h-3" /> Facebook</label>
+                      <input className="glass-input" value={settings.facebook || ""} onChange={(e) => updateSetting("facebook", e.target.value)} placeholder="facebook.com/suabarbearia" />
+                    </div>
+                    <div>
+                      <label className={`${labelStyle} flex items-center gap-1`}><Globe className="w-3 h-3" /> TikTok</label>
+                      <input className="glass-input" value={settings.tiktok || ""} onChange={(e) => updateSetting("tiktok", e.target.value)} placeholder="@suabarbearia" />
+                    </div>
+                    <div>
+                      <label className={`${labelStyle} flex items-center gap-1`}><Map className="w-3 h-3" /> Link do Google Maps</label>
+                      <input className="glass-input" value={settings.google_maps_link || ""} onChange={(e) => updateSetting("google_maps_link", e.target.value)} placeholder="https://maps.app.goo.gl/..." />
                     </div>
                   </div>
                 </div>
