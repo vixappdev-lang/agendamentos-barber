@@ -110,6 +110,8 @@ const Index = () => {
         setWhatsappNumber(map.whatsapp_number || "");
         setPixKey(map.pix_key || "");
         setPixType(map.pix_type || "cpf");
+        setSiteStatus((map.site_status as "ativo" | "inativo") || "ativo");
+        setBusinessName(map.business_name || "Barbearia");
       }
     };
     fetchAll();
