@@ -79,6 +79,13 @@ const BookingFlow = ({ service, onClose, user }: BookingFlowProps) => {
     fetchBooked();
   }, [selectedDate, selectedBarber]);
 
+  // Auto-atribuir barbeiro se admin desligou "cliente escolhe barbeiro"
+  useEffect(() => {
+    if (settings.allow_choose_barber === "false" && barbers.length > 0 && !selectedBarber) {
+      setSelectedBarber(barbers[0]);
+    }
+  }, [settings.allow_choose_barber, barbers, selectedBarber]);
+
   const generateTimes = () => {
     const opening = settings.opening_time || "09:00";
     const closing = settings.closing_time || "19:00";
