@@ -92,6 +92,7 @@ const App = () => (
                 <Route path="store" element={<StoreDashboard />} />
                 <Route path="confg" element={<ChatProConfig />} />
                 <Route path="barbershops" element={<Barbershops />} />
+                <Route path="reviews" element={<Reviews />} />
                 <Route path="settings" element={<Settings />} />
               </Route>
 

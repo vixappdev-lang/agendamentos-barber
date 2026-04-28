@@ -18,7 +18,7 @@ import {
   MessageSquare,
   Wallet,
   Building2,
-} from "lucide-react";
+  Star,
 import { isSuperAdmin } from "@/lib/superAdmin";
 
 interface NavItem {
