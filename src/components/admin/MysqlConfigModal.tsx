@@ -11,8 +11,30 @@ import { supabase } from "@/integrations/supabase/client";
 import type { BarbershopProfile } from "@/hooks/useBarbershops";
 import { useQueryClient } from "@tanstack/react-query";
 
+// Sanitiza host: aceita "https://x.com/", "x.com:3306", "tcp://x.com" etc → "x.com"
+const sanitizeHost = (raw: string): string => {
+  let h = raw.trim();
+  // remove protocolo
+  h = h.replace(/^[a-zA-Z]+:\/\//, "");
+  // remove path/query
+  h = h.split("/")[0].split("?")[0];
+  // remove porta (capturada em campo separado)
+  h = h.split(":")[0];
+  return h;
+};
+
+const HOSTNAME_RE = /^(?=.{1,253}$)([a-zA-Z0-9_]([a-zA-Z0-9-_]{0,61}[a-zA-Z0-9_])?)(\.[a-zA-Z0-9_]([a-zA-Z0-9-_]{0,61}[a-zA-Z0-9_])?)*$|^(\d{1,3}\.){3}\d{1,3}$/;
+
 const schema = z.object({
-  host: z.string().trim().min(1, "Host obrigatório").max(255),
+  host: z
+    .string()
+    .trim()
+    .min(1, "Host obrigatório")
+    .max(255)
+    .transform(sanitizeHost)
+    .refine((v) => HOSTNAME_RE.test(v), {
+      message: "Host inválido. Use apenas o domínio (ex: mysql.seudominio.com.br) — sem https:// nem barras.",
+    }),
   port: z.coerce.number().int().min(1).max(65535),
   database_name: z.string().trim().min(1, "Banco obrigatório").max(64),
   username: z.string().trim().min(1, "Usuário obrigatório").max(64),
