@@ -20,6 +20,7 @@ const DemoSite = lazy(() => import("./pages/DemoSite"));
 const BaixarSource = lazy(() => import("./pages/BaixarSource"));
 const MemberLogin = lazy(() => import("./pages/MemberLogin"));
 const MemberArea = lazy(() => import("./pages/MemberArea"));
+const Avaliacao = lazy(() => import("./pages/Avaliacao"));
 
 const AdminLogin = lazy(() => import("./pages/AdminLogin"));
 const AdminLayout = lazy(() => import("./components/admin/AdminLayout"));
@@ -33,6 +34,7 @@ const StoreDashboard = lazy(() => import("./pages/admin/StoreDashboard"));
 const Finance = lazy(() => import("./pages/admin/Finance"));
 const ChatProConfig = lazy(() => import("./pages/admin/ChatProConfig"));
 const Barbershops = lazy(() => import("./pages/admin/Barbershops"));
+const Reviews = lazy(() => import("./pages/admin/Reviews"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -68,6 +70,7 @@ const App = () => (
               <Route path="/loja" element={<StorePage />} />
               <Route path="/navegacao" element={<Navigation />} />
               <Route path="/demo-site" element={<DemoSite />} />
+              <Route path="/avaliacao" element={<Avaliacao />} />
 
               <Route element={<LoginRedirectGuard />}>
                 <Route path="/login" element={<MemberLogin />} />
@@ -89,6 +92,7 @@ const App = () => (
                 <Route path="store" element={<StoreDashboard />} />
                 <Route path="confg" element={<ChatProConfig />} />
                 <Route path="barbershops" element={<Barbershops />} />
+                <Route path="reviews" element={<Reviews />} />
                 <Route path="settings" element={<Settings />} />
               </Route>
 
