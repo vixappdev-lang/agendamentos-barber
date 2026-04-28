@@ -115,6 +115,9 @@ const Settings = () => {
   const [dbTesting, setDbTesting] = useState(false);
   const [dbTestResult, setDbTestResult] = useState<{ success: boolean; message: string } | null>(null);
 
+  // Templates picker
+  const [templateCategory, setTemplateCategory] = useState<TemplateCategory | null>(null);
+
   useEffect(() => {
     fetchSettings();
   }, []);
