@@ -26,6 +26,7 @@ export type Database = {
           customer_phone: string | null
           id: string
           notes: string | null
+          review_token: string | null
           service_id: string | null
           status: string | null
           total_price: number | null
@@ -41,6 +42,7 @@ export type Database = {
           customer_phone?: string | null
           id?: string
           notes?: string | null
+          review_token?: string | null
           service_id?: string | null
           status?: string | null
           total_price?: number | null
@@ -56,6 +58,7 @@ export type Database = {
           customer_phone?: string | null
           id?: string
           notes?: string | null
+          review_token?: string | null
           service_id?: string | null
           status?: string | null
           total_price?: number | null
@@ -116,6 +119,7 @@ export type Database = {
           owner_email: string
           owner_name: string | null
           owner_password: string
+          permissions: Json
           phone: string | null
           slug: string
           updated_at: string
@@ -132,6 +136,7 @@ export type Database = {
           owner_email: string
           owner_name?: string | null
           owner_password: string
+          permissions?: Json
           phone?: string | null
           slug: string
           updated_at?: string
@@ -148,6 +153,7 @@ export type Database = {
           owner_email?: string
           owner_name?: string | null
           owner_password?: string
+          permissions?: Json
           phone?: string | null
           slug?: string
           updated_at?: string
@@ -479,6 +485,48 @@ export type Database = {
           price?: number
           sort_order?: number
           title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      reviews: {
+        Row: {
+          appointment_id: string | null
+          comment: string | null
+          created_at: string
+          customer_name: string
+          customer_phone: string | null
+          id: string
+          is_public: boolean
+          rating: number
+          review_token: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          appointment_id?: string | null
+          comment?: string | null
+          created_at?: string
+          customer_name: string
+          customer_phone?: string | null
+          id?: string
+          is_public?: boolean
+          rating: number
+          review_token?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          appointment_id?: string | null
+          comment?: string | null
+          created_at?: string
+          customer_name?: string
+          customer_phone?: string | null
+          id?: string
+          is_public?: boolean
+          rating?: number
+          review_token?: string | null
+          status?: string
           updated_at?: string
         }
         Relationships: []
