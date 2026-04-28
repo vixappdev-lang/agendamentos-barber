@@ -553,32 +553,28 @@ const VilaNova = () => {
                 </div>
               </div>
 
-              {/* Image grid - takes 7 columns on desktop */}
+              {/* Image grid - takes 7 columns on desktop - 2x2 alinhado */}
               <div className="lg:col-span-7">
-                <div className="grid grid-cols-12 gap-3 sm:gap-4">
-                  <div className="col-span-7 rounded-2xl overflow-hidden" style={{ border: `1px solid ${t.borderSubtle}` }}>
-                    <div className="aspect-[3/4]">
-                      <img src={heroImg1} alt="Interior" className="w-full h-full object-cover" loading="lazy" />
+                <div className="grid grid-cols-2 gap-3 sm:gap-4">
+                  {[
+                    { src: heroImg1, alt: "Interior" },
+                    { src: heroImg2, alt: "Barba profissional" },
+                    { src: galleryImg1, alt: "Ferramentas profissionais" },
+                    { src: heroImg3, alt: "Corte moderno" },
+                  ].map((img) => (
+                    <div
+                      key={img.alt}
+                      className="rounded-2xl overflow-hidden aspect-square"
+                      style={{ border: `1px solid ${t.borderSubtle}` }}
+                    >
+                      <img
+                        src={img.src}
+                        alt={img.alt}
+                        loading="lazy"
+                        className="w-full h-full object-cover"
+                      />
                     </div>
-                  </div>
-                  <div className="col-span-5 flex flex-col gap-3 sm:gap-4">
-                    <div className="rounded-2xl overflow-hidden flex-1" style={{ border: `1px solid ${t.borderSubtle}` }}>
-                      <img src={heroImg2} alt="Barba profissional" className="w-full h-full object-cover" loading="lazy" />
-                    </div>
-                    <div className="rounded-2xl overflow-hidden flex-1" style={{ border: `1px solid ${t.borderSubtle}` }}>
-                      <img src={galleryImg1} alt="Ferramentas profissionais" className="w-full h-full object-cover" loading="lazy" />
-                    </div>
-                  </div>
-                  <div className="col-span-5 rounded-2xl overflow-hidden" style={{ border: `1px solid ${t.borderSubtle}` }}>
-                    <div className="aspect-[4/3]">
-                      <img src={heroImg3} alt="Corte moderno" className="w-full h-full object-cover" loading="lazy" />
-                    </div>
-                  </div>
-                  <div className="col-span-7 rounded-2xl overflow-hidden" style={{ border: `1px solid ${t.borderSubtle}` }}>
-                    <div className="aspect-[4/3]">
-                      <img src={galleryImg3} alt="Ambiente acolhedor" className="w-full h-full object-cover" loading="lazy" />
-                    </div>
-                  </div>
+                  ))}
                 </div>
               </div>
             </div>

@@ -19,6 +19,7 @@ import {
   Wallet,
   Building2,
   Star,
+} from "lucide-react";
 import { isSuperAdmin } from "@/lib/superAdmin";
 
 interface NavItem {
@@ -36,6 +37,7 @@ const navItems: NavItem[] = [
   { label: "Barbeiros", path: "/admin/barbers", icon: Users },
   { label: "Agendamentos", path: "/admin/appointments", icon: CalendarDays },
   { label: "Cupons", path: "/admin/coupons", icon: Tag },
+  { label: "Avaliações", path: "/admin/reviews", icon: Star },
   { label: "ChatPro", path: "/admin/confg", icon: MessageSquare },
   { label: "Perfis Barbearias", path: "/admin/barbershops", icon: Building2, superAdminOnly: true },
   { label: "Configurações", path: "/admin/settings", icon: Settings },
@@ -77,6 +79,7 @@ const AdminLayout = () => {
       void import("@/pages/admin/StoreDashboard");
       void import("@/pages/admin/Finance");
       void import("@/pages/admin/ChatProConfig");
+      void import("@/pages/admin/Reviews");
       void import("@/pages/admin/Settings");
       if (isSuperAdmin(userEmail)) {
         void import("@/pages/admin/Barbershops");

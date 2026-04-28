@@ -66,8 +66,52 @@ const Appointments = () => {
     setAppointments((data as Appointment[]) || []);
   };
 
+  const generateToken = () => {
+    if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
+      return crypto.randomUUID().replace(/-/g, "");
+    }
+    return Math.random().toString(36).slice(2) + Date.now().toString(36);
+  };
+
+  const sendReviewWhatsApp = async (a: Appointment, token: string) => {
+    if (!a.customer_phone) return;
+    try {
+      const { data: settings } = await supabase
+        .from("business_settings")
+        .select("key,value")
+        .in("key", ["business_name", "review_whatsapp_template", "review_send_enabled"]);
+      const map: Record<string, string> = {};
+      (settings || []).forEach((s: any) => { map[s.key] = s.value || ""; });
+      if (map.review_send_enabled === "false") return;
+      const businessName = map.business_name || "Barbearia";
+      const link = `${window.location.origin}/avaliacao?token=${token}`;
+      const tmpl =
+        map.review_whatsapp_template ||
+        `⭐ Olá *{cliente}*! Como foi seu atendimento na *{barbearia}*?\n\nDeixe sua avaliação: {link}\n\nSua opinião é muito importante 💈`;
+      const message = tmpl
+        .replace(/\{cliente\}/g, a.customer_name)
+        .replace(/\{barbearia\}/g, businessName)
+        .replace(/\{link\}/g, link);
+      await supabase.functions.invoke("chatpro", {
+        body: { action: "send_message", phone: a.customer_phone, message },
+      });
+    } catch (e) {
+      console.error("Review WhatsApp error:", e);
+    }
+  };
+
   const updateStatus = async (id: string, status: string) => {
-    await supabase.from("appointments").update({ status }).eq("id", id);
+    const target = appointments.find((a) => a.id === id);
+    const patch: Record<string, any> = { status };
+    let token: string | null = null;
+    if (status === "completed") {
+      token = generateToken();
+      patch.review_token = token;
+    }
+    await supabase.from("appointments").update(patch).eq("id", id);
+    if (status === "completed" && target && token) {
+      await sendReviewWhatsApp(target, token);
+    }
     fetchAppointments();
   };
 
