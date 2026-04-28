@@ -6,11 +6,79 @@ import {
   Database, Calendar, Settings2, Globe, Shield, Upload, CheckCircle,
   XCircle, Loader2, Eye, ChevronRight, Mail, Instagram, Type,
   AlarmClock, Timer, Ban, FileText, CreditCard, QrCode, Copy, Plus, Trash2,
-  AlertCircle, Wand2, ToggleLeft, Layout, ImageIcon, Sun, Moon, Monitor
+  AlertCircle, Wand2, ToggleLeft, Layout, ImageIcon, Sun, Moon, Monitor, Send
 } from "lucide-react";
 import { toast } from "sonner";
 import LocationPickerModal from "@/components/LocationPickerModal";
 import { useThemeColors } from "@/hooks/useThemeColors";
+import { MessageTemplatesModal } from "@/components/admin/MessageTemplatesModal";
+import type { TemplateCategory } from "@/lib/messageTemplates";
+
+// Toggle card padrão (substitui checkboxes feios da aba Agendamento)
+const ToggleCard = ({
+  active,
+  onToggle,
+  title,
+  description,
+  icon,
+}: {
+  active: boolean;
+  onToggle: () => void;
+  title: string;
+  description: string;
+  icon?: React.ReactNode;
+}) => (
+  <button
+    type="button"
+    onClick={onToggle}
+    className="w-full text-left p-3.5 rounded-xl transition-all flex items-start gap-3 group"
+    style={{
+      background: active ? "hsl(245 60% 55% / 0.1)" : "hsl(0 0% 100% / 0.025)",
+      border: `1px solid ${active ? "hsl(245 60% 55% / 0.3)" : "hsl(0 0% 100% / 0.05)"}`,
+    }}
+  >
+    {icon && (
+      <div
+        className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 mt-0.5 transition-colors"
+        style={{
+          background: active ? "hsl(245 60% 55% / 0.15)" : "hsl(0 0% 100% / 0.04)",
+          color: active ? "hsl(245 60% 70%)" : "hsl(0 0% 50%)",
+        }}
+      >
+        {icon}
+      </div>
+    )}
+    <div className="flex-1 min-w-0">
+      <p className="text-xs font-semibold text-foreground leading-tight">{title}</p>
+      <p className="text-[10.5px] text-muted-foreground leading-snug mt-0.5">{description}</p>
+    </div>
+    <div
+      className="w-9 h-5 rounded-full flex items-center px-0.5 transition-all shrink-0 mt-1"
+      style={{
+        background: active ? "hsl(245 60% 55%)" : "hsl(0 0% 22%)",
+        justifyContent: active ? "flex-end" : "flex-start",
+      }}
+    >
+      <div className="w-4 h-4 rounded-full bg-white transition-all shadow" />
+    </div>
+  </button>
+);
+
+// Botão "Templates" reutilizável
+const TemplatePickerBtn = ({ onClick }: { onClick: () => void }) => (
+  <button
+    type="button"
+    onClick={onClick}
+    className="text-[10px] font-semibold inline-flex items-center gap-1 px-2 py-1 rounded-md transition-colors"
+    style={{
+      background: "hsl(245 60% 55% / 0.1)",
+      color: "hsl(245 60% 75%)",
+      border: "1px solid hsl(245 60% 55% / 0.25)",
+    }}
+  >
+    <Wand2 className="w-3 h-3" /> Templates
+  </button>
+);
 
 const dayLabels = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 
@@ -46,6 +114,9 @@ const Settings = () => {
   // Database connection test
   const [dbTesting, setDbTesting] = useState(false);
   const [dbTestResult, setDbTestResult] = useState<{ success: boolean; message: string } | null>(null);
+
+  // Templates picker
+  const [templateCategory, setTemplateCategory] = useState<TemplateCategory | null>(null);
 
   useEffect(() => {
     fetchSettings();
@@ -218,7 +289,7 @@ const Settings = () => {
         >
           {/* ===== DADOS DA BARBEARIA ===== */}
           {activeTab === "business" && (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-stretch">
               {/* Coluna esquerda — Identidade + Endereço */}
               <div className="space-y-4">
                 <div className={cardStyle}>
@@ -488,17 +559,17 @@ const Settings = () => {
           {/* ===== AGENDAMENTO ===== */}
           {activeTab === "scheduling" && (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
-              {/* Coluna esquerda */}
+              {/* ---------- COLUNA ESQUERDA ---------- */}
               <div className="space-y-4">
                 {/* Modo de Confirmação */}
                 <div className={cardStyle}>
                   <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                    <CheckCircle className="w-4 h-4" style={{ color: iconColor }} /> Confirmação de Agendamento
+                    <CheckCircle className="w-4 h-4" style={{ color: iconColor }} /> Modo de Confirmação
                   </h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {[
-                      { id: "auto", label: "Automática", desc: "Cliente agenda e o status já entra como confirmado. Mensagem de confirmação enviada na hora." },
-                      { id: "manual", label: "Manual", desc: "Cliente agenda em status pendente. Recebe mensagem de 'pedido recebido' e o admin confirma no painel." },
+                      { id: "auto", label: "Automática", desc: "Cliente agenda → status Confirmado. Mensagem enviada na hora." },
+                      { id: "manual", label: "Manual", desc: "Status Pendente. Cliente recebe 'pedido recebido' e admin confirma." },
                     ].map((opt) => {
                       const active = (settings.confirmation_mode || "auto") === opt.id;
                       return (
@@ -506,14 +577,22 @@ const Settings = () => {
                           key={opt.id}
                           type="button"
                           onClick={() => updateSetting("confirmation_mode", opt.id)}
-                          className="text-left p-3 rounded-xl transition-all"
+                          className="text-left p-3.5 rounded-xl transition-all"
                           style={{
-                            background: active ? "hsl(245 60% 55% / 0.12)" : "hsl(0 0% 100% / 0.02)",
+                            background: active ? "hsl(245 60% 55% / 0.12)" : "hsl(0 0% 100% / 0.025)",
                             border: `1px solid ${active ? "hsl(245 60% 55% / 0.35)" : "hsl(0 0% 100% / 0.06)"}`,
                           }}
                         >
                           <div className="flex items-center gap-2 mb-1">
-                            <span className="w-3.5 h-3.5 rounded-full border" style={{ borderColor: active ? "hsl(245 60% 70%)" : "hsl(0 0% 40%)", background: active ? "hsl(245 60% 70%)" : "transparent" }} />
+                            <span
+                              className="w-3.5 h-3.5 rounded-full border flex items-center justify-center"
+                              style={{
+                                borderColor: active ? "hsl(245 60% 70%)" : "hsl(0 0% 40%)",
+                                background: active ? "hsl(245 60% 70%)" : "transparent",
+                              }}
+                            >
+                              {active && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                            </span>
                             <span className="text-sm font-semibold text-foreground">{opt.label}</span>
                           </div>
                           <p className="text-[11px] text-muted-foreground leading-snug">{opt.desc}</p>
@@ -522,43 +601,35 @@ const Settings = () => {
                     })}
                   </div>
 
-                  <div className="grid gap-3 pt-1 border-t border-white/5">
-                    <label className="flex items-center gap-3 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        className="w-4 h-4 rounded accent-primary"
-                        checked={settings.send_whatsapp_on_book === "true"}
-                        onChange={(e) => updateSetting("send_whatsapp_on_book", e.target.checked ? "true" : "false")}
-                      />
-                      <div>
-                        <p className="text-xs font-semibold text-foreground">Enviar WhatsApp ao agendar</p>
-                        <p className="text-[10px] text-muted-foreground">Notifica o cliente assim que o agendamento é criado.</p>
-                      </div>
-                    </label>
-                    <label className="flex items-center gap-3 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        className="w-4 h-4 rounded accent-primary"
-                        checked={settings.send_whatsapp_on_confirm === "true"}
-                        onChange={(e) => updateSetting("send_whatsapp_on_confirm", e.target.checked ? "true" : "false")}
-                      />
-                      <div>
-                        <p className="text-xs font-semibold text-foreground">Enviar WhatsApp ao confirmar</p>
-                        <p className="text-[10px] text-muted-foreground">Útil quando a confirmação é manual pelo admin.</p>
-                      </div>
-                    </label>
-                    <label className="flex items-center gap-3 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        className="w-4 h-4 rounded accent-primary"
-                        checked={settings.send_whatsapp_reminder === "true"}
-                        onChange={(e) => updateSetting("send_whatsapp_reminder", e.target.checked ? "true" : "false")}
-                      />
-                      <div>
-                        <p className="text-xs font-semibold text-foreground">Lembrete antes do horário</p>
-                        <p className="text-[10px] text-muted-foreground">Envia lembrete X horas antes (configurar abaixo).</p>
-                      </div>
-                    </label>
+                  {/* Toggles WhatsApp ligados ao modo de confirmação */}
+                  <div className="grid gap-2 pt-2 border-t border-white/5">
+                    <ToggleCard
+                      active={settings.send_whatsapp_on_book === "true"}
+                      onToggle={() =>
+                        updateSetting("send_whatsapp_on_book", settings.send_whatsapp_on_book === "true" ? "false" : "true")
+                      }
+                      title="Enviar WhatsApp ao agendar"
+                      description="Notifica o cliente assim que o agendamento é criado."
+                      icon={<Send className="w-4 h-4" />}
+                    />
+                    <ToggleCard
+                      active={settings.send_whatsapp_on_confirm === "true"}
+                      onToggle={() =>
+                        updateSetting("send_whatsapp_on_confirm", settings.send_whatsapp_on_confirm === "true" ? "false" : "true")
+                      }
+                      title="Enviar WhatsApp ao confirmar"
+                      description="Útil quando a confirmação é manual pelo admin."
+                      icon={<CheckCircle className="w-4 h-4" />}
+                    />
+                    <ToggleCard
+                      active={settings.send_whatsapp_reminder === "true"}
+                      onToggle={() =>
+                        updateSetting("send_whatsapp_reminder", settings.send_whatsapp_reminder === "true" ? "false" : "true")
+                      }
+                      title="Lembrete antes do horário"
+                      description="Envia lembrete X horas antes (configurar abaixo)."
+                      icon={<AlarmClock className="w-4 h-4" />}
+                    />
                     <div>
                       <label className={labelStyle}>Lembrete — quantas horas antes?</label>
                       <input
@@ -600,64 +671,41 @@ const Settings = () => {
                     </div>
                   </div>
                 </div>
-              </div>
 
-              {/* Coluna direita */}
-              <div className="space-y-4">
-                {/* Comportamento do cliente */}
+                {/* Comportamento do Cliente */}
                 <div className={cardStyle}>
                   <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
                     <Settings2 className="w-4 h-4" style={{ color: iconColor }} /> Comportamento do Cliente
                   </h3>
-                  <div className="grid gap-3">
-                    <label className="flex items-center gap-3 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        className="w-4 h-4 rounded accent-primary"
-                        checked={settings.allow_cancel_by_client === "true"}
-                        onChange={(e) => updateSetting("allow_cancel_by_client", e.target.checked ? "true" : "false")}
-                      />
-                      <div>
-                        <p className="text-xs font-semibold text-foreground">Permitir cliente cancelar</p>
-                        <p className="text-[10px] text-muted-foreground">Cliente pode cancelar pelo painel dele.</p>
-                      </div>
-                    </label>
-                    <label className="flex items-center gap-3 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        className="w-4 h-4 rounded accent-primary"
-                        checked={settings.allow_reschedule_by_client === "true"}
-                        onChange={(e) => updateSetting("allow_reschedule_by_client", e.target.checked ? "true" : "false")}
-                      />
-                      <div>
-                        <p className="text-xs font-semibold text-foreground">Permitir reagendamento</p>
-                        <p className="text-[10px] text-muted-foreground">Cliente pode mudar a data/hora.</p>
-                      </div>
-                    </label>
-                    <label className="flex items-center gap-3 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        className="w-4 h-4 rounded accent-primary"
-                        checked={settings.require_login_to_book === "true"}
-                        onChange={(e) => updateSetting("require_login_to_book", e.target.checked ? "true" : "false")}
-                      />
-                      <div>
-                        <p className="text-xs font-semibold text-foreground">Exigir login para agendar</p>
-                        <p className="text-[10px] text-muted-foreground">Bloqueia agendamento anônimo.</p>
-                      </div>
-                    </label>
-                    <label className="flex items-center gap-3 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        className="w-4 h-4 rounded accent-primary"
-                        checked={settings.allow_choose_barber === "true"}
-                        onChange={(e) => updateSetting("allow_choose_barber", e.target.checked ? "true" : "false")}
-                      />
-                      <div>
-                        <p className="text-xs font-semibold text-foreground">Cliente escolhe barbeiro</p>
-                        <p className="text-[10px] text-muted-foreground">Senão o sistema atribui automaticamente.</p>
-                      </div>
-                    </label>
+                  <div className="grid gap-2">
+                    <ToggleCard
+                      active={settings.allow_cancel_by_client === "true"}
+                      onToggle={() => updateSetting("allow_cancel_by_client", settings.allow_cancel_by_client === "true" ? "false" : "true")}
+                      title="Permitir cliente cancelar"
+                      description="Cliente pode cancelar pelo painel dele (Área do Cliente)."
+                      icon={<Ban className="w-4 h-4" />}
+                    />
+                    <ToggleCard
+                      active={settings.allow_reschedule_by_client === "true"}
+                      onToggle={() => updateSetting("allow_reschedule_by_client", settings.allow_reschedule_by_client === "true" ? "false" : "true")}
+                      title="Permitir reagendamento"
+                      description="Cliente pode mudar a data/hora pela própria área."
+                      icon={<Calendar className="w-4 h-4" />}
+                    />
+                    <ToggleCard
+                      active={settings.require_login_to_book === "true"}
+                      onToggle={() => updateSetting("require_login_to_book", settings.require_login_to_book === "true" ? "false" : "true")}
+                      title="Exigir login para agendar"
+                      description="Bloqueia agendamento anônimo — cliente precisa criar conta."
+                      icon={<Shield className="w-4 h-4" />}
+                    />
+                    <ToggleCard
+                      active={settings.allow_choose_barber === "true"}
+                      onToggle={() => updateSetting("allow_choose_barber", settings.allow_choose_barber === "true" ? "false" : "true")}
+                      title="Cliente escolhe barbeiro"
+                      description="Senão o sistema atribui automaticamente o primeiro disponível."
+                      icon={<Eye className="w-4 h-4" />}
+                    />
                     <div>
                       <label className={labelStyle}>Cancelamento permitido até (horas antes)</label>
                       <input
@@ -670,6 +718,47 @@ const Settings = () => {
                     </div>
                   </div>
                 </div>
+              </div>
+
+              {/* ---------- COLUNA DIREITA ---------- */}
+              <div className="space-y-4">
+                {/* Mensagens (templates inline) */}
+                <div className={cardStyle}>
+                  <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                    <Send className="w-4 h-4" style={{ color: iconColor }} /> Mensagens (WhatsApp)
+                  </h3>
+                  <div className="grid gap-4">
+                    {([
+                      { key: "msg_on_book", label: "Mensagem ao Agendar" },
+                      { key: "msg_on_confirm", label: "Mensagem ao Confirmar" },
+                      { key: "msg_reminder", label: "Mensagem de Lembrete" },
+                      { key: "review_whatsapp_template", label: "Mensagem de Avaliação (pós-corte)" },
+                    ] as { key: TemplateCategory; label: string }[]).map((m) => (
+                      <div key={m.key}>
+                        <div className="flex items-center justify-between mb-1">
+                          <label className={labelStyle + " mb-0"}>{m.label}</label>
+                          <TemplatePickerBtn onClick={() => setTemplateCategory(m.key)} />
+                        </div>
+                        <textarea
+                          className="glass-input min-h-[80px] resize-none"
+                          value={settings[m.key] || ""}
+                          onChange={(e) => updateSetting(m.key, e.target.value)}
+                          placeholder="Clique em 'Templates' para usar um modelo profissional"
+                        />
+                      </div>
+                    ))}
+                    <p className="text-[10px] text-muted-foreground">
+                      Variáveis: <code>{"{cliente}"}</code> <code>{"{servico}"}</code> <code>{"{data}"}</code> <code>{"{hora}"}</code> <code>{"{barbearia}"}</code> <code>{"{barbeiro}"}</code> <code>{"{valor}"}</code> <code>{"{link}"}</code>
+                    </p>
+                    <ToggleCard
+                      active={settings.review_send_enabled !== "false"}
+                      onToggle={() => updateSetting("review_send_enabled", settings.review_send_enabled !== "false" ? "false" : "true")}
+                      title="Enviar avaliação automaticamente ao concluir"
+                      description="Gera token único e envia link no WhatsApp ao marcar agendamento como concluído."
+                      icon={<Wand2 className="w-4 h-4" />}
+                    />
+                  </div>
+                </div>
 
                 {/* Políticas */}
                 <div className={cardStyle}>
@@ -678,45 +767,33 @@ const Settings = () => {
                   </h3>
                   <div className="grid gap-4">
                     <div>
-                      <label className={labelStyle}>Política de Cancelamento</label>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className={labelStyle + " mb-0"}>Política de Cancelamento</label>
+                        <TemplatePickerBtn onClick={() => setTemplateCategory("cancellation_policy")} />
+                      </div>
                       <textarea
                         className="glass-input min-h-[80px] resize-none"
                         value={settings.cancellation_policy || ""}
                         onChange={(e) => updateSetting("cancellation_policy", e.target.value)}
-                        placeholder="Ex: Cancelamentos devem ser feitos com no mínimo 2 horas de antecedência"
+                        placeholder="Clique em 'Templates' para escolher um modelo"
                       />
                     </div>
                     <div>
-                      <label className={labelStyle}>Política de Atraso</label>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className={labelStyle + " mb-0"}>Política de Atraso</label>
+                        <TemplatePickerBtn onClick={() => setTemplateCategory("late_policy")} />
+                      </div>
                       <textarea
                         className="glass-input min-h-[80px] resize-none"
                         value={settings.late_policy || ""}
                         onChange={(e) => updateSetting("late_policy", e.target.value)}
-                        placeholder="Ex: Tolerância de 10 minutos. Após isso, o horário será liberado"
-                      />
-                    </div>
-                    <div>
-                      <label className={labelStyle}>Mensagem ao Agendar (WhatsApp)</label>
-                      <textarea
-                        className="glass-input min-h-[70px] resize-none"
-                        value={settings.msg_on_book || ""}
-                        onChange={(e) => updateSetting("msg_on_book", e.target.value)}
-                        placeholder="Ex: Olá {cliente}, recebemos seu agendamento de {servico} para {data} às {hora}."
-                      />
-                    </div>
-                    <div>
-                      <label className={labelStyle}>Mensagem ao Confirmar (WhatsApp)</label>
-                      <textarea
-                        className="glass-input min-h-[70px] resize-none"
-                        value={settings.msg_on_confirm || ""}
-                        onChange={(e) => updateSetting("msg_on_confirm", e.target.value)}
-                        placeholder="Ex: ✅ Seu agendamento de {servico} foi CONFIRMADO para {data} às {hora}."
+                        placeholder="Clique em 'Templates' para escolher um modelo"
                       />
                     </div>
                   </div>
                 </div>
 
-                {/* Avançado */}
+                {/* Configurações Avançadas */}
                 <div className={cardStyle}>
                   <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
                     <Timer className="w-4 h-4" style={{ color: iconColor }} /> Configurações Avançadas
@@ -755,67 +832,30 @@ const Settings = () => {
                       />
                       <p className="text-[10px] text-muted-foreground mt-1">Datas (AAAA-MM-DD) separadas por vírgula.</p>
                     </div>
-                    <label className="col-span-2 flex items-center gap-3 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        className="w-4 h-4 rounded accent-primary"
-                        checked={settings.auto_no_show === "true"}
-                        onChange={(e) => updateSetting("auto_no_show", e.target.checked ? "true" : "false")}
-                      />
-                      <div>
-                        <p className="text-xs font-semibold text-foreground">Marcar no-show automaticamente</p>
-                        <p className="text-[10px] text-muted-foreground">Sistema marca como falta sem ação manual.</p>
-                      </div>
-                    </label>
                     <div className="col-span-2">
-                      <label className={labelStyle}>Mensagem de Lembrete (WhatsApp)</label>
-                      <textarea
-                        className="glass-input min-h-[70px] resize-none"
-                        value={settings.msg_reminder || ""}
-                        onChange={(e) => updateSetting("msg_reminder", e.target.value)}
-                        placeholder="Ex: ⏰ Lembrete: você tem agendamento amanhã às {hora}, {cliente}!"
+                      <ToggleCard
+                        active={settings.auto_no_show === "true"}
+                        onToggle={() => updateSetting("auto_no_show", settings.auto_no_show === "true" ? "false" : "true")}
+                        title="Marcar no-show automaticamente"
+                        description="Sistema marca como falta sem ação manual após o tempo configurado."
+                        icon={<XCircle className="w-4 h-4" />}
                       />
                     </div>
-                    <div className="col-span-2">
-                      <label className={labelStyle}>Mensagem de Avaliação (pós-corte)</label>
-                      <textarea
-                        className="glass-input min-h-[70px] resize-none"
-                        value={settings.review_whatsapp_template || ""}
-                        onChange={(e) => updateSetting("review_whatsapp_template", e.target.value)}
-                        placeholder="⭐ Olá {cliente}! Como foi seu atendimento na {barbearia}? Avalie: {link}"
-                      />
-                      <p className="text-[10px] text-muted-foreground mt-1">Variáveis: {"{cliente}"} {"{barbearia}"} {"{link}"}</p>
-                    </div>
-                    <label className="col-span-2 flex items-center gap-3 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        className="w-4 h-4 rounded accent-primary"
-                        checked={settings.review_send_enabled !== "false"}
-                        onChange={(e) => updateSetting("review_send_enabled", e.target.checked ? "true" : "false")}
-                      />
-                      <div>
-                        <p className="text-xs font-semibold text-foreground">Enviar avaliação automaticamente ao concluir</p>
-                        <p className="text-[10px] text-muted-foreground">Gera token único e envia link no WhatsApp do cliente.</p>
-                      </div>
-                    </label>
                   </div>
                 </div>
               </div>
             </div>
           )}
+
+          {/* ===== PERSONALIZAÇÃO ===== */}
           {activeTab === "personalization" && (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               <div className="space-y-4">
-                {/* ── Tema / Aparência ── */}
                 <div className={cardStyle}>
                   <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
                     <Sun className="w-4 h-4" style={{ color: iconColor }} /> Tema / Aparência
                   </h3>
-                  <p className="text-[10px] text-muted-foreground">
-                    Ative o modo claro para áreas específicas da plataforma
-                  </p>
-                  
-                  {/* Master toggle */}
+                  <p className="text-[10px] text-muted-foreground">Ative o modo claro para áreas específicas</p>
                   <button
                     onClick={() => updateSetting("theme_mode", (settings.theme_mode || "dark") === "dark" ? "light" : "dark")}
                     className="w-full flex items-center justify-between p-4 rounded-xl transition-all"
@@ -825,16 +865,10 @@ const Settings = () => {
                     }}
                   >
                     <div className="flex items-center gap-3">
-                      {(settings.theme_mode || "dark") === "light" ? (
-                        <Sun className="w-5 h-5" style={{ color: "hsl(40 80% 50%)" }} />
-                      ) : (
-                        <Moon className="w-5 h-5" style={{ color: "hsl(0 0% 50%)" }} />
-                      )}
+                      {(settings.theme_mode || "dark") === "light" ? <Sun className="w-5 h-5" style={{ color: "hsl(40 80% 50%)" }} /> : <Moon className="w-5 h-5" style={{ color: "hsl(0 0% 50%)" }} />}
                       <div className="text-left">
                         <p className="text-sm font-semibold">Modo Claro</p>
-                        <p className="text-[11px]" style={{ color: "hsl(0 0% 50%)" }}>
-                          {(settings.theme_mode || "dark") === "light" ? "Ativado" : "Desativado"}
-                        </p>
+                        <p className="text-[11px]" style={{ color: "hsl(0 0% 50%)" }}>{(settings.theme_mode || "dark") === "light" ? "Ativado" : "Desativado"}</p>
                       </div>
                     </div>
                     <div className="w-12 h-6 rounded-full flex items-center px-0.5 transition-all"
@@ -845,64 +879,16 @@ const Settings = () => {
                       <div className="w-5 h-5 rounded-full bg-white transition-all" />
                     </div>
                   </button>
-
-                  {/* Area checkboxes */}
-                  {(settings.theme_mode || "dark") === "light" && (
-                    <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} className="space-y-2">
-                      <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
-                        Aplicar modo claro em:
-                      </p>
-                      {[
-                        { key: "site", label: "Site Público", desc: "Landing page, loja, agendamento", icon: Globe },
-                        { key: "admin", label: "Painel Admin", desc: "Dashboard, configurações, relatórios", icon: Monitor },
-                        { key: "member", label: "Área do Cliente", desc: "Login, área de membro, PIX", icon: Eye },
-                      ].map((area) => {
-                        const currentAreas: string[] = (() => {
-                          try { return JSON.parse(settings.theme_areas || "[]"); } catch { return []; }
-                        })();
-                        const isActive = currentAreas.includes(area.key);
-                        return (
-                          <button key={area.key}
-                            onClick={() => {
-                              const updated = isActive
-                                ? currentAreas.filter((a: string) => a !== area.key)
-                                : [...currentAreas, area.key];
-                              updateSetting("theme_areas", JSON.stringify(updated));
-                            }}
-                            className="w-full flex items-center gap-3 p-3 rounded-xl transition-all text-left"
-                            style={{
-                              background: isActive ? "hsl(245 60% 55% / 0.08)" : "hsl(0 0% 100% / 0.02)",
-                              border: `1px solid ${isActive ? "hsl(245 60% 55% / 0.2)" : "hsl(0 0% 100% / 0.05)"}`,
-                            }}>
-                            <div className="w-5 h-5 rounded border-2 flex items-center justify-center shrink-0"
-                              style={{
-                                borderColor: isActive ? "hsl(245 60% 65%)" : "hsl(0 0% 30%)",
-                                background: isActive ? "hsl(245 60% 55%)" : "transparent",
-                              }}>
-                              {isActive && <CheckCircle className="w-3 h-3 text-white" />}
-                            </div>
-                            <area.icon className="w-4 h-4 shrink-0" style={{ color: isActive ? "hsl(245 60% 65%)" : "hsl(0 0% 45%)" }} />
-                            <div className="min-w-0">
-                              <p className="text-xs font-semibold">{area.label}</p>
-                              <p className="text-[10px]" style={{ color: "hsl(0 0% 45%)" }}>{area.desc}</p>
-                            </div>
-                          </button>
-                        );
-                      })}
-                    </motion.div>
-                  )}
                 </div>
+
                 <div className={cardStyle}>
                   <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
                     <Layout className="w-4 h-4" style={{ color: iconColor }} /> Modo do Site
                   </h3>
-                  <p className="text-[10px] text-muted-foreground">
-                    Escolha como seu site será exibido para os clientes
-                  </p>
                   <div className="grid gap-2">
                     {[
-                      { value: "full", label: "Site Completo", desc: "Landing page + agendamento + loja + área do cliente" },
-                      { value: "booking", label: "Agendamento Direto", desc: "Apenas tela de agendamento sem landing page" },
+                      { value: "full", label: "Site Completo", desc: "Landing + agendamento + loja + área do cliente" },
+                      { value: "booking", label: "Agendamento Direto", desc: "Apenas tela de agendamento" },
                     ].map((mode) => (
                       <button key={mode.value} onClick={() => updateSetting("site_mode", mode.value)}
                         className="w-full text-left p-4 rounded-xl transition-all"
@@ -926,7 +912,9 @@ const Settings = () => {
                     ))}
                   </div>
                 </div>
+              </div>
 
+              <div className="space-y-4">
                 <div className={cardStyle}>
                   <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
                     <Type className="w-4 h-4" style={{ color: iconColor }} /> Textos do Site
@@ -934,159 +922,24 @@ const Settings = () => {
                   <div className="grid gap-4">
                     <div>
                       <label className={labelStyle}>Título Principal (Hero)</label>
-                      <input className="glass-input" value={settings.hero_title || ""} onChange={(e) => updateSetting("hero_title", e.target.value)}
-                        placeholder="Ex: GenesisBarber" />
+                      <input className="glass-input" value={settings.hero_title || ""} onChange={(e) => updateSetting("hero_title", e.target.value)} placeholder="Ex: GenesisBarber" />
                     </div>
                     <div>
                       <label className={labelStyle}>Subtítulo do Hero</label>
-                      <input className="glass-input" value={settings.hero_subtitle || ""} onChange={(e) => updateSetting("hero_subtitle", e.target.value)}
-                        placeholder="Ex: Barbearia Premium" />
+                      <input className="glass-input" value={settings.hero_subtitle || ""} onChange={(e) => updateSetting("hero_subtitle", e.target.value)} placeholder="Ex: Barbearia Premium" />
                     </div>
                     <div>
                       <label className={labelStyle}>Descrição do Hero</label>
-                      <textarea className="glass-input min-h-[70px] resize-none" value={settings.hero_description || ""} onChange={(e) => updateSetting("hero_description", e.target.value)}
-                        placeholder="Ex: Mais do que um corte — uma experiência de transformação." />
+                      <textarea className="glass-input min-h-[70px] resize-none" value={settings.hero_description || ""} onChange={(e) => updateSetting("hero_description", e.target.value)} />
                     </div>
                     <div>
-                      <label className={labelStyle}>Título da Seção Sobre</label>
-                      <input className="glass-input" value={settings.about_title || ""} onChange={(e) => updateSetting("about_title", e.target.value)}
-                        placeholder="Ex: Onde estilo encontra atitude" />
+                      <label className={labelStyle}>Título Sobre</label>
+                      <input className="glass-input" value={settings.about_title || ""} onChange={(e) => updateSetting("about_title", e.target.value)} />
                     </div>
                     <div>
                       <label className={labelStyle}>Descrição Sobre</label>
-                      <textarea className="glass-input min-h-[70px] resize-none" value={settings.about_description || ""} onChange={(e) => updateSetting("about_description", e.target.value)}
-                        placeholder="Texto descritivo sobre a barbearia" />
+                      <textarea className="glass-input min-h-[70px] resize-none" value={settings.about_description || ""} onChange={(e) => updateSetting("about_description", e.target.value)} />
                     </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                <div className={cardStyle}>
-                  <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                    <Palette className="w-4 h-4" style={{ color: iconColor }} /> Cores dos Botões
-                  </h3>
-                  <div className="grid gap-4">
-                    <div>
-                      <label className={labelStyle}>Botão Principal (Background)</label>
-                      <div className="flex items-center gap-3">
-                        <input type="color" value={settings.btn_primary_bg || "#F2F2F2"} onChange={(e) => updateSetting("btn_primary_bg", e.target.value)}
-                          className="w-10 h-10 rounded-lg cursor-pointer border-0 bg-transparent" />
-                        <input className="glass-input flex-1" value={settings.btn_primary_bg || "#F2F2F2"} onChange={(e) => updateSetting("btn_primary_bg", e.target.value)} />
-                      </div>
-                    </div>
-                    <div>
-                      <label className={labelStyle}>Botão Principal (Texto)</label>
-                      <div className="flex items-center gap-3">
-                        <input type="color" value={settings.btn_primary_text || "#111111"} onChange={(e) => updateSetting("btn_primary_text", e.target.value)}
-                          className="w-10 h-10 rounded-lg cursor-pointer border-0 bg-transparent" />
-                        <input className="glass-input flex-1" value={settings.btn_primary_text || "#111111"} onChange={(e) => updateSetting("btn_primary_text", e.target.value)} />
-                      </div>
-                    </div>
-                    <div>
-                      <label className={labelStyle}>Botão Secundário (Cor)</label>
-                      <div className="flex items-center gap-3">
-                        <input type="color" value={settings.btn_secondary_color || "#6C5CE7"} onChange={(e) => updateSetting("btn_secondary_color", e.target.value)}
-                          className="w-10 h-10 rounded-lg cursor-pointer border-0 bg-transparent" />
-                        <input className="glass-input flex-1" value={settings.btn_secondary_color || "#6C5CE7"} onChange={(e) => updateSetting("btn_secondary_color", e.target.value)} />
-                      </div>
-                    </div>
-                    {/* Preview */}
-                    <div>
-                      <label className={labelStyle}>Pré-visualização</label>
-                      <div className="flex gap-3 items-center p-4 rounded-xl" style={{ background: "hsl(0 0% 100% / 0.03)" }}>
-                        <button className="px-5 py-2.5 rounded-xl text-sm font-bold"
-                          style={{ background: settings.btn_primary_bg || "#F2F2F2", color: settings.btn_primary_text || "#111111" }}>
-                          Agendar
-                        </button>
-                        <button className="px-5 py-2.5 rounded-xl text-sm font-bold text-white"
-                          style={{ background: settings.btn_secondary_color || "#6C5CE7" }}>
-                          Adicionar
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className={cardStyle}>
-                  <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                    <ImageIcon className="w-4 h-4" style={{ color: iconColor }} /> Imagens do Slider (Hero)
-                  </h3>
-                  <p className="text-[10px] text-muted-foreground">
-                    Envie até 3 imagens para o slider principal do site. Recomendado: 1920x1080px
-                  </p>
-                  <div className="grid gap-3">
-                    {[1, 2, 3].map((i) => {
-                      const key = `hero_image_${i}`;
-                      return (
-                        <div key={i} className="flex items-center gap-3 p-3 rounded-xl" style={{ background: "hsl(0 0% 100% / 0.03)", border: "1px solid hsl(0 0% 100% / 0.06)" }}>
-                          <div className="w-16 h-10 rounded-lg overflow-hidden shrink-0 flex items-center justify-center" style={{ background: "hsl(0 0% 100% / 0.05)" }}>
-                            {settings[key] ? (
-                              <img src={settings[key]} alt={`Hero ${i}`} className="w-full h-full object-cover" />
-                            ) : (
-                              <ImageIcon className="w-4 h-4" style={{ color: "hsl(0 0% 35%)" }} />
-                            )}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-xs font-semibold">Imagem {i}</p>
-                            <p className="text-[10px] truncate" style={{ color: "hsl(0 0% 45%)" }}>
-                              {settings[key] ? "Imagem configurada" : "Nenhuma imagem"}
-                            </p>
-                          </div>
-                          <label className="px-3 py-1.5 rounded-lg text-[10px] font-semibold cursor-pointer transition-all shrink-0"
-                            style={{ background: "hsl(245 60% 55% / 0.1)", color: "hsl(245 60% 70%)", border: "1px solid hsl(245 60% 55% / 0.2)" }}>
-                            <Upload className="w-3 h-3 inline mr-1" /> Upload
-                            <input type="file" accept="image/*" className="hidden" onChange={async (e) => {
-                              const file = e.target.files?.[0];
-                              if (!file) return;
-                              try {
-                                const ext = file.name.split(".").pop();
-                                const fileName = `hero-${i}-${Date.now()}.${ext}`;
-                                await supabase.storage.from("public-assets").upload(fileName, file, { upsert: true });
-                                const { data: urlData } = supabase.storage.from("public-assets").getPublicUrl(fileName);
-                                updateSetting(key, urlData.publicUrl);
-                                toast.success(`Imagem ${i} enviada!`);
-                              } catch { toast.error("Erro ao enviar imagem"); }
-                            }} />
-                          </label>
-                          {settings[key] && (
-                            <button onClick={() => updateSetting(key, "")} className="p-1.5 rounded-lg hover:bg-white/5">
-                              <Trash2 className="w-3.5 h-3.5" style={{ color: "hsl(0 60% 55%)" }} />
-                            </button>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                <div className={cardStyle}>
-                  <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                    <ToggleLeft className="w-4 h-4" style={{ color: iconColor }} /> Módulos Visíveis
-                  </h3>
-                  <p className="text-[10px] text-muted-foreground">
-                    Ative ou desative seções do site
-                  </p>
-                  <div className="grid gap-2">
-                    {[
-                      { key: "show_gallery", label: "Galeria de Fotos" },
-                      { key: "show_about", label: "Seção Sobre" },
-                      { key: "show_store", label: "Loja (menu)" },
-                      { key: "show_cta", label: "Banner CTA" },
-                    ].map((mod) => (
-                      <button key={mod.key} onClick={() => updateSetting(mod.key, (settings[mod.key] || "true") === "true" ? "false" : "true")}
-                        className="flex items-center justify-between p-3 rounded-xl transition-all"
-                        style={{ background: "hsl(0 0% 100% / 0.03)", border: "1px solid hsl(0 0% 100% / 0.06)" }}>
-                        <span className="text-xs font-medium">{mod.label}</span>
-                        <div className="w-10 h-5 rounded-full flex items-center px-0.5 transition-all"
-                          style={{
-                            background: (settings[mod.key] || "true") === "true" ? "hsl(140 60% 45%)" : "hsl(0 0% 25%)",
-                            justifyContent: (settings[mod.key] || "true") === "true" ? "flex-end" : "flex-start",
-                          }}>
-                          <div className="w-4 h-4 rounded-full bg-white transition-all" />
-                        </div>
-                      </button>
-                    ))}
                   </div>
                 </div>
               </div>
@@ -1387,6 +1240,13 @@ const Settings = () => {
           />
         )}
       </AnimatePresence>
+
+      <MessageTemplatesModal
+        open={!!templateCategory}
+        category={templateCategory}
+        onOpenChange={(v) => { if (!v) setTemplateCategory(null); }}
+        onPick={(body) => { if (templateCategory) updateSetting(templateCategory, body); }}
+      />
     </div>
   );
 };

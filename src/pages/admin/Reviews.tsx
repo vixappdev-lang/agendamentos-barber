@@ -158,13 +158,13 @@ const Reviews = () => {
             </button>
           );
         })}
-        <div className="relative ml-auto">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+        <div className="relative ml-auto w-full sm:w-[320px]">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Buscar por nome ou comentário..."
-            className="pl-9 pr-3 py-2 rounded-lg border border-border bg-card/40 text-sm w-[260px] outline-none focus:border-primary/40"
+            className="w-full pl-9 pr-3 py-2 rounded-lg border border-border bg-card/40 text-sm outline-none focus:border-primary/40"
           />
         </div>
       </div>

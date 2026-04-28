@@ -309,13 +309,19 @@ SET FOREIGN_KEY_CHECKS = 1;
 
 const buildSeeds = (p: BarbershopProfile): string => {
   const userId = uuid();
+  // Apenas dados ESPECÍFICOS desta barbearia. Painel inicia limpo
+  // (sem serviços, barbeiros, agendamentos ou produtos de outras unidades).
   const settings: Array<[string, string]> = [
     ["business_name", p.name],
     ["business_slug", p.slug],
+    ["tenant_slug", p.slug],
     ["owner_email", p.owner_email],
+    ["site_status", "ativo"],
+    ["confirmation_mode", "auto"],
   ];
   if (p.owner_name) settings.push(["owner_name", p.owner_name]);
   if (p.phone) settings.push(["phone", p.phone]);
+  if (p.phone) settings.push(["whatsapp_number", p.phone.replace(/\D/g, "")]);
   if (p.address) settings.push(["address", p.address]);
 
   const settingsValues = settings
@@ -332,25 +338,27 @@ const buildSeeds = (p: BarbershopProfile): string => {
 
   return `
 -- =====================================================================
--- SEEDS personalizados deste perfil
+-- SEEDS — somente dados específicos desta barbearia.
+-- Tabelas operacionais (services, barbers, appointments, products,
+-- orders, coupons, reviews) ficam VAZIAS para o painel iniciar limpo.
 -- =====================================================================
 
 -- Login do dono (senha bcrypt — mesma definida no painel admin)
 INSERT INTO \`users\` (\`id\`, \`email\`, \`password_hash\`, \`name\`, \`role\`)
 VALUES (${esc(userId)}, ${esc(p.owner_email)}, ${esc(p.owner_password)}, ${esc(p.owner_name ?? "Admin")}, 'admin');
 
--- Permissões granulares do painel (pode ser lido por qualquer linguagem do backend)
+-- Permissões granulares do painel
 INSERT INTO \`user_permissions\` (\`id\`, \`user_id\`, \`permission_key\`, \`enabled\`) VALUES
 ${permissionsValues};
 
--- Configurações da barbearia
+-- Configurações iniciais da barbearia
 INSERT INTO \`business_settings\` (\`id\`, \`key\`, \`value\`) VALUES
 ${settingsValues};
 
--- (ChatPro NÃO é semeado — cada barbearia configura o seu próprio no painel)
+-- (ChatPro NÃO é semeado — cada barbearia configura no painel)
 
 -- =====================================================================
--- Fim do schema. Banco pronto. Login no painel:
+-- Login no painel:
 --   Email: ${p.owner_email}
 --   Senha: (a definida ao criar o perfil)
 -- =====================================================================
