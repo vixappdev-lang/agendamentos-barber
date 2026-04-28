@@ -19,6 +19,7 @@ import {
   Wallet,
   Building2,
   Star,
+} from "lucide-react";
 import { isSuperAdmin } from "@/lib/superAdmin";
 
 interface NavItem {
