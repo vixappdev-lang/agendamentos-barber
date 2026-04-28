@@ -1240,6 +1240,13 @@ const Settings = () => {
           />
         )}
       </AnimatePresence>
+
+      <MessageTemplatesModal
+        open={!!templateCategory}
+        category={templateCategory}
+        onOpenChange={(v) => { if (!v) setTemplateCategory(null); }}
+        onPick={(body) => { if (templateCategory) updateSetting(templateCategory, body); }}
+      />
     </div>
   );
 };
