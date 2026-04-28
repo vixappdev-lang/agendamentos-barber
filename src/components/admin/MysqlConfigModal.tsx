@@ -11,8 +11,30 @@ import { supabase } from "@/integrations/supabase/client";
 import type { BarbershopProfile } from "@/hooks/useBarbershops";
 import { useQueryClient } from "@tanstack/react-query";
 
+// Sanitiza host: aceita "https://x.com/", "x.com:3306", "tcp://x.com" etc → "x.com"
+const sanitizeHost = (raw: string): string => {
+  let h = raw.trim();
+  // remove protocolo
+  h = h.replace(/^[a-zA-Z]+:\/\//, "");
+  // remove path/query
+  h = h.split("/")[0].split("?")[0];
+  // remove porta (capturada em campo separado)
+  h = h.split(":")[0];
+  return h;
+};
+
+const HOSTNAME_RE = /^(?=.{1,253}$)([a-zA-Z0-9_]([a-zA-Z0-9-_]{0,61}[a-zA-Z0-9_])?)(\.[a-zA-Z0-9_]([a-zA-Z0-9-_]{0,61}[a-zA-Z0-9_])?)*$|^(\d{1,3}\.){3}\d{1,3}$/;
+
 const schema = z.object({
-  host: z.string().trim().min(1, "Host obrigatório").max(255),
+  host: z
+    .string()
+    .trim()
+    .min(1, "Host obrigatório")
+    .max(255)
+    .transform(sanitizeHost)
+    .refine((v) => HOSTNAME_RE.test(v), {
+      message: "Host inválido. Use apenas o domínio (ex: mysql.seudominio.com.br) — sem https:// nem barras.",
+    }),
   port: z.coerce.number().int().min(1).max(65535),
   database_name: z.string().trim().min(1, "Banco obrigatório").max(64),
   username: z.string().trim().min(1, "Usuário obrigatório").max(64),
@@ -116,10 +138,17 @@ export const MysqlConfigModal = ({ open, onOpenChange, barbershop }: Props) => {
       toast({ title: "Conexão MySQL salva" });
       setExistingProfileId(profileId);
       return profileId;
-    } catch (e) {
+    } catch (e: any) {
+      const description =
+        e?.message ||
+        e?.error_description ||
+        e?.error ||
+        e?.hint ||
+        e?.details ||
+        (typeof e === "string" ? e : JSON.stringify(e));
       toast({
         title: "Erro ao salvar",
-        description: e instanceof Error ? e.message : String(e),
+        description,
         variant: "destructive",
       });
       return null;
@@ -151,8 +180,9 @@ export const MysqlConfigModal = ({ open, onOpenChange, barbershop }: Props) => {
         ok: true,
         msg: `Conectado! MySQL ${data.data?.version ?? "?"} • banco ${data.data?.database}`,
       });
-    } catch (e) {
-      setTestResult({ ok: false, msg: e instanceof Error ? e.message : String(e) });
+    } catch (e: any) {
+      const msg = e?.message || e?.error_description || e?.error || (typeof e === "string" ? e : JSON.stringify(e));
+      setTestResult({ ok: false, msg });
     } finally {
       setTesting(false);
     }
@@ -172,7 +202,16 @@ export const MysqlConfigModal = ({ open, onOpenChange, barbershop }: Props) => {
           <div className="grid grid-cols-3 gap-3">
             <div className="col-span-2">
               <Label htmlFor="host">Host *</Label>
-              <Input id="host" value={form.host} onChange={(e) => setForm((p) => ({ ...p, host: e.target.value }))} placeholder="ex: mysql.cliente.com.br" />
+              <Input
+                id="host"
+                value={form.host}
+                onChange={(e) => setForm((p) => ({ ...p, host: e.target.value }))}
+                onBlur={(e) => setForm((p) => ({ ...p, host: sanitizeHost(e.target.value) }))}
+                placeholder="ex: mysql.cliente.com.br"
+              />
+              <p className="text-[10px] text-muted-foreground mt-1">
+                Apenas o domínio — sem <code>https://</code> ou <code>/</code>.
+              </p>
             </div>
             <div>
               <Label htmlFor="port">Porta *</Label>
