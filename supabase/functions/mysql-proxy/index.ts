@@ -342,7 +342,7 @@ Deno.serve(async (req: Request) => {
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_ANON_KEY")!,
-      { global: { headers: { Authorization: authHeader } } },
+      { global: { headers: { Authorization: authHeader! } } },
     );
 
     const token = authHeader.replace("Bearer ", "");
@@ -515,8 +515,9 @@ Deno.serve(async (req: Request) => {
             : "*";
         const w = buildWhere(where);
         let sql = `SELECT ${cols} FROM ${ident(table)}${w.sql}`;
-        if (order && order.column) {
-          sql += ` ORDER BY ${ident(order.column)} ${order.ascending === false ? "DESC" : "ASC"}`;
+        const firstOrder = Array.isArray(order) ? order[0] : order;
+        if (firstOrder && firstOrder.column) {
+          sql += ` ORDER BY ${ident(firstOrder.column)} ${firstOrder.ascending === false ? "DESC" : "ASC"}`;
         }
         if (limit && Number.isFinite(Number(limit))) {
           sql += ` LIMIT ${Number(limit)}`;
