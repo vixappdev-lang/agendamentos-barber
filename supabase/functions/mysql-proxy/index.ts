@@ -212,6 +212,70 @@ Deno.serve(async (req: Request) => {
 
     if (!action) throw new Error("Missing action");
 
+    if (action === "save_profile") {
+      const host = sanitizeHost(body.host);
+      if (!HOSTNAME_RE.test(host)) {
+        throw new Error("Host inválido. Informe apenas domínio ou IP, sem https://, barra ou caminho.");
+      }
+      const port = Number(body.port) || 3306;
+      if (!Number.isInteger(port) || port < 1 || port > 65535) throw new Error("Porta inválida");
+      const database_name = requireText(body.database_name, "Banco", 64);
+      const username = requireText(body.username, "Usuário", 64);
+      const name = requireText(body.name || "MySQL", "Nome", 255);
+      const barbershop_id = body.barbershop_id ? String(body.barbershop_id) : null;
+      let password_encrypted: string | null = null;
+
+      if (body.password) {
+        const { data: encrypted, error: encErr } = await admin.rpc("encrypt_mysql_password", {
+          _plain: String(body.password),
+        });
+        if (encErr) throw new Error(`Encrypt failed: ${encErr.message}`);
+        password_encrypted = encrypted as string;
+      } else if (profile_id) {
+        const { data: existing, error: existingErr } = await admin
+          .from("mysql_profiles")
+          .select("password_encrypted")
+          .eq("id", profile_id)
+          .maybeSingle();
+        if (existingErr) throw new Error(`Profile lookup failed: ${existingErr.message}`);
+        password_encrypted = existing?.password_encrypted ?? null;
+      }
+
+      if (!password_encrypted) throw new Error("Senha obrigatória para salvar a conexão MySQL");
+
+      const payload = {
+        name,
+        host,
+        port,
+        database_name,
+        username,
+        password_encrypted,
+        ssl_enabled: Boolean(body.ssl_enabled),
+      };
+
+      let savedId = profile_id as string | undefined;
+      if (savedId) {
+        const { error } = await admin.from("mysql_profiles").update(payload).eq("id", savedId);
+        if (error) throw new Error(`Save failed: ${error.message}`);
+      } else {
+        const { data, error } = await admin.from("mysql_profiles").insert(payload).select("id").single();
+        if (error) throw new Error(`Save failed: ${error.message}`);
+        savedId = data.id;
+      }
+
+      if (barbershop_id) {
+        const { error: linkErr } = await admin
+          .from("barbershop_profiles")
+          .update({ mysql_profile_id: savedId })
+          .eq("id", barbershop_id);
+        if (linkErr) throw new Error(`Link failed: ${linkErr.message}`);
+      }
+
+      return new Response(JSON.stringify({ success: true, data: { profile_id: savedId, host, database_name } }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const profile = await getProfile(admin, profile_id);
     const password = await decryptPassword(admin, profile.password_encrypted);
 
