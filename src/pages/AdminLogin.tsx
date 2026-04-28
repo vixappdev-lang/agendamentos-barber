@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { ArrowRight, Lock, Mail, Scissors, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { useThemeColors } from "@/hooks/useThemeColors";
+import { clearAdminMysqlSession, setAdminMysqlSession } from "@/lib/adminMysqlSession";
 
 const floatingOrbs = [
   { size: 500, x: ["0%", "3%", "-2%", "0%"], y: ["0%", "-2%", "3%", "0%"], duration: 8, color: "hsl(245 80% 55% / 0.25)", blur: 80, left: "5%", top: "15%" },
@@ -22,6 +23,21 @@ const AdminLogin = () => {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+
+    clearAdminMysqlSession();
+
+    const { data: mysqlLogin } = await supabase.functions.invoke("mysql-proxy", {
+      body: { action: "login", email, password },
+    });
+
+    if (mysqlLogin?.success && mysqlLogin.data?.token) {
+      setAdminMysqlSession(mysqlLogin.data);
+      await supabase.auth.signOut();
+      toast.success("Bem-vindo ao painel Genesis!");
+      navigate("/admin");
+      setLoading(false);
+      return;
+    }
 
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
