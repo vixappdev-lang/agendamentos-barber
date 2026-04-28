@@ -292,7 +292,7 @@ const Settings = () => {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-stretch">
               {/* Coluna esquerda — Identidade + Endereço */}
               <div className="space-y-4 flex flex-col">
-                <div className={cardStyle}>
+                <div className={`${cardStyle} lg:min-h-[330px]`}>
                   <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
                     <Store className="w-4 h-4" style={{ color: iconColor }} /> Informações Básicas
                   </h3>
@@ -355,7 +355,7 @@ const Settings = () => {
 
               {/* Coluna direita — Contato + Redes & Links */}
               <div className="space-y-4 flex flex-col">
-                <div className={cardStyle}>
+                <div className={`${cardStyle} lg:min-h-[330px]`}>
                   <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
                     <Phone className="w-4 h-4" style={{ color: iconColor }} /> Contato
                   </h3>
