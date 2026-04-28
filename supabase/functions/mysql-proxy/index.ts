@@ -510,25 +510,86 @@ Deno.serve(async (req: Request) => {
           orders_completed: 0,
           revenue_total: 0,
           revenue_today: 0,
+          revenue_week: 0,
+          revenue_month: 0,
+          avg_ticket: 0,
+          completion_rate: 0,
           reviews_avg: 0,
+          reviews_5: 0,
+          reviews_4: 0,
+          reviews_3: 0,
+          reviews_2: 0,
+          reviews_1: 0,
           users_total: 0,
+          orders_revenue_total: 0,
         };
-        const safe = async (sql: string, key: string, mapper: (v: any) => number = (v) => Number(v) || 0) => {
+        const lists: Record<string, any[]> = {
+          top_services: [],
+          top_barbers: [],
+          upcoming: [],
+          recent_orders: [],
+        };
+        const safeNum = async (sql: string, key: string, mapper: (v: any) => number = (v) => Number(v) || 0) => {
           try {
             const [rows] = await conn.query(sql);
             extras[key] = mapper((rows as any[])[0]);
           } catch { /* ignore */ }
         };
-        await safe(`SELECT COUNT(*) AS c FROM appointments WHERE appointment_date = CURDATE()`, "appointments_today", (r) => Number(r?.c) || 0);
-        await safe(`SELECT COUNT(*) AS c FROM appointments WHERE status = 'pending'`, "appointments_pending", (r) => Number(r?.c) || 0);
-        await safe(`SELECT COUNT(*) AS c FROM appointments WHERE status = 'completed'`, "appointments_completed", (r) => Number(r?.c) || 0);
-        await safe(`SELECT COUNT(*) AS c FROM appointments WHERE status = 'cancelled'`, "appointments_cancelled", (r) => Number(r?.c) || 0);
-        await safe(`SELECT COUNT(*) AS c FROM orders WHERE status = 'pending'`, "orders_pending", (r) => Number(r?.c) || 0);
-        await safe(`SELECT COUNT(*) AS c FROM orders WHERE status = 'completed'`, "orders_completed", (r) => Number(r?.c) || 0);
-        await safe(`SELECT COALESCE(SUM(total_price),0) AS s FROM appointments WHERE status = 'completed'`, "revenue_total", (r) => Number(r?.s) || 0);
-        await safe(`SELECT COALESCE(SUM(total_price),0) AS s FROM appointments WHERE status = 'completed' AND appointment_date = CURDATE()`, "revenue_today", (r) => Number(r?.s) || 0);
-        await safe(`SELECT COALESCE(AVG(rating),0) AS s FROM reviews`, "reviews_avg", (r) => Number(r?.s) || 0);
-        await safe(`SELECT COUNT(*) AS c FROM users`, "users_total", (r) => Number(r?.c) || 0);
+        const safeList = async (sql: string, key: string) => {
+          try {
+            const [rows] = await conn.query(sql);
+            lists[key] = rows as any[];
+          } catch { /* ignore */ }
+        };
+        await safeNum(`SELECT COUNT(*) AS c FROM appointments WHERE appointment_date = CURDATE()`, "appointments_today", (r) => Number(r?.c) || 0);
+        await safeNum(`SELECT COUNT(*) AS c FROM appointments WHERE status = 'pending'`, "appointments_pending", (r) => Number(r?.c) || 0);
+        await safeNum(`SELECT COUNT(*) AS c FROM appointments WHERE status = 'completed'`, "appointments_completed", (r) => Number(r?.c) || 0);
+        await safeNum(`SELECT COUNT(*) AS c FROM appointments WHERE status = 'cancelled'`, "appointments_cancelled", (r) => Number(r?.c) || 0);
+        await safeNum(`SELECT COUNT(*) AS c FROM orders WHERE status = 'pending'`, "orders_pending", (r) => Number(r?.c) || 0);
+        await safeNum(`SELECT COUNT(*) AS c FROM orders WHERE status = 'completed'`, "orders_completed", (r) => Number(r?.c) || 0);
+        await safeNum(`SELECT COALESCE(SUM(total_price),0) AS s FROM appointments WHERE status = 'completed'`, "revenue_total", (r) => Number(r?.s) || 0);
+        await safeNum(`SELECT COALESCE(SUM(total_price),0) AS s FROM appointments WHERE status = 'completed' AND appointment_date = CURDATE()`, "revenue_today", (r) => Number(r?.s) || 0);
+        await safeNum(`SELECT COALESCE(SUM(total_price),0) AS s FROM appointments WHERE status = 'completed' AND appointment_date >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)`, "revenue_week", (r) => Number(r?.s) || 0);
+        await safeNum(`SELECT COALESCE(SUM(total_price),0) AS s FROM appointments WHERE status = 'completed' AND appointment_date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)`, "revenue_month", (r) => Number(r?.s) || 0);
+        await safeNum(`SELECT COALESCE(AVG(total_price),0) AS s FROM appointments WHERE status = 'completed' AND total_price > 0`, "avg_ticket", (r) => Number(r?.s) || 0);
+        await safeNum(`SELECT COALESCE(SUM(total_price),0) AS s FROM orders WHERE status = 'completed'`, "orders_revenue_total", (r) => Number(r?.s) || 0);
+        await safeNum(`SELECT COALESCE(AVG(rating),0) AS s FROM reviews`, "reviews_avg", (r) => Number(r?.s) || 0);
+        await safeNum(`SELECT COUNT(*) AS c FROM reviews WHERE rating = 5`, "reviews_5", (r) => Number(r?.c) || 0);
+        await safeNum(`SELECT COUNT(*) AS c FROM reviews WHERE rating = 4`, "reviews_4", (r) => Number(r?.c) || 0);
+        await safeNum(`SELECT COUNT(*) AS c FROM reviews WHERE rating = 3`, "reviews_3", (r) => Number(r?.c) || 0);
+        await safeNum(`SELECT COUNT(*) AS c FROM reviews WHERE rating = 2`, "reviews_2", (r) => Number(r?.c) || 0);
+        await safeNum(`SELECT COUNT(*) AS c FROM reviews WHERE rating = 1`, "reviews_1", (r) => Number(r?.c) || 0);
+        await safeNum(`SELECT COUNT(*) AS c FROM users`, "users_total", (r) => Number(r?.c) || 0);
+
+        const totalDone = extras.appointments_completed;
+        const totalAll = totalDone + extras.appointments_cancelled + extras.appointments_pending;
+        extras.completion_rate = totalAll > 0 ? Math.round((totalDone / totalAll) * 100) : 0;
+
+        await safeList(
+          `SELECT COALESCE(s.title, a.service_name, 'Serviço') AS name, COUNT(*) AS total, COALESCE(SUM(a.total_price),0) AS revenue
+           FROM appointments a LEFT JOIN services s ON s.id = a.service_id
+           WHERE a.status = 'completed'
+           GROUP BY name ORDER BY total DESC LIMIT 5`,
+          "top_services",
+        );
+        await safeList(
+          `SELECT COALESCE(barber_name, 'Sem barbeiro') AS name, COUNT(*) AS total, COALESCE(SUM(total_price),0) AS revenue
+           FROM appointments WHERE status = 'completed'
+           GROUP BY name ORDER BY total DESC LIMIT 5`,
+          "top_barbers",
+        );
+        await safeList(
+          `SELECT customer_name, appointment_date, appointment_time, barber_name, status
+           FROM appointments
+           WHERE appointment_date >= CURDATE() AND status IN ('pending','confirmed')
+           ORDER BY appointment_date ASC, appointment_time ASC LIMIT 5`,
+          "upcoming",
+        );
+        await safeList(
+          `SELECT customer_name, total_price, status, created_at
+           FROM orders ORDER BY created_at DESC LIMIT 5`,
+          "recent_orders",
+        );
 
         // Versão MySQL e nome do banco para info
         let mysql_version = "";
@@ -541,6 +602,7 @@ Deno.serve(async (req: Request) => {
           success: true,
           data: stats,
           extras,
+          lists,
           info: {
             mysql_version,
             database: profile.database_name,
