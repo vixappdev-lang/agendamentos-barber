@@ -39,7 +39,26 @@ const ALLOWED_TABLES = new Set([
   "chatpro_config",
   "prize_wheel_slices",
   "user_roles",
+  "user_permissions",
+  "reviews",
 ]);
+
+const sanitizeHost = (raw: unknown): string => {
+  let h = String(raw ?? "").trim();
+  h = h.replace(/^[a-zA-Z]+:\/\//, "");
+  h = h.split("/")[0].split("?")[0];
+  h = h.split(":")[0];
+  return h;
+};
+
+const HOSTNAME_RE = /^(?=.{1,253}$)([a-zA-Z0-9_]([a-zA-Z0-9-_]{0,61}[a-zA-Z0-9_])?)(\.[a-zA-Z0-9_]([a-zA-Z0-9-_]{0,61}[a-zA-Z0-9_])?)*$|^(\d{1,3}\.){3}\d{1,3}$/;
+
+const requireText = (value: unknown, label: string, max = 255): string => {
+  const out = String(value ?? "").trim();
+  if (!out) throw new Error(`${label} obrigatório`);
+  if (out.length > max) throw new Error(`${label} muito longo`);
+  return out;
+};
 
 const ident = (name: string): string => {
   if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(name)) {
