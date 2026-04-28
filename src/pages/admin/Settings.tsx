@@ -218,23 +218,25 @@ const Settings = () => {
         >
           {/* ===== DADOS DA BARBEARIA ===== */}
           {activeTab === "business" && (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              <div className={cardStyle}>
-                <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                  <Store className="w-4 h-4" style={{ color: iconColor }} /> Informações Básicas
-                </h3>
-                <div className="grid gap-4">
-                  <div>
-                    <label className={labelStyle}>Nome da Barbearia</label>
-                    <input className="glass-input" value={settings.business_name || ""} onChange={(e) => updateSetting("business_name", e.target.value)} />
-                  </div>
-                  <div>
-                    <label className={labelStyle}>Slogan</label>
-                    <input className="glass-input" value={settings.slogan || ""} onChange={(e) => updateSetting("slogan", e.target.value)} placeholder="Ex: Estilo que define você" />
-                  </div>
-                  <div>
-                    <label className={labelStyle}>Descrição</label>
-                    <textarea className="glass-input min-h-[70px] resize-none" value={settings.description || ""} onChange={(e) => updateSetting("description", e.target.value)} placeholder="Breve descrição da barbearia" />
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-stretch">
+              <div className="space-y-4 h-full flex flex-col">
+                <div className={`${cardStyle} flex-1`}>
+                  <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                    <Store className="w-4 h-4" style={{ color: iconColor }} /> Informações Básicas
+                  </h3>
+                  <div className="grid gap-4">
+                    <div>
+                      <label className={labelStyle}>Nome da Barbearia</label>
+                      <input className="glass-input" value={settings.business_name || ""} onChange={(e) => updateSetting("business_name", e.target.value)} />
+                    </div>
+                    <div>
+                      <label className={labelStyle}>Slogan</label>
+                      <input className="glass-input" value={settings.slogan || ""} onChange={(e) => updateSetting("slogan", e.target.value)} placeholder="Ex: Estilo que define você" />
+                    </div>
+                    <div>
+                      <label className={labelStyle}>Descrição</label>
+                      <textarea className="glass-input min-h-[120px] resize-none" value={settings.description || ""} onChange={(e) => updateSetting("description", e.target.value)} placeholder="Breve descrição da barbearia" />
+                    </div>
                   </div>
                 </div>
               </div>
