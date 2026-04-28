@@ -312,7 +312,7 @@ const Settings = () => {
                   </div>
                 </div>
 
-                <div className={cardStyle}>
+                <div className={`${cardStyle} flex-1 flex flex-col`}>
                   <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
                     <MapPin className="w-4 h-4" style={{ color: iconColor }} /> Endereço
                   </h3>
@@ -375,7 +375,7 @@ const Settings = () => {
                   </div>
                 </div>
 
-                <div className={cardStyle}>
+                <div className={`${cardStyle} flex-1 flex flex-col`}>
                   <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
                     <Globe className="w-4 h-4" style={{ color: iconColor }} /> Redes Sociais & Links
                   </h3>
@@ -673,7 +673,7 @@ const Settings = () => {
                 </div>
 
                 {/* Comportamento do Cliente */}
-                <div className={cardStyle}>
+                <div className={`${cardStyle} flex-1 flex flex-col`}>
                   <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
                     <Settings2 className="w-4 h-4" style={{ color: iconColor }} /> Comportamento do Cliente
                   </h3>
@@ -794,7 +794,7 @@ const Settings = () => {
                 </div>
 
                 {/* Configurações Avançadas */}
-                <div className={cardStyle}>
+                <div className={`${cardStyle} flex-1 flex flex-col`}>
                   <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
                     <Timer className="w-4 h-4" style={{ color: iconColor }} /> Configurações Avançadas
                   </h3>
