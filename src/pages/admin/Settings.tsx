@@ -11,6 +11,74 @@ import {
 import { toast } from "sonner";
 import LocationPickerModal from "@/components/LocationPickerModal";
 import { useThemeColors } from "@/hooks/useThemeColors";
+import { MessageTemplatesModal } from "@/components/admin/MessageTemplatesModal";
+import type { TemplateCategory } from "@/lib/messageTemplates";
+
+// Toggle card padrão (substitui checkboxes feios da aba Agendamento)
+const ToggleCard = ({
+  active,
+  onToggle,
+  title,
+  description,
+  icon,
+}: {
+  active: boolean;
+  onToggle: () => void;
+  title: string;
+  description: string;
+  icon?: React.ReactNode;
+}) => (
+  <button
+    type="button"
+    onClick={onToggle}
+    className="w-full text-left p-3.5 rounded-xl transition-all flex items-start gap-3 group"
+    style={{
+      background: active ? "hsl(245 60% 55% / 0.1)" : "hsl(0 0% 100% / 0.025)",
+      border: `1px solid ${active ? "hsl(245 60% 55% / 0.3)" : "hsl(0 0% 100% / 0.05)"}`,
+    }}
+  >
+    {icon && (
+      <div
+        className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 mt-0.5 transition-colors"
+        style={{
+          background: active ? "hsl(245 60% 55% / 0.15)" : "hsl(0 0% 100% / 0.04)",
+          color: active ? "hsl(245 60% 70%)" : "hsl(0 0% 50%)",
+        }}
+      >
+        {icon}
+      </div>
+    )}
+    <div className="flex-1 min-w-0">
+      <p className="text-xs font-semibold text-foreground leading-tight">{title}</p>
+      <p className="text-[10.5px] text-muted-foreground leading-snug mt-0.5">{description}</p>
+    </div>
+    <div
+      className="w-9 h-5 rounded-full flex items-center px-0.5 transition-all shrink-0 mt-1"
+      style={{
+        background: active ? "hsl(245 60% 55%)" : "hsl(0 0% 22%)",
+        justifyContent: active ? "flex-end" : "flex-start",
+      }}
+    >
+      <div className="w-4 h-4 rounded-full bg-white transition-all shadow" />
+    </div>
+  </button>
+);
+
+// Botão "Templates" reutilizável
+const TemplatePickerBtn = ({ onClick }: { onClick: () => void }) => (
+  <button
+    type="button"
+    onClick={onClick}
+    className="text-[10px] font-semibold inline-flex items-center gap-1 px-2 py-1 rounded-md transition-colors"
+    style={{
+      background: "hsl(245 60% 55% / 0.1)",
+      color: "hsl(245 60% 75%)",
+      border: "1px solid hsl(245 60% 55% / 0.25)",
+    }}
+  >
+    <Wand2 className="w-3 h-3" /> Templates
+  </button>
+);
 
 const dayLabels = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 
