@@ -10,10 +10,13 @@ import {
   Lock,
   Cloud,
   CheckCircle2,
-  XCircle,
   Circle,
   Loader2,
   AlertTriangle,
+  BarChart3,
+  Database as DbIcon,
+  Mail,
+  Phone as PhoneIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -39,6 +42,7 @@ import { useSuperAdmin } from "@/hooks/useSuperAdmin";
 import { useBarbershops, useDeleteBarbershop, type BarbershopProfile } from "@/hooks/useBarbershops";
 import { BarbershopFormModal } from "@/components/admin/BarbershopFormModal";
 import { MysqlConfigModal } from "@/components/admin/MysqlConfigModal";
+import { BarbershopMonitorModal } from "@/components/admin/BarbershopMonitorModal";
 import { downloadProfileSQL } from "@/lib/profileSqlGenerator";
 
 const PER_PAGE = 10;
@@ -46,22 +50,53 @@ const PER_PAGE = 10;
 const StatusBadge = ({ p }: { p: BarbershopProfile }) => {
   if (p.is_cloud) {
     return (
-      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-blue-500/10 text-blue-400 border border-blue-500/20">
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-blue-500/10 text-blue-400 border border-blue-500/20">
         <Cloud className="w-3 h-3" /> Lovable Cloud
       </span>
     );
   }
   if (!p.mysql_profile_id) {
     return (
-      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-muted text-muted-foreground border border-border">
-        <Circle className="w-3 h-3" /> MySQL não configurado
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-muted text-muted-foreground border border-border">
+        <Circle className="w-3 h-3" /> MySQL pendente
       </span>
     );
   }
   return (
-    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-green-500/10 text-green-400 border border-green-500/20">
+    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-green-500/10 text-green-400 border border-green-500/20">
       <CheckCircle2 className="w-3 h-3" /> MySQL conectado
     </span>
+  );
+};
+
+interface OverviewCardProps {
+  label: string;
+  value: string | number;
+  icon: typeof Building2;
+  tone?: "primary" | "info" | "success" | "muted";
+}
+
+const OverviewCard = ({ label, value, icon: Icon, tone = "primary" }: OverviewCardProps) => {
+  const tones: Record<string, { bg: string; fg: string }> = {
+    primary: { bg: "hsl(245 60% 55% / 0.12)", fg: "hsl(245 60% 70%)" },
+    info: { bg: "hsl(200 70% 55% / 0.12)", fg: "hsl(200 70% 65%)" },
+    success: { bg: "hsl(140 60% 50% / 0.12)", fg: "hsl(140 60% 60%)" },
+    muted: { bg: "hsl(0 0% 100% / 0.05)", fg: "hsl(0 0% 75%)" },
+  };
+  const t = tones[tone];
+  return (
+    <div className="rounded-xl border border-border bg-card/60 backdrop-blur-sm p-4 flex items-center gap-3">
+      <div
+        className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
+        style={{ background: t.bg }}
+      >
+        <Icon className="w-5 h-5" style={{ color: t.fg }} />
+      </div>
+      <div className="min-w-0">
+        <p className="text-[11px] uppercase tracking-wide text-muted-foreground">{label}</p>
+        <p className="text-2xl font-bold text-foreground leading-tight">{value}</p>
+      </div>
+    </div>
   );
 };
 
@@ -75,6 +110,7 @@ const Barbershops = () => {
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<BarbershopProfile | null>(null);
   const [mysqlFor, setMysqlFor] = useState<BarbershopProfile | null>(null);
+  const [monitorFor, setMonitorFor] = useState<BarbershopProfile | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<BarbershopProfile | null>(null);
 
   const totalPages = Math.max(1, Math.ceil(barbershops.length / PER_PAGE));
@@ -83,14 +119,20 @@ const Barbershops = () => {
     [barbershops, page],
   );
 
+  const overview = useMemo(() => {
+    const total = barbershops.length;
+    const cloud = barbershops.filter((b) => b.is_cloud).length;
+    const mysql = barbershops.filter((b) => !b.is_cloud && b.mysql_profile_id).length;
+    const pending = barbershops.filter((b) => !b.is_cloud && !b.mysql_profile_id).length;
+    return { total, cloud, mysql, pending };
+  }, [barbershops]);
+
   if (!loadingAdmin && !isSuperAdmin) {
     return (
       <div className="max-w-md mx-auto mt-20 text-center space-y-4">
         <AlertTriangle className="w-12 h-12 mx-auto text-amber-500" />
         <h2 className="text-xl font-bold text-foreground">Acesso restrito</h2>
-        <p className="text-muted-foreground">
-          Esta área é exclusiva do super admin.
-        </p>
+        <p className="text-muted-foreground">Esta área é exclusiva do super admin.</p>
         <Button onClick={() => navigate("/admin")}>Voltar ao painel</Button>
       </div>
     );
@@ -98,13 +140,14 @@ const Barbershops = () => {
 
   return (
     <div className="space-y-6">
+      {/* Header */}
       <header className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 className="text-2xl font-bold text-foreground flex items-center gap-2">
             <Building2 className="w-6 h-6" /> Perfis de Barbearias
           </h2>
           <p className="text-sm text-muted-foreground mt-1">
-            Gerencie barbearias clientes. Cada uma tem seu próprio MySQL e .sql para importar.
+            Gerencie barbearias clientes — cada uma com seu próprio MySQL e SQL para importar.
           </p>
         </div>
         <Button onClick={() => { setEditing(null); setFormOpen(true); }}>
@@ -112,94 +155,142 @@ const Barbershops = () => {
         </Button>
       </header>
 
+      {/* Dashboard de overview */}
+      <section className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <OverviewCard label="Total" value={overview.total} icon={Building2} tone="primary" />
+        <OverviewCard label="No Cloud" value={overview.cloud} icon={Cloud} tone="info" />
+        <OverviewCard label="MySQL ativo" value={overview.mysql} icon={DbIcon} tone="success" />
+        <OverviewCard label="Pendentes" value={overview.pending} icon={Circle} tone="muted" />
+      </section>
+
+      {/* Lista */}
       {isLoading ? (
         <div className="flex justify-center py-16">
           <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
         </div>
       ) : barbershops.length === 0 ? (
-        <div className="text-center py-16 text-muted-foreground">
+        <div className="text-center py-16 text-muted-foreground rounded-xl border border-dashed border-border">
           Nenhuma barbearia cadastrada ainda.
         </div>
       ) : (
         <>
           <div className="grid gap-3">
             {pageItems.map((p) => (
-              <div
+              <article
                 key={p.id}
-                className="rounded-xl border border-border bg-card p-4 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4"
+                className="group rounded-xl border border-border bg-card/60 backdrop-blur-sm p-4 transition-all hover:border-primary/30 hover:bg-card/80"
               >
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <h3 className="font-semibold text-foreground truncate">{p.name}</h3>
-                    {p.is_locked && (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-amber-500/10 text-amber-500 border border-amber-500/20">
-                        <Lock className="w-3 h-3" /> Travado
-                      </span>
-                    )}
-                    <StatusBadge p={p} />
+                <div className="flex flex-col lg:flex-row lg:items-center gap-4">
+                  {/* Avatar + Info */}
+                  <div className="flex items-start gap-3 flex-1 min-w-0">
+                    <div
+                      className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0 text-base font-bold uppercase"
+                      style={{
+                        background: p.is_cloud
+                          ? "hsl(200 70% 55% / 0.12)"
+                          : "hsl(245 60% 55% / 0.12)",
+                        color: p.is_cloud ? "hsl(200 70% 65%)" : "hsl(245 60% 70%)",
+                        border: `1px solid ${p.is_cloud ? "hsl(200 70% 55% / 0.25)" : "hsl(245 60% 55% / 0.25)"}`,
+                      }}
+                    >
+                      {p.name.slice(0, 2)}
+                    </div>
+
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h3 className="font-semibold text-foreground truncate">{p.name}</h3>
+                        {p.is_locked && (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-500/10 text-amber-500 border border-amber-500/20">
+                            <Lock className="w-3 h-3" /> Travado
+                          </span>
+                        )}
+                        <StatusBadge p={p} />
+                      </div>
+                      <div className="text-xs text-muted-foreground mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1">
+                        <span className="inline-flex items-center gap-1">
+                          <span className="opacity-60">slug:</span>
+                          <code className="text-foreground/80 px-1.5 py-0.5 rounded bg-muted/50 text-[11px]">
+                            {p.slug}
+                          </code>
+                        </span>
+                        <span className="inline-flex items-center gap-1">
+                          <Mail className="w-3 h-3" />
+                          {p.owner_email}
+                        </span>
+                        {p.phone && (
+                          <span className="inline-flex items-center gap-1">
+                            <PhoneIcon className="w-3 h-3" /> {p.phone}
+                          </span>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                  <div className="text-xs text-muted-foreground mt-1 flex flex-wrap gap-x-3 gap-y-0.5">
-                    <span>slug: <code className="text-foreground/80">{p.slug}</code></span>
-                    <span>•</span>
-                    <span>{p.owner_email}</span>
-                    {p.phone && (<><span>•</span><span>{p.phone}</span></>)}
+
+                  {/* Ações */}
+                  <div className="flex flex-wrap items-center gap-1.5 lg:justify-end shrink-0">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setMonitorFor(p)}
+                      title="Monitorar (agendamentos, totais)"
+                    >
+                      <BarChart3 className="w-3.5 h-3.5 mr-1" /> Monitor
+                    </Button>
+
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => { setEditing(p); setFormOpen(true); }}
+                      disabled={p.is_locked}
+                      title={p.is_locked ? "Perfil travado" : "Editar"}
+                    >
+                      <Pencil className="w-3.5 h-3.5" />
+                    </Button>
+
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setMysqlFor(p)}
+                      disabled={p.is_locked}
+                      title={p.is_cloud ? "Roda no Lovable Cloud" : "Configurar MySQL"}
+                    >
+                      <Plug className="w-3.5 h-3.5 mr-1" /> MySQL
+                    </Button>
+
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        try {
+                          downloadProfileSQL(p);
+                          toast({ title: "Download iniciado", description: `barber-${p.slug}.sql` });
+                        } catch (e) {
+                          toast({
+                            title: "Erro",
+                            description: e instanceof Error ? e.message : String(e),
+                            variant: "destructive",
+                          });
+                        }
+                      }}
+                      disabled={p.is_cloud}
+                      title={p.is_cloud ? "Cloud não exporta .sql" : "Baixar SQL para phpMyAdmin"}
+                    >
+                      <Download className="w-3.5 h-3.5 mr-1" /> .sql
+                    </Button>
+
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => setDeleteTarget(p)}
+                      disabled={p.is_locked}
+                      className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                      title={p.is_locked ? "Perfil travado" : "Excluir"}
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </Button>
                   </div>
                 </div>
-
-                <div className="flex flex-wrap items-center gap-1.5">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => { setEditing(p); setFormOpen(true); }}
-                    disabled={p.is_locked}
-                    title={p.is_locked ? "Perfil travado" : "Editar"}
-                  >
-                    <Pencil className="w-3.5 h-3.5" />
-                  </Button>
-
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => setMysqlFor(p)}
-                    disabled={p.is_locked}
-                    title={p.is_cloud ? "Roda no Lovable Cloud" : "Configurar MySQL"}
-                  >
-                    <Plug className="w-3.5 h-3.5 mr-1" /> MySQL
-                  </Button>
-
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => {
-                      try {
-                        downloadProfileSQL(p);
-                        toast({ title: "Download iniciado", description: `barber-${p.slug}.sql` });
-                      } catch (e) {
-                        toast({
-                          title: "Erro",
-                          description: e instanceof Error ? e.message : String(e),
-                          variant: "destructive",
-                        });
-                      }
-                    }}
-                    disabled={p.is_cloud}
-                    title={p.is_cloud ? "Cloud não exporta .sql" : "Baixar SQL para phpMyAdmin"}
-                  >
-                    <Download className="w-3.5 h-3.5 mr-1" /> .sql
-                  </Button>
-
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => setDeleteTarget(p)}
-                    disabled={p.is_locked}
-                    className="text-destructive hover:text-destructive"
-                    title={p.is_locked ? "Perfil travado" : "Excluir"}
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </Button>
-                </div>
-              </div>
+              </article>
             ))}
           </div>
 
@@ -235,12 +326,20 @@ const Barbershops = () => {
         </>
       )}
 
+      {/* Modais */}
       <BarbershopFormModal open={formOpen} onOpenChange={setFormOpen} profile={editing} />
       {mysqlFor && (
         <MysqlConfigModal
           open={!!mysqlFor}
           onOpenChange={(v) => !v && setMysqlFor(null)}
           barbershop={mysqlFor}
+        />
+      )}
+      {monitorFor && (
+        <BarbershopMonitorModal
+          open={!!monitorFor}
+          onOpenChange={(v) => !v && setMonitorFor(null)}
+          barbershop={monitorFor}
         />
       )}
 
@@ -250,7 +349,10 @@ const Barbershops = () => {
             <AlertDialogTitle>Excluir barbearia?</AlertDialogTitle>
             <AlertDialogDescription>
               {deleteTarget && (
-                <>Esta ação removerá permanentemente o perfil <b>{deleteTarget.name}</b>. O banco MySQL do cliente NÃO será apagado — apenas o vínculo no painel.</>
+                <>
+                  Esta ação removerá permanentemente o perfil <b>{deleteTarget.name}</b>. O banco
+                  MySQL do cliente NÃO será apagado — apenas o vínculo no painel.
+                </>
               )}
             </AlertDialogDescription>
           </AlertDialogHeader>

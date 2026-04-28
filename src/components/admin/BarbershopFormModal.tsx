@@ -141,7 +141,7 @@ export const BarbershopFormModal = ({ open, onOpenChange, profile }: Props) => {
         <div className="space-y-4 py-2">
           <div>
             <Label htmlFor="name">Nome da barbearia *</Label>
-            <Input id="name" value={form.name} onChange={(e) => update("name", e.target.value)} placeholder="Ex: Vila Nova Barbershop" />
+            <Input id="name" value={form.name} onChange={(e) => update("name", e.target.value)} placeholder="Ex: Barbearia do João" />
           </div>
 
           <div>
@@ -150,7 +150,7 @@ export const BarbershopFormModal = ({ open, onOpenChange, profile }: Props) => {
               id="slug"
               value={form.slug}
               onChange={(e) => { setSlugTouched(true); update("slug", e.target.value.toLowerCase()); }}
-              placeholder="vila-nova"
+              placeholder="barbearia-do-joao"
             />
             <p className="text-xs text-muted-foreground mt-1">Apenas letras minúsculas, números e hífens.</p>
           </div>

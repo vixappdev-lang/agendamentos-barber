@@ -14,7 +14,7 @@ import { useThemeColors } from "@/hooks/useThemeColors";
 
 const dayLabels = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 
-type SettingsTab = "business" | "branding" | "hours" | "scheduling" | "payments" | "personalization" | "database" | "general";
+type SettingsTab = "business" | "branding" | "hours" | "scheduling" | "payments" | "personalization" | "general";
 
 const tabs: { id: SettingsTab; label: string; icon: typeof Store }[] = [
   { id: "business", label: "Dados", icon: Store },
@@ -23,7 +23,6 @@ const tabs: { id: SettingsTab; label: string; icon: typeof Store }[] = [
   { id: "hours", label: "Horários", icon: Clock },
   { id: "scheduling", label: "Agendamento", icon: Calendar },
   { id: "payments", label: "PIX / Pagamentos", icon: CreditCard },
-  { id: "database", label: "Banco de Dados", icon: Database },
   { id: "general", label: "Geral", icon: Settings2 },
 ];
 
@@ -954,82 +953,7 @@ const Settings = () => {
             </div>
           )}
 
-          {/* ===== BANCO DE DADOS ===== */}
-          {activeTab === "database" && (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              <div className={cardStyle}>
-                <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                  <Database className="w-4 h-4" style={{ color: iconColor }} /> Conexão MySQL
-                </h3>
-                <p className="text-[10px] text-muted-foreground">
-                  Configure os dados de acesso ao banco de dados da hospedagem (cPanel/PHPMyAdmin)
-                </p>
-                <div className="grid gap-4">
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className={labelStyle}>Host</label>
-                      <input className="glass-input" value={settings.db_host || ""} onChange={(e) => updateSetting("db_host", e.target.value)} placeholder="localhost" />
-                    </div>
-                    <div>
-                      <label className={labelStyle}>Porta</label>
-                      <input className="glass-input" value={settings.db_port || ""} onChange={(e) => updateSetting("db_port", e.target.value)} placeholder="3306" />
-                    </div>
-                  </div>
-                  <div>
-                    <label className={labelStyle}>Nome do Banco</label>
-                    <input className="glass-input" value={settings.db_name || ""} onChange={(e) => updateSetting("db_name", e.target.value)} placeholder="barber_saas" />
-                  </div>
-                  <div>
-                    <label className={labelStyle}>Usuário</label>
-                    <input className="glass-input" value={settings.db_user || ""} onChange={(e) => updateSetting("db_user", e.target.value)} placeholder="root" />
-                  </div>
-                  <div>
-                    <label className={labelStyle}>Senha</label>
-                    <input type="password" className="glass-input" value={settings.db_pass || ""} onChange={(e) => updateSetting("db_pass", e.target.value)} placeholder="••••••••" />
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                {/* Test result */}
-                {dbTestResult && (
-                  <div
-                    className="flex items-center gap-2 p-4 rounded-xl text-xs font-medium"
-                    style={{
-                      background: dbTestResult.success ? "hsl(140 60% 50% / 0.1)" : "hsl(0 60% 50% / 0.1)",
-                      color: dbTestResult.success ? "hsl(140 60% 60%)" : "hsl(0 60% 65%)",
-                      border: `1px solid ${dbTestResult.success ? "hsl(140 60% 50% / 0.2)" : "hsl(0 60% 50% / 0.2)"}`,
-                    }}
-                  >
-                    {dbTestResult.success ? <CheckCircle className="w-4 h-4" /> : <XCircle className="w-4 h-4" />}
-                    {dbTestResult.message}
-                  </div>
-                )}
-
-                <div className={cardStyle}>
-                  <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                    <Shield className="w-4 h-4" style={{ color: iconColor }} /> Ações
-                  </h3>
-                  <button
-                    onClick={handleTestDbConnection}
-                    disabled={dbTesting}
-                    className="w-full py-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition-all"
-                    style={{
-                      background: "hsl(200 70% 55% / 0.1)",
-                      color: "hsl(200 70% 60%)",
-                      border: "1px solid hsl(200 70% 55% / 0.2)",
-                    }}
-                  >
-                    {dbTesting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Shield className="w-3.5 h-3.5" />}
-                    {dbTesting ? "Testando..." : "Testar Conexão"}
-                  </button>
-                  <p className="text-[10px] text-muted-foreground">
-                    O teste verificará se os dados de conexão estão corretos via sua API PHP
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
+          {/* (Aba Banco de Dados removida — gerencie em /admin/barbershops) */}
 
           {/* ===== GERAL ===== */}
           {activeTab === "general" && (
