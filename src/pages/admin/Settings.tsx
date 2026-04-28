@@ -289,9 +289,9 @@ const Settings = () => {
         >
           {/* ===== DADOS DA BARBEARIA ===== */}
           {activeTab === "business" && (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-stretch">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
               {/* Coluna esquerda — Identidade + Endereço */}
-              <div className="space-y-4">
+              <div className="space-y-4 flex flex-col">
                 <div className={cardStyle}>
                   <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
                     <Store className="w-4 h-4" style={{ color: iconColor }} /> Informações Básicas
@@ -354,7 +354,7 @@ const Settings = () => {
               </div>
 
               {/* Coluna direita — Contato + Redes & Links */}
-              <div className="space-y-4">
+              <div className="space-y-4 flex flex-col">
                 <div className={cardStyle}>
                   <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
                     <Phone className="w-4 h-4" style={{ color: iconColor }} /> Contato
@@ -560,7 +560,7 @@ const Settings = () => {
           {activeTab === "scheduling" && (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
               {/* ---------- COLUNA ESQUERDA ---------- */}
-              <div className="space-y-4">
+              <div className="space-y-4 flex flex-col">
                 {/* Modo de Confirmação */}
                 <div className={cardStyle}>
                   <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
@@ -721,7 +721,7 @@ const Settings = () => {
               </div>
 
               {/* ---------- COLUNA DIREITA ---------- */}
-              <div className="space-y-4">
+              <div className="space-y-4 flex flex-col">
                 {/* Mensagens (templates inline) */}
                 <div className={cardStyle}>
                   <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
