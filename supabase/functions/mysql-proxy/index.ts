@@ -181,15 +181,15 @@ Deno.serve(async (req: Request) => {
     );
 
     const token = authHeader.replace("Bearer ", "");
-    const { data: claimsData, error: claimsErr } = await supabase.auth.getClaims(token);
-    if (claimsErr || !claimsData?.claims) {
+    const { data: userData, error: userErr } = await supabase.auth.getUser(token);
+    if (userErr || !userData?.user) {
       return new Response(JSON.stringify({ success: false, error: "Invalid token" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const email = (claimsData.claims.email as string | undefined) || "";
+    const email = (userData.user.email as string | undefined) || "";
     if (email.toLowerCase() !== SUPER_ADMIN_EMAIL.toLowerCase()) {
       return new Response(
         JSON.stringify({ success: false, error: "Only the super admin can use MySQL" }),
