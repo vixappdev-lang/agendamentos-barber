@@ -21,6 +21,7 @@ import {
   Star,
 } from "lucide-react";
 import { isSuperAdmin } from "@/lib/superAdmin";
+import { clearAdminMysqlSession, getAdminMysqlSession } from "@/lib/adminMysqlSession";
 
 interface NavItem {
   label: string;
@@ -53,6 +54,12 @@ const AdminLayout = () => {
 
   useEffect(() => {
     const checkAdmin = async () => {
+      const mysqlSession = getAdminMysqlSession();
+      if (mysqlSession) {
+        setUserEmail(mysqlSession.email);
+        setLoading(false);
+        return;
+      }
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) { navigate("/admin/login"); return; }
       const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", session.user.id).eq("role", "admin");
@@ -87,9 +94,16 @@ const AdminLayout = () => {
     });
   }, [loading, userEmail]);
 
-  const visibleNavItems = navItems.filter((it) => !it.superAdminOnly || isSuperAdmin(userEmail));
+  const mysqlSession = getAdminMysqlSession();
+  const visibleNavItems = navItems.filter((it) => {
+    if (it.superAdminOnly) return isSuperAdmin(userEmail);
+    if (!mysqlSession?.permissions) return true;
+    const key = it.path === "/admin" ? "dashboard" : it.path.split("/").pop();
+    if (key === "confg") return mysqlSession.permissions.chatpro !== false;
+    return mysqlSession.permissions[key || ""] !== false;
+  });
 
-  const handleLogout = async () => { await supabase.auth.signOut(); navigate("/admin/login"); };
+  const handleLogout = async () => { clearAdminMysqlSession(); await supabase.auth.signOut(); navigate("/admin/login"); };
 
   if (loading) {
     return (

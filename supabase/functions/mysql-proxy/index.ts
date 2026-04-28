@@ -18,6 +18,7 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import mysql from "npm:mysql2@3.11.3/promise";
+import bcrypt from "npm:bcryptjs@2.4.3";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -26,6 +27,7 @@ const corsHeaders = {
 };
 
 const SUPER_ADMIN_EMAIL = "admin-barber@gmail.com";
+const SESSION_TTL_SECONDS = 60 * 60 * 12;
 
 const ALLOWED_TABLES = new Set([
   "services",
@@ -52,6 +54,74 @@ const sanitizeHost = (raw: unknown): string => {
 };
 
 const HOSTNAME_RE = /^(?=.{1,253}$)([a-zA-Z0-9_]([a-zA-Z0-9-_]{0,61}[a-zA-Z0-9_])?)(\.[a-zA-Z0-9_]([a-zA-Z0-9-_]{0,61}[a-zA-Z0-9_])?)*$|^(\d{1,3}\.){3}\d{1,3}$/;
+
+interface MysqlAdminSession {
+  profile_id: string;
+  barbershop_id: string;
+  user_id: string;
+  email: string;
+  role: string;
+  iat: number;
+  exp: number;
+}
+
+const encoder = new TextEncoder();
+const decoder = new TextDecoder();
+
+const b64url = (value: string | Uint8Array) => {
+  const bytes = typeof value === "string" ? encoder.encode(value) : value;
+  let binary = "";
+  bytes.forEach((b) => (binary += String.fromCharCode(b)));
+  return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+};
+
+const fromB64url = (value: string) => {
+  const normalized = value.replace(/-/g, "+").replace(/_/g, "/");
+  const padded = normalized + "=".repeat((4 - (normalized.length % 4)) % 4);
+  const binary = atob(padded);
+  return new Uint8Array([...binary].map((ch) => ch.charCodeAt(0)));
+};
+
+const sessionSecret = () =>
+  Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || Deno.env.get("LOVABLE_API_KEY") || Deno.env.get("SUPABASE_ANON_KEY") || "";
+
+const hmac = async (data: string) => {
+  const key = await crypto.subtle.importKey(
+    "raw",
+    encoder.encode(sessionSecret()),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"],
+  );
+  return b64url(new Uint8Array(await crypto.subtle.sign("HMAC", key, encoder.encode(data))));
+};
+
+const safeEqual = (a: string, b: string) => {
+  if (a.length !== b.length) return false;
+  let out = 0;
+  for (let i = 0; i < a.length; i++) out |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return out === 0;
+};
+
+const signSession = async (payload: Omit<MysqlAdminSession, "iat" | "exp">) => {
+  const now = Math.floor(Date.now() / 1000);
+  const encoded = b64url(JSON.stringify({ ...payload, iat: now, exp: now + SESSION_TTL_SECONDS }));
+  return `${encoded}.${await hmac(encoded)}`;
+};
+
+const verifySession = async (token: unknown): Promise<MysqlAdminSession> => {
+  const raw = String(token || "");
+  const [payload, signature] = raw.split(".");
+  if (!payload || !signature) throw new Error("Sessão MySQL inválida");
+  const expected = await hmac(payload);
+  if (!safeEqual(signature, expected)) throw new Error("Sessão MySQL inválida");
+  const parsed = JSON.parse(decoder.decode(fromB64url(payload))) as MysqlAdminSession;
+  if (!parsed.profile_id || !parsed.user_id || !parsed.email || parsed.role !== "admin") {
+    throw new Error("Sessão MySQL sem permissão de admin");
+  }
+  if (parsed.exp <= Math.floor(Date.now() / 1000)) throw new Error("Sessão MySQL expirada");
+  return parsed;
+};
 
 const requireText = (value: unknown, label: string, max = 255): string => {
   const out = String(value ?? "").trim();
@@ -165,19 +235,114 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
+    const body = await req.json();
+    const { action, profile_id, table, values, where, columns, order, limit, sql_text } =
+      body as Record<string, any>;
+    if (!action) throw new Error("Missing action");
+
+    // Use service role for profile/password reads (bypass RLS for the proxy)
+    const admin = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+    );
+
+    if (action === "login") {
+      const email = requireText(body.email, "E-mail", 255).toLowerCase();
+      const passwordInput = requireText(body.password, "Senha", 255);
+      const slug = String(body.slug || "").trim().toLowerCase();
+      const barbershopId = body.barbershop_id ? String(body.barbershop_id) : "";
+
+      let barbershopQuery = admin
+        .from("barbershop_profiles")
+        .select("id, slug, name, owner_email, mysql_profile_id, is_active, is_cloud")
+        .eq("is_active", true)
+        .eq("is_cloud", false)
+        .not("mysql_profile_id", "is", null);
+      if (barbershopId) barbershopQuery = barbershopQuery.eq("id", barbershopId);
+      else if (slug) barbershopQuery = barbershopQuery.eq("slug", slug);
+      const { data: shops, error: shopsErr } = await barbershopQuery.limit(25);
+      if (shopsErr) throw new Error(`Profile lookup failed: ${shopsErr.message}`);
+
+      for (const shop of shops || []) {
+        const linkedProfile = await getProfile(admin, shop.mysql_profile_id);
+        const linkedPassword = await decryptPassword(admin, linkedProfile.password_encrypted);
+        let loginConn: any = null;
+        try {
+          loginConn = await connectMysql(linkedProfile, linkedPassword);
+          const [rows] = await loginConn.query(
+            "SELECT id, email, password_hash, name, role, active FROM `users` WHERE LOWER(`email`) = LOWER(?) LIMIT 1",
+            [email],
+          );
+          const user = (rows as any[])[0];
+          if (!user || Number(user.active) !== 1 || user.role !== "admin") continue;
+          const ok = await bcrypt.compare(passwordInput, String(user.password_hash || ""));
+          if (!ok) continue;
+          await loginConn.query("UPDATE `users` SET `last_login_at` = CURRENT_TIMESTAMP WHERE `id` = ?", [user.id]);
+          const [permRows] = await loginConn.query(
+            "SELECT permission_key, enabled FROM `user_permissions` WHERE `user_id` = ?",
+            [user.id],
+          );
+          const permissions = Object.fromEntries(
+            (permRows as any[]).map((p) => [String(p.permission_key), Number(p.enabled) === 1]),
+          );
+          const token = await signSession({
+            profile_id: linkedProfile.id,
+            barbershop_id: shop.id,
+            user_id: String(user.id),
+            email: String(user.email),
+            role: String(user.role),
+          });
+          return new Response(
+            JSON.stringify({
+              success: true,
+              data: {
+                token,
+                profile_id: linkedProfile.id,
+                barbershop_id: shop.id,
+                name: user.name || shop.name,
+                email: user.email,
+                role: user.role,
+                permissions,
+                source: "mysql",
+              },
+            }),
+            { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+          );
+        } catch (loginErr) {
+          console.error("[mysql-proxy] login profile failed", linkedProfile.id, loginErr instanceof Error ? loginErr.message : String(loginErr));
+        } finally {
+          try { await loginConn?.end(); } catch { /* ignore */ }
+        }
+      }
+
+      return new Response(JSON.stringify({ success: false, error: "Credenciais inválidas", code: "INVALID_LOGIN" }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const isMysqlSessionRequest = action !== "save_profile" && Boolean(body.mysql_session);
+    let mysqlSession: MysqlAdminSession | null = null;
+    if (isMysqlSessionRequest) {
+      mysqlSession = await verifySession(body.mysql_session);
+      if (profile_id && profile_id !== mysqlSession.profile_id) throw new Error("Perfil MySQL inválido para esta sessão");
+      body.profile_id = mysqlSession.profile_id;
+    }
+
     // Auth
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader?.startsWith("Bearer ")) {
+    if (!mysqlSession && !authHeader?.startsWith("Bearer ")) {
       return new Response(JSON.stringify({ success: false, error: "Unauthorized" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
+    if (!mysqlSession) {
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_ANON_KEY")!,
-      { global: { headers: { Authorization: authHeader } } },
+      { global: { headers: { Authorization: authHeader! } } },
     );
 
     const token = authHeader.replace("Bearer ", "");
@@ -189,8 +354,10 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    const email = (userData.user.email as string | undefined) || "";
-    if (email.toLowerCase() !== SUPER_ADMIN_EMAIL.toLowerCase()) {
+    const authEmail = (userData.user.email as string | undefined) || "";
+
+    const isSuperAdminRequest = authEmail.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase();
+    if (!isSuperAdminRequest) {
       return new Response(
         JSON.stringify({ success: false, error: "Only the super admin can use MySQL" }),
         {
@@ -199,18 +366,7 @@ Deno.serve(async (req: Request) => {
         },
       );
     }
-
-    // Use service role for profile/password reads (bypass RLS for the proxy)
-    const admin = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-    );
-
-    const body = await req.json();
-    const { action, profile_id, table, values, where, columns, order, limit, sql_text } =
-      body as Record<string, any>;
-
-    if (!action) throw new Error("Missing action");
+    }
 
     if (action === "save_profile") {
       const host = sanitizeHost(body.host);
@@ -276,7 +432,8 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    const profile = await getProfile(admin, profile_id);
+    const effectiveProfileId = mysqlSession?.profile_id || profile_id;
+    const profile = await getProfile(admin, effectiveProfileId);
     const password = await decryptPassword(admin, profile.password_encrypted);
 
     let conn;
@@ -358,8 +515,12 @@ Deno.serve(async (req: Request) => {
             : "*";
         const w = buildWhere(where);
         let sql = `SELECT ${cols} FROM ${ident(table)}${w.sql}`;
-        if (order && order.column) {
-          sql += ` ORDER BY ${ident(order.column)} ${order.ascending === false ? "DESC" : "ASC"}`;
+        const orderList = Array.isArray(order) ? order : order ? [order] : [];
+        if (orderList.length) {
+          sql += ` ORDER BY ${orderList
+            .filter((o: any) => o?.column)
+            .map((o: any) => `${ident(o.column)} ${o.ascending === false ? "DESC" : "ASC"}`)
+            .join(", ")}`;
         }
         if (limit && Number.isFinite(Number(limit))) {
           sql += ` LIMIT ${Number(limit)}`;
