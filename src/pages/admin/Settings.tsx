@@ -715,11 +715,94 @@ const Settings = () => {
                     </div>
                   </div>
                 </div>
+
+                {/* Avançado */}
+                <div className={cardStyle}>
+                  <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                    <Timer className="w-4 h-4" style={{ color: iconColor }} /> Configurações Avançadas
+                  </h3>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className={labelStyle}>Buffer mesmo barbeiro (min)</label>
+                      <input
+                        type="number"
+                        min={0}
+                        className="glass-input"
+                        value={settings.buffer_same_barber || "0"}
+                        onChange={(e) => updateSetting("buffer_same_barber", e.target.value)}
+                      />
+                      <p className="text-[10px] text-muted-foreground mt-1">Tempo extra entre clientes do mesmo profissional.</p>
+                    </div>
+                    <div>
+                      <label className={labelStyle}>No-show automático após (min)</label>
+                      <input
+                        type="number"
+                        min={0}
+                        className="glass-input"
+                        value={settings.no_show_minutes || "15"}
+                        onChange={(e) => updateSetting("no_show_minutes", e.target.value)}
+                      />
+                      <p className="text-[10px] text-muted-foreground mt-1">Marca como falta após X minutos de atraso.</p>
+                    </div>
+                    <div className="col-span-2">
+                      <label className={labelStyle}>Dias com agenda fechada</label>
+                      <input
+                        type="text"
+                        className="glass-input"
+                        placeholder="Ex: 2026-12-25, 2027-01-01"
+                        value={settings.closed_days || ""}
+                        onChange={(e) => updateSetting("closed_days", e.target.value)}
+                      />
+                      <p className="text-[10px] text-muted-foreground mt-1">Datas (AAAA-MM-DD) separadas por vírgula.</p>
+                    </div>
+                    <label className="col-span-2 flex items-center gap-3 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        className="w-4 h-4 rounded accent-primary"
+                        checked={settings.auto_no_show === "true"}
+                        onChange={(e) => updateSetting("auto_no_show", e.target.checked ? "true" : "false")}
+                      />
+                      <div>
+                        <p className="text-xs font-semibold text-foreground">Marcar no-show automaticamente</p>
+                        <p className="text-[10px] text-muted-foreground">Sistema marca como falta sem ação manual.</p>
+                      </div>
+                    </label>
+                    <div className="col-span-2">
+                      <label className={labelStyle}>Mensagem de Lembrete (WhatsApp)</label>
+                      <textarea
+                        className="glass-input min-h-[70px] resize-none"
+                        value={settings.msg_reminder || ""}
+                        onChange={(e) => updateSetting("msg_reminder", e.target.value)}
+                        placeholder="Ex: ⏰ Lembrete: você tem agendamento amanhã às {hora}, {cliente}!"
+                      />
+                    </div>
+                    <div className="col-span-2">
+                      <label className={labelStyle}>Mensagem de Avaliação (pós-corte)</label>
+                      <textarea
+                        className="glass-input min-h-[70px] resize-none"
+                        value={settings.review_whatsapp_template || ""}
+                        onChange={(e) => updateSetting("review_whatsapp_template", e.target.value)}
+                        placeholder="⭐ Olá {cliente}! Como foi seu atendimento na {barbearia}? Avalie: {link}"
+                      />
+                      <p className="text-[10px] text-muted-foreground mt-1">Variáveis: {"{cliente}"} {"{barbearia}"} {"{link}"}</p>
+                    </div>
+                    <label className="col-span-2 flex items-center gap-3 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        className="w-4 h-4 rounded accent-primary"
+                        checked={settings.review_send_enabled !== "false"}
+                        onChange={(e) => updateSetting("review_send_enabled", e.target.checked ? "true" : "false")}
+                      />
+                      <div>
+                        <p className="text-xs font-semibold text-foreground">Enviar avaliação automaticamente ao concluir</p>
+                        <p className="text-[10px] text-muted-foreground">Gera token único e envia link no WhatsApp do cliente.</p>
+                      </div>
+                    </label>
+                  </div>
+                </div>
               </div>
             </div>
           )}
-
-          {/* ===== PERSONALIZAÇÃO ===== */}
           {activeTab === "personalization" && (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               <div className="space-y-4">
