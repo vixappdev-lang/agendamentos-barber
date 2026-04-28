@@ -37,8 +37,11 @@ const Barbershops = lazy(() => import("./pages/admin/Barbershops"));
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 60_000,
+      staleTime: 5 * 60_000, // 5min — evita refetch entre navegações curtas
+      gcTime: 10 * 60_000,
       refetchOnWindowFocus: false,
+      refetchOnMount: false,
+      retry: 1,
     },
   },
 });
