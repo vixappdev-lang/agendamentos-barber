@@ -159,6 +159,22 @@ const Index = () => {
   const cartTotal = cart.reduce((s, i) => s + i.price * i.quantity, 0);
   const cartCount = cart.reduce((s, i) => s + i.quantity, 0);
 
+  if (siteStatus === "inativo") {
+    return (
+      <div className="min-h-screen min-h-[100dvh] flex items-center justify-center px-6">
+        <div className="max-w-md w-full text-center space-y-5 glass-card p-8">
+          <div className="w-14 h-14 mx-auto rounded-2xl flex items-center justify-center" style={{ background: "hsl(0 0% 100% / 0.05)", border: "1px solid hsl(0 0% 100% / 0.08)" }}>
+            <Scissors className="w-6 h-6 text-muted-foreground" />
+          </div>
+          <h1 className="text-2xl font-bold text-foreground">{businessName}</h1>
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            Estamos temporariamente indisponíveis para manutenção. Voltaremos em breve.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen min-h-[100dvh] relative">
       <div className="relative z-10">
