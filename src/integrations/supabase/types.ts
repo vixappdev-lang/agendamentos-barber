@@ -491,6 +491,8 @@ export type Database = {
         Returns: undefined
       }
       deactivate_all_mysql_profiles: { Args: never; Returns: undefined }
+      decrypt_mysql_password: { Args: { _encrypted: string }; Returns: string }
+      encrypt_mysql_password: { Args: { _plain: string }; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
