@@ -278,6 +278,13 @@ Deno.serve(async (req: Request) => {
           const ok = await bcrypt.compare(passwordInput, String(user.password_hash || ""));
           if (!ok) continue;
           await loginConn.query("UPDATE `users` SET `last_login_at` = CURRENT_TIMESTAMP WHERE `id` = ?", [user.id]);
+          const [permRows] = await loginConn.query(
+            "SELECT permission_key, enabled FROM `user_permissions` WHERE `user_id` = ?",
+            [user.id],
+          );
+          const permissions = Object.fromEntries(
+            (permRows as any[]).map((p) => [String(p.permission_key), Number(p.enabled) === 1]),
+          );
           const token = await signSession({
             profile_id: linkedProfile.id,
             barbershop_id: shop.id,
@@ -295,6 +302,7 @@ Deno.serve(async (req: Request) => {
                 name: user.name || shop.name,
                 email: user.email,
                 role: user.role,
+                permissions,
                 source: "mysql",
               },
             }),
