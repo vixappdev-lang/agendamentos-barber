@@ -275,11 +275,28 @@ const MemberArea = () => {
   const btnBg = t.btnBg;
   const btnColor = t.btnColor;
 
+  const allowCancel = (settings as any)?.allow_cancel_by_client === "true";
+  const cancelUntilHours = parseInt((settings as any)?.cancel_until_hours || "2", 10);
+
+  const cancelAppointment = async (apt: Appointment) => {
+    const aptDateTime = new Date(`${apt.appointment_date}T${apt.appointment_time}`);
+    const diffH = (aptDateTime.getTime() - Date.now()) / 36e5;
+    if (diffH < cancelUntilHours) {
+      toast.error(`Cancelamento permitido até ${cancelUntilHours}h antes do horário.`);
+      return;
+    }
+    const { error } = await supabase.from("appointments").update({ status: "cancelled" }).eq("id", apt.id);
+    if (error) { toast.error("Erro ao cancelar."); return; }
+    toast.success("Agendamento cancelado.");
+    setAppointments((prev) => prev.map((a) => (a.id === apt.id ? { ...a, status: "cancelled" } : a)));
+  };
+
   const AppointmentCard = ({ apt }: { apt: Appointment }) => {
     const status = statusMap[apt.status || "pending"] || statusMap.pending;
     const StatusIcon = status.icon;
     const dateStr = new Date(apt.appointment_date + "T12:00:00").toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" });
     const isPast = apt.appointment_date < today;
+    const canCancel = allowCancel && !isPast && apt.status !== "cancelled" && apt.status !== "completed";
 
     return (
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
@@ -300,14 +317,24 @@ const MemberArea = () => {
             <StatusIcon className="w-3 h-3" /> {status.label}
           </div>
         </div>
-        <div className="flex items-center gap-4 text-xs" style={{ color: t.textMuted }}>
+        <div className="flex items-center gap-4 text-xs flex-wrap" style={{ color: t.textMuted }}>
           <span className="flex items-center gap-1.5"><Calendar className="w-3.5 h-3.5" /> {dateStr}</span>
           <span className="flex items-center gap-1.5"><Clock className="w-3.5 h-3.5" /> {apt.appointment_time?.slice(0, 5)}</span>
           {apt.total_price && <span className="font-semibold" style={{ color: t.textSecondary }}>R$ {Number(apt.total_price).toFixed(2)}</span>}
+          {canCancel && (
+            <button
+              onClick={() => cancelAppointment(apt)}
+              className="ml-auto inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-colors"
+              style={{ background: "hsl(0 60% 50% / 0.1)", color: "hsl(0 60% 60%)", border: "1px solid hsl(0 60% 50% / 0.2)" }}
+            >
+              <XCircle className="w-3 h-3" /> Cancelar
+            </button>
+          )}
         </div>
       </motion.div>
     );
   };
+
 
   return (
     <div className="min-h-screen w-full" style={{ background: bg, color: t.textPrimary, fontFamily: "'Montserrat', sans-serif" }}>
