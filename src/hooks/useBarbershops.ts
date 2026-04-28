@@ -44,10 +44,13 @@ export const useBarbershops = () => {
       const { data, error } = await supabase
         .from("barbershop_profiles")
         .select("*")
-        .order("is_locked", { ascending: false }) // travados primeiro (Vila Nova no topo)
+        .order("is_locked", { ascending: false })
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return (data ?? []) as BarbershopProfile[];
+      return (data ?? []).map((row: any) => ({
+        ...row,
+        permissions: sanitizePermissions(row.permissions),
+      })) as BarbershopProfile[];
     },
   });
 };
@@ -61,6 +64,7 @@ export const useCreateBarbershop = () => {
         _plain: input.password,
       });
       if (hashErr) throw hashErr;
+      const perms = sanitizePermissions(input.permissions ?? DEFAULT_PERMISSIONS);
       const { data, error } = await supabase
         .from("barbershop_profiles")
         .insert({
@@ -71,11 +75,12 @@ export const useCreateBarbershop = () => {
           owner_password: hash as string,
           phone: input.phone ?? null,
           address: input.address ?? null,
+          permissions: perms as any,
         })
         .select()
         .single();
       if (error) throw error;
-      return data as BarbershopProfile;
+      return { ...(data as any), permissions: perms } as BarbershopProfile;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: KEY }),
   });
@@ -93,6 +98,9 @@ export const useUpdateBarbershop = () => {
         phone: input.phone ?? null,
         address: input.address ?? null,
       };
+      if (input.permissions) {
+        patch.permissions = sanitizePermissions(input.permissions) as any;
+      }
       if (input.password && input.password.length > 0) {
         const { data: hash, error: hashErr } = await supabase.rpc("hash_owner_password", {
           _plain: input.password,
@@ -100,7 +108,6 @@ export const useUpdateBarbershop = () => {
         if (hashErr) throw hashErr;
         patch.owner_password = hash as string;
       }
-      // remover undefined
       Object.keys(patch).forEach((k) => patch[k] === undefined && delete patch[k]);
       const { data, error } = await supabase
         .from("barbershop_profiles")
@@ -109,13 +116,11 @@ export const useUpdateBarbershop = () => {
         .select()
         .single();
       if (error) throw error;
-      return data as BarbershopProfile;
+      return { ...(data as any), permissions: sanitizePermissions((data as any).permissions) } as BarbershopProfile;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: KEY }),
   });
 };
-
-export const useDeleteBarbershop = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
