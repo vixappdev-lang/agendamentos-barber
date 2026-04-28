@@ -847,6 +847,104 @@ const Settings = () => {
             </div>
           )}
 
+          {/* ===== PERSONALIZAÇÃO ===== */}
+          {activeTab === "personalization" && (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <div className="space-y-4">
+                <div className={cardStyle}>
+                  <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                    <Sun className="w-4 h-4" style={{ color: iconColor }} /> Tema / Aparência
+                  </h3>
+                  <p className="text-[10px] text-muted-foreground">Ative o modo claro para áreas específicas</p>
+                  <button
+                    onClick={() => updateSetting("theme_mode", (settings.theme_mode || "dark") === "dark" ? "light" : "dark")}
+                    className="w-full flex items-center justify-between p-4 rounded-xl transition-all"
+                    style={{
+                      background: (settings.theme_mode || "dark") === "light" ? "hsl(245 60% 55% / 0.1)" : "hsl(0 0% 100% / 0.03)",
+                      border: `1px solid ${(settings.theme_mode || "dark") === "light" ? "hsl(245 60% 55% / 0.25)" : "hsl(0 0% 100% / 0.06)"}`,
+                    }}
+                  >
+                    <div className="flex items-center gap-3">
+                      {(settings.theme_mode || "dark") === "light" ? <Sun className="w-5 h-5" style={{ color: "hsl(40 80% 50%)" }} /> : <Moon className="w-5 h-5" style={{ color: "hsl(0 0% 50%)" }} />}
+                      <div className="text-left">
+                        <p className="text-sm font-semibold">Modo Claro</p>
+                        <p className="text-[11px]" style={{ color: "hsl(0 0% 50%)" }}>{(settings.theme_mode || "dark") === "light" ? "Ativado" : "Desativado"}</p>
+                      </div>
+                    </div>
+                    <div className="w-12 h-6 rounded-full flex items-center px-0.5 transition-all"
+                      style={{
+                        background: (settings.theme_mode || "dark") === "light" ? "hsl(245 60% 55%)" : "hsl(0 0% 25%)",
+                        justifyContent: (settings.theme_mode || "dark") === "light" ? "flex-end" : "flex-start",
+                      }}>
+                      <div className="w-5 h-5 rounded-full bg-white transition-all" />
+                    </div>
+                  </button>
+                </div>
+
+                <div className={cardStyle}>
+                  <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                    <Layout className="w-4 h-4" style={{ color: iconColor }} /> Modo do Site
+                  </h3>
+                  <div className="grid gap-2">
+                    {[
+                      { value: "full", label: "Site Completo", desc: "Landing + agendamento + loja + área do cliente" },
+                      { value: "booking", label: "Agendamento Direto", desc: "Apenas tela de agendamento" },
+                    ].map((mode) => (
+                      <button key={mode.value} onClick={() => updateSetting("site_mode", mode.value)}
+                        className="w-full text-left p-4 rounded-xl transition-all"
+                        style={{
+                          background: (settings.site_mode || "full") === mode.value ? "hsl(245 60% 55% / 0.1)" : "hsl(0 0% 100% / 0.03)",
+                          border: `1px solid ${(settings.site_mode || "full") === mode.value ? "hsl(245 60% 55% / 0.25)" : "hsl(0 0% 100% / 0.06)"}`,
+                        }}>
+                        <div className="flex items-center gap-3">
+                          <div className="w-5 h-5 rounded-full border-2 flex items-center justify-center"
+                            style={{ borderColor: (settings.site_mode || "full") === mode.value ? "hsl(245 60% 65%)" : "hsl(0 0% 30%)" }}>
+                            {(settings.site_mode || "full") === mode.value && (
+                              <div className="w-2.5 h-2.5 rounded-full" style={{ background: "hsl(245 60% 65%)" }} />
+                            )}
+                          </div>
+                          <div>
+                            <p className="text-sm font-semibold">{mode.label}</p>
+                            <p className="text-[11px]" style={{ color: "hsl(0 0% 50%)" }}>{mode.desc}</p>
+                          </div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div className={cardStyle}>
+                  <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                    <Type className="w-4 h-4" style={{ color: iconColor }} /> Textos do Site
+                  </h3>
+                  <div className="grid gap-4">
+                    <div>
+                      <label className={labelStyle}>Título Principal (Hero)</label>
+                      <input className="glass-input" value={settings.hero_title || ""} onChange={(e) => updateSetting("hero_title", e.target.value)} placeholder="Ex: GenesisBarber" />
+                    </div>
+                    <div>
+                      <label className={labelStyle}>Subtítulo do Hero</label>
+                      <input className="glass-input" value={settings.hero_subtitle || ""} onChange={(e) => updateSetting("hero_subtitle", e.target.value)} placeholder="Ex: Barbearia Premium" />
+                    </div>
+                    <div>
+                      <label className={labelStyle}>Descrição do Hero</label>
+                      <textarea className="glass-input min-h-[70px] resize-none" value={settings.hero_description || ""} onChange={(e) => updateSetting("hero_description", e.target.value)} />
+                    </div>
+                    <div>
+                      <label className={labelStyle}>Título Sobre</label>
+                      <input className="glass-input" value={settings.about_title || ""} onChange={(e) => updateSetting("about_title", e.target.value)} />
+                    </div>
+                    <div>
+                      <label className={labelStyle}>Descrição Sobre</label>
+                      <textarea className="glass-input min-h-[70px] resize-none" value={settings.about_description || ""} onChange={(e) => updateSetting("about_description", e.target.value)} />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* ===== PIX / PAGAMENTOS ===== */}
           {activeTab === "payments" && (
