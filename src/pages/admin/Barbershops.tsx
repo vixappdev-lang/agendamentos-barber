@@ -226,68 +226,73 @@ const Barbershops = () => {
                     </div>
                   </div>
 
-                  {/* Ações */}
-                  <div className="flex flex-wrap items-center gap-1.5 lg:justify-end shrink-0">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => setMonitorFor(p)}
-                      title="Monitorar (agendamentos, totais)"
-                    >
-                      <BarChart3 className="w-3.5 h-3.5 mr-1" /> Monitor
-                    </Button>
-
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => { setEditing(p); setFormOpen(true); }}
-                      disabled={p.is_locked}
-                      title={p.is_locked ? "Perfil travado" : "Editar"}
-                    >
-                      <Pencil className="w-3.5 h-3.5" />
-                    </Button>
-
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => setMysqlFor(p)}
-                      disabled={p.is_locked}
-                      title={p.is_cloud ? "Roda no Lovable Cloud" : "Configurar MySQL"}
-                    >
-                      <Plug className="w-3.5 h-3.5 mr-1" /> MySQL
-                    </Button>
-
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => {
-                        try {
-                          downloadProfileSQL(p);
-                          toast({ title: "Download iniciado", description: `barber-${p.slug}.sql` });
-                        } catch (e) {
-                          toast({
-                            title: "Erro",
-                            description: e instanceof Error ? e.message : String(e),
-                            variant: "destructive",
-                          });
+                  {/* Ações — somente ícones, hover neutro (sem amarelo) */}
+                  <div className="flex items-center gap-1 lg:justify-end shrink-0">
+                    {[
+                      {
+                        icon: BarChart3,
+                        label: "Monitorar",
+                        onClick: () => setMonitorFor(p),
+                        disabled: false,
+                        tone: "default" as const,
+                      },
+                      {
+                        icon: Pencil,
+                        label: p.is_locked ? "Perfil travado" : "Editar",
+                        onClick: () => { setEditing(p); setFormOpen(true); },
+                        disabled: p.is_locked,
+                        tone: "default" as const,
+                      },
+                      {
+                        icon: Plug,
+                        label: p.is_cloud ? "Roda no Lovable Cloud" : "Configurar MySQL",
+                        onClick: () => setMysqlFor(p),
+                        disabled: p.is_locked,
+                        tone: "default" as const,
+                      },
+                      {
+                        icon: Download,
+                        label: p.is_cloud ? "Cloud não exporta .sql" : "Baixar SQL para phpMyAdmin",
+                        onClick: () => {
+                          try {
+                            downloadProfileSQL(p);
+                            toast({ title: "Download iniciado", description: `barber-${p.slug}.sql` });
+                          } catch (e) {
+                            toast({
+                              title: "Erro",
+                              description: e instanceof Error ? e.message : String(e),
+                              variant: "destructive",
+                            });
+                          }
+                        },
+                        disabled: p.is_cloud,
+                        tone: "default" as const,
+                      },
+                      {
+                        icon: Trash2,
+                        label: p.is_locked ? "Perfil travado" : "Excluir",
+                        onClick: () => setDeleteTarget(p),
+                        disabled: p.is_locked,
+                        tone: "danger" as const,
+                      },
+                    ].map((a, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={a.onClick}
+                        disabled={a.disabled}
+                        title={a.label}
+                        aria-label={a.label}
+                        className={
+                          "w-9 h-9 inline-flex items-center justify-center rounded-lg border transition-colors disabled:opacity-40 disabled:cursor-not-allowed " +
+                          (a.tone === "danger"
+                            ? "border-border bg-card/40 text-muted-foreground hover:text-destructive hover:bg-destructive/10 hover:border-destructive/30"
+                            : "border-border bg-card/40 text-muted-foreground hover:text-foreground hover:bg-muted/40 hover:border-border")
                         }
-                      }}
-                      disabled={p.is_cloud}
-                      title={p.is_cloud ? "Cloud não exporta .sql" : "Baixar SQL para phpMyAdmin"}
-                    >
-                      <Download className="w-3.5 h-3.5 mr-1" /> .sql
-                    </Button>
-
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => setDeleteTarget(p)}
-                      disabled={p.is_locked}
-                      className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                      title={p.is_locked ? "Perfil travado" : "Excluir"}
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </Button>
+                      >
+                        <a.icon className="w-4 h-4" />
+                      </button>
+                    ))}
                   </div>
                 </div>
               </article>

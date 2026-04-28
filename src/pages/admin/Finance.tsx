@@ -33,51 +33,77 @@ const Finance = () => {
     else if (period === "week") { const week = new Date(now); week.setDate(week.getDate() - 7); dateFrom = week.toISOString().split("T")[0]; }
     else { const month = new Date(now); month.setDate(month.getDate() - 30); dateFrom = month.toISOString().split("T")[0]; }
 
-    const { data: appointments } = await supabase.from("appointments").select("*").gte("appointment_date", dateFrom).eq("status", "confirmed");
-    const revenue = appointments?.reduce((sum, a) => sum + (a.total_price || 0), 0) || 0;
-    const totalAttendances = appointments?.length || 0;
+    // Considera tanto agendamentos confirmados quanto concluídos como receita realizada
+    const { data: appointments } = await supabase
+      .from("appointments")
+      .select("*")
+      .gte("appointment_date", dateFrom)
+      .in("status", ["confirmed", "completed"]);
+    const apptList = appointments ?? [];
+    const revenue = apptList.reduce((sum, a) => sum + (Number(a.total_price) || 0), 0);
+    const totalAttendances = apptList.length;
     const avgTicket = totalAttendances > 0 ? revenue / totalAttendances : 0;
 
-    const { data: orders } = await supabase.from("orders").select("*").gte("created_at", dateFrom);
-    const productRevenue = orders?.reduce((sum, o) => sum + (o.total_price || 0), 0) || 0;
-    const productSales = orders?.length || 0;
+    // Pedidos da loja entregues / pagos contam como receita
+    const { data: orders } = await supabase
+      .from("orders")
+      .select("*")
+      .gte("created_at", dateFrom)
+      .in("status", ["paid", "delivered", "completed", "confirmed"]);
+    const orderList = orders ?? [];
+    const productRevenue = orderList.reduce((sum, o) => sum + (Number(o.total_price) || 0), 0);
+    const productSales = orderList.length;
 
-    setStats({ revenue: revenue + productRevenue, expenses: 0, netProfit: revenue + productRevenue, totalAttendances, avgTicket, productSales });
+    // Pedidos cancelados como "perda" (apenas informativo)
+    const { data: cancelled } = await supabase
+      .from("appointments")
+      .select("total_price")
+      .gte("appointment_date", dateFrom)
+      .eq("status", "cancelled");
+    const expenses = (cancelled ?? []).reduce((s, a) => s + (Number(a.total_price) || 0), 0);
+
+    const grossRevenue = revenue + productRevenue;
+    setStats({
+      revenue: grossRevenue,
+      expenses,
+      netProfit: grossRevenue - expenses,
+      totalAttendances,
+      avgTicket,
+      productSales,
+    });
 
     const chartDays: any[] = [];
     for (let i = 13; i >= 0; i--) {
       const d = new Date(); d.setDate(d.getDate() - i);
       const dateStr = d.toISOString().split("T")[0];
-      const dayRevenue = appointments?.filter((a) => a.appointment_date === dateStr).reduce((sum, a) => sum + (a.total_price || 0), 0) || 0;
-      const dayCount = appointments?.filter((a) => a.appointment_date === dateStr).length || 0;
+      const dayRevenue = apptList.filter((a) => a.appointment_date === dateStr).reduce((sum, a) => sum + (Number(a.total_price) || 0), 0);
+      const dayCount = apptList.filter((a) => a.appointment_date === dateStr).length;
       chartDays.push({ date: d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" }), receita: dayRevenue, atendimentos: dayCount });
     }
     setChartData(chartDays);
 
     const { data: services } = await supabase.from("services").select("id, title");
-    if (services && appointments) {
+    if (services) {
       const serviceMap: Record<string, { title: string; count: number; revenue: number }> = {};
-      for (const a of appointments) {
+      for (const a of apptList) {
         if (a.service_id) {
           const svc = services.find((s) => s.id === a.service_id);
           const key = a.service_id;
           if (!serviceMap[key]) serviceMap[key] = { title: svc?.title || "—", count: 0, revenue: 0 };
-          serviceMap[key].count++; serviceMap[key].revenue += a.total_price || 0;
+          serviceMap[key].count++; serviceMap[key].revenue += Number(a.total_price) || 0;
         }
       }
       setTopServices(Object.values(serviceMap).sort((a, b) => b.revenue - a.revenue).slice(0, 5));
     }
 
-    if (appointments) {
-      const barberMap: Record<string, { name: string; count: number; revenue: number }> = {};
-      for (const a of appointments) {
-        if (a.barber_name) {
-          if (!barberMap[a.barber_name]) barberMap[a.barber_name] = { name: a.barber_name, count: 0, revenue: 0 };
-          barberMap[a.barber_name].count++; barberMap[a.barber_name].revenue += a.total_price || 0;
-        }
+    const barberMap: Record<string, { name: string; count: number; revenue: number }> = {};
+    for (const a of apptList) {
+      if (a.barber_name) {
+        if (!barberMap[a.barber_name]) barberMap[a.barber_name] = { name: a.barber_name, count: 0, revenue: 0 };
+        barberMap[a.barber_name].count++; barberMap[a.barber_name].revenue += Number(a.total_price) || 0;
       }
-      setBarberRanking(Object.values(barberMap).sort((a, b) => b.revenue - a.revenue));
     }
+    setBarberRanking(Object.values(barberMap).sort((a, b) => b.revenue - a.revenue));
     setLoading(false);
   };
 
@@ -85,12 +111,12 @@ const Finance = () => {
   const periodLabels: Record<Period, string> = { day: "Hoje", week: "7 dias", month: "30 dias" };
 
   const statCards = [
-    { label: "Faturamento", value: formatCurrency(stats.revenue), icon: DollarSign, color: "hsl(140 60% 50%)", trend: "+12%" },
-    { label: "Lucro Líquido", value: formatCurrency(stats.netProfit), icon: TrendingUp, color: "hsl(200 70% 55%)", trend: "+8%" },
-    { label: "Atendimentos", value: stats.totalAttendances, icon: Users, color: "hsl(245 60% 65%)", trend: `${stats.totalAttendances}` },
-    { label: "Ticket Médio", value: formatCurrency(stats.avgTicket), icon: CreditCard, color: "hsl(35 80% 55%)", trend: "" },
-    { label: "Vendas Produtos", value: stats.productSales, icon: ShoppingBag, color: "hsl(320 60% 55%)", trend: formatCurrency(stats.revenue - stats.netProfit || 0) },
-    { label: "Saldo", value: formatCurrency(stats.netProfit), icon: PiggyBank, color: "hsl(160 60% 45%)", trend: "" },
+    { label: "Faturamento", value: formatCurrency(stats.revenue), icon: DollarSign, color: "hsl(140 60% 50%)" },
+    { label: "Lucro Líquido", value: formatCurrency(stats.netProfit), icon: TrendingUp, color: "hsl(200 70% 55%)" },
+    { label: "Atendimentos", value: stats.totalAttendances, icon: Users, color: "hsl(245 60% 65%)" },
+    { label: "Ticket Médio", value: formatCurrency(stats.avgTicket), icon: CreditCard, color: "hsl(35 80% 55%)" },
+    { label: "Vendas Produtos", value: stats.productSales, icon: ShoppingBag, color: "hsl(320 60% 55%)" },
+    { label: "Cancelados (perda)", value: formatCurrency(stats.expenses), icon: PiggyBank, color: "hsl(0 60% 55%)" },
   ];
 
   return (
