@@ -121,6 +121,8 @@ export const useUpdateBarbershop = () => {
     onSuccess: () => qc.invalidateQueries({ queryKey: KEY }),
   });
 };
+
+export const useDeleteBarbershop = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
