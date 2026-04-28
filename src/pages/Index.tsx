@@ -80,6 +80,8 @@ const Index = () => {
   const [mainTab, setMainTab] = useState<MainTab>("services");
   const [storeEnabled, setStoreEnabled] = useState(false);
   const [wheelEnabled, setWheelEnabled] = useState(false);
+  const [siteStatus, setSiteStatus] = useState<"ativo" | "inativo">("ativo");
+  const [businessName, setBusinessName] = useState("Barbearia");
   const [showWheel, setShowWheel] = useState(false);
   const [storeOrderMode, setStoreOrderMode] = useState<"ifood" | "whatsapp">("whatsapp");
   const [cart, setCart] = useState<CartItem[]>([]);
