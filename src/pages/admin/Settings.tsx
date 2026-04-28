@@ -487,57 +487,232 @@ const Settings = () => {
 
           {/* ===== AGENDAMENTO ===== */}
           {activeTab === "scheduling" && (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              <div className={cardStyle}>
-                <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                  <Timer className="w-4 h-4" style={{ color: iconColor }} /> Regras de Agendamento
-                </h3>
-                <div className="grid gap-4">
-                  <div>
-                    <label className={labelStyle}>Duração Padrão (minutos)</label>
-                    <input type="number" className="glass-input" value={settings.default_duration || "30"} onChange={(e) => updateSetting("default_duration", e.target.value)} />
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
+              {/* Coluna esquerda */}
+              <div className="space-y-4">
+                {/* Modo de Confirmação */}
+                <div className={cardStyle}>
+                  <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4" style={{ color: iconColor }} /> Confirmação de Agendamento
+                  </h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {[
+                      { id: "auto", label: "Automática", desc: "Cliente agenda e o status já entra como confirmado. Mensagem de confirmação enviada na hora." },
+                      { id: "manual", label: "Manual", desc: "Cliente agenda em status pendente. Recebe mensagem de 'pedido recebido' e o admin confirma no painel." },
+                    ].map((opt) => {
+                      const active = (settings.confirmation_mode || "auto") === opt.id;
+                      return (
+                        <button
+                          key={opt.id}
+                          type="button"
+                          onClick={() => updateSetting("confirmation_mode", opt.id)}
+                          className="text-left p-3 rounded-xl transition-all"
+                          style={{
+                            background: active ? "hsl(245 60% 55% / 0.12)" : "hsl(0 0% 100% / 0.02)",
+                            border: `1px solid ${active ? "hsl(245 60% 55% / 0.35)" : "hsl(0 0% 100% / 0.06)"}`,
+                          }}
+                        >
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="w-3.5 h-3.5 rounded-full border" style={{ borderColor: active ? "hsl(245 60% 70%)" : "hsl(0 0% 40%)", background: active ? "hsl(245 60% 70%)" : "transparent" }} />
+                            <span className="text-sm font-semibold text-foreground">{opt.label}</span>
+                          </div>
+                          <p className="text-[11px] text-muted-foreground leading-snug">{opt.desc}</p>
+                        </button>
+                      );
+                    })}
                   </div>
-                  <div>
-                    <label className={labelStyle}>Intervalo entre Agendamentos (minutos)</label>
-                    <input type="number" className="glass-input" value={settings.interval_between || "0"} onChange={(e) => updateSetting("interval_between", e.target.value)} />
+
+                  <div className="grid gap-3 pt-1 border-t border-white/5">
+                    <label className="flex items-center gap-3 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        className="w-4 h-4 rounded accent-primary"
+                        checked={settings.send_whatsapp_on_book === "true"}
+                        onChange={(e) => updateSetting("send_whatsapp_on_book", e.target.checked ? "true" : "false")}
+                      />
+                      <div>
+                        <p className="text-xs font-semibold text-foreground">Enviar WhatsApp ao agendar</p>
+                        <p className="text-[10px] text-muted-foreground">Notifica o cliente assim que o agendamento é criado.</p>
+                      </div>
+                    </label>
+                    <label className="flex items-center gap-3 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        className="w-4 h-4 rounded accent-primary"
+                        checked={settings.send_whatsapp_on_confirm === "true"}
+                        onChange={(e) => updateSetting("send_whatsapp_on_confirm", e.target.checked ? "true" : "false")}
+                      />
+                      <div>
+                        <p className="text-xs font-semibold text-foreground">Enviar WhatsApp ao confirmar</p>
+                        <p className="text-[10px] text-muted-foreground">Útil quando a confirmação é manual pelo admin.</p>
+                      </div>
+                    </label>
+                    <label className="flex items-center gap-3 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        className="w-4 h-4 rounded accent-primary"
+                        checked={settings.send_whatsapp_reminder === "true"}
+                        onChange={(e) => updateSetting("send_whatsapp_reminder", e.target.checked ? "true" : "false")}
+                      />
+                      <div>
+                        <p className="text-xs font-semibold text-foreground">Lembrete antes do horário</p>
+                        <p className="text-[10px] text-muted-foreground">Envia lembrete X horas antes (configurar abaixo).</p>
+                      </div>
+                    </label>
+                    <div>
+                      <label className={labelStyle}>Lembrete — quantas horas antes?</label>
+                      <input
+                        type="number"
+                        min={0}
+                        className="glass-input"
+                        value={settings.reminder_hours_before || "2"}
+                        onChange={(e) => updateSetting("reminder_hours_before", e.target.value)}
+                      />
+                    </div>
                   </div>
-                  <div>
-                    <label className={labelStyle}>Máximo por Horário</label>
-                    <input type="number" className="glass-input" value={settings.max_per_slot || "1"} onChange={(e) => updateSetting("max_per_slot", e.target.value)} />
-                  </div>
-                  <div>
-                    <label className={labelStyle}>Antecedência Mínima (horas)</label>
-                    <input type="number" className="glass-input" value={settings.min_advance_hours || "1"} onChange={(e) => updateSetting("min_advance_hours", e.target.value)} />
-                  </div>
-                  <div>
-                    <label className={labelStyle}>Antecedência Máxima (dias)</label>
-                    <input type="number" className="glass-input" value={settings.max_advance_days || "30"} onChange={(e) => updateSetting("max_advance_days", e.target.value)} />
+                </div>
+
+                {/* Regras */}
+                <div className={cardStyle}>
+                  <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                    <Timer className="w-4 h-4" style={{ color: iconColor }} /> Regras de Agendamento
+                  </h3>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className={labelStyle}>Duração padrão (min)</label>
+                      <input type="number" className="glass-input" value={settings.default_duration || "30"} onChange={(e) => updateSetting("default_duration", e.target.value)} />
+                    </div>
+                    <div>
+                      <label className={labelStyle}>Intervalo entre (min)</label>
+                      <input type="number" className="glass-input" value={settings.interval_between || "0"} onChange={(e) => updateSetting("interval_between", e.target.value)} />
+                    </div>
+                    <div>
+                      <label className={labelStyle}>Máx. por horário</label>
+                      <input type="number" className="glass-input" value={settings.max_per_slot || "1"} onChange={(e) => updateSetting("max_per_slot", e.target.value)} />
+                    </div>
+                    <div>
+                      <label className={labelStyle}>Antec. mín. (horas)</label>
+                      <input type="number" className="glass-input" value={settings.min_advance_hours || "1"} onChange={(e) => updateSetting("min_advance_hours", e.target.value)} />
+                    </div>
+                    <div className="col-span-2">
+                      <label className={labelStyle}>Antecedência máxima (dias)</label>
+                      <input type="number" className="glass-input" value={settings.max_advance_days || "30"} onChange={(e) => updateSetting("max_advance_days", e.target.value)} />
+                    </div>
                   </div>
                 </div>
               </div>
 
-              <div className={cardStyle}>
-                <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                  <FileText className="w-4 h-4" style={{ color: iconColor }} /> Políticas
-                </h3>
-                <div className="grid gap-4">
-                  <div>
-                    <label className={labelStyle}>Política de Cancelamento</label>
-                    <textarea
-                      className="glass-input min-h-[80px] resize-none"
-                      value={settings.cancellation_policy || ""}
-                      onChange={(e) => updateSetting("cancellation_policy", e.target.value)}
-                      placeholder="Ex: Cancelamentos devem ser feitos com no mínimo 2 horas de antecedência"
-                    />
+              {/* Coluna direita */}
+              <div className="space-y-4">
+                {/* Comportamento do cliente */}
+                <div className={cardStyle}>
+                  <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                    <Settings2 className="w-4 h-4" style={{ color: iconColor }} /> Comportamento do Cliente
+                  </h3>
+                  <div className="grid gap-3">
+                    <label className="flex items-center gap-3 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        className="w-4 h-4 rounded accent-primary"
+                        checked={settings.allow_cancel_by_client === "true"}
+                        onChange={(e) => updateSetting("allow_cancel_by_client", e.target.checked ? "true" : "false")}
+                      />
+                      <div>
+                        <p className="text-xs font-semibold text-foreground">Permitir cliente cancelar</p>
+                        <p className="text-[10px] text-muted-foreground">Cliente pode cancelar pelo painel dele.</p>
+                      </div>
+                    </label>
+                    <label className="flex items-center gap-3 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        className="w-4 h-4 rounded accent-primary"
+                        checked={settings.allow_reschedule_by_client === "true"}
+                        onChange={(e) => updateSetting("allow_reschedule_by_client", e.target.checked ? "true" : "false")}
+                      />
+                      <div>
+                        <p className="text-xs font-semibold text-foreground">Permitir reagendamento</p>
+                        <p className="text-[10px] text-muted-foreground">Cliente pode mudar a data/hora.</p>
+                      </div>
+                    </label>
+                    <label className="flex items-center gap-3 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        className="w-4 h-4 rounded accent-primary"
+                        checked={settings.require_login_to_book === "true"}
+                        onChange={(e) => updateSetting("require_login_to_book", e.target.checked ? "true" : "false")}
+                      />
+                      <div>
+                        <p className="text-xs font-semibold text-foreground">Exigir login para agendar</p>
+                        <p className="text-[10px] text-muted-foreground">Bloqueia agendamento anônimo.</p>
+                      </div>
+                    </label>
+                    <label className="flex items-center gap-3 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        className="w-4 h-4 rounded accent-primary"
+                        checked={settings.allow_choose_barber === "true"}
+                        onChange={(e) => updateSetting("allow_choose_barber", e.target.checked ? "true" : "false")}
+                      />
+                      <div>
+                        <p className="text-xs font-semibold text-foreground">Cliente escolhe barbeiro</p>
+                        <p className="text-[10px] text-muted-foreground">Senão o sistema atribui automaticamente.</p>
+                      </div>
+                    </label>
+                    <div>
+                      <label className={labelStyle}>Cancelamento permitido até (horas antes)</label>
+                      <input
+                        type="number"
+                        min={0}
+                        className="glass-input"
+                        value={settings.cancel_until_hours || "2"}
+                        onChange={(e) => updateSetting("cancel_until_hours", e.target.value)}
+                      />
+                    </div>
                   </div>
-                  <div>
-                    <label className={labelStyle}>Política de Atraso</label>
-                    <textarea
-                      className="glass-input min-h-[80px] resize-none"
-                      value={settings.late_policy || ""}
-                      onChange={(e) => updateSetting("late_policy", e.target.value)}
-                      placeholder="Ex: Tolerância de 10 minutos. Após isso, o horário será liberado"
-                    />
+                </div>
+
+                {/* Políticas */}
+                <div className={cardStyle}>
+                  <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                    <FileText className="w-4 h-4" style={{ color: iconColor }} /> Políticas
+                  </h3>
+                  <div className="grid gap-4">
+                    <div>
+                      <label className={labelStyle}>Política de Cancelamento</label>
+                      <textarea
+                        className="glass-input min-h-[80px] resize-none"
+                        value={settings.cancellation_policy || ""}
+                        onChange={(e) => updateSetting("cancellation_policy", e.target.value)}
+                        placeholder="Ex: Cancelamentos devem ser feitos com no mínimo 2 horas de antecedência"
+                      />
+                    </div>
+                    <div>
+                      <label className={labelStyle}>Política de Atraso</label>
+                      <textarea
+                        className="glass-input min-h-[80px] resize-none"
+                        value={settings.late_policy || ""}
+                        onChange={(e) => updateSetting("late_policy", e.target.value)}
+                        placeholder="Ex: Tolerância de 10 minutos. Após isso, o horário será liberado"
+                      />
+                    </div>
+                    <div>
+                      <label className={labelStyle}>Mensagem ao Agendar (WhatsApp)</label>
+                      <textarea
+                        className="glass-input min-h-[70px] resize-none"
+                        value={settings.msg_on_book || ""}
+                        onChange={(e) => updateSetting("msg_on_book", e.target.value)}
+                        placeholder="Ex: Olá {cliente}, recebemos seu agendamento de {servico} para {data} às {hora}."
+                      />
+                    </div>
+                    <div>
+                      <label className={labelStyle}>Mensagem ao Confirmar (WhatsApp)</label>
+                      <textarea
+                        className="glass-input min-h-[70px] resize-none"
+                        value={settings.msg_on_confirm || ""}
+                        onChange={(e) => updateSetting("msg_on_confirm", e.target.value)}
+                        placeholder="Ex: ✅ Seu agendamento de {servico} foi CONFIRMADO para {data} às {hora}."
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
