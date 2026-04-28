@@ -1,0 +1,382 @@
+/**
+ * MySQL Proxy Edge Function
+ *
+ * Recebe ações do painel admin e executa no MySQL do cliente (perfil ativo).
+ * Apenas o super admin pode chamar (validado por e-mail no JWT).
+ *
+ * Ações suportadas:
+ *   - test          → SELECT 1 + versão MySQL
+ *   - install_schema→ executa o SQL de schema enviado
+ *   - select        → { table, columns?, where?, order?, limit? }
+ *   - insert        → { table, values }                   (1 ou N linhas)
+ *   - update        → { table, values, where }
+ *   - delete        → { table, where }
+ *   - upsert        → { table, values, on_conflict }
+ *   - count         → { table, where? }
+ *   - stats         → conta linhas das tabelas conhecidas
+ */
+
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import mysql from "npm:mysql2@3.11.3/promise";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type, x-profile-id",
+};
+
+const SUPER_ADMIN_EMAIL = "admin-barber@gmail.com";
+
+const ALLOWED_TABLES = new Set([
+  "services",
+  "barbers",
+  "appointments",
+  "products",
+  "orders",
+  "order_items",
+  "coupons",
+  "business_settings",
+  "chatpro_config",
+  "prize_wheel_slices",
+  "user_roles",
+]);
+
+const ident = (name: string): string => {
+  if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(name)) {
+    throw new Error(`Invalid identifier: ${name}`);
+  }
+  return `\`${name}\``;
+};
+
+const ALLOWED_OPERATORS = new Set([
+  "=",
+  "!=",
+  "<>",
+  ">",
+  "<",
+  ">=",
+  "<=",
+  "in",
+  "not in",
+  "like",
+  "is",
+  "is not",
+]);
+
+interface WhereClause {
+  column: string;
+  op: string;
+  value: unknown;
+}
+
+const buildWhere = (
+  where?: WhereClause[],
+): { sql: string; params: unknown[] } => {
+  if (!where || where.length === 0) return { sql: "", params: [] };
+  const parts: string[] = [];
+  const params: unknown[] = [];
+  for (const w of where) {
+    const op = (w.op || "=").toLowerCase();
+    if (!ALLOWED_OPERATORS.has(op)) throw new Error(`Operator not allowed: ${op}`);
+    if (op === "in" || op === "not in") {
+      const arr = Array.isArray(w.value) ? w.value : [w.value];
+      if (arr.length === 0) {
+        parts.push("1=0");
+      } else {
+        parts.push(
+          `${ident(w.column)} ${op.toUpperCase()} (${arr.map(() => "?").join(",")})`,
+        );
+        params.push(...arr);
+      }
+    } else if (op === "is" || op === "is not") {
+      parts.push(`${ident(w.column)} ${op.toUpperCase()} NULL`);
+    } else {
+      parts.push(`${ident(w.column)} ${op} ?`);
+      params.push(w.value);
+    }
+  }
+  return { sql: " WHERE " + parts.join(" AND "), params };
+};
+
+async function getProfile(supabase: any, profileId?: string) {
+  let query = supabase.from("mysql_profiles").select("*");
+  if (profileId) query = query.eq("id", profileId);
+  else query = query.eq("is_active", true);
+  const { data, error } = await query.limit(1).maybeSingle();
+  if (error) throw new Error(`Profile lookup failed: ${error.message}`);
+  if (!data) throw new Error("No active MySQL profile");
+  return data;
+}
+
+async function decryptPassword(supabase: any, encrypted: string): Promise<string> {
+  // pgsodium decrypt RPC (configured below)
+  const { data, error } = await supabase.rpc("decrypt_mysql_password", {
+    _encrypted: encrypted,
+  });
+  if (error) throw new Error(`Decrypt failed: ${error.message}`);
+  return data as string;
+}
+
+async function connectMysql(profile: any, password: string) {
+  return await mysql.createConnection({
+    host: profile.host,
+    port: Number(profile.port) || 3306,
+    user: profile.username,
+    password,
+    database: profile.database_name,
+    ssl: profile.ssl_enabled ? { rejectUnauthorized: false } : undefined,
+    connectTimeout: 10_000,
+  });
+}
+
+async function recordTest(supabase: any, profileId: string, ok: boolean, msg: string) {
+  await supabase
+    .from("mysql_profiles")
+    .update({
+      last_test_at: new Date().toISOString(),
+      last_test_status: ok ? "ok" : "fail",
+      last_test_message: msg.slice(0, 500),
+    })
+    .eq("id", profileId);
+}
+
+Deno.serve(async (req: Request) => {
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { headers: corsHeaders });
+  }
+
+  try {
+    // Auth
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return new Response(JSON.stringify({ success: false, error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_ANON_KEY")!,
+      { global: { headers: { Authorization: authHeader } } },
+    );
+
+    const token = authHeader.replace("Bearer ", "");
+    const { data: claimsData, error: claimsErr } = await supabase.auth.getClaims(token);
+    if (claimsErr || !claimsData?.claims) {
+      return new Response(JSON.stringify({ success: false, error: "Invalid token" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const email = (claimsData.claims.email as string | undefined) || "";
+    if (email.toLowerCase() !== SUPER_ADMIN_EMAIL.toLowerCase()) {
+      return new Response(
+        JSON.stringify({ success: false, error: "Only the super admin can use MySQL" }),
+        {
+          status: 403,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      );
+    }
+
+    // Use service role for profile/password reads (bypass RLS for the proxy)
+    const admin = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+    );
+
+    const body = await req.json();
+    const { action, profile_id, table, values, where, columns, order, limit, sql_text } =
+      body as Record<string, any>;
+
+    if (!action) throw new Error("Missing action");
+
+    const profile = await getProfile(admin, profile_id);
+    const password = await decryptPassword(admin, profile.password_encrypted);
+
+    let conn;
+    try {
+      conn = await connectMysql(profile, password);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      await recordTest(admin, profile.id, false, msg);
+      return new Response(JSON.stringify({ success: false, error: msg, code: "CONN_FAIL" }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    try {
+      if (action === "test") {
+        const [versionRows] = await conn.query("SELECT VERSION() AS version");
+        const [pingRows] = await conn.query("SELECT 1 AS ok");
+        await recordTest(admin, profile.id, true, "OK");
+        return new Response(
+          JSON.stringify({
+            success: true,
+            data: {
+              version: (versionRows as any[])[0]?.version,
+              ping: (pingRows as any[])[0]?.ok === 1,
+              host: profile.host,
+              database: profile.database_name,
+            },
+          }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+
+      if (action === "install_schema") {
+        if (!sql_text || typeof sql_text !== "string") {
+          throw new Error("sql_text required");
+        }
+        // mysql2 supports multipleStatements via flag — reconnect with it on
+        await conn.end();
+        conn = await mysql.createConnection({
+          host: profile.host,
+          port: Number(profile.port) || 3306,
+          user: profile.username,
+          password,
+          database: profile.database_name,
+          ssl: profile.ssl_enabled ? { rejectUnauthorized: false } : undefined,
+          multipleStatements: true,
+          connectTimeout: 30_000,
+        });
+        await conn.query(sql_text);
+        return new Response(JSON.stringify({ success: true, data: { installed: true } }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      if (action === "stats") {
+        const stats: Record<string, number> = {};
+        for (const t of ALLOWED_TABLES) {
+          try {
+            const [rows] = await conn.query(`SELECT COUNT(*) AS c FROM ${ident(t)}`);
+            stats[t] = (rows as any[])[0]?.c ?? 0;
+          } catch {
+            stats[t] = -1; // table missing
+          }
+        }
+        return new Response(JSON.stringify({ success: true, data: stats }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      if (!table || !ALLOWED_TABLES.has(table)) {
+        throw new Error(`Table not allowed: ${table}`);
+      }
+
+      if (action === "select") {
+        const cols =
+          Array.isArray(columns) && columns.length > 0
+            ? columns.map(ident).join(",")
+            : "*";
+        const w = buildWhere(where);
+        let sql = `SELECT ${cols} FROM ${ident(table)}${w.sql}`;
+        if (order && order.column) {
+          sql += ` ORDER BY ${ident(order.column)} ${order.ascending === false ? "DESC" : "ASC"}`;
+        }
+        if (limit && Number.isFinite(Number(limit))) {
+          sql += ` LIMIT ${Number(limit)}`;
+        }
+        const [rows] = await conn.query(sql, w.params);
+        return new Response(JSON.stringify({ success: true, data: rows }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      if (action === "insert") {
+        const arr = Array.isArray(values) ? values : [values];
+        if (arr.length === 0) throw new Error("No values");
+        const allKeys = Array.from(new Set(arr.flatMap((r: any) => Object.keys(r))));
+        const colsSql = allKeys.map(ident).join(",");
+        const placeholders = arr
+          .map(() => `(${allKeys.map(() => "?").join(",")})`)
+          .join(",");
+        const params = arr.flatMap((r: any) => allKeys.map((k) => r[k] ?? null));
+        const sql = `INSERT INTO ${ident(table)} (${colsSql}) VALUES ${placeholders}`;
+        const [result] = await conn.query(sql, params);
+        return new Response(
+          JSON.stringify({ success: true, data: { affected: (result as any).affectedRows } }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+
+      if (action === "update") {
+        if (!values || typeof values !== "object") throw new Error("values required");
+        const keys = Object.keys(values);
+        const setSql = keys.map((k) => `${ident(k)} = ?`).join(",");
+        const w = buildWhere(where);
+        const sql = `UPDATE ${ident(table)} SET ${setSql}${w.sql}`;
+        const params = [...keys.map((k) => (values as any)[k]), ...w.params];
+        const [result] = await conn.query(sql, params);
+        return new Response(
+          JSON.stringify({ success: true, data: { affected: (result as any).affectedRows } }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+
+      if (action === "delete") {
+        const w = buildWhere(where);
+        if (!w.sql) throw new Error("DELETE requires where");
+        const sql = `DELETE FROM ${ident(table)}${w.sql}`;
+        const [result] = await conn.query(sql, w.params);
+        return new Response(
+          JSON.stringify({ success: true, data: { affected: (result as any).affectedRows } }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+
+      if (action === "upsert") {
+        const arr = Array.isArray(values) ? values : [values];
+        const conflict = body.on_conflict as string | undefined;
+        if (arr.length === 0) throw new Error("No values");
+        const allKeys = Array.from(new Set(arr.flatMap((r: any) => Object.keys(r))));
+        const colsSql = allKeys.map(ident).join(",");
+        const placeholders = arr
+          .map(() => `(${allKeys.map(() => "?").join(",")})`)
+          .join(",");
+        const updateKeys = allKeys.filter((k) => k !== conflict && k !== "id");
+        const updateSql = updateKeys
+          .map((k) => `${ident(k)} = VALUES(${ident(k)})`)
+          .join(",");
+        const params = arr.flatMap((r: any) => allKeys.map((k) => r[k] ?? null));
+        const sql = `INSERT INTO ${ident(table)} (${colsSql}) VALUES ${placeholders}${
+          updateSql ? ` ON DUPLICATE KEY UPDATE ${updateSql}` : ""
+        }`;
+        const [result] = await conn.query(sql, params);
+        return new Response(
+          JSON.stringify({ success: true, data: { affected: (result as any).affectedRows } }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+
+      if (action === "count") {
+        const w = buildWhere(where);
+        const sql = `SELECT COUNT(*) AS c FROM ${ident(table)}${w.sql}`;
+        const [rows] = await conn.query(sql, w.params);
+        return new Response(
+          JSON.stringify({ success: true, data: { count: (rows as any[])[0]?.c ?? 0 } }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+
+      throw new Error(`Unknown action: ${action}`);
+    } finally {
+      try {
+        await conn.end();
+      } catch {
+        /* ignore */
+      }
+    }
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    console.error("[mysql-proxy]", msg);
+    return new Response(JSON.stringify({ success: false, error: msg }), {
+      status: 200,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+});
