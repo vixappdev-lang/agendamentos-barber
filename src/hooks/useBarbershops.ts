@@ -1,5 +1,10 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  DEFAULT_PERMISSIONS,
+  sanitizePermissions,
+  type PermissionKey,
+} from "@/lib/barbershopPermissions";
 
 export interface BarbershopProfile {
   id: string;
@@ -14,6 +19,7 @@ export interface BarbershopProfile {
   is_cloud: boolean;
   is_locked: boolean;
   is_active: boolean;
+  permissions: Record<PermissionKey, boolean>;
   created_at: string;
   updated_at: string;
 }
@@ -26,6 +32,7 @@ export interface BarbershopInput {
   password?: string; // plain — será hasheada via RPC
   phone?: string;
   address?: string;
+  permissions?: Record<PermissionKey, boolean>;
 }
 
 const KEY = ["barbershop_profiles"] as const;
