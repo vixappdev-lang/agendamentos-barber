@@ -61,6 +61,29 @@ const AdminLayout = () => {
     checkAdmin();
   }, [navigate]);
 
+  // Pré-carrega chunks das rotas admin em background (após sessão validada)
+  useEffect(() => {
+    if (loading) return;
+    const idle = (cb: () => void) =>
+      "requestIdleCallback" in window
+        ? (window as any).requestIdleCallback(cb, { timeout: 2000 })
+        : setTimeout(cb, 800);
+    idle(() => {
+      void import("@/pages/admin/Dashboard");
+      void import("@/pages/admin/Services");
+      void import("@/pages/admin/Barbers");
+      void import("@/pages/admin/Appointments");
+      void import("@/pages/admin/Coupons");
+      void import("@/pages/admin/StoreDashboard");
+      void import("@/pages/admin/Finance");
+      void import("@/pages/admin/ChatProConfig");
+      void import("@/pages/admin/Settings");
+      if (isSuperAdmin(userEmail)) {
+        void import("@/pages/admin/Barbershops");
+      }
+    });
+  }, [loading, userEmail]);
+
   const visibleNavItems = navItems.filter((it) => !it.superAdminOnly || isSuperAdmin(userEmail));
 
   const handleLogout = async () => { await supabase.auth.signOut(); navigate("/admin/login"); };
