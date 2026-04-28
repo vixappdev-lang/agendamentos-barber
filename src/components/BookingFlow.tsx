@@ -135,41 +135,25 @@ const BookingFlow = ({ service, onClose, user }: BookingFlowProps) => {
     return dates;
   };
 
-  const sendWhatsAppConfirmation = async (phoneNumber: string, dateFormatted: string) => {
-    const businessName = settings.business_name || "Jack Hair";
-    
-    const msg = `✅ *Agendamento Confirmado!*\n\n` +
-      `Olá *${name}*, tudo certo!\n\n` +
-      `💈 ${service.title}\n` +
-      `✂️ ${selectedBarber?.name}\n` +
-      `📅 ${dateFormatted} às ${selectedTime}\n` +
-      `💰 R$ ${service.price.toFixed(2)}\n\n` +
-      `📍 Rua Exemplo, 123 - Centro\n` +
-      `⏰ Chegue 5 min antes\n\n` +
-      `*${businessName}* 💈`;
-
+  const sendWhatsApp = async (
+    phoneNumber: string,
+    template: string,
+    fallback: string,
+    vars: Record<string, string>,
+  ) => {
+    let body = (template || "").trim() || fallback;
+    Object.entries(vars).forEach(([k, v]) => {
+      body = body.replace(new RegExp(`\\{${k}\\}`, "g"), v);
+    });
     try {
       const res = await supabase.functions.invoke("chatpro", {
-        body: {
-          action: "send_message",
-          phone: phoneNumber,
-          message: msg,
-        },
+        body: { action: "send_message", phone: phoneNumber, message: body },
       });
-
-      console.log("ChatPro response:", JSON.stringify(res.data));
-
       if (res.error) {
         console.error("ChatPro invoke error:", res.error);
         return false;
       }
-
-      if (res.data?.success) {
-        console.log("WhatsApp confirmation sent via ChatPro");
-        return true;
-      }
-      console.log("ChatPro not available:", res.data?.reason);
-      return false;
+      return !!res.data?.success;
     } catch (err) {
       console.error("Error sending WhatsApp:", err);
       return false;
@@ -197,26 +181,54 @@ const BookingFlow = ({ service, onClose, user }: BookingFlowProps) => {
       return;
     }
 
+    // Regras vindas do admin
+    const confirmationMode = (settings.confirmation_mode || "auto") as "auto" | "manual";
+    const sendOnBook = settings.send_whatsapp_on_book === "true";
+    const sendOnConfirm = settings.send_whatsapp_on_confirm === "true";
+    const requireLogin = settings.require_login_to_book === "true";
+
+    if (requireLogin && !user) {
+      toast.error("É necessário fazer login para agendar.");
+      return;
+    }
+
     setSubmitting(true);
+    const fullName = `${name.trim()} ${surname.trim()}`.trim();
+    const status = confirmationMode === "auto" ? "confirmed" : "pending";
+
     const { error } = await supabase.from("appointments").insert({
       service_id: service.id,
-      customer_name: `${name.trim()} ${surname.trim()}`,
+      customer_name: fullName,
       customer_phone: phone,
       customer_email: user?.email || null,
       barber_name: selectedBarber?.name || null,
       appointment_date: selectedDate,
       appointment_time: selectedTime,
       total_price: service.price,
-      status: "pending",
+      status,
     });
 
     if (error) { toast.error("Erro ao agendar. Tente novamente."); setSubmitting(false); return; }
 
-    const dateFormatted = selectedDate ? new Date(selectedDate + "T12:00:00").toLocaleDateString("pt-BR") : "";
-    const whatsappSent = await sendWhatsAppConfirmation(digitsOnly, dateFormatted);
-    
-    if (!whatsappSent) {
-      console.log("WhatsApp not sent, but appointment was created successfully");
+    const dateFormatted = new Date(selectedDate + "T12:00:00").toLocaleDateString("pt-BR");
+    const vars = {
+      cliente: fullName,
+      servico: service.title,
+      data: dateFormatted,
+      hora: selectedTime,
+      barbearia: settings.business_name || "Barbearia",
+      barbeiro: selectedBarber?.name || "",
+      valor: service.price.toFixed(2),
+    };
+
+    // Auto: dispara confirmação imediata.
+    // Manual: envia "pedido recebido" se sendOnBook estiver ativo.
+    if (confirmationMode === "auto" && sendOnConfirm) {
+      const fallback = `✅ *Agendamento Confirmado!*\n\nOlá *${fullName}*\n💈 ${service.title}\n✂️ ${selectedBarber?.name}\n📅 ${dateFormatted} às ${selectedTime}\n💰 R$ ${service.price.toFixed(2)}\n\n*${vars.barbearia}* 💈`;
+      await sendWhatsApp(digitsOnly, settings.msg_on_confirm || "", fallback, vars);
+    } else if (confirmationMode === "manual" && sendOnBook) {
+      const fallback = `Olá *${fullName}*! Recebemos seu agendamento de *${service.title}* para *${dateFormatted}* às *${selectedTime}*. Em breve confirmaremos. — *${vars.barbearia}* 💈`;
+      await sendWhatsApp(digitsOnly, settings.msg_on_book || "", fallback, vars);
     }
 
     setSubmitting(false);
