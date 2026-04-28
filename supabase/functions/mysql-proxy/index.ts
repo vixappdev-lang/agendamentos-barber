@@ -18,6 +18,7 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import mysql from "npm:mysql2@3.11.3/promise";
+import bcrypt from "npm:bcryptjs@2.4.3";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -26,6 +27,7 @@ const corsHeaders = {
 };
 
 const SUPER_ADMIN_EMAIL = "admin-barber@gmail.com";
+const SESSION_TTL_SECONDS = 60 * 60 * 12;
 
 const ALLOWED_TABLES = new Set([
   "services",
@@ -52,6 +54,74 @@ const sanitizeHost = (raw: unknown): string => {
 };
 
 const HOSTNAME_RE = /^(?=.{1,253}$)([a-zA-Z0-9_]([a-zA-Z0-9-_]{0,61}[a-zA-Z0-9_])?)(\.[a-zA-Z0-9_]([a-zA-Z0-9-_]{0,61}[a-zA-Z0-9_])?)*$|^(\d{1,3}\.){3}\d{1,3}$/;
+
+interface MysqlAdminSession {
+  profile_id: string;
+  barbershop_id: string;
+  user_id: string;
+  email: string;
+  role: string;
+  iat: number;
+  exp: number;
+}
+
+const encoder = new TextEncoder();
+const decoder = new TextDecoder();
+
+const b64url = (value: string | Uint8Array) => {
+  const bytes = typeof value === "string" ? encoder.encode(value) : value;
+  let binary = "";
+  bytes.forEach((b) => (binary += String.fromCharCode(b)));
+  return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+};
+
+const fromB64url = (value: string) => {
+  const normalized = value.replace(/-/g, "+").replace(/_/g, "/");
+  const padded = normalized + "=".repeat((4 - (normalized.length % 4)) % 4);
+  const binary = atob(padded);
+  return new Uint8Array([...binary].map((ch) => ch.charCodeAt(0)));
+};
+
+const sessionSecret = () =>
+  Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || Deno.env.get("LOVABLE_API_KEY") || Deno.env.get("SUPABASE_ANON_KEY") || "";
+
+const hmac = async (data: string) => {
+  const key = await crypto.subtle.importKey(
+    "raw",
+    encoder.encode(sessionSecret()),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"],
+  );
+  return b64url(new Uint8Array(await crypto.subtle.sign("HMAC", key, encoder.encode(data))));
+};
+
+const safeEqual = (a: string, b: string) => {
+  if (a.length !== b.length) return false;
+  let out = 0;
+  for (let i = 0; i < a.length; i++) out |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return out === 0;
+};
+
+const signSession = async (payload: Omit<MysqlAdminSession, "iat" | "exp">) => {
+  const now = Math.floor(Date.now() / 1000);
+  const encoded = b64url(JSON.stringify({ ...payload, iat: now, exp: now + SESSION_TTL_SECONDS }));
+  return `${encoded}.${await hmac(encoded)}`;
+};
+
+const verifySession = async (token: unknown): Promise<MysqlAdminSession> => {
+  const raw = String(token || "");
+  const [payload, signature] = raw.split(".");
+  if (!payload || !signature) throw new Error("Sessão MySQL inválida");
+  const expected = await hmac(payload);
+  if (!safeEqual(signature, expected)) throw new Error("Sessão MySQL inválida");
+  const parsed = JSON.parse(decoder.decode(fromB64url(payload))) as MysqlAdminSession;
+  if (!parsed.profile_id || !parsed.user_id || !parsed.email || parsed.role !== "admin") {
+    throw new Error("Sessão MySQL sem permissão de admin");
+  }
+  if (parsed.exp <= Math.floor(Date.now() / 1000)) throw new Error("Sessão MySQL expirada");
+  return parsed;
+};
 
 const requireText = (value: unknown, label: string, max = 255): string => {
   const out = String(value ?? "").trim();
