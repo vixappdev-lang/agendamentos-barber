@@ -190,6 +190,57 @@ export type Database = {
         }
         Relationships: []
       }
+      mysql_profiles: {
+        Row: {
+          created_at: string
+          database_name: string
+          host: string
+          id: string
+          is_active: boolean
+          last_test_at: string | null
+          last_test_message: string | null
+          last_test_status: string | null
+          name: string
+          password_encrypted: string
+          port: number
+          ssl_enabled: boolean
+          updated_at: string
+          username: string
+        }
+        Insert: {
+          created_at?: string
+          database_name: string
+          host: string
+          id?: string
+          is_active?: boolean
+          last_test_at?: string | null
+          last_test_message?: string | null
+          last_test_status?: string | null
+          name: string
+          password_encrypted: string
+          port?: number
+          ssl_enabled?: boolean
+          updated_at?: string
+          username: string
+        }
+        Update: {
+          created_at?: string
+          database_name?: string
+          host?: string
+          id?: string
+          is_active?: boolean
+          last_test_at?: string | null
+          last_test_message?: string | null
+          last_test_status?: string | null
+          name?: string
+          password_encrypted?: string
+          port?: number
+          ssl_enabled?: boolean
+          updated_at?: string
+          username?: string
+        }
+        Relationships: []
+      }
       order_items: {
         Row: {
           created_at: string
@@ -435,6 +486,11 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      activate_mysql_profile: {
+        Args: { _profile_id: string }
+        Returns: undefined
+      }
+      deactivate_all_mysql_profiles: { Args: never; Returns: undefined }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
