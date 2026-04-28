@@ -959,29 +959,56 @@ const Settings = () => {
 
           {/* ===== GERAL ===== */}
           {activeTab === "general" && (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              <div className={cardStyle}>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-stretch">
+              <div className={`${cardStyle} h-full flex flex-col`}>
                 <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
                   <Globe className="w-4 h-4" style={{ color: iconColor }} /> Domínio e Identificação
                 </h3>
-                <div className="grid gap-4">
+                <div className="grid gap-4 flex-1">
                   <div>
                     <label className={labelStyle}>Slug (identificador)</label>
-                    <input className="glass-input" value={settings.tenant_slug || ""} onChange={(e) => updateSetting("tenant_slug", e.target.value)} placeholder="vilanova" />
-                    <p className="text-[10px] text-muted-foreground mt-1">Identificador único usado internamente</p>
+                    <input
+                      className="glass-input"
+                      value={settings.tenant_slug || ""}
+                      onChange={(e) => updateSetting("tenant_slug", e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))}
+                      placeholder="vilanova"
+                    />
+                    <p className="text-[10px] text-muted-foreground mt-1">
+                      Apenas letras minúsculas, números e hífens. Identificador único do tenant.
+                    </p>
+                    {settings.tenant_slug && !/^[a-z0-9-]+$/.test(settings.tenant_slug) && (
+                      <p className="text-[10px] text-destructive mt-1 flex items-center gap-1">
+                        <AlertCircle className="w-3 h-3" /> Formato inválido
+                      </p>
+                    )}
                   </div>
                   <div>
                     <label className={labelStyle}>Domínio Personalizado</label>
-                    <input className="glass-input" value={settings.custom_domain || ""} onChange={(e) => updateSetting("custom_domain", e.target.value)} placeholder="www.suabarbearia.com.br" />
+                    <input
+                      className="glass-input"
+                      value={settings.custom_domain || ""}
+                      onChange={(e) => updateSetting("custom_domain", e.target.value.trim().toLowerCase())}
+                      placeholder="www.suabarbearia.com.br"
+                    />
+                    {settings.custom_domain && (
+                      <a
+                        href={`https://${settings.custom_domain.replace(/^https?:\/\//, "")}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[10px] text-muted-foreground hover:text-foreground mt-1 inline-flex items-center gap-1"
+                      >
+                        <Globe className="w-3 h-3" /> Abrir domínio
+                      </a>
+                    )}
                   </div>
                 </div>
               </div>
 
-              <div className={cardStyle}>
+              <div className={`${cardStyle} h-full flex flex-col`}>
                 <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
                   <Settings2 className="w-4 h-4" style={{ color: iconColor }} /> Preferências
                 </h3>
-                <div className="grid gap-4">
+                <div className="grid gap-4 flex-1">
                   <div>
                     <label className={labelStyle}>Status do Site</label>
                     <div className="flex gap-3">
@@ -1012,10 +1039,33 @@ const Settings = () => {
                         </button>
                       ))}
                     </div>
+                    <p className="text-[10px] text-muted-foreground mt-1">
+                      {(settings.site_status || "ativo") === "inativo"
+                        ? "Site público exibirá página de manutenção."
+                        : "Site público acessível normalmente."}
+                    </p>
                   </div>
                   <div>
                     <label className={labelStyle}>Link Google Maps</label>
-                    <input className="glass-input" value={settings.google_maps_link || ""} onChange={(e) => updateSetting("google_maps_link", e.target.value)} placeholder="https://maps.google.com/..." />
+                    <input
+                      className="glass-input"
+                      value={settings.google_maps_link || ""}
+                      onChange={(e) => updateSetting("google_maps_link", e.target.value.trim())}
+                      placeholder="https://maps.google.com/..."
+                    />
+                    {settings.google_maps_link && (
+                      <a
+                        href={settings.google_maps_link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[10px] text-muted-foreground hover:text-foreground mt-1 inline-flex items-center gap-1"
+                      >
+                        <MapPin className="w-3 h-3" /> Testar link
+                      </a>
+                    )}
+                    <p className="text-[10px] text-muted-foreground mt-1">
+                      Usado no botão "Como chegar" no rodapé do site.
+                    </p>
                   </div>
                 </div>
               </div>
