@@ -38,7 +38,7 @@ const schema = z.object({
   port: z.coerce.number().int().min(1).max(65535),
   database_name: z.string().trim().min(1, "Banco obrigatório").max(64),
   username: z.string().trim().min(1, "Usuário obrigatório").max(64),
-  password: z.string().min(1, "Senha obrigatória").max(255),
+  password: z.string().max(255),
   ssl_enabled: z.boolean(),
 });
 
@@ -98,45 +98,36 @@ export const MysqlConfigModal = ({ open, onOpenChange, barbershop }: Props) => {
       toast({ title: "Erro", description: parsed.error.issues[0].message, variant: "destructive" });
       return null;
     }
+    if (!existingProfileId && !parsed.data.password.trim()) {
+      toast({ title: "Erro", description: "Senha obrigatória para salvar a primeira conexão.", variant: "destructive" });
+      return null;
+    }
     setSaving(true);
     try {
-      // Encripta a senha do MySQL via RPC
-      const { data: encrypted, error: encErr } = await supabase.rpc("encrypt_mysql_password", {
-        _plain: parsed.data.password,
-      });
-      if (encErr) throw encErr;
-
-      const payload = {
+      const { data, error } = await supabase.functions.invoke("mysql-proxy", {
+        body: {
+          action: "save_profile",
+          profile_id: existingProfileId,
+          barbershop_id: barbershop.id,
         name: barbershop.name,
         host: parsed.data.host,
         port: parsed.data.port,
         database_name: parsed.data.database_name,
         username: parsed.data.username,
-        password_encrypted: encrypted as string,
+          password: parsed.data.password,
         ssl_enabled: parsed.data.ssl_enabled,
-      };
+        },
+      });
+      if (error) throw error;
+      if (!data?.success) throw new Error(data?.error || "Falha ao salvar conexão MySQL");
 
-      let profileId: string;
-      if (existingProfileId) {
-        const { error } = await supabase.from("mysql_profiles").update(payload).eq("id", existingProfileId);
-        if (error) throw error;
-        profileId = existingProfileId;
-      } else {
-        const { data, error } = await supabase.from("mysql_profiles").insert(payload).select("id").single();
-        if (error) throw error;
-        profileId = data.id;
-      }
-
-      // vincula no barbershop
-      const { error: linkErr } = await supabase
-        .from("barbershop_profiles")
-        .update({ mysql_profile_id: profileId })
-        .eq("id", barbershop.id);
-      if (linkErr) throw linkErr;
+      const profileId = data.data?.profile_id as string;
+      if (!profileId) throw new Error("Conexão salva sem ID de perfil");
 
       qc.invalidateQueries({ queryKey: ["barbershop_profiles"] });
       toast({ title: "Conexão MySQL salva" });
       setExistingProfileId(profileId);
+      setForm((p) => ({ ...p, host: parsed.data.host, password: "" }));
       return profileId;
     } catch (e: any) {
       const description =
