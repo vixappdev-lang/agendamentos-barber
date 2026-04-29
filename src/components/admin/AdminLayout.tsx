@@ -102,9 +102,10 @@ const AdminLayout = () => {
     if (loading) return;
     const idle = (cb: () => void) =>
       "requestIdleCallback" in window
-        ? (window as any).requestIdleCallback(cb, { timeout: 2000 })
-        : setTimeout(cb, 800);
+        ? (window as any).requestIdleCallback(cb, { timeout: 1500 })
+        : setTimeout(cb, 200);
     idle(() => {
+      // todas as rotas — qualquer clique fica instantâneo após o 1º carregamento
       void import("@/pages/admin/Dashboard");
       void import("@/pages/admin/Services");
       void import("@/pages/admin/Barbers");
@@ -115,11 +116,18 @@ const AdminLayout = () => {
       void import("@/pages/admin/ChatProConfig");
       void import("@/pages/admin/Reviews");
       void import("@/pages/admin/Settings");
+      void import("@/pages/admin/Cashier");
+      void import("@/pages/admin/Commands");
+      void import("@/pages/admin/Commissions");
+      void import("@/pages/admin/Credit");
+      void import("@/pages/admin/Inventory");
+      void import("@/pages/admin/Suppliers");
       if (isSuperAdmin(userEmail)) {
         void import("@/pages/admin/Barbershops");
       }
     });
   }, [loading, userEmail]);
+
 
   // Hook de progresso (banner + welcome)
   const { steps, completedCount, totalCount, allDone, welcomeSeen, refresh } = useSetupProgress(userEmail);
@@ -174,7 +182,7 @@ const AdminLayout = () => {
           <button className="lg:hidden text-muted-foreground" onClick={() => setSidebarOpen(false)}><X className="w-5 h-5" /></button>
         </div>
 
-        <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
+        <nav className="flex-1 p-3 space-y-1 overflow-y-auto scrollbar-hidden">
           {visibleNavItems.map((item) => {
             const isActive = location.pathname === item.path;
             return (
@@ -197,6 +205,7 @@ const AdminLayout = () => {
           </button>
         </div>
       </motion.aside>
+
 
       <div className="flex-1 flex flex-col min-w-0">
         <header className="sticky top-0 z-30 flex items-center gap-3 px-4 sm:px-6 py-4"
@@ -237,7 +246,7 @@ const AdminLayout = () => {
           </button>
         )}
 
-        <main className="flex-1 p-4 sm:p-6 overflow-auto"><Outlet /></main>
+        <main key={location.pathname} className="flex-1 p-4 sm:p-6 overflow-auto admin-page-enter"><Outlet /></main>
       </div>
 
       <WelcomeSetupModal

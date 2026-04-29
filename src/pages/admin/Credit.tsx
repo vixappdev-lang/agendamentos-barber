@@ -8,6 +8,7 @@ import { supabase as supabaseTyped } from "@/integrations/supabase/client";
 const supabase = supabaseTyped as any;
 import { toast } from "sonner";
 import { ModuleSection, Stat, EmptyState, PrimaryButton, GhostButton, TextField } from "@/components/admin/ModuleUI";
+import { ModuleHeader } from "@/components/admin/HelpModal";
 
 interface Account {
   id: string; customer_name: string; customer_phone: string | null;
@@ -109,6 +110,26 @@ const Credit = () => {
 
   return (
     <div className="space-y-5">
+      <ModuleHeader
+        title="Fiados"
+        description="Clientes em conta corrente — controle débitos, pagamentos e limites."
+        help={{
+          title: "Como funcionam os Fiados",
+          intro: "Cada cliente tem uma 'conta'. Toda vez que ele consome sem pagar, vira débito. Ao pagar, abate o saldo.",
+          steps: [
+            { title: "Cadastrar cliente", description: "Nome + telefone. Defina um limite de crédito (opcional) — o sistema avisa se ultrapassar." },
+            { title: "Lançar débito", description: "Manualmente ou automaticamente quando uma comanda é fechada como 'fiado'." },
+            { title: "Receber pagamento", description: "Informe o valor e o método. O sistema cria entrada no caixa aberto e abate do saldo do cliente." },
+            { title: "Bloquear/desbloquear", description: "Cliente que não paga pode ser bloqueado pra novos fiados (mas o histórico fica)." },
+          ],
+          tips: [
+            "Defina limite por cliente — o sistema alerta antes de estourar.",
+            "Saldo positivo = cliente deve. Saldo zero = quitado.",
+            "Pagamentos parciais são aceitos.",
+          ],
+        }}
+      />
+
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <Stat label="Total a receber" value={fmt(totalOwed)} tone={totalOwed > 0 ? "warning" : "positive"} />
         <Stat label="Clientes devendo" value={String(owingCount)} />

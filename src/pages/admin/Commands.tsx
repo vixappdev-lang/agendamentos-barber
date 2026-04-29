@@ -8,6 +8,7 @@ import { supabase as supabaseTyped } from "@/integrations/supabase/client";
 const supabase = supabaseTyped as any;
 import { toast } from "sonner";
 import { ModuleSection, Stat, EmptyState, PrimaryButton, GhostButton, TextField } from "@/components/admin/ModuleUI";
+import { ModuleHeader } from "@/components/admin/HelpModal";
 
 interface Command {
   id: string;
@@ -174,6 +175,26 @@ const Commands = () => {
 
   return (
     <div className="space-y-5">
+      <ModuleHeader
+        title="Comandas"
+        description="Abra comandas por cliente, adicione serviços e produtos, e feche gerando lançamento automático no caixa."
+        help={{
+          title: "Como funciona Comandas",
+          intro: "Comanda é a 'conta' do cliente enquanto ele está sendo atendido. Você adiciona itens em tempo real e fecha quando terminar.",
+          steps: [
+            { title: "Abrir comanda", description: "Informe o nome do cliente (e barbeiro, se quiser). O sistema atribui um número sequencial." },
+            { title: "Adicionar itens", description: "Inclua serviços e produtos. O subtotal é calculado automaticamente." },
+            { title: "Aplicar desconto (opcional)", description: "Use cupom ou ajuste manual antes de fechar." },
+            { title: "Fechar comanda", description: "Escolha pagamento (dinheiro, pix, cartão, fiado). Se houver caixa aberto, gera entrada automática. Se for fiado, cria lançamento na conta do cliente." },
+          ],
+          tips: [
+            "Comandas em aberto aparecem em destaque pra você não esquecer.",
+            "Pagamento como 'fiado' exige cliente cadastrado em Fiados.",
+            "O total vai automaticamente pro Caixa quando você fecha (se houver caixa aberto).",
+          ],
+        }}
+      />
+
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <Stat label="Comandas abertas" value={String(opens.length)} tone={opens.length ? "warning" : "neutral"} />
         <Stat label="Total em aberto" value={fmt(totalOpen)} tone="warning" />

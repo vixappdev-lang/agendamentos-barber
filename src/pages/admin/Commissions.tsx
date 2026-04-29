@@ -14,6 +14,7 @@ import { supabase as supabaseTyped } from "@/integrations/supabase/client";
 const supabase = supabaseTyped as any;
 import { toast } from "sonner";
 import { ModuleSection, Stat, EmptyState, PrimaryButton, GhostButton, TextField } from "@/components/admin/ModuleUI";
+import { ModuleHeader } from "@/components/admin/HelpModal";
 
 interface Rule {
   id: string;
@@ -157,6 +158,26 @@ const Commissions = () => {
 
   return (
     <div className="space-y-5">
+      <ModuleHeader
+        title="Comissões"
+        description="Defina regras de % por barbeiro/serviço e calcule pagamentos automaticamente sobre os atendimentos concluídos."
+        help={{
+          title: "Como funcionam as Comissões",
+          intro: "Comissão é a parte que cada barbeiro recebe por atendimento. O sistema aplica regras hierárquicas e calcula sozinho.",
+          steps: [
+            { title: "Crie regras", description: "Você pode ter regra global (vale pra todos), por barbeiro, por serviço, ou combinada (barbeiro+serviço)." },
+            { title: "Hierarquia", description: "Quando há conflito, a regra mais ESPECÍFICA vence: barbeiro+serviço > barbeiro > serviço > global." },
+            { title: "Calcular período", description: "Escolha datas e o sistema soma todos os atendimentos confirmados/concluídos e aplica a regra correta a cada um." },
+            { title: "Registrar pagamento", description: "Após pagar o barbeiro, marque como pago. Fica histórico em commission_payouts." },
+          ],
+          tips: [
+            "Use regra global como 'fallback' (ex: 50% pra todos) e crie exceções por barbeiro.",
+            "Comissões só consideram atendimentos COM status confirmed ou completed.",
+            "Você pode pagar por semana, quinzena ou mês — o cálculo respeita o período escolhido.",
+          ],
+        }}
+      />
+
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <Stat label="Regras ativas" value={String(rules.filter((r) => r.active).length)} />
         <Stat label="Pendentes" value={String(payouts.filter((p) => p.status === "pending").length)} tone="warning" />
