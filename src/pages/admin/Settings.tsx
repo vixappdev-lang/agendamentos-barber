@@ -123,8 +123,21 @@ const Settings = () => {
   const adminSession = getAdminMysqlSession();
   const barbershopId = adminSession?.barbershop_id || null;
   const publicSlug = settings.tenant_slug || settings.business_slug || "";
-  const publicUrl = publicSlug ? `${window.location.origin}/s/${publicSlug}` : "";
+  const currentHost = typeof window !== "undefined" ? window.location.host : "";
+  const customDomain = (settings.custom_domain || "").replace(/^https?:\/\//, "").replace(/\/.*$/, "");
+  const publicUrl = customDomain
+    ? `https://${customDomain}`
+    : publicSlug ? `${window.location.origin}/s/${publicSlug}` : "";
   const sitePublished = settings.site_published !== "false";
+
+  // Auto-detecta domínio atual da hospedagem (útil pra preencher custom_domain)
+  useEffect(() => {
+    if (!settings.detected_host && currentHost) {
+      // Apenas guarda local pra exibir, não persiste sem ação do usuário
+      setSettings((p) => ({ ...p, detected_host: currentHost }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentHost]);
 
   useEffect(() => {
     fetchSettings();
