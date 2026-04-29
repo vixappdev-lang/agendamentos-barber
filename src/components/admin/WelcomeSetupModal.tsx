@@ -2,50 +2,76 @@ import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import {
-  Sparkles, Database, FileCode, Palette, Globe, ArrowRight, CheckCircle2, Loader2,
+  Sparkles, Database, FileCode, Palette, Type, Clock, MessageSquare, Globe,
+  ArrowRight, ArrowLeft, CheckCircle2, Clock3,
 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
+import { useSetupProgress } from "@/hooks/useSetupProgress";
 
 interface Props {
   open: boolean;
-  onComplete: () => void;
+  onClose: () => void;
   adminName?: string | null;
 }
 
-const steps = [
-  { icon: Database, title: "Banco MySQL conectado", desc: "Configure o MySQL do seu perfil em Perfis Barbearias.", href: "/admin/barbershops" },
-  { icon: FileCode, title: "Schema importado", desc: "Importe o SQL inicial para criar as tabelas necessárias.", href: "/admin/barbershops" },
-  { icon: Palette, title: "Personalize seu site", desc: "Defina cores, logo, hero, sobre e SEO em Configurações → Personalização.", href: "/admin/settings" },
-  { icon: Globe, title: "Publique seu site", desc: "Escolha o modo (Site Completo ou Agendamento Direto) e ative.", href: "/admin/settings" },
-];
+type Slide = {
+  icon: typeof Sparkles;
+  title: string;
+  body: React.ReactNode;
+  href?: string;
+  cta?: string;
+};
 
-const WelcomeSetupModal = ({ open, onComplete, adminName }: Props) => {
-  const [saving, setSaving] = useState(false);
+const WelcomeSetupModal = ({ open, onClose, adminName }: Props) => {
   const navigate = useNavigate();
+  const { steps, completedCount, totalCount, markWelcomeSeen } = useSetupProgress();
+  const [index, setIndex] = useState(0);
 
-  // Bloqueia scroll do body
+  // Bloqueia scroll
   useEffect(() => {
-    if (open) {
-      document.body.style.overflow = "hidden";
-      return () => { document.body.style.overflow = ""; };
-    }
+    if (!open) return;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = ""; };
   }, [open]);
 
-  const markCompleted = async () => {
-    setSaving(true);
-    const { error } = await supabase
-      .from("business_settings")
-      .upsert({ key: "welcome_completed", value: "true" }, { onConflict: "key" });
-    setSaving(false);
-    if (error) { toast.error(error.message); return; }
-    toast.success("Tudo pronto! Bem-vindo(a) ao painel ✨");
-    onComplete();
-  };
+  // Reset ao abrir
+  useEffect(() => { if (open) setIndex(0); }, [open]);
 
-  const goAndDismiss = async (href: string) => {
-    await markCompleted();
-    navigate(href);
+  const slides: Slide[] = [
+    {
+      icon: Sparkles,
+      title: `Bem-vindo${adminName ? `, ${adminName}` : ""}! 👋`,
+      body: (
+        <div className="space-y-3 text-center">
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            Vamos configurar seu site e painel em <strong className="text-foreground">7 passos rápidos</strong>.
+            Você pode pular agora e voltar depois pelo banner no topo.
+          </p>
+          <div className="flex items-center justify-center gap-2 text-[11px] text-muted-foreground pt-2">
+            <CheckCircle2 className="w-3.5 h-3.5" style={{ color: "hsl(140 60% 55%)" }} />
+            Progresso salvo automaticamente
+          </div>
+        </div>
+      ),
+    },
+    { icon: Database, title: "1. Conecte seu MySQL", body: <p className="text-sm text-muted-foreground">Vá em <strong>Perfis Barbearias</strong> e conecte seu servidor MySQL. É lá que ficam todos os dados do seu site (zero peso no Cloud).</p>, href: "/admin/barbershops", cta: "Ir para Perfis" },
+    { icon: FileCode, title: "2. Importe o schema SQL", body: <p className="text-sm text-muted-foreground">Após conectar o MySQL, importe o SQL inicial para criar as tabelas necessárias automaticamente.</p>, href: "/admin/barbershops", cta: "Importar agora" },
+    { icon: Palette, title: "3. Logo e cores", body: <p className="text-sm text-muted-foreground">Em <strong>Configurações → Visual</strong> envie sua logo e escolha as cores principais do site.</p>, href: "/admin/settings", cta: "Personalizar visual" },
+    { icon: Type, title: "4. Conteúdo do site", body: <p className="text-sm text-muted-foreground">Em <strong>Configurações → Personalização</strong> defina o título do hero, descrição e seção sobre.</p>, href: "/admin/settings", cta: "Editar conteúdo" },
+    { icon: Clock, title: "5. Horários", body: <p className="text-sm text-muted-foreground">Em <strong>Configurações → Horários</strong> configure abertura, fechamento, almoço e dias off.</p>, href: "/admin/settings", cta: "Configurar horários" },
+    { icon: MessageSquare, title: "6. Mensagens automáticas", body: <p className="text-sm text-muted-foreground">Em <strong>Configurações → Agendamento</strong> escolha templates prontos para WhatsApp.</p>, href: "/admin/settings", cta: "Definir mensagens" },
+    { icon: Globe, title: "7. Publique seu site!", body: <p className="text-sm text-muted-foreground">Em <strong>Configurações → Personalização → Publicação</strong> ative o site e copie o link público.</p>, href: "/admin/settings", cta: "Publicar agora" },
+  ];
+
+  const current = slides[index];
+  const isFirst = index === 0;
+  const isLast = index === slides.length - 1;
+
+  const handleSkip = async () => { await markWelcomeSeen(); onClose(); };
+  const handleNext = () => { if (!isLast) setIndex(index + 1); else handleSkip(); };
+  const handlePrev = () => { if (!isFirst) setIndex(index - 1); };
+  const handleAction = async () => {
+    if (current.href) { await markWelcomeSeen(); onClose(); navigate(current.href); }
+    else handleNext();
   };
 
   return (
@@ -55,66 +81,79 @@ const WelcomeSetupModal = ({ open, onComplete, adminName }: Props) => {
           initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
           className="fixed inset-0 z-[200] flex items-center justify-center p-4"
           style={{ background: "hsl(220 25% 4% / 0.85)", backdropFilter: "blur(8px)" }}
-          onClick={(e) => e.stopPropagation()}
         >
           <motion.div
             initial={{ y: 20, opacity: 0, scale: 0.97 }}
             animate={{ y: 0, opacity: 1, scale: 1 }}
             exit={{ y: 10, opacity: 0 }}
-            className="w-full max-w-xl rounded-2xl border border-border bg-card/95 backdrop-blur-xl shadow-2xl overflow-hidden"
+            className="w-full max-w-md rounded-2xl shadow-2xl overflow-hidden"
+            style={{ background: "hsl(220 25% 7% / 0.98)", border: "1px solid hsl(0 0% 100% / 0.08)", backdropFilter: "blur(20px)" }}
           >
-            {/* Header */}
-            <div className="p-6 border-b border-border" style={{ background: "linear-gradient(135deg, hsl(245 60% 55% / 0.15), hsl(280 60% 55% / 0.08))" }}>
-              <div className="flex items-center gap-3">
-                <div className="w-11 h-11 rounded-xl flex items-center justify-center"
-                  style={{ background: "hsl(245 60% 55% / 0.2)", border: "1px solid hsl(245 60% 55% / 0.35)" }}>
-                  <Sparkles className="w-5 h-5" style={{ color: "hsl(245 60% 75%)" }} />
-                </div>
-                <div>
-                  <h2 className="text-lg font-bold text-foreground">Bem-vindo{adminName ? `, ${adminName}` : ""}! 👋</h2>
-                  <p className="text-xs text-muted-foreground">Vamos configurar seu site em poucos passos.</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Steps */}
-            <div className="p-6 space-y-3">
-              {steps.map((s, i) => (
-                <button
-                  key={i}
-                  onClick={() => goAndDismiss(s.href)}
-                  disabled={saving}
-                  className="w-full flex items-center gap-3 p-3.5 rounded-xl text-left transition-all hover:bg-muted/40 disabled:opacity-50"
-                  style={{ background: "hsl(0 0% 100% / 0.025)", border: "1px solid hsl(0 0% 100% / 0.06)" }}
-                >
-                  <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
-                    style={{ background: "hsl(245 60% 55% / 0.12)", color: "hsl(245 60% 75%)" }}>
-                    <s.icon className="w-4 h-4" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-foreground">{i + 1}. {s.title}</p>
-                    <p className="text-[11px] text-muted-foreground leading-snug">{s.desc}</p>
-                  </div>
-                  <ArrowRight className="w-4 h-4 text-muted-foreground shrink-0" />
-                </button>
+            {/* Progress dots */}
+            <div className="px-6 pt-5 pb-3 flex items-center gap-1.5">
+              {slides.map((_, i) => (
+                <div key={i} className="h-1 flex-1 rounded-full transition-all"
+                  style={{ background: i <= index ? "hsl(245 60% 60%)" : "hsl(0 0% 100% / 0.06)" }} />
               ))}
             </div>
 
-            {/* Footer */}
-            <div className="p-5 border-t border-border bg-muted/20 flex items-center justify-between gap-3">
-              <p className="text-[11px] text-muted-foreground flex items-center gap-1.5">
-                <CheckCircle2 className="w-3.5 h-3.5" style={{ color: "hsl(140 60% 55%)" }} />
-                Você pode revisitar depois em Configurações.
-              </p>
-              <button
-                onClick={markCompleted}
-                disabled={saving}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all disabled:opacity-50"
-                style={{ background: "hsl(245 60% 55%)", color: "white" }}
+            {/* Slide */}
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.2 }}
+                className="px-6 py-6"
               >
-                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
-                Entendi, vamos lá
+                <div className="flex items-center justify-center w-14 h-14 mx-auto rounded-2xl mb-4"
+                  style={{ background: "linear-gradient(135deg, hsl(245 60% 55% / 0.2), hsl(280 60% 55% / 0.1))", border: "1px solid hsl(245 60% 55% / 0.3)" }}>
+                  <current.icon className="w-6 h-6" style={{ color: "hsl(245 60% 75%)" }} />
+                </div>
+                <h2 className="text-lg font-bold text-center text-foreground mb-3">{current.title}</h2>
+                <div className="min-h-[80px] flex items-center justify-center px-2">{current.body}</div>
+              </motion.div>
+            </AnimatePresence>
+
+            {/* Footer */}
+            <div className="px-6 py-4 flex items-center justify-between gap-3" style={{ borderTop: "1px solid hsl(0 0% 100% / 0.06)", background: "hsl(0 0% 100% / 0.02)" }}>
+              <button
+                onClick={isFirst ? handleSkip : handlePrev}
+                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold text-muted-foreground hover:text-foreground transition"
+              >
+                {isFirst ? <><Clock3 className="w-3.5 h-3.5" /> Fazer depois</> : <><ArrowLeft className="w-3.5 h-3.5" /> Voltar</>}
               </button>
+
+              <div className="flex items-center gap-2">
+                {current.href && !isFirst && (
+                  <button
+                    onClick={handleAction}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold transition"
+                    style={{ background: "hsl(245 60% 55%)", color: "white" }}
+                  >
+                    {current.cta || "Ir agora"} <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                )}
+                <button
+                  onClick={handleNext}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold transition"
+                  style={
+                    current.href && !isFirst
+                      ? { background: "hsl(0 0% 100% / 0.05)", color: "hsl(0 0% 80%)", border: "1px solid hsl(0 0% 100% / 0.08)" }
+                      : { background: "hsl(245 60% 55%)", color: "white" }
+                  }
+                >
+                  {isLast ? "Concluir" : "Próximo"} {!isLast && <ArrowRight className="w-3.5 h-3.5" />}
+                </button>
+              </div>
+            </div>
+
+            {/* Mini progress info */}
+            <div className="px-6 pb-3 text-center">
+              <p className="text-[10px] text-muted-foreground">
+                {completedCount}/{totalCount} configurações concluídas
+              </p>
             </div>
           </motion.div>
         </motion.div>
