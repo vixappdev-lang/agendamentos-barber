@@ -23,6 +23,8 @@ import {
 import { isSuperAdmin } from "@/lib/superAdmin";
 import { clearAdminMysqlSession, getAdminMysqlSession } from "@/lib/adminMysqlSession";
 import WelcomeSetupModal from "@/components/admin/WelcomeSetupModal";
+import { useSetupProgress } from "@/hooks/useSetupProgress";
+import { Sparkles } from "lucide-react";
 
 interface NavItem {
   label: string;
