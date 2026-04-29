@@ -285,7 +285,7 @@ const MemberArea = () => {
       toast.error(`Cancelamento permitido até ${cancelUntilHours}h antes do horário.`);
       return;
     }
-    const { error } = await supabase.from("appointments").update({ status: "cancelled" }).eq("id", apt.id);
+    const { error } = await supabase.from("appointments").update({ status: "cancelled" }).eq("id", apt.id).eq("customer_email", apt.customer_email || userEmail);
     if (error) { toast.error("Erro ao cancelar."); return; }
     toast.success("Agendamento cancelado.");
     setAppointments((prev) => prev.map((a) => (a.id === apt.id ? { ...a, status: "cancelled" } : a)));
