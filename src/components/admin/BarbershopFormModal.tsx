@@ -85,11 +85,13 @@ export const BarbershopFormModal = ({ open, onOpenChange, profile }: Props) => {
     password: "",
     phone: "",
     address: "",
+    custom_domain: "",
+    subdomain: "",
   });
   const [permissions, setPermissions] = useState<Record<PermissionKey, boolean>>(DEFAULT_PERMISSIONS);
   const [showPwd, setShowPwd] = useState(false);
   const [slugTouched, setSlugTouched] = useState(false);
-  const [tab, setTab] = useState<"info" | "perms">("info");
+  const [tab, setTab] = useState<"info" | "domain" | "perms">("info");
 
   useEffect(() => {
     if (profile) {
