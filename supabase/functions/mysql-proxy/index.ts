@@ -345,7 +345,9 @@ Deno.serve(async (req: Request) => {
 
       const SUBS = new Set([
         "site_settings","services","barbers","products","reviews_public",
+        "business_settings_all","prize_wheel_slices","coupon_validate",
         "create_appointment","create_order","create_review",
+        "appointments_by_email","cancel_appointment","orders_by_phone","order_items",
       ]);
       if (!SUBS.has(sub)) throw new Error("sub não permitida");
 
