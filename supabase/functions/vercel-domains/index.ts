@@ -44,6 +44,7 @@ async function vercelProject(path: string, init: RequestInit = {}, teamId = VERC
 const readList = (body: any, key: "domains" | "projects") => {
   if (Array.isArray(body)) return body;
   if (Array.isArray(body?.[key])) return body[key];
+  if (Array.isArray(body?.teams)) return body.teams;
   if (Array.isArray(body?.data)) return body.data;
   return [];
 };
