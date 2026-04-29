@@ -917,77 +917,139 @@ const Settings = () => {
 
           {/* ===== PERSONALIZAÇÃO ===== */}
           {activeTab === "personalization" && (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              <div className="space-y-4">
-                <div className={cardStyle}>
-                  <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                    <Sun className="w-4 h-4" style={{ color: iconColor }} /> Tema / Aparência
-                  </h3>
-                  <p className="text-[10px] text-muted-foreground">Ative o modo claro para áreas específicas</p>
-                  <button
-                    onClick={() => updateSetting("theme_mode", (settings.theme_mode || "dark") === "dark" ? "light" : "dark")}
-                    className="w-full flex items-center justify-between p-4 rounded-xl transition-all"
-                    style={{
-                      background: (settings.theme_mode || "dark") === "light" ? "hsl(245 60% 55% / 0.1)" : "hsl(0 0% 100% / 0.03)",
-                      border: `1px solid ${(settings.theme_mode || "dark") === "light" ? "hsl(245 60% 55% / 0.25)" : "hsl(0 0% 100% / 0.06)"}`,
-                    }}
-                  >
-                    <div className="flex items-center gap-3">
-                      {(settings.theme_mode || "dark") === "light" ? <Sun className="w-5 h-5" style={{ color: "hsl(40 80% 50%)" }} /> : <Moon className="w-5 h-5" style={{ color: "hsl(0 0% 50%)" }} />}
-                      <div className="text-left">
-                        <p className="text-sm font-semibold">Modo Claro</p>
-                        <p className="text-[11px]" style={{ color: "hsl(0 0% 50%)" }}>{(settings.theme_mode || "dark") === "light" ? "Ativado" : "Desativado"}</p>
-                      </div>
-                    </div>
-                    <div className="w-12 h-6 rounded-full flex items-center px-0.5 transition-all"
-                      style={{
-                        background: (settings.theme_mode || "dark") === "light" ? "hsl(245 60% 55%)" : "hsl(0 0% 25%)",
-                        justifyContent: (settings.theme_mode || "dark") === "light" ? "flex-end" : "flex-start",
-                      }}>
-                      <div className="w-5 h-5 rounded-full bg-white transition-all" />
-                    </div>
-                  </button>
-                </div>
-
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-stretch">
+              {/* ---------- COLUNA ESQUERDA ---------- */}
+              <div className="space-y-4 flex flex-col">
+                {/* Modo do Site */}
                 <div className={cardStyle}>
                   <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
                     <Layout className="w-4 h-4" style={{ color: iconColor }} /> Modo do Site
                   </h3>
-                  <div className="grid gap-2">
+                  <p className="text-[10px] text-muted-foreground">
+                    O efeito é aplicado imediatamente ao salvar — o visitante verá conforme escolhido.
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {[
-                      { value: "full", label: "Site Completo", desc: "Landing + agendamento + loja + área do cliente" },
-                      { value: "booking", label: "Agendamento Direto", desc: "Apenas tela de agendamento" },
-                    ].map((mode) => (
-                      <button key={mode.value} onClick={() => updateSetting("site_mode", mode.value)}
-                        className="w-full text-left p-4 rounded-xl transition-all"
-                        style={{
-                          background: (settings.site_mode || "full") === mode.value ? "hsl(245 60% 55% / 0.1)" : "hsl(0 0% 100% / 0.03)",
-                          border: `1px solid ${(settings.site_mode || "full") === mode.value ? "hsl(245 60% 55% / 0.25)" : "hsl(0 0% 100% / 0.06)"}`,
-                        }}>
-                        <div className="flex items-center gap-3">
-                          <div className="w-5 h-5 rounded-full border-2 flex items-center justify-center"
-                            style={{ borderColor: (settings.site_mode || "full") === mode.value ? "hsl(245 60% 65%)" : "hsl(0 0% 30%)" }}>
-                            {(settings.site_mode || "full") === mode.value && (
-                              <div className="w-2.5 h-2.5 rounded-full" style={{ background: "hsl(245 60% 65%)" }} />
-                            )}
+                      { value: "full", label: "Site Completo", desc: "Landing + agenda + contato. Tudo visível." },
+                      { value: "booking", label: "Agendamento Direto", desc: "Abre direto na tela de agendar." },
+                    ].map((mode) => {
+                      const active = (settings.site_mode || "full") === mode.value;
+                      return (
+                        <button key={mode.value} onClick={() => updateSetting("site_mode", mode.value)}
+                          className="text-left p-3.5 rounded-xl transition-all"
+                          style={{
+                            background: active ? "hsl(245 60% 55% / 0.12)" : "hsl(0 0% 100% / 0.025)",
+                            border: `1px solid ${active ? "hsl(245 60% 55% / 0.35)" : "hsl(0 0% 100% / 0.06)"}`,
+                          }}>
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="w-3.5 h-3.5 rounded-full border flex items-center justify-center"
+                              style={{ borderColor: active ? "hsl(245 60% 70%)" : "hsl(0 0% 40%)", background: active ? "hsl(245 60% 70%)" : "transparent" }}>
+                              {active && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                            </span>
+                            <span className="text-sm font-semibold text-foreground">{mode.label}</span>
                           </div>
-                          <div>
-                            <p className="text-sm font-semibold">{mode.label}</p>
-                            <p className="text-[11px]" style={{ color: "hsl(0 0% 50%)" }}>{mode.desc}</p>
-                          </div>
-                        </div>
+                          <p className="text-[11px] text-muted-foreground leading-snug">{mode.desc}</p>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Publicação */}
+                <div className={cardStyle}>
+                  <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                    <Globe className="w-4 h-4" style={{ color: iconColor }} /> Publicação do Site
+                  </h3>
+                  <ToggleCard
+                    active={sitePublished}
+                    onToggle={() => updateSetting("site_published", sitePublished ? "false" : "true")}
+                    title={sitePublished ? "Site publicado" : "Site oculto"}
+                    description={sitePublished
+                      ? "Visitantes podem acessar a URL pública agora."
+                      : "URL pública retorna página de manutenção até reativar."}
+                    icon={<CheckCircle className="w-4 h-4" />}
+                  />
+                  <div>
+                    <label className={labelStyle}>URL pública</label>
+                    <div className="flex gap-2">
+                      <code className="flex-1 px-3 py-2.5 rounded-lg text-xs truncate" style={{ background: "hsl(0 0% 100% / 0.04)" }}>
+                        {publicUrl || "Defina o slug em Geral"}
+                      </code>
+                      <button
+                        type="button"
+                        onClick={() => { if (publicUrl) { navigator.clipboard.writeText(publicUrl); toast.success("Link copiado"); } }}
+                        disabled={!publicUrl}
+                        className="px-3 rounded-lg disabled:opacity-40"
+                        style={{ background: "hsl(245 60% 55% / 0.1)", border: "1px solid hsl(245 60% 55% / 0.2)", color: "hsl(245 60% 70%)" }}
+                        title="Copiar"
+                      >
+                        <Copy className="w-3.5 h-3.5" />
                       </button>
-                    ))}
+                      <a
+                        href={publicUrl || "#"}
+                        target="_blank"
+                        rel="noreferrer"
+                        className={`px-3 flex items-center rounded-lg ${!publicUrl ? "opacity-40 pointer-events-none" : ""}`}
+                        style={{ background: "hsl(245 60% 55% / 0.1)", border: "1px solid hsl(245 60% 55% / 0.2)", color: "hsl(245 60% 70%)" }}
+                        title="Abrir"
+                      >
+                        <Eye className="w-3.5 h-3.5" />
+                      </a>
+                    </div>
+                  </div>
+                  <p className="text-[10px] text-muted-foreground">
+                    Ao clicar em <strong>Salvar Configurações</strong> o status e o modo são publicados automaticamente no roteamento.
+                  </p>
+                </div>
+
+                {/* Imagem do Hero (upload) */}
+                <div className={`${cardStyle} flex-1 flex flex-col`}>
+                  <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                    <ImageIcon className="w-4 h-4" style={{ color: iconColor }} /> Imagem do Hero
+                  </h3>
+                  <div className="flex items-center gap-4 flex-1">
+                    {(() => {
+                      let imgs: string[] = [];
+                      try { imgs = JSON.parse(settings.site_hero_images || "[]"); } catch {}
+                      const heroImg = imgs[0];
+                      return (
+                        <>
+                          <div className="w-24 h-24 rounded-xl flex items-center justify-center overflow-hidden shrink-0"
+                            style={{ background: "hsl(0 0% 100% / 0.03)", border: "1px dashed hsl(0 0% 100% / 0.12)" }}>
+                            {heroImg ? <img src={heroImg} alt="" className="w-full h-full object-cover"/> : <ImageIcon className="w-6 h-6 text-muted-foreground"/>}
+                          </div>
+                          <div className="flex-1 min-w-0 space-y-2">
+                            <label className="w-full py-2 rounded-lg text-xs font-semibold flex items-center justify-center gap-2 cursor-pointer transition-all"
+                              style={{ background: "hsl(245 60% 55% / 0.1)", color: "hsl(245 60% 70%)", border: "1px solid hsl(245 60% 55% / 0.2)" }}>
+                              <Upload className="w-3.5 h-3.5" /> {heroImg ? "Trocar imagem" : "Enviar imagem"}
+                              <input type="file" accept="image/*" className="hidden" onChange={async (e) => {
+                                const f = e.target.files?.[0]; if (!f) return;
+                                const url = await uploadAsset(f, "hero");
+                                if (url) { updateSetting("site_hero_images", JSON.stringify([url])); toast.success("Hero atualizado"); }
+                              }}/>
+                            </label>
+                            {heroImg && (
+                              <button type="button" onClick={() => updateSetting("site_hero_images", "[]")}
+                                className="w-full py-1.5 rounded-lg text-[11px] font-medium text-muted-foreground hover:text-destructive transition"
+                                style={{ border: "1px solid hsl(0 0% 100% / 0.06)" }}>Remover</button>
+                            )}
+                            <p className="text-[10px] text-muted-foreground leading-snug">Formato vertical (4:5) funciona melhor · Máx 4MB</p>
+                          </div>
+                        </>
+                      );
+                    })()}
                   </div>
                 </div>
               </div>
 
-              <div className="space-y-4">
+              {/* ---------- COLUNA DIREITA ---------- */}
+              <div className="space-y-4 flex flex-col">
+                {/* Textos do Site */}
                 <div className={cardStyle}>
                   <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
                     <Type className="w-4 h-4" style={{ color: iconColor }} /> Textos do Site
                   </h3>
-                  <div className="grid gap-4">
+                  <div className="grid gap-3">
                     <div>
                       <label className={labelStyle}>Título Principal (Hero)</label>
                       <input className="glass-input" value={settings.hero_title || ""} onChange={(e) => updateSetting("hero_title", e.target.value)} placeholder="Ex: GenesisBarber" />
@@ -1006,125 +1068,114 @@ const Settings = () => {
                     </div>
                     <div>
                       <label className={labelStyle}>Descrição Sobre</label>
-                      <textarea className="glass-input min-h-[70px] resize-none" value={settings.about_description || ""} onChange={(e) => updateSetting("about_description", e.target.value)} />
+                      <textarea className="glass-input min-h-[80px] resize-none" value={settings.about_description || ""} onChange={(e) => updateSetting("about_description", e.target.value)} />
                     </div>
                   </div>
                 </div>
 
-                {/* PUBLICAÇÃO — vinculado ao Cloud (routing) */}
+                {/* Galeria (upload múltiplo) */}
                 <div className={cardStyle}>
                   <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                    <Globe className="w-4 h-4" style={{ color: iconColor }} /> Publicação do Site
+                    <ImageIcon className="w-4 h-4" style={{ color: iconColor }} /> Galeria
                   </h3>
-                  <div className="space-y-3">
-                    <button
-                      type="button"
-                      onClick={() => updateSetting("site_published", sitePublished ? "false" : "true")}
-                      className="w-full flex items-center justify-between p-3 rounded-xl transition-all"
-                      style={{
-                        background: sitePublished ? "hsl(140 60% 50% / 0.1)" : "hsl(0 0% 100% / 0.03)",
-                        border: `1px solid ${sitePublished ? "hsl(140 60% 50% / 0.3)" : "hsl(0 0% 100% / 0.06)"}`,
-                      }}
-                    >
-                      <div className="flex items-center gap-2">
-                        <CheckCircle className="w-4 h-4" style={{ color: sitePublished ? "hsl(140 60% 60%)" : "hsl(0 0% 50%)" }} />
-                        <span className="text-sm font-semibold">{sitePublished ? "Site publicado" : "Site oculto"}</span>
-                      </div>
-                      <div className="w-9 h-5 rounded-full flex items-center px-0.5"
-                        style={{
-                          background: sitePublished ? "hsl(140 60% 50%)" : "hsl(0 0% 22%)",
-                          justifyContent: sitePublished ? "flex-end" : "flex-start",
-                        }}>
-                        <div className="w-4 h-4 rounded-full bg-white" />
-                      </div>
-                    </button>
-
-                    <div>
-                      <label className={labelStyle}>URL pública</label>
-                      <div className="flex gap-2">
-                        <code className="flex-1 px-3 py-2.5 rounded-lg text-xs truncate" style={{ background: "hsl(0 0% 100% / 0.04)" }}>
-                          {publicUrl || "Defina o slug em Geral"}
-                        </code>
-                        <button
-                          type="button"
-                          onClick={() => { if (publicUrl) { navigator.clipboard.writeText(publicUrl); toast.success("Link copiado"); } }}
-                          disabled={!publicUrl}
-                          className="px-3 rounded-lg disabled:opacity-40"
-                          style={{ background: "hsl(245 60% 55% / 0.1)", border: "1px solid hsl(245 60% 55% / 0.2)", color: "hsl(245 60% 70%)" }}
-                          title="Copiar"
-                        >
-                          <Copy className="w-3.5 h-3.5" />
-                        </button>
-                        <a
-                          href={publicUrl || "#"}
-                          target="_blank"
-                          rel="noreferrer"
-                          className={`px-3 flex items-center rounded-lg ${!publicUrl ? "opacity-40 pointer-events-none" : ""}`}
-                          style={{ background: "hsl(245 60% 55% / 0.1)", border: "1px solid hsl(245 60% 55% / 0.2)", color: "hsl(245 60% 70%)" }}
-                          title="Abrir"
-                        >
-                          <Eye className="w-3.5 h-3.5" />
-                        </a>
-                      </div>
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={saveSiteRouting}
-                      disabled={savingRouting || !barbershopId}
-                      className="w-full inline-flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-all disabled:opacity-50"
-                      style={{ background: "hsl(245 60% 55%)", color: "white" }}
-                    >
-                      {savingRouting ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
-                      Salvar publicação
-                    </button>
-                    <p className="text-[10px] text-muted-foreground">
-                      Salva o status (publicado/oculto) e o modo do site no roteamento Cloud.
-                    </p>
-                  </div>
+                  {(() => {
+                    let gallery: string[] = [];
+                    try { gallery = JSON.parse(settings.site_gallery || "[]"); if (!Array.isArray(gallery)) gallery = []; } catch { gallery = []; }
+                    return (
+                      <>
+                        <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                          {gallery.map((url, i) => (
+                            <div key={i} className="relative group aspect-square rounded-lg overflow-hidden"
+                              style={{ background: "hsl(0 0% 100% / 0.03)", border: "1px solid hsl(0 0% 100% / 0.06)" }}>
+                              <img src={url} alt="" className="w-full h-full object-cover" />
+                              <button type="button"
+                                onClick={() => updateSetting("site_gallery", JSON.stringify(gallery.filter((_, j) => j !== i)))}
+                                className="absolute top-1 right-1 w-6 h-6 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition"
+                                style={{ background: "hsl(0 0% 0% / 0.7)" }}>
+                                <Trash2 className="w-3 h-3 text-white" />
+                              </button>
+                            </div>
+                          ))}
+                          <label className="aspect-square rounded-lg flex flex-col items-center justify-center gap-1 cursor-pointer transition hover:bg-white/5"
+                            style={{ background: "hsl(0 0% 100% / 0.025)", border: "1px dashed hsl(0 0% 100% / 0.15)" }}>
+                            <Plus className="w-5 h-5 text-muted-foreground" />
+                            <span className="text-[10px] text-muted-foreground">Enviar</span>
+                            <input type="file" accept="image/*" multiple className="hidden" onChange={async (e) => {
+                              const files = Array.from(e.target.files || []);
+                              const uploaded: string[] = [];
+                              for (const f of files) {
+                                const url = await uploadAsset(f, "gallery");
+                                if (url) uploaded.push(url);
+                              }
+                              if (uploaded.length) {
+                                updateSetting("site_gallery", JSON.stringify([...gallery, ...uploaded]));
+                                toast.success(`${uploaded.length} imagem(ns) adicionada(s)`);
+                              }
+                              e.target.value = "";
+                            }}/>
+                          </label>
+                        </div>
+                        <p className="text-[10px] text-muted-foreground">{gallery.length} imagem(ns) · clique no X para remover</p>
+                      </>
+                    );
+                  })()}
                 </div>
 
-                {/* GALERIA + SEO */}
-                <div className={cardStyle}>
+                {/* SEO */}
+                <div className={`${cardStyle} flex-1 flex flex-col`}>
                   <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                    <ImageIcon className="w-4 h-4" style={{ color: iconColor }} /> Galeria & SEO
+                    <Globe className="w-4 h-4" style={{ color: iconColor }} /> SEO
                   </h3>
                   <div className="grid gap-3">
-                    <div>
-                      <label className={labelStyle}>Galeria (URLs em JSON)</label>
-                      <textarea
-                        className="glass-input min-h-[70px] resize-none font-mono text-[11px]"
-                        value={settings.site_gallery || ""}
-                        onChange={(e) => updateSetting("site_gallery", e.target.value)}
-                        placeholder='["https://...", "https://..."]'
-                      />
-                    </div>
                     <div>
                       <label className={labelStyle}>SEO Title (≤60 caracteres)</label>
                       <input
                         className="glass-input"
+                        maxLength={60}
                         value={settings.site_seo_title || ""}
                         onChange={(e) => updateSetting("site_seo_title", e.target.value)}
                         placeholder="Nome | Barbearia em..."
                       />
+                      <p className="text-[10px] text-muted-foreground mt-1">{(settings.site_seo_title || "").length}/60</p>
                     </div>
                     <div>
                       <label className={labelStyle}>SEO Description (≤160 caracteres)</label>
                       <textarea
                         className="glass-input min-h-[60px] resize-none"
+                        maxLength={160}
                         value={settings.site_seo_description || ""}
                         onChange={(e) => updateSetting("site_seo_description", e.target.value)}
                         placeholder="Descrição para Google e redes sociais"
                       />
+                      <p className="text-[10px] text-muted-foreground mt-1">{(settings.site_seo_description || "").length}/160</p>
                     </div>
                     <div>
-                      <label className={labelStyle}>OG Image (URL)</label>
-                      <input
-                        className="glass-input"
-                        value={settings.site_seo_og_image || ""}
-                        onChange={(e) => updateSetting("site_seo_og_image", e.target.value)}
-                        placeholder="https://..."
-                      />
+                      <label className={labelStyle}>OG Image</label>
+                      <div className="flex items-center gap-3">
+                        <div className="w-16 h-16 rounded-lg flex items-center justify-center overflow-hidden shrink-0"
+                          style={{ background: "hsl(0 0% 100% / 0.03)", border: "1px dashed hsl(0 0% 100% / 0.12)" }}>
+                          {settings.site_seo_og_image
+                            ? <img src={settings.site_seo_og_image} alt="" className="w-full h-full object-cover"/>
+                            : <ImageIcon className="w-5 h-5 text-muted-foreground"/>}
+                        </div>
+                        <div className="flex-1 min-w-0 space-y-2">
+                          <label className="w-full py-2 rounded-lg text-xs font-semibold flex items-center justify-center gap-2 cursor-pointer transition-all"
+                            style={{ background: "hsl(245 60% 55% / 0.1)", color: "hsl(245 60% 70%)", border: "1px solid hsl(245 60% 55% / 0.2)" }}>
+                            <Upload className="w-3.5 h-3.5" /> {settings.site_seo_og_image ? "Trocar OG image" : "Enviar OG image"}
+                            <input type="file" accept="image/*" className="hidden" onChange={async (e) => {
+                              const f = e.target.files?.[0]; if (!f) return;
+                              const url = await uploadAsset(f, "og");
+                              if (url) { updateSetting("site_seo_og_image", url); toast.success("OG image atualizada"); }
+                            }}/>
+                          </label>
+                          {settings.site_seo_og_image && (
+                            <button type="button" onClick={() => updateSetting("site_seo_og_image", "")}
+                              className="w-full py-1.5 rounded-lg text-[11px] font-medium text-muted-foreground hover:text-destructive transition"
+                              style={{ border: "1px solid hsl(0 0% 100% / 0.06)" }}>Remover</button>
+                          )}
+                          <p className="text-[10px] text-muted-foreground leading-snug">Recomendado 1200×630 · Máx 4MB</p>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
