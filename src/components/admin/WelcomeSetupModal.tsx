@@ -11,6 +11,7 @@ interface Props {
   open: boolean;
   onClose: () => void;
   adminName?: string | null;
+  adminEmail?: string | null;
 }
 
 type Slide = {
