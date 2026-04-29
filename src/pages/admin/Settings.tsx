@@ -403,17 +403,7 @@ const Settings = () => {
             </div>
           )}
 
-          {/* ===== SITE PÚBLICO ===== */}
-          {activeTab === "site" && (
-            <SettingsSiteTab
-              settings={settings}
-              updateSetting={updateSetting}
-              barbershopId={getAdminMysqlSession()?.barbershop_id || null}
-              barbershopSlug={settings.business_slug || settings.tenant_slug || null}
-              initialSiteMode={(settings.site_mode as "full" | "booking") || "full"}
-              initialSitePublished={settings.site_published !== "false"}
-            />
-          )}
+
 
           {/* ===== IDENTIDADE VISUAL ===== */}
           {activeTab === "branding" && (
