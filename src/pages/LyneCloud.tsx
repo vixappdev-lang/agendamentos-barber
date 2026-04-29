@@ -538,7 +538,7 @@ const DashboardMockup = () => (
       ].map((c) => (
         <div key={c.label} className="rounded-xl p-3"
              style={{ background: "hsl(0 0% 100% / 0.03)", border: "1px solid hsl(0 0% 100% / 0.06)" }}>
-          <div className="text-[9px] text-muted-foreground uppercase tracking-wider">{c.label}</div>
+          <div className="text-[9px] text-muted-foreground uppercase tracking-wider whitespace-nowrap">{c.label}</div>
           <div className="text-lg font-bold mt-1">{c.value}</div>
           <div className="text-[9px] mt-0.5" style={{ color: c.color }}>{c.trend}</div>
         </div>
