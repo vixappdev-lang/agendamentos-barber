@@ -94,6 +94,79 @@ export const BarbershopFormModal = ({ open, onOpenChange, profile }: Props) => {
   const [slugTouched, setSlugTouched] = useState(false);
   const [tab, setTab] = useState<"info" | "domain" | "perms">("info");
 
+  // ==== Vercel API integration ====
+  type VercelStatus = {
+    loading: boolean;
+    verified?: boolean;
+    misconfigured?: boolean;
+    nameservers?: string[];
+    aValues?: string[];
+    cnames?: string[];
+    error?: string;
+  };
+  const [vercelBusy, setVercelBusy] = useState<"add" | "verify" | "remove" | null>(null);
+  const [statusByDomain, setStatusByDomain] = useState<Record<string, VercelStatus>>({});
+
+  const callVercel = async (action: "add" | "remove" | "verify" | "status", domain: string) => {
+    const { data, error } = await supabase.functions.invoke("vercel-domains", { body: { action, domain } });
+    if (error) throw new Error(error.message);
+    return data as any;
+  };
+
+  const refreshStatus = async (domain: string) => {
+    if (!domain) return;
+    setStatusByDomain((p) => ({ ...p, [domain]: { ...(p[domain] || {}), loading: true } }));
+    try {
+      const r = await callVercel("status", domain);
+      const info = r?.info || {};
+      const config = r?.config || {};
+      setStatusByDomain((p) => ({
+        ...p,
+        [domain]: {
+          loading: false,
+          verified: !!info.verified,
+          misconfigured: !!config.misconfigured,
+          nameservers: config.nameservers,
+          aValues: config.aValues,
+          cnames: config.cnames,
+        },
+      }));
+    } catch (e: any) {
+      setStatusByDomain((p) => ({ ...p, [domain]: { loading: false, error: e?.message || "Erro" } }));
+    }
+  };
+
+  const handleVercelAdd = async (domain: string) => {
+    if (!domain) { toast({ title: "Informe o domínio primeiro", variant: "destructive" }); return; }
+    setVercelBusy("add");
+    try {
+      const r = await callVercel("add", domain);
+      if (r?.ok) toast({ title: "Domínio vinculado", description: "Configure o DNS para finalizar." });
+      else toast({ title: "Falha ao vincular", description: r?.data?.error?.message || "Erro Vercel", variant: "destructive" });
+      await refreshStatus(domain);
+    } catch (e: any) {
+      toast({ title: "Erro Vercel", description: e?.message, variant: "destructive" });
+    } finally { setVercelBusy(null); }
+  };
+
+  const handleVercelVerify = async (domain: string) => {
+    setVercelBusy("verify");
+    try { await callVercel("verify", domain); await refreshStatus(domain); toast({ title: "Verificação solicitada" }); }
+    catch (e: any) { toast({ title: "Erro", description: e?.message, variant: "destructive" }); }
+    finally { setVercelBusy(null); }
+  };
+
+  const handleVercelRemove = async (domain: string) => {
+    if (!domain || !confirm(`Remover ${domain} da Vercel?`)) return;
+    setVercelBusy("remove");
+    try {
+      const r = await callVercel("remove", domain);
+      if (r?.ok) { toast({ title: "Removido" }); setStatusByDomain((p) => { const n = { ...p }; delete n[domain]; return n; }); }
+      else toast({ title: "Falha", description: r?.data?.error?.message, variant: "destructive" });
+    } catch (e: any) { toast({ title: "Erro", description: e?.message, variant: "destructive" }); }
+    finally { setVercelBusy(null); }
+  };
+
   useEffect(() => {
     if (profile) {
       setForm({
