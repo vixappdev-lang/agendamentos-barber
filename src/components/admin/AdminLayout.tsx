@@ -174,7 +174,7 @@ const AdminLayout = () => {
           <button className="lg:hidden text-muted-foreground" onClick={() => setSidebarOpen(false)}><X className="w-5 h-5" /></button>
         </div>
 
-        <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
+        <nav className="flex-1 p-3 space-y-1 overflow-y-auto scrollbar-hidden">
           {visibleNavItems.map((item) => {
             const isActive = location.pathname === item.path;
             return (
@@ -197,6 +197,7 @@ const AdminLayout = () => {
           </button>
         </div>
       </motion.aside>
+
 
       <div className="flex-1 flex flex-col min-w-0">
         <header className="sticky top-0 z-30 flex items-center gap-3 px-4 sm:px-6 py-4"
@@ -237,7 +238,7 @@ const AdminLayout = () => {
           </button>
         )}
 
-        <main className="flex-1 p-4 sm:p-6 overflow-auto"><Outlet /></main>
+        <main key={location.pathname} className="flex-1 p-4 sm:p-6 overflow-auto admin-page-enter"><Outlet /></main>
       </div>
 
       <WelcomeSetupModal
