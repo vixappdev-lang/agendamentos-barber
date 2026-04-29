@@ -256,9 +256,28 @@ export const BarbershopFormModal = ({ open, onOpenChange, profile }: Props) => {
     } finally { setVercelBusy(null); }
   };
 
+  // Faz polling do status até o domínio ficar live (ou esgotar tentativas)
+  const pollStatus = async (domain: string, tries = 6, intervalMs = 5000) => {
+    for (let i = 0; i < tries; i++) {
+      await new Promise((r) => setTimeout(r, intervalMs));
+      try {
+        await callVercel("verify", domain).catch(() => null);
+        await refreshStatus(domain);
+        const s = statusByDomain[domain];
+        if (s?.verified && !s?.misconfigured) return true;
+      } catch { /* segue */ }
+    }
+    return false;
+  };
+
   const handleVercelVerify = async (domain: string) => {
     setVercelBusy("verify");
-    try { await callVercel("verify", domain); await refreshStatus(domain); toast({ title: "Verificação solicitada" }); }
+    try {
+      await callVercel("verify", domain);
+      await refreshStatus(domain);
+      toast({ title: "Verificação solicitada", description: "Aguardando propagação… vou tentar de novo automaticamente nos próximos segundos." });
+      pollStatus(domain, 6, 5000); // background
+    }
     catch (e: any) { toast({ title: "Erro", description: e?.message, variant: "destructive" }); }
     finally { setVercelBusy(null); }
   };
@@ -284,9 +303,10 @@ export const BarbershopFormModal = ({ open, onOpenChange, profile }: Props) => {
       if (data?.ok) {
         toast({
           title: "Cloudflare configurado",
-          description: `Registros aplicados na zona "${data.zone}" (${data.removed_conflicts} conflitos removidos). DNS propaga em ~1 min.`,
+          description: `Registros aplicados na zona "${data.zone}" (${data.removed_conflicts} conflitos removidos). Aguardando Vercel detectar e emitir SSL…`,
         });
-        setTimeout(() => refreshStatus(normalizedDomain), 3000);
+        await refreshStatus(normalizedDomain);
+        pollStatus(normalizedDomain, 8, 5000); // background — verifica até ~40s
       } else {
         toast({ title: "Falha no Cloudflare", description: data?.error || "Erro desconhecido", variant: "destructive" });
       }
