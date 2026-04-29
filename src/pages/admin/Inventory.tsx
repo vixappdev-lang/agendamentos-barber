@@ -132,6 +132,26 @@ const Inventory = () => {
 
   return (
     <div className="space-y-5">
+      <ModuleHeader
+        title="Estoque"
+        description="Controle de itens, custos, alertas de mínimo e movimentações (entrada, saída, ajuste, perda)."
+        help={{
+          title: "Como funciona o Estoque",
+          intro: "Estoque rastreia tudo que entra e sai (produtos, insumos, materiais). Pode estar vinculado a um produto da loja ou ser uso interno.",
+          steps: [
+            { title: "Cadastrar item", description: "Nome, unidade (un, ml, g), custo, preço de venda e quantidade mínima." },
+            { title: "Vincular fornecedor (opcional)", description: "Facilita reposição — você sabe quem fornece cada item." },
+            { title: "Registrar movimentação", description: "Entrada (compra), saída (uso), ajuste (correção), perda (avaria). O saldo atualiza automático." },
+            { title: "Alertas", description: "Quando a quantidade fica abaixo do mínimo, aparece alerta no topo da tela." },
+          ],
+          tips: [
+            "Configure mínimo realista — evita ruptura sem ficar alarmando à toa.",
+            "Vincule produtos da loja a itens de estoque — venda baixa estoque automático.",
+            "Use 'ajuste' pra corrigir contagem, 'perda' pra produtos vencidos/danificados.",
+          ],
+        }}
+      />
+
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <Stat label="Itens cadastrados" value={String(items.length)} />
         <Stat label="Estoque baixo" value={String(lowStock.length)} tone={lowStock.length ? "warning" : "positive"} />

@@ -76,6 +76,24 @@ const Suppliers = () => {
 
   return (
     <div className="space-y-5">
+      <ModuleHeader
+        title="Fornecedores"
+        description="Cadastro de quem fornece produtos e insumos — usado pelo módulo de Estoque."
+        help={{
+          title: "Como funcionam os Fornecedores",
+          intro: "Aqui você mantém o cadastro de quem vende pra você (distribuidoras, atacados, marcas).",
+          steps: [
+            { title: "Cadastrar", description: "Nome, contato, telefone, e-mail e categoria (cosméticos, ferramentas, etc.)." },
+            { title: "Vincular ao estoque", description: "Em Estoque, ao cadastrar um item, você escolhe o fornecedor." },
+            { title: "Histórico", description: "Saiba rapidamente quais itens cada fornecedor abastece." },
+          ],
+          tips: [
+            "Use 'categoria' pra agrupar fornecedores — facilita busca depois.",
+            "Cadastre o documento (CNPJ) pra emitir notas/comprovantes corretos.",
+          ],
+        }}
+      />
+
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
         <Stat label="Cadastrados" value={String(list.length)} />
         <Stat label="Ativos" value={String(list.filter((s) => s.active).length)} tone="positive" />
