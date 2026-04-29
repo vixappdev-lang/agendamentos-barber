@@ -168,36 +168,46 @@ Deno.serve(async (req) => {
 
     // ADD
     if (action === "add") {
-      const r = await vercelProject(`/v10/projects/${VERCEL_PROJECT_ID}/domains`, {
+      const project = await resolveProjectContext();
+      if (!project.ok) return json({ ok: false, error: project.error }, 200);
+      const r = await vercelProject(`/v10/projects/${project.id}/domains`, {
         method: "POST",
         body: JSON.stringify({ name: domain }),
-      });
+      }, project.teamId || "");
       return json({ ok: r.ok, status: r.status, data: r.body });
     }
 
     // REMOVE
     if (action === "remove") {
+      const project = await resolveProjectContext();
+      if (!project.ok) return json({ ok: false, error: project.error }, 200);
       const r = await vercelProject(
-        `/v9/projects/${VERCEL_PROJECT_ID}/domains/${encodeURIComponent(domain)}`,
+        `/v9/projects/${project.id}/domains/${encodeURIComponent(domain)}`,
         { method: "DELETE" },
+        project.teamId || "",
       );
       return json({ ok: r.ok, status: r.status, data: r.body });
     }
 
     // VERIFY (dispara verificação)
     if (action === "verify") {
+      const project = await resolveProjectContext();
+      if (!project.ok) return json({ ok: false, error: project.error }, 200);
       const r = await vercelProject(
-        `/v9/projects/${VERCEL_PROJECT_ID}/domains/${encodeURIComponent(domain)}/verify`,
+        `/v9/projects/${project.id}/domains/${encodeURIComponent(domain)}/verify`,
         { method: "POST" },
+        project.teamId || "",
       );
       return json({ ok: r.ok, status: r.status, data: r.body });
     }
 
     // STATUS (config + domain info → registros DNS pendentes / verified)
     if (action === "status") {
+      const project = await resolveProjectContext();
+      if (!project.ok) return json({ ok: false, domain, info: {}, config: {}, error: project.error }, 200);
       const [info, config] = await Promise.all([
-        vercelProject(`/v9/projects/${VERCEL_PROJECT_ID}/domains/${encodeURIComponent(domain)}`),
-        vercelProject(`/v6/domains/${encodeURIComponent(domain)}/config`),
+        vercelProject(`/v9/projects/${project.id}/domains/${encodeURIComponent(domain)}`, {}, project.teamId || ""),
+        vercelProject(`/v6/domains/${encodeURIComponent(domain)}/config`, {}, project.teamId || ""),
       ]);
       return json({
         ok: info.ok,
