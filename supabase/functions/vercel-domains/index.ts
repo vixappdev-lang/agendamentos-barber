@@ -379,11 +379,23 @@ Deno.serve(async (req) => {
       ]);
       const aValues = bestRecommendedA(config.body);
       const cname = bestRecommendedCname(config.body);
+      const cfg = config.body || {};
+      const verified = !!info.body?.verified;
+      const misconfigured = cfg.misconfigured !== false; // qualquer coisa diferente de explicit false = problema
+      const live = verified && cfg.misconfigured === false;
       return json({
         ok: info.ok,
         domain,
+        verified,
+        misconfigured,
+        live,
+        current_a: Array.isArray(cfg.aValues) ? cfg.aValues : [],
+        current_cname: cfg.cnames || cfg.cname || null,
+        recommended_a: aValues,
+        recommended_cname: cname,
+        apex_name: info.body?.apexName || null,
         info: info.body,
-        config: { ...(config.body || {}), live: !!info.body?.verified && config.body?.misconfigured === false },
+        config: { ...cfg, live },
         // Registros recomendados pra mostrar pro usuário
         recommended: {
           a_root: { type: "A", name: "@", value: aValues },

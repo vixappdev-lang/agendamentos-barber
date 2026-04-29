@@ -4,7 +4,11 @@ import { Loader2 } from "lucide-react";
 import { callPublic } from "./TenantResolver";
 import { TenantSiteProvider, type TenantSiteValue } from "@/contexts/TenantSiteContext";
 
-const Index = lazy(() => import("@/pages/Index"));
+// Quando o hostname resolve para um tenant, respeitamos o site_mode:
+//   - "full"    → landing completa personalizada (clone do VilaNova com dados do tenant)
+//   - "booking" → vai direto pro fluxo de agendamento
+const TenantHomeFull = lazy(() => import("@/pages/VilaNova"));
+const TenantHomeBooking = lazy(() => import("@/pages/Index"));
 
 interface Props {
   /**
@@ -88,10 +92,12 @@ const HostnameResolver = ({ fallback, mode = "root" }: Props) => {
   // mode === "root"
   if (!state.value) return <>{fallback}</>;
 
+  const Home = state.value.profile.site_mode === "booking" ? TenantHomeBooking : TenantHomeFull;
+
   return (
     <TenantSiteProvider value={state.value}>
       <Suspense fallback={<Loader />}>
-        <Index />
+        <Home />
       </Suspense>
     </TenantSiteProvider>
   );

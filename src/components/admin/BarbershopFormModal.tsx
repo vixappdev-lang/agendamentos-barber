@@ -109,6 +109,7 @@ export const BarbershopFormModal = ({ open, onOpenChange, profile }: Props) => {
     loading: boolean;
     verified?: boolean;
     misconfigured?: boolean;
+    dnsMatches?: boolean;
     nameservers?: string[];
     aValues?: string[];
     cnames?: string[];
@@ -196,18 +197,23 @@ export const BarbershopFormModal = ({ open, onOpenChange, profile }: Props) => {
       if (r?.error) throw new Error(r.error);
       const info = r?.info || {};
       const config = r?.config || {};
+      // Compara o que a Vercel ESTÁ vendo no DNS público com o recomendado.
+      const recommendedA: string[] = Array.isArray(r?.recommended_a) ? r.recommended_a : [];
+      const currentA: string[] = Array.isArray(r?.current_a) ? r.current_a : (Array.isArray(config.aValues) ? config.aValues : []);
+      const dnsMatches = recommendedA.length > 0 && recommendedA.every((v) => currentA.includes(v));
       setStatusByDomain((p) => ({
         ...p,
         [domain]: {
           loading: false,
           verified: !!info.verified,
           misconfigured: !!config.misconfigured,
+          dnsMatches,
           nameservers: config.nameservers,
-          aValues: config.aValues,
+          aValues: currentA,
           cnames: config.cnames,
-          recommendedAValues: Array.isArray(config.recommendedIPv4?.[0]?.value) ? config.recommendedIPv4[0].value : undefined,
-          recommendedCname: config.recommendedCNAME?.[0]?.value ? String(config.recommendedCNAME[0].value).replace(/\.$/, "") : undefined,
-          apexName: info.apexName,
+          recommendedAValues: recommendedA.length ? recommendedA : (Array.isArray(config.recommendedIPv4?.[0]?.value) ? config.recommendedIPv4[0].value : undefined),
+          recommendedCname: r?.recommended_cname || (config.recommendedCNAME?.[0]?.value ? String(config.recommendedCNAME[0].value).replace(/\.$/, "") : undefined),
+          apexName: info.apexName || r?.apex_name,
         },
       }));
     } catch (e: any) {
@@ -250,9 +256,28 @@ export const BarbershopFormModal = ({ open, onOpenChange, profile }: Props) => {
     } finally { setVercelBusy(null); }
   };
 
+  // Faz polling do status até o domínio ficar live (ou esgotar tentativas)
+  const pollStatus = async (domain: string, tries = 6, intervalMs = 5000) => {
+    for (let i = 0; i < tries; i++) {
+      await new Promise((r) => setTimeout(r, intervalMs));
+      try {
+        await callVercel("verify", domain).catch(() => null);
+        await refreshStatus(domain);
+        const s = statusByDomain[domain];
+        if (s?.verified && !s?.misconfigured) return true;
+      } catch { /* segue */ }
+    }
+    return false;
+  };
+
   const handleVercelVerify = async (domain: string) => {
     setVercelBusy("verify");
-    try { await callVercel("verify", domain); await refreshStatus(domain); toast({ title: "Verificação solicitada" }); }
+    try {
+      await callVercel("verify", domain);
+      await refreshStatus(domain);
+      toast({ title: "Verificação solicitada", description: "Aguardando propagação… vou tentar de novo automaticamente nos próximos segundos." });
+      pollStatus(domain, 6, 5000); // background
+    }
     catch (e: any) { toast({ title: "Erro", description: e?.message, variant: "destructive" }); }
     finally { setVercelBusy(null); }
   };
@@ -278,9 +303,10 @@ export const BarbershopFormModal = ({ open, onOpenChange, profile }: Props) => {
       if (data?.ok) {
         toast({
           title: "Cloudflare configurado",
-          description: `Registros aplicados na zona "${data.zone}" (${data.removed_conflicts} conflitos removidos). DNS propaga em ~1 min.`,
+          description: `Registros aplicados na zona "${data.zone}" (${data.removed_conflicts} conflitos removidos). Aguardando Vercel detectar e emitir SSL…`,
         });
-        setTimeout(() => refreshStatus(normalizedDomain), 3000);
+        await refreshStatus(normalizedDomain);
+        pollStatus(normalizedDomain, 8, 5000); // background — verifica até ~40s
       } else {
         toast({ title: "Falha no Cloudflare", description: data?.error || "Erro desconhecido", variant: "destructive" });
       }
@@ -495,7 +521,8 @@ export const BarbershopFormModal = ({ open, onOpenChange, profile }: Props) => {
             if (s.loading) return <span className="text-[10px] text-muted-foreground flex items-center gap-1"><Loader2 className="w-3 h-3 animate-spin"/> Verificando…</span>;
             if (s.error) return <span className="text-[10px] text-destructive flex items-center gap-1"><AlertTriangle className="w-3 h-3"/> {s.error}</span>;
             if (s.verified && !s.misconfigured) return <span className="text-[10px] text-emerald-400 flex items-center gap-1"><CheckCircle2 className="w-3 h-3"/> Ativo · SSL OK</span>;
-            if (s.verified && s.misconfigured) return <span className="text-[10px] text-amber-400 flex items-center gap-1"><AlertTriangle className="w-3 h-3"/> Verificado · DNS pendente</span>;
+            if (s.verified && s.dnsMatches) return <span className="text-[10px] text-sky-400 flex items-center gap-1"><Loader2 className="w-3 h-3 animate-spin"/> DNS aplicado · emitindo SSL…</span>;
+            if (s.verified && s.misconfigured) return <span className="text-[10px] text-amber-400 flex items-center gap-1"><AlertTriangle className="w-3 h-3"/> Verificado · DNS ainda não propagou</span>;
             return <span className="text-[10px] text-amber-400 flex items-center gap-1"><AlertTriangle className="w-3 h-3"/> Aguardando DNS</span>;
           };
 
