@@ -400,10 +400,236 @@ Deno.serve(async (req: Request) => {
         });
       }
       if (shop.is_cloud) {
-        return new Response(JSON.stringify({
-          success: true, source: "cloud",
-          profile: { id: shop.id, slug: shop.slug, name: shop.name, site_mode: shop.site_mode },
-        }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        // Tenant roda no Lovable Cloud (Postgres). Atende todos os subs lendo/gravando direto via service role.
+        const profile = { id: shop.id, slug: shop.slug, name: shop.name, site_mode: shop.site_mode };
+        const ok = (extra: Record<string, unknown>) =>
+          new Response(JSON.stringify({ success: true, source: "cloud", profile, ...extra }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        const fail = (code: string, status = 200) =>
+          new Response(JSON.stringify({ success: false, code }), {
+            status, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+
+        if (sub === "site_settings") {
+          const { data, error } = await admin
+            .from("business_settings")
+            .select("key,value")
+            .in("key", SITE_KEYS);
+          if (error) throw new Error(`cloud site_settings: ${error.message}`);
+          const map: Record<string, string> = {};
+          for (const r of (data || []) as any[]) map[String(r.key)] = r.value == null ? "" : String(r.value);
+          return ok({ data: map });
+        }
+        if (sub === "business_settings_all") {
+          const { data, error } = await admin.from("business_settings").select("key,value");
+          if (error) throw new Error(`cloud settings: ${error.message}`);
+          return ok({ data: data || [] });
+        }
+        if (sub === "services") {
+          const { data, error } = await admin
+            .from("services")
+            .select("id,title,subtitle,duration,price,image_url,sort_order")
+            .eq("active", true)
+            .order("sort_order", { ascending: true })
+            .order("title", { ascending: true });
+          if (error) throw new Error(`cloud services: ${error.message}`);
+          return ok({ data: data || [] });
+        }
+        if (sub === "barbers") {
+          const { data, error } = await admin
+            .from("barbers")
+            .select("id,name,specialty,avatar_url,sort_order")
+            .eq("active", true)
+            .order("sort_order", { ascending: true })
+            .order("name", { ascending: true });
+          if (error) throw new Error(`cloud barbers: ${error.message}`);
+          return ok({ data: data || [] });
+        }
+        if (sub === "products") {
+          const { data, error } = await admin
+            .from("products")
+            .select("id,title,description,price,image_url,sort_order")
+            .eq("active", true)
+            .order("sort_order", { ascending: true })
+            .order("title", { ascending: true });
+          if (error) throw new Error(`cloud products: ${error.message}`);
+          return ok({ data: data || [] });
+        }
+        if (sub === "reviews_public") {
+          const { data, error } = await admin
+            .from("reviews")
+            .select("id,customer_name,rating,comment,created_at")
+            .eq("status", "approved")
+            .eq("is_public", true)
+            .order("created_at", { ascending: false })
+            .limit(30);
+          if (error) throw new Error(`cloud reviews: ${error.message}`);
+          return ok({ data: data || [] });
+        }
+        if (sub === "prize_wheel_slices") {
+          const { data, error } = await admin
+            .from("prize_wheel_slices")
+            .select("id,label,icon,image_url,discount_percent,discount_value,custom_prize,probability,sort_order")
+            .eq("active", true)
+            .order("sort_order", { ascending: true });
+          if (error) throw new Error(`cloud wheel: ${error.message}`);
+          return ok({ data: data || [] });
+        }
+        if (sub === "create_appointment") {
+          const p = body.payload || {};
+          const customer_name = requireText(p.customer_name, "Nome", 120);
+          const customer_phone = String(p.customer_phone || "").replace(/\D/g, "").slice(0, 20) || null;
+          const customer_email = p.customer_email ? requireText(p.customer_email, "E-mail", 255) : null;
+          const service_id = p.service_id ? String(p.service_id).slice(0, 36) : null;
+          const barber_name = p.barber_name ? String(p.barber_name).slice(0, 120) : null;
+          const date = String(p.appointment_date || "");
+          const time = String(p.appointment_time || "");
+          if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) throw new Error("Data inválida");
+          if (!/^\d{2}:\d{2}(:\d{2})?$/.test(time)) throw new Error("Hora inválida");
+          const total_price = p.total_price != null && p.total_price !== "" ? Number(p.total_price) : null;
+          if (total_price != null && (!Number.isFinite(total_price) || total_price < 0 || total_price > 99999)) {
+            throw new Error("Preço inválido");
+          }
+          const notes = p.notes ? String(p.notes).slice(0, 500) : null;
+          const { data, error } = await admin.from("appointments").insert({
+            customer_name, customer_phone, customer_email, service_id, barber_name,
+            appointment_date: date, appointment_time: time, status: "pending", total_price, notes,
+          }).select("id").single();
+          if (error) throw new Error(`cloud create_appointment: ${error.message}`);
+          return ok({ data: { id: data?.id } });
+        }
+        if (sub === "create_review") {
+          const p = body.payload || {};
+          const customer_name = requireText(p.customer_name, "Nome", 120);
+          const rating = Number(p.rating);
+          if (!Number.isInteger(rating) || rating < 1 || rating > 5) throw new Error("Nota inválida");
+          const comment = p.comment ? String(p.comment).slice(0, 1000) : null;
+          const customer_phone = p.customer_phone ? String(p.customer_phone).slice(0, 50) : null;
+          const { data, error } = await admin.from("reviews").insert({
+            customer_name, customer_phone, rating, comment, status: "approved", is_public: true,
+          }).select("id").single();
+          if (error) throw new Error(`cloud create_review: ${error.message}`);
+          return ok({ data: { id: data?.id } });
+        }
+        if (sub === "create_order") {
+          const p = body.payload || {};
+          const customer_name = requireText(p.customer_name, "Nome", 120);
+          const customer_phone = String(p.customer_phone || "").replace(/\D/g, "").slice(0, 20) || null;
+          const customer_email = p.customer_email ? String(p.customer_email).slice(0, 255) : null;
+          const total_price = Number(p.total_price);
+          if (!Number.isFinite(total_price) || total_price < 0) throw new Error("Total inválido");
+          const delivery_mode = (p.delivery_mode === "delivery" ? "delivery" : "pickup");
+          const payment_method = p.payment_method ? String(p.payment_method).slice(0, 30) : "pix";
+          const items = Array.isArray(p.items) ? p.items : [];
+          if (items.length > 50) throw new Error("Itens inválidos");
+          const { data: ord, error: oe } = await admin.from("orders").insert({
+            customer_name, customer_phone, customer_email, delivery_mode, payment_method, total_price,
+            status: "pending",
+            address: p.address ? String(p.address).slice(0, 255) : null,
+            address_number: p.address_number ? String(p.address_number).slice(0, 20) : null,
+            address_complement: p.address_complement ? String(p.address_complement).slice(0, 120) : null,
+            neighborhood: p.neighborhood ? String(p.neighborhood).slice(0, 120) : null,
+            city: p.city ? String(p.city).slice(0, 120) : null,
+            notes: p.notes ? String(p.notes).slice(0, 500) : null,
+          }).select("id").single();
+          if (oe) throw new Error(`cloud create_order: ${oe.message}`);
+          if (items.length > 0 && ord?.id) {
+            const rows = items.map((it: any) => ({
+              order_id: ord.id,
+              product_id: it.product_id ? String(it.product_id).slice(0, 36) : null,
+              product_title: String(it.product_title || it.title || "").slice(0, 255),
+              product_price: Number(it.product_price ?? it.price) || 0,
+              quantity: Math.max(1, Math.min(99, Number(it.quantity) || 1)),
+            })).filter((r: any) => r.product_title);
+            if (rows.length > 0) {
+              const { error: ie } = await admin.from("order_items").insert(rows);
+              if (ie) throw new Error(`cloud order_items: ${ie.message}`);
+            }
+          }
+          return ok({ data: { id: ord?.id } });
+        }
+        if (sub === "add_order_items") {
+          const orderId = String(body.payload?.order_id || "").slice(0, 64);
+          const items = Array.isArray(body.payload?.items) ? body.payload.items : [];
+          if (!orderId || items.length === 0 || items.length > 50) throw new Error("Itens inválidos");
+          const rows = items.map((it: any) => ({
+            order_id: orderId,
+            product_id: it.product_id ? String(it.product_id).slice(0, 36) : null,
+            product_title: String(it.product_title || it.title || "").slice(0, 255),
+            product_price: Number(it.product_price ?? it.price) || 0,
+            quantity: Math.max(1, Math.min(99, Number(it.quantity) || 1)),
+          })).filter((r: any) => r.product_title);
+          if (rows.length === 0) return ok({ data: { affected: 0 } });
+          const { error } = await admin.from("order_items").insert(rows);
+          if (error) throw new Error(`cloud add_order_items: ${error.message}`);
+          return ok({ data: { affected: rows.length } });
+        }
+        if (sub === "coupon_validate") {
+          const code = String(body.payload?.code || "").trim().toUpperCase().slice(0, 50);
+          if (!code) throw new Error("Cupom obrigatório");
+          const { data: row, error } = await admin
+            .from("coupons")
+            .select("id,code,discount_percent,discount_value,max_uses,current_uses,expires_at,active")
+            .ilike("code", code)
+            .eq("active", true)
+            .maybeSingle();
+          if (error) throw new Error(`cloud coupon: ${error.message}`);
+          if (!row) return fail("NOT_FOUND");
+          if (row.expires_at && new Date(row.expires_at) < new Date()) return fail("EXPIRED");
+          if (row.max_uses != null && Number(row.current_uses) >= Number(row.max_uses)) return fail("EXHAUSTED");
+          return ok({ data: row });
+        }
+        if (sub === "appointments_by_email") {
+          const email = String(body.payload?.email || "").trim().toLowerCase().slice(0, 255);
+          if (!email) throw new Error("E-mail obrigatório");
+          const { data, error } = await admin
+            .from("appointments")
+            .select("id,customer_name,customer_email,customer_phone,service_id,barber_name,appointment_date,appointment_time,status,total_price,notes,created_at")
+            .ilike("customer_email", email)
+            .order("appointment_date", { ascending: false })
+            .order("appointment_time", { ascending: false })
+            .limit(100);
+          if (error) throw new Error(`cloud appts: ${error.message}`);
+          return ok({ data: data || [] });
+        }
+        if (sub === "cancel_appointment") {
+          const id = String(body.payload?.id || "").slice(0, 64);
+          const email = String(body.payload?.email || "").trim().toLowerCase().slice(0, 255);
+          if (!id || !email) throw new Error("Dados inválidos");
+          const { data, error } = await admin
+            .from("appointments")
+            .update({ status: "cancelled" })
+            .eq("id", id)
+            .ilike("customer_email", email)
+            .in("status", ["pending", "confirmed"])
+            .select("id");
+          if (error) throw new Error(`cloud cancel: ${error.message}`);
+          return ok({ data: { affected: (data || []).length } });
+        }
+        if (sub === "orders_by_phone") {
+          const phone = String(body.payload?.phone || "").replace(/\D/g, "").slice(0, 20);
+          if (!phone) throw new Error("Telefone obrigatório");
+          const { data, error } = await admin
+            .from("orders")
+            .select("id,customer_name,customer_phone,delivery_mode,status,total_price,payment_method,created_at")
+            .eq("customer_phone", phone)
+            .order("created_at", { ascending: false })
+            .limit(30);
+          if (error) throw new Error(`cloud orders: ${error.message}`);
+          return ok({ data: data || [] });
+        }
+        if (sub === "order_items") {
+          const orderId = String(body.payload?.order_id || "").slice(0, 64);
+          if (!orderId) throw new Error("order_id obrigatório");
+          const { data, error } = await admin
+            .from("order_items")
+            .select("id,order_id,product_id,product_title,product_price,quantity")
+            .eq("order_id", orderId);
+          if (error) throw new Error(`cloud order_items: ${error.message}`);
+          return ok({ data: data || [] });
+        }
+        throw new Error("sub não implementada (cloud)");
       }
       if (!shop.mysql_profile_id) {
         return new Response(JSON.stringify({ success: false, code: "NOT_CONFIGURED" }), {
