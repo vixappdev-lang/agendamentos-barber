@@ -75,11 +75,21 @@ const App = () => (
               {/* Main site (eager) */}
               <Route path="/" element={<HostnameResolver fallback={<VilaNova />} />} />
 
-              <Route path="/agenda" element={<Index />} />
-              <Route path="/loja" element={<StorePage />} />
-              <Route path="/navegacao" element={<Navigation />} />
-              <Route path="/demo-site" element={<DemoSite />} />
-              <Route path="/avaliacao" element={<Avaliacao />} />
+              {/*
+                Rotas globais (sem slug) sob HostnameResolver em modo wrapper:
+                - Quando o hostname É um custom_domain/subdomain, herdam o tenant
+                  e ficam dentro de TenantSiteProvider (dados vêm do MySQL daquela
+                  barbearia, idêntico a /s/<slug>/agenda etc.).
+                - Quando NÃO é (preview lovable.app, localhost, dev), funcionam
+                  como rotas globais como antes.
+              */}
+              <Route element={<HostnameResolver mode="wrapper" />}>
+                <Route path="/agenda" element={<Index />} />
+                <Route path="/loja" element={<StorePage />} />
+                <Route path="/navegacao" element={<Navigation />} />
+                <Route path="/demo-site" element={<DemoSite />} />
+                <Route path="/avaliacao" element={<Avaliacao />} />
+              </Route>
 
               {/* Site público por barbearia (mesmo projeto, mesmas páginas, sob o slug) */}
               <Route path="/s/:slug" element={<TenantResolver />}>
