@@ -32,13 +32,91 @@ async function vercel(path: string, init: RequestInit = {}) {
   return { ok: res.ok, status: res.status, body };
 }
 
-async function vercelProject(path: string, init: RequestInit = {}) {
-  const first = await vercel(withTeam(path), init);
-  if (first.ok || !VERCEL_TEAM_ID || first.status !== 404) return first;
+async function vercelProject(path: string, init: RequestInit = {}, teamId = VERCEL_TEAM_ID) {
+  const first = await vercel(withTeam(path, teamId), init);
+  if (first.ok || !teamId || first.status !== 404) return first;
 
   // Se o Team ID salvo estiver errado, tenta a conta padrão do token antes de falhar.
   const retryWithoutTeam = await vercel(path, init);
   return retryWithoutTeam.ok ? retryWithoutTeam : first;
+}
+
+const readList = (body: any, key: "domains" | "projects") => {
+  if (Array.isArray(body)) return body;
+  if (Array.isArray(body?.[key])) return body[key];
+  if (Array.isArray(body?.data)) return body.data;
+  return [];
+};
+
+async function getTeamContexts() {
+  const seen = new Set<string>();
+  const contexts: Array<string | null> = [];
+  const add = (id?: string | null) => {
+    const key = id || "__personal__";
+    if (seen.has(key)) return;
+    seen.add(key);
+    contexts.push(id || null);
+  };
+  add(VERCEL_TEAM_ID || null);
+  add(null);
+
+  const teams = await vercel("/v2/teams");
+  const list = readList(teams.body, "projects");
+  for (const team of list) add(team?.id || team?.teamId || null);
+  return contexts;
+}
+
+async function listAccountDomains() {
+  const contexts = await getTeamContexts();
+  const rows = new Map<string, any>();
+  const errors: string[] = [];
+
+  for (const teamId of contexts) {
+    const r = await vercel(withTeam("/v5/domains", teamId || ""));
+    if (!r.ok) {
+      const msg = r.body?.error?.message || r.body?.error?.code;
+      if (msg) errors.push(String(msg));
+      continue;
+    }
+    for (const d of readList(r.body, "domains")) {
+      const name = String(d?.name || d?.domain || "").toLowerCase();
+      if (name && DOMAIN_RE.test(name) && !name.endsWith(".vercel.app")) {
+        rows.set(name, { ...d, name, source: teamId ? "team" : "personal" });
+      }
+    }
+  }
+
+  return { domains: [...rows.values()], errors };
+}
+
+async function listVisibleProjects() {
+  const contexts = await getTeamContexts();
+  const rows: any[] = [];
+  for (const teamId of contexts) {
+    const r = await vercel(withTeam("/v9/projects", teamId || ""));
+    if (!r.ok) continue;
+    for (const p of readList(r.body, "projects")) rows.push({ ...p, teamId });
+  }
+  return rows;
+}
+
+async function resolveProjectContext() {
+  if (!VERCEL_PROJECT_ID) return { ok: false, error: "VERCEL_PROJECT_ID ausente" } as const;
+
+  const configured = await vercelProject(`/v9/projects/${VERCEL_PROJECT_ID}`);
+  if (configured.ok) return { ok: true, id: VERCEL_PROJECT_ID, teamId: VERCEL_TEAM_ID || null } as const;
+
+  const projects = await listVisibleProjects();
+  const exact = projects.find((p) => p?.id === VERCEL_PROJECT_ID || p?.name === VERCEL_PROJECT_ID);
+  if (exact?.id || exact?.name) return { ok: true, id: exact.id || exact.name, teamId: exact.teamId || null } as const;
+  if (projects.length === 1 && (projects[0]?.id || projects[0]?.name)) {
+    return { ok: true, id: projects[0].id || projects[0].name, teamId: projects[0].teamId || null, auto: true } as const;
+  }
+
+  return {
+    ok: false,
+    error: `Projeto Vercel não encontrado. Projetos visíveis: ${projects.map((p) => `${p.name || "sem-nome"} (${p.id})`).slice(0, 8).join(", ") || "nenhum"}. Atualize VERCEL_PROJECT_ID/VERCEL_TEAM_ID com o projeto correto.`,
+  } as const;
 }
 
 const DOMAIN_RE = /^([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)(\.[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)+$/;
