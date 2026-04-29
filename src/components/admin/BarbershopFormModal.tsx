@@ -481,15 +481,15 @@ export const BarbershopFormModal = ({ open, onOpenChange, profile }: Props) => {
           const DnsHelper = ({ domain }: { domain: string }) => {
             const s = statusByDomain[domain];
             if (!s || s.loading || s.error) return null;
-            const isApex = domain.split(".").length === 2;
-            const aValue = s.recommendedAValues?.[0] || "76.76.21.21";
+            const isApex = !s.apexName || domain === s.apexName;
+            const aValues = s.recommendedAValues?.length ? s.recommendedAValues : ["76.76.21.21"];
             const cnameValue = s.recommendedCname || "cname.vercel-dns.com";
             return (
               <div className="rounded-lg p-2.5 mt-2 text-[10.5px] leading-snug bg-amber-500/5 border border-amber-500/15 text-amber-200/85 space-y-1.5">
                 <p className="font-semibold text-amber-300/90">Configure o DNS no seu provedor:</p>
                 {isApex ? (
                   <div className="font-mono text-[10px]">
-                    <div>Tipo: <b>A</b> · Nome: <b>@</b> · Valor: <b>{aValue}</b></div>
+                    {aValues.map((value) => <div key={value}>Tipo: <b>A</b> · Nome: <b>@</b> · Valor: <b>{value}</b></div>)}
                   </div>
                 ) : (
                   <div className="font-mono text-[10px]">
@@ -503,11 +503,11 @@ export const BarbershopFormModal = ({ open, onOpenChange, profile }: Props) => {
             );
           };
 
-          const VercelActions = ({ domain }: { domain: string }) => (
+          const VercelActions = ({ domain, field }: { domain: string; field: "custom_domain" | "subdomain" }) => (
             <div className="flex flex-wrap gap-2 pt-1">
-              <Button type="button" size="sm" variant="default" disabled={!domain || vercelBusy !== null} onClick={() => handleVercelAdd(domain)}>
+              <Button type="button" size="sm" variant="default" disabled={!domain || vercelBusy !== null} onClick={() => handleVercelAdd(domain, field)}>
                 {vercelBusy === "add" ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin"/> : <Link2 className="w-3.5 h-3.5 mr-1.5"/>}
-                Vincular na Vercel
+                Vincular e salvar
               </Button>
               <Button type="button" size="sm" variant="outline" disabled={!domain || vercelBusy !== null} onClick={() => handleVercelVerify(domain)}>
                 {vercelBusy === "verify" ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin"/> : <RefreshCw className="w-3.5 h-3.5 mr-1.5"/>}
