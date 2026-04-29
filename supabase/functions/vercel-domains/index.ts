@@ -98,7 +98,7 @@ Deno.serve(async (req) => {
 
     // REMOVE
     if (action === "remove") {
-      const r = await vercel(
+      const r = await vercelProject(
         `/v9/projects/${VERCEL_PROJECT_ID}/domains/${encodeURIComponent(domain)}`,
         { method: "DELETE" },
       );
@@ -107,7 +107,7 @@ Deno.serve(async (req) => {
 
     // VERIFY (dispara verificação)
     if (action === "verify") {
-      const r = await vercel(
+      const r = await vercelProject(
         `/v9/projects/${VERCEL_PROJECT_ID}/domains/${encodeURIComponent(domain)}/verify`,
         { method: "POST" },
       );
