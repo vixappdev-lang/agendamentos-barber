@@ -89,7 +89,7 @@ Deno.serve(async (req) => {
 
     // ADD
     if (action === "add") {
-      const r = await vercel(`/v10/projects/${VERCEL_PROJECT_ID}/domains${teamQuery}`, {
+      const r = await vercelProject(`/v10/projects/${VERCEL_PROJECT_ID}/domains`, {
         method: "POST",
         body: JSON.stringify({ name: domain }),
       });
@@ -99,7 +99,7 @@ Deno.serve(async (req) => {
     // REMOVE
     if (action === "remove") {
       const r = await vercel(
-        `/v9/projects/${VERCEL_PROJECT_ID}/domains/${encodeURIComponent(domain)}${teamQuery}`,
+        `/v9/projects/${VERCEL_PROJECT_ID}/domains/${encodeURIComponent(domain)}`,
         { method: "DELETE" },
       );
       return json({ ok: r.ok, status: r.status, data: r.body });
@@ -108,7 +108,7 @@ Deno.serve(async (req) => {
     // VERIFY (dispara verificação)
     if (action === "verify") {
       const r = await vercel(
-        `/v9/projects/${VERCEL_PROJECT_ID}/domains/${encodeURIComponent(domain)}/verify${teamQuery}`,
+        `/v9/projects/${VERCEL_PROJECT_ID}/domains/${encodeURIComponent(domain)}/verify`,
         { method: "POST" },
       );
       return json({ ok: r.ok, status: r.status, data: r.body });
@@ -117,8 +117,8 @@ Deno.serve(async (req) => {
     // STATUS (config + domain info → registros DNS pendentes / verified)
     if (action === "status") {
       const [info, config] = await Promise.all([
-        vercel(`/v9/projects/${VERCEL_PROJECT_ID}/domains/${encodeURIComponent(domain)}${teamQuery}`),
-        vercel(`/v6/domains/${encodeURIComponent(domain)}/config${teamQuery}`),
+        vercelProject(`/v9/projects/${VERCEL_PROJECT_ID}/domains/${encodeURIComponent(domain)}`),
+        vercelProject(`/v6/domains/${encodeURIComponent(domain)}/config`),
       ]);
       return json({
         ok: info.ok,
@@ -135,7 +135,7 @@ Deno.serve(async (req) => {
 
     // LIST
     if (action === "list") {
-      const r = await vercel(`/v9/projects/${VERCEL_PROJECT_ID}/domains${teamQuery}`);
+      const r = await vercelProject(`/v9/projects/${VERCEL_PROJECT_ID}/domains`);
       if (!r.ok) {
         const apiErr = r.body?.error?.message || r.body?.error?.code || "Erro desconhecido";
         const hint =
@@ -151,8 +151,8 @@ Deno.serve(async (req) => {
     if (action === "diagnose") {
       const [user, projects, target] = await Promise.all([
         vercel(`/v2/user`),
-        vercel(`/v9/projects${teamQuery}`),
-        vercel(`/v9/projects/${VERCEL_PROJECT_ID}${teamQuery}`),
+        vercel(withTeam(`/v9/projects`)),
+        vercelProject(`/v9/projects/${VERCEL_PROJECT_ID}`),
       ]);
       return json({
         ok: target.ok,
