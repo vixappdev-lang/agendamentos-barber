@@ -19,6 +19,8 @@ export interface BarbershopProfile {
   is_cloud: boolean;
   is_locked: boolean;
   is_active: boolean;
+  site_mode: "full" | "booking";
+  site_published: boolean;
   permissions: Record<PermissionKey, boolean>;
   created_at: string;
   updated_at: string;
