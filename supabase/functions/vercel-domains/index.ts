@@ -224,24 +224,30 @@ Deno.serve(async (req) => {
 
     // LIST
     if (action === "list") {
-      const r = await vercelProject(`/v9/projects/${VERCEL_PROJECT_ID}/domains`);
-      if (!r.ok) {
-        const apiErr = r.body?.error?.message || r.body?.error?.code || "Erro desconhecido";
-        const hint =
-          r.body?.error?.code === "not_found"
-            ? `O VERCEL_PROJECT_ID (${VERCEL_PROJECT_ID}) não foi encontrado${VERCEL_TEAM_ID ? ` no team ${VERCEL_TEAM_ID}` : " na conta do token"}. Verifique: 1) Project ID em Vercel → Settings → General; 2) Team ID em Team Settings (deixe vazio se for conta pessoal); 3) o token tem acesso a esse team.`
-            : "";
-        return json({ ok: false, error: `Vercel: ${apiErr}${hint ? " — " + hint : ""}`, raw: r.body }, 200);
+      const project = await resolveProjectContext();
+      if (project.ok) {
+        const r = await vercelProject(`/v9/projects/${project.id}/domains`, {}, project.teamId || "");
+        if (r.ok) return json({ ok: true, data: r.body, project });
       }
-      return json({ ok: true, data: r.body });
+
+      // Fallback intencional: lista domínios da conta/team para o admin conseguir selecionar,
+      // mesmo que o Project ID salvo esteja errado. Vincular ainda exige projeto válido.
+      const account = await listAccountDomains();
+      return json({
+        ok: true,
+        fallback: true,
+        data: { domains: account.domains },
+        warning: project.ok ? null : project.error,
+      });
     }
 
     // DIAGNOSE — útil pra debug do admin
     if (action === "diagnose") {
-      const [user, projects, target] = await Promise.all([
+      const [user, projects, target, accountDomains] = await Promise.all([
         vercel(`/v2/user`),
-        vercel(withTeam(`/v9/projects`)),
+        listVisibleProjects(),
         vercelProject(`/v9/projects/${VERCEL_PROJECT_ID}`),
+        listAccountDomains(),
       ]);
       return json({
         ok: target.ok,
@@ -252,9 +258,8 @@ Deno.serve(async (req) => {
         token_user: user.body?.user
           ? { id: user.body.user.id, email: user.body.user.email, defaultTeamId: user.body.user.defaultTeamId }
           : user.body,
-        projects_visible: Array.isArray(projects.body?.projects)
-          ? projects.body.projects.map((p: any) => ({ id: p.id, name: p.name }))
-          : projects.body,
+        projects_visible: projects.map((p: any) => ({ id: p.id, name: p.name, teamId: p.teamId || null })),
+        account_domains: accountDomains.domains.map((d: any) => ({ name: d.name, verified: !!d.verified })),
         target_project: target.body,
       });
     }
