@@ -5,7 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
-import { Eye, EyeOff, Loader2, Shield, Lock, Check, Globe, Copy, ExternalLink, Info } from "lucide-react";
+import { Eye, EyeOff, Loader2, Shield, Lock, Check, Globe, Copy, ExternalLink, Info, Link2, RefreshCw, Trash2, CheckCircle2, AlertTriangle } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import {
   useCreateBarbershop,
   useUpdateBarbershop,
