@@ -109,6 +109,7 @@ export const BarbershopFormModal = ({ open, onOpenChange, profile }: Props) => {
     loading: boolean;
     verified?: boolean;
     misconfigured?: boolean;
+    dnsMatches?: boolean;
     nameservers?: string[];
     aValues?: string[];
     cnames?: string[];
