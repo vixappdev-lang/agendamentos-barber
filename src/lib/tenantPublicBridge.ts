@@ -66,9 +66,16 @@ class PublicSelectQuery {
 
   private filterAndShape(data: any[]): any[] {
     let rows = Array.isArray(data) ? [...data] : [];
-    // aplica filtros locais (servidor já trouxe só active=true por padrão)
+    // Aplica filtros locais. Para listas públicas, o servidor já entrega apenas
+    // registros ativos; alguns endpoints não retornam a coluna `active`, então
+    // não podemos remover tudo quando a página encadeia `.eq("active", true)`.
     for (const w of this.where) {
-      if (w.op === "=") rows = rows.filter((r) => String(r[w.column]) === String(w.value));
+      if (w.op === "=") {
+        rows = rows.filter((r) => {
+          if (w.column === "active" && w.value === true && !("active" in r)) return true;
+          return String(r[w.column]) === String(w.value);
+        });
+      }
       else if (w.op === "in" && Array.isArray(w.value)) {
         const set = new Set((w.value as any[]).map((x) => String(x)));
         rows = rows.filter((r) => set.has(String(r[w.column])));
