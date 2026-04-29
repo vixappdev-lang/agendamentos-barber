@@ -191,15 +191,15 @@ const AdminLayout = () => {
         {welcomeSeen && !allDone && (
           <button
             onClick={() => setShowWelcome(true)}
-            className="mx-4 sm:mx-6 mt-3 px-4 py-2.5 rounded-xl flex items-center gap-3 text-left transition hover:scale-[1.005]"
+            className="mx-4 sm:mx-6 mt-3 px-4 py-2.5 rounded-xl flex items-center gap-3 text-left transition hover:bg-white/[0.04]"
             style={{
-              background: "linear-gradient(135deg, hsl(245 60% 55% / 0.12), hsl(280 60% 55% / 0.06))",
-              border: "1px solid hsl(245 60% 55% / 0.25)",
+              background: "hsl(0 0% 100% / 0.025)",
+              border: "1px solid hsl(0 0% 100% / 0.06)",
             }}
           >
             <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
-              style={{ background: "hsl(245 60% 55% / 0.2)" }}>
-              <Sparkles className="w-4 h-4" style={{ color: "hsl(245 60% 80%)" }} />
+              style={{ background: "hsl(0 0% 100% / 0.05)", border: "1px solid hsl(0 0% 100% / 0.06)" }}>
+              <Sparkles className="w-4 h-4" style={{ color: "hsl(0 0% 70%)" }} />
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-xs font-semibold text-foreground">
@@ -207,9 +207,9 @@ const AdminLayout = () => {
               </p>
               <p className="text-[10px] text-muted-foreground">Clique aqui para retomar a configuração inicial</p>
             </div>
-            <div className="hidden sm:block w-32 h-1.5 rounded-full overflow-hidden" style={{ background: "hsl(0 0% 100% / 0.06)" }}>
+            <div className="hidden sm:block w-32 h-1 rounded-full overflow-hidden" style={{ background: "hsl(0 0% 100% / 0.05)" }}>
               <div className="h-full rounded-full transition-all"
-                style={{ width: `${(completedCount / totalCount) * 100}%`, background: "linear-gradient(90deg, hsl(245 60% 60%), hsl(280 60% 60%))" }} />
+                style={{ width: `${(completedCount / totalCount) * 100}%`, background: "hsl(0 0% 70%)" }} />
             </div>
           </button>
         )}
