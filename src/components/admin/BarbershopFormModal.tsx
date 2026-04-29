@@ -29,6 +29,14 @@ const slugify = (s: string) =>
     .slice(0, 60);
 
 const DOMAIN_RE = /^([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)(\.[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)+$/;
+const cleanDomain = (value: string) =>
+  value
+    .trim()
+    .toLowerCase()
+    .replace(/^https?:\/\//, "")
+    .replace(/\/.*$/, "")
+    .replace(/:\d+$/, "")
+    .replace(/\.$/, "");
 
 const baseSchema = {
   name: z.string().trim().min(2, "Nome muito curto").max(120),
@@ -138,7 +146,7 @@ export const BarbershopFormModal = ({ open, onOpenChange, profile }: Props) => {
   const diagnoseVercel = async () => {
     setLoadingDomains(true);
     try {
-      const { data, error } = await supabase.functions.invoke("vercel-domains", { body: { action: "diagnose" } });
+      const { data, error } = await supabase.functions.invoke("vercel-domains", { body: { action: "diagnose", domain: "" } });
       if (error) throw new Error(error.message);
       const visible = Array.isArray(data?.projects_visible) ? data.projects_visible : [];
       const cfg = data?.configured || {};
@@ -163,7 +171,9 @@ export const BarbershopFormModal = ({ open, onOpenChange, profile }: Props) => {
   };
 
   const callVercel = async (action: "add" | "remove" | "verify" | "status", domain: string) => {
-    const { data, error } = await supabase.functions.invoke("vercel-domains", { body: { action, domain } });
+    const normalizedDomain = cleanDomain(domain);
+    if (!DOMAIN_RE.test(normalizedDomain)) throw new Error("Domínio inválido (ex: barbearia.com.br)");
+    const { data, error } = await supabase.functions.invoke("vercel-domains", { body: { action, domain: normalizedDomain } });
     if (error) throw new Error(error.message);
     return data as any;
   };
