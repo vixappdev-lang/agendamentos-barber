@@ -268,6 +268,27 @@ export const BarbershopFormModal = ({ open, onOpenChange, profile }: Props) => {
     finally { setVercelBusy(null); }
   };
 
+  const handleCloudflareApply = async (domain: string) => {
+    if (!domain) { toast({ title: "Informe o domínio primeiro", variant: "destructive" }); return; }
+    const normalizedDomain = cleanDomain(domain);
+    setVercelBusy("cf");
+    try {
+      const { data, error } = await supabase.functions.invoke("vercel-domains", { body: { action: "cf_apply", domain: normalizedDomain } });
+      if (error) throw new Error(error.message);
+      if (data?.ok) {
+        toast({
+          title: "Cloudflare configurado",
+          description: `Registros aplicados na zona "${data.zone}" (${data.removed_conflicts} conflitos removidos). DNS propaga em ~1 min.`,
+        });
+        setTimeout(() => refreshStatus(normalizedDomain), 3000);
+      } else {
+        toast({ title: "Falha no Cloudflare", description: data?.error || "Erro desconhecido", variant: "destructive" });
+      }
+    } catch (e: any) {
+      toast({ title: "Erro Cloudflare", description: e?.message, variant: "destructive" });
+    } finally { setVercelBusy(null); }
+  };
+
   // Auto-status quando aba Domínio abre — pula *.vercel.app (não suportado pela API)
   useEffect(() => {
     if (tab !== "domain") return;
