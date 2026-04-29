@@ -27,6 +27,7 @@ const Avaliacao = lazy(() => import("./pages/Avaliacao"));
 const TenantResolver = lazy(() => import("./components/TenantResolver"));
 const TenantSite = lazy(() => import("./pages/tenant/TenantSite"));
 const TenantBooking = lazy(() => import("./pages/tenant/TenantBooking"));
+const LyneCloud = lazy(() => import("./pages/LyneCloud"));
 
 const AdminLogin = lazy(() => import("./pages/AdminLogin"));
 const AdminLayout = lazy(() => import("./components/admin/AdminLayout"));
@@ -80,6 +81,9 @@ const App = () => (
             <Routes>
               {/* Main site (eager) */}
               <Route path="/" element={<HostnameResolver fallback={<VilaNova />} />} />
+
+              {/* Site comercial LyneCloud — sempre global, ignora tenant */}
+              <Route path="/lynecloud" element={<LyneCloud />} />
 
               {/*
                 Rotas globais (sem slug) sob HostnameResolver em modo wrapper:

@@ -182,9 +182,17 @@ class PublicInsertQuery {
     if (!t) return { data: null, error: new Error("Tenant não disponível") };
     const map = this.toPayload();
     if (!map) return { data: null, error: new Error(`Insert público não suportado para "${this.table}"`) };
-    const { data, error } = await t.publicQuery(map.sub, map.payload);
-    if (error) return { data: null, error };
-    return { data: data?.data || data, error: null };
+    try {
+      const { data, error } = await t.publicQuery(map.sub, map.payload);
+      if (error) {
+        console.error(`[tenantPublicBridge] ${map.sub} error:`, error);
+        return { data: null, error };
+      }
+      return { data: data?.data || data, error: null };
+    } catch (e: any) {
+      console.error(`[tenantPublicBridge] ${map.sub} threw:`, e);
+      return { data: null, error: e instanceof Error ? e : new Error(String(e)) };
+    }
   }
 
   // Suporta .select() encadeado pra retornar o registro criado (chain compatível com supabase)
@@ -199,7 +207,7 @@ class PublicInsertQuery {
     };
   }
 
-  then(resolve: any, reject: any) { return this.execute().then(resolve, reject); }
+  then(resolve: any, _reject: any) { return this.execute().then(resolve); }
 }
 
 /**

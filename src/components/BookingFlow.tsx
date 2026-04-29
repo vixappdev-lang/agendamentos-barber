@@ -4,6 +4,7 @@ import { ArrowLeft, ArrowRight, Check, Calendar, User, Clock, Send, X, Loader2, 
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useThemeColors } from "@/hooks/useThemeColors";
+import { useOptionalTenantSite } from "@/contexts/TenantSiteContext";
 import type { User as AuthUser } from "@supabase/supabase-js";
 
 interface BookingService {
@@ -32,6 +33,7 @@ const steps = ["Serviço", "Barbeiro", "Data & Hora", "Seus Dados", "Confirmar"]
 
 const BookingFlow = ({ service, onClose, user }: BookingFlowProps) => {
   const t = useThemeColors();
+  const tenant = useOptionalTenantSite();
   const [currentStep, setCurrentStep] = useState(0);
   const [barbers, setBarbers] = useState<DBBarber[]>([]);
   const [selectedBarber, setSelectedBarber] = useState<DBBarber | null>(null);
@@ -203,7 +205,7 @@ const BookingFlow = ({ service, onClose, user }: BookingFlowProps) => {
     const fullName = `${name.trim()} ${surname.trim()}`.trim();
     const status = confirmationMode === "auto" ? "confirmed" : "pending";
 
-    const { error } = await supabase.from("appointments").insert({
+    const payload = {
       service_id: service.id,
       customer_name: fullName,
       customer_phone: phone,
@@ -213,9 +215,31 @@ const BookingFlow = ({ service, onClose, user }: BookingFlowProps) => {
       appointment_time: selectedTime,
       total_price: service.price,
       status,
-    });
+    };
 
-    if (error) { toast.error("Erro ao agendar. Tente novamente."); setSubmitting(false); return; }
+    let bookingError: any = null;
+    try {
+      if (tenant) {
+        // Em tenants (custom domain / subdomain / /s/:slug), usa publicQuery direto.
+        // Evita a camada do bridge e garante mensagem de erro clara.
+        const { error } = await tenant.publicQuery("create_appointment", payload);
+        bookingError = error;
+      } else {
+        const { error } = await supabase.from("appointments").insert(payload);
+        bookingError = error;
+      }
+    } catch (e: any) {
+      console.error("[BookingFlow] insert threw:", e);
+      bookingError = e;
+    }
+
+    if (bookingError) {
+      console.error("[BookingFlow] booking failed:", bookingError);
+      const msg = bookingError?.message || "Erro ao agendar. Tente novamente.";
+      toast.error(msg);
+      setSubmitting(false);
+      return;
+    }
 
     const dateFormatted = new Date(selectedDate + "T12:00:00").toLocaleDateString("pt-BR");
     const vars = {
@@ -228,14 +252,18 @@ const BookingFlow = ({ service, onClose, user }: BookingFlowProps) => {
       valor: service.price.toFixed(2),
     };
 
-    // Auto: dispara confirmação imediata.
-    // Manual: envia "pedido recebido" se sendOnBook estiver ativo.
-    if (confirmationMode === "auto" && sendOnConfirm) {
-      const fallback = `✅ *Agendamento Confirmado!*\n\nOlá *${fullName}*\n💈 ${service.title}\n✂️ ${selectedBarber?.name}\n📅 ${dateFormatted} às ${selectedTime}\n💰 R$ ${service.price.toFixed(2)}\n\n*${vars.barbearia}* 💈`;
-      await sendWhatsApp(digitsOnly, settings.msg_on_confirm || "", fallback, vars);
-    } else if (confirmationMode === "manual" && sendOnBook) {
-      const fallback = `Olá *${fullName}*! Recebemos seu agendamento de *${service.title}* para *${dateFormatted}* às *${selectedTime}*. Em breve confirmaremos. — *${vars.barbearia}* 💈`;
-      await sendWhatsApp(digitsOnly, settings.msg_on_book || "", fallback, vars);
+    // Auto: dispara confirmação imediata. Manual: envia "pedido recebido" se sendOnBook ativo.
+    // WhatsApp NÃO pode bloquear a UX: erro aqui não impede a confirmação.
+    try {
+      if (confirmationMode === "auto" && sendOnConfirm) {
+        const fallback = `✅ *Agendamento Confirmado!*\n\nOlá *${fullName}*\n💈 ${service.title}\n✂️ ${selectedBarber?.name}\n📅 ${dateFormatted} às ${selectedTime}\n💰 R$ ${service.price.toFixed(2)}\n\n*${vars.barbearia}* 💈`;
+        await sendWhatsApp(digitsOnly, settings.msg_on_confirm || "", fallback, vars);
+      } else if (confirmationMode === "manual" && sendOnBook) {
+        const fallback = `Olá *${fullName}*! Recebemos seu agendamento de *${service.title}* para *${dateFormatted}* às *${selectedTime}*. Em breve confirmaremos. — *${vars.barbearia}* 💈`;
+        await sendWhatsApp(digitsOnly, settings.msg_on_book || "", fallback, vars);
+      }
+    } catch (waErr) {
+      console.warn("[BookingFlow] WhatsApp falhou (não-bloqueante):", waErr);
     }
 
     setSubmitting(false);
