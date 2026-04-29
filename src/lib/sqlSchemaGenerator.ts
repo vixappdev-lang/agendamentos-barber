@@ -3,6 +3,7 @@
  * Compatível com MySQL 5.7+ e MariaDB 10+.
  * Espelha as tabelas usadas no Lovable Cloud (Supabase) deste projeto.
  */
+import { NEW_MODULES_SQL, NEW_MODULES_TABLES } from "./newModulesSchema";
 
 const HEADER = `-- =====================================================================
 -- Barber SaaS — Schema MySQL
@@ -246,9 +247,11 @@ export const TABLES_LIST = [
   "chatpro_config",
   "prize_wheel_slices",
   "user_roles",
+  ...NEW_MODULES_TABLES,
 ] as const;
 
-export const generateSchemaSQL = (): string => HEADER + TABLES;
+export const generateSchemaSQL = (): string =>
+  HEADER + TABLES + "\nSET FOREIGN_KEY_CHECKS = 0;\n" + NEW_MODULES_SQL + "\nSET FOREIGN_KEY_CHECKS = 1;\n";
 
 export const downloadSchemaSQL = (filename = "barber-saas-schema.sql") => {
   const sql = generateSchemaSQL();

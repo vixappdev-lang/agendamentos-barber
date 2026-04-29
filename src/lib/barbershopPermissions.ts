@@ -16,7 +16,12 @@ export type PermissionKey =
   | "coupons"
   | "chatpro"
   | "reviews"
-  | "settings";
+  | "settings"
+  // Novos módulos
+  | "cashier"
+  | "commands"
+  | "credit"
+  | "inventory";
 
 export interface PermissionGroup {
   id: string;
@@ -41,14 +46,18 @@ export const PERMISSION_GROUPS: PermissionGroup[] = [
       { key: "services", label: "Serviços", desc: "Catálogo e preços" },
       { key: "barbers", label: "Barbeiros", desc: "Equipe e disponibilidade" },
       { key: "coupons", label: "Cupons", desc: "Descontos promocionais" },
+      { key: "commands", label: "Comandas", desc: "Comandas abertas por cliente" },
+      { key: "cashier", label: "Caixa", desc: "Abertura/fechamento, sangrias" },
     ],
   },
   {
     id: "comercial",
     label: "Comercial",
     items: [
-      { key: "finance", label: "Financeiro", desc: "Receitas e relatórios" },
+      { key: "finance", label: "Financeiro", desc: "Receitas, comissões e relatórios" },
       { key: "store", label: "Loja", desc: "Produtos e pedidos" },
+      { key: "inventory", label: "Estoque", desc: "Produtos, fornecedores, movimentação" },
+      { key: "credit", label: "Fiados", desc: "Controle de clientes devedores" },
       { key: "reviews", label: "Avaliações", desc: "Depoimentos de clientes" },
     ],
   },

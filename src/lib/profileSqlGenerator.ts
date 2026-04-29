@@ -8,6 +8,7 @@
 
 import type { BarbershopProfile } from "@/hooks/useBarbershops";
 import { ALL_PERMISSION_KEYS, sanitizePermissions } from "@/lib/barbershopPermissions";
+import { NEW_MODULES_SQL } from "@/lib/newModulesSchema";
 
 // gera UUID v4 sem dependências externas
 const uuid = (): string => {
@@ -305,7 +306,7 @@ CREATE TABLE \`user_permissions\` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 SET FOREIGN_KEY_CHECKS = 1;
-`;
+` + "\nSET FOREIGN_KEY_CHECKS = 0;\n" + NEW_MODULES_SQL + "\nSET FOREIGN_KEY_CHECKS = 1;\n";
 
 const buildSeeds = (p: BarbershopProfile): string => {
   const userId = uuid();

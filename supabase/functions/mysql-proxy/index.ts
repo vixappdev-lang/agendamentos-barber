@@ -43,6 +43,18 @@ const ALLOWED_TABLES = new Set([
   "user_roles",
   "user_permissions",
   "reviews",
+  // Novos módulos
+  "cash_sessions",
+  "cash_movements",
+  "commands",
+  "command_items",
+  "commission_rules",
+  "commission_payouts",
+  "credit_accounts",
+  "credit_entries",
+  "suppliers",
+  "inventory_items",
+  "inventory_movements",
 ]);
 
 const sanitizeHost = (raw: unknown): string => {
