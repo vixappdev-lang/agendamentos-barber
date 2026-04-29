@@ -45,7 +45,7 @@ const HostnameResolver = ({ fallback, mode = "root" }: Props) => {
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const host = window.location.hostname.toLowerCase();
+      const host = window.location.hostname.toLowerCase().replace(/^www\./, "");
       // Em previews lovable.app a raiz é landing global — não tentar resolver.
       const isLovablePreview = host.endsWith(".lovable.app") || host === "localhost" || host.startsWith("127.");
       if (isLovablePreview) {

@@ -29,6 +29,14 @@ const slugify = (s: string) =>
     .slice(0, 60);
 
 const DOMAIN_RE = /^([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)(\.[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)+$/;
+const cleanDomain = (value: string) =>
+  value
+    .trim()
+    .toLowerCase()
+    .replace(/^https?:\/\//, "")
+    .replace(/\/.*$/, "")
+    .replace(/:\d+$/, "")
+    .replace(/\.$/, "");
 
 const baseSchema = {
   name: z.string().trim().min(2, "Nome muito curto").max(120),
@@ -138,7 +146,7 @@ export const BarbershopFormModal = ({ open, onOpenChange, profile }: Props) => {
   const diagnoseVercel = async () => {
     setLoadingDomains(true);
     try {
-      const { data, error } = await supabase.functions.invoke("vercel-domains", { body: { action: "diagnose" } });
+      const { data, error } = await supabase.functions.invoke("vercel-domains", { body: { action: "diagnose", domain: "" } });
       if (error) throw new Error(error.message);
       const visible = Array.isArray(data?.projects_visible) ? data.projects_visible : [];
       const cfg = data?.configured || {};
@@ -163,7 +171,9 @@ export const BarbershopFormModal = ({ open, onOpenChange, profile }: Props) => {
   };
 
   const callVercel = async (action: "add" | "remove" | "verify" | "status", domain: string) => {
-    const { data, error } = await supabase.functions.invoke("vercel-domains", { body: { action, domain } });
+    const normalizedDomain = cleanDomain(domain);
+    if (!DOMAIN_RE.test(normalizedDomain)) throw new Error("Domínio inválido (ex: barbearia.com.br)");
+    const { data, error } = await supabase.functions.invoke("vercel-domains", { body: { action, domain: normalizedDomain } });
     if (error) throw new Error(error.message);
     return data as any;
   };
@@ -295,8 +305,8 @@ export const BarbershopFormModal = ({ open, onOpenChange, profile }: Props) => {
     try {
       const cleaned = {
         ...parsed.data,
-        custom_domain: parsed.data.custom_domain ? parsed.data.custom_domain : null,
-        subdomain: parsed.data.subdomain ? parsed.data.subdomain : null,
+        custom_domain: parsed.data.custom_domain ? cleanDomain(parsed.data.custom_domain) : null,
+        subdomain: parsed.data.subdomain ? cleanDomain(parsed.data.subdomain) : null,
       };
       const payload = { ...cleaned, permissions: sanitizePermissions(permissions) } as any;
       if (isEdit && profile) {
@@ -418,8 +428,8 @@ export const BarbershopFormModal = ({ open, onOpenChange, profile }: Props) => {
         {/* DOMAIN */}
         {tab === "domain" && (() => {
           const slugUrl = form.slug ? `${window.location.origin}/s/${form.slug}` : "";
-          const sub = form.subdomain.trim();
-          const cd = form.custom_domain.trim();
+          const sub = cleanDomain(form.subdomain);
+          const cd = cleanDomain(form.custom_domain);
           const copy = (txt: string) => { if (!txt) return; navigator.clipboard.writeText(txt); toast({ title: "Copiado" }); };
 
           const StatusBadge = ({ domain }: { domain: string }) => {
@@ -534,10 +544,10 @@ export const BarbershopFormModal = ({ open, onOpenChange, profile }: Props) => {
                             <code className="truncate">{d.name}</code>
                           </div>
                           <div className="flex items-center gap-1.5 shrink-0">
-                            <Button type="button" size="sm" variant="ghost" className="h-7 px-2 text-[10.5px]" onClick={() => update("custom_domain", d.name)}>
+                            <Button type="button" size="sm" variant="ghost" className="h-7 px-2 text-[10.5px]" onClick={() => update("custom_domain", cleanDomain(d.name))}>
                               Usar como próprio
                             </Button>
-                            <Button type="button" size="sm" variant="ghost" className="h-7 px-2 text-[10.5px]" onClick={() => update("subdomain", d.name)}>
+                            <Button type="button" size="sm" variant="ghost" className="h-7 px-2 text-[10.5px]" onClick={() => update("subdomain", cleanDomain(d.name))}>
                               Usar como sub
                             </Button>
                           </div>
@@ -564,7 +574,7 @@ export const BarbershopFormModal = ({ open, onOpenChange, profile }: Props) => {
                 <Input
                   id="subdomain"
                   value={form.subdomain}
-                  onChange={(e) => update("subdomain", e.target.value.trim().toLowerCase())}
+                  onChange={(e) => update("subdomain", cleanDomain(e.target.value))}
                   placeholder="ex: barbearia-x.meusistema.com.br"
                 />
                 <p className="text-[10px] text-muted-foreground">
@@ -600,7 +610,7 @@ export const BarbershopFormModal = ({ open, onOpenChange, profile }: Props) => {
                 <Input
                   id="custom_domain"
                   value={form.custom_domain}
-                  onChange={(e) => update("custom_domain", e.target.value.trim().toLowerCase())}
+                  onChange={(e) => update("custom_domain", cleanDomain(e.target.value))}
                   placeholder="ex: barbearia-x.com.br"
                 />
                 {cd && (
