@@ -25,7 +25,6 @@ const MemberLogin = lazy(() => import("./pages/MemberLogin"));
 const MemberArea = lazy(() => import("./pages/MemberArea"));
 const Avaliacao = lazy(() => import("./pages/Avaliacao"));
 const TenantResolver = lazy(() => import("./components/TenantResolver"));
-const TenantResolver = lazy(() => import("./components/TenantResolver"));
 const TenantSite = lazy(() => import("./pages/tenant/TenantSite"));
 const TenantBooking = lazy(() => import("./pages/tenant/TenantBooking"));
 const LyneCloud = lazy(() => import("./pages/LyneCloud"));
