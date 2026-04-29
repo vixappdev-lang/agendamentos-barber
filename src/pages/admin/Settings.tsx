@@ -12,7 +12,6 @@ import { toast } from "sonner";
 import LocationPickerModal from "@/components/LocationPickerModal";
 import { useThemeColors } from "@/hooks/useThemeColors";
 import { MessageTemplatesModal } from "@/components/admin/MessageTemplatesModal";
-import SettingsSiteTab from "@/components/admin/SettingsSiteTab";
 import { getAdminMysqlSession } from "@/lib/adminMysqlSession";
 import type { TemplateCategory } from "@/lib/messageTemplates";
 
