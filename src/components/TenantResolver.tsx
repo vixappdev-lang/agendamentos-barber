@@ -64,7 +64,7 @@ const TenantResolver = () => {
     let cancelled = false;
     (async () => {
       setState({ loading: true, error: null, value: null });
-      const { data, error } = await callPublic(slug, "site_settings");
+      const { data, error } = await callPublic({ slug }, "site_settings");
       if (cancelled) return;
       if (error || !data?.profile) {
         setState({ loading: false, error: "not_found", value: null });
@@ -76,7 +76,7 @@ const TenantResolver = () => {
         profile: data.profile,
         source: data.source,
         settings,
-        publicQuery: (sub, payload) => callPublic(slug, sub, payload),
+        publicQuery: (sub, payload) => callPublic({ slug }, sub, payload),
       };
       setState({ loading: false, error: null, value });
     })();
