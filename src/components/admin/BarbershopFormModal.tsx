@@ -154,7 +154,12 @@ export const BarbershopFormModal = ({ open, onOpenChange, profile }: Props) => {
     }
 
     try {
-      const payload = { ...parsed.data, permissions: sanitizePermissions(permissions) } as any;
+      const cleaned = {
+        ...parsed.data,
+        custom_domain: parsed.data.custom_domain ? parsed.data.custom_domain : null,
+        subdomain: parsed.data.subdomain ? parsed.data.subdomain : null,
+      };
+      const payload = { ...cleaned, permissions: sanitizePermissions(permissions) } as any;
       if (isEdit && profile) {
         await updateMut.mutateAsync({ id: profile.id, input: payload });
         toast({ title: "Perfil atualizado", description: "Permissões e dados salvos." });
