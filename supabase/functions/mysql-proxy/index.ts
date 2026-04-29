@@ -429,7 +429,7 @@ Deno.serve(async (req: Request) => {
         if (sub === "services") {
           const { data, error } = await admin
             .from("services")
-            .select("id,title,subtitle,duration,price,image_url,sort_order")
+            .select("id,title,subtitle,duration,price,image_url,active,sort_order")
             .eq("active", true)
             .order("sort_order", { ascending: true })
             .order("title", { ascending: true });
@@ -439,7 +439,7 @@ Deno.serve(async (req: Request) => {
         if (sub === "barbers") {
           const { data, error } = await admin
             .from("barbers")
-            .select("id,name,specialty,avatar_url,sort_order")
+            .select("id,name,specialty,avatar_url,active,sort_order")
             .eq("active", true)
             .order("sort_order", { ascending: true })
             .order("name", { ascending: true });
@@ -449,7 +449,7 @@ Deno.serve(async (req: Request) => {
         if (sub === "products") {
           const { data, error } = await admin
             .from("products")
-            .select("id,title,description,price,image_url,sort_order")
+            .select("id,title,description,price,image_url,active,sort_order")
             .eq("active", true)
             .order("sort_order", { ascending: true })
             .order("title", { ascending: true });
@@ -660,7 +660,7 @@ Deno.serve(async (req: Request) => {
 
         if (sub === "services") {
           const [rows] = await pubConn.query(
-            "SELECT id, title, subtitle, duration, price, image_url, sort_order FROM services WHERE active = 1 ORDER BY sort_order ASC, title ASC",
+            "SELECT id, title, subtitle, duration, price, image_url, active, sort_order FROM services WHERE active = 1 ORDER BY sort_order ASC, title ASC",
           );
           return new Response(JSON.stringify({ success: true, data: rows }), {
             headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -669,7 +669,7 @@ Deno.serve(async (req: Request) => {
 
         if (sub === "barbers") {
           const [rows] = await pubConn.query(
-            "SELECT id, name, specialty, avatar_url, sort_order FROM barbers WHERE active = 1 ORDER BY sort_order ASC, name ASC",
+            "SELECT id, name, specialty, avatar_url, active, sort_order FROM barbers WHERE active = 1 ORDER BY sort_order ASC, name ASC",
           );
           return new Response(JSON.stringify({ success: true, data: rows }), {
             headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -678,7 +678,7 @@ Deno.serve(async (req: Request) => {
 
         if (sub === "products") {
           const [rows] = await pubConn.query(
-            "SELECT id, title, description, price, image_url, sort_order FROM products WHERE active = 1 ORDER BY sort_order ASC, title ASC",
+            "SELECT id, title, description, price, image_url, active, sort_order FROM products WHERE active = 1 ORDER BY sort_order ASC, title ASC",
           );
           return new Response(JSON.stringify({ success: true, data: rows }), {
             headers: { ...corsHeaders, "Content-Type": "application/json" },
