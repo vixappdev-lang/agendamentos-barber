@@ -1,11 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { z } from "zod";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
-import { Eye, EyeOff, Loader2, Shield, Lock, Check } from "lucide-react";
+import { Eye, EyeOff, Loader2, Shield, Lock, Check, Globe, Copy, ExternalLink, Info } from "lucide-react";
 import {
   useCreateBarbershop,
   useUpdateBarbershop,
