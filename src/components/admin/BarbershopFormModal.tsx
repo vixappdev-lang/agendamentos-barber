@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -82,6 +83,7 @@ interface Props {
 
 export const BarbershopFormModal = ({ open, onOpenChange, profile }: Props) => {
   const isEdit = !!profile;
+  const queryClient = useQueryClient();
   const createMut = useCreateBarbershop();
   const updateMut = useUpdateBarbershop();
   const loading = createMut.isPending || updateMut.isPending;
@@ -112,6 +114,7 @@ export const BarbershopFormModal = ({ open, onOpenChange, profile }: Props) => {
     cnames?: string[];
     recommendedAValues?: string[];
     recommendedCname?: string;
+    apexName?: string;
     error?: string;
   };
   const [vercelBusy, setVercelBusy] = useState<"add" | "verify" | "remove" | null>(null);
@@ -204,6 +207,7 @@ export const BarbershopFormModal = ({ open, onOpenChange, profile }: Props) => {
           cnames: config.cnames,
           recommendedAValues: Array.isArray(config.recommendedIPv4?.[0]?.value) ? config.recommendedIPv4[0].value : undefined,
           recommendedCname: config.recommendedCNAME?.[0]?.value ? String(config.recommendedCNAME[0].value).replace(/\.$/, "") : undefined,
+          apexName: info.apexName,
         },
       }));
     } catch (e: any) {
@@ -211,17 +215,27 @@ export const BarbershopFormModal = ({ open, onOpenChange, profile }: Props) => {
     }
   };
 
-  const handleVercelAdd = async (domain: string) => {
+  const handleVercelAdd = async (domain: string, field?: "custom_domain" | "subdomain") => {
     if (!domain) { toast({ title: "Informe o domínio primeiro", variant: "destructive" }); return; }
+    const normalizedDomain = cleanDomain(domain);
     setVercelBusy("add");
     try {
-      const r = await callVercel("add", domain);
+      const r = await callVercel("add", normalizedDomain);
       if (r?.ok) {
+        if (field) update(field, normalizedDomain);
+        if (isEdit && profile) {
+          const patch = field === "subdomain"
+            ? { subdomain: normalizedDomain }
+            : { custom_domain: normalizedDomain };
+          const { error: saveErr } = await supabase.from("barbershop_profiles").update(patch).eq("id", profile.id);
+          if (saveErr) throw saveErr;
+          await queryClient.invalidateQueries({ queryKey: ["barbershop_profiles"] });
+        }
         const desc = r?.already_linked
-          ? "Esse domínio já estava vinculado ao projeto correto. Agora basta salvar este perfil."
+          ? isEdit ? "Esse domínio já estava vinculado ao projeto correto e foi salvo neste perfil." : "Esse domínio já estava vinculado ao projeto correto. Agora crie o perfil para salvar."
           : r?.moved_from
-          ? `Removido do projeto "${r.moved_from}" e vinculado aqui. Configure o DNS para finalizar.`
-          : "Configure o DNS para finalizar.";
+          ? isEdit ? `Removido do projeto "${r.moved_from}", vinculado aqui e salvo neste perfil.` : `Removido do projeto "${r.moved_from}" e vinculado aqui. Agora crie o perfil para salvar.`
+          : isEdit ? "Domínio vinculado e salvo neste perfil. Configure o DNS se ainda aparecer pendente." : "Domínio vinculado. Agora crie o perfil para salvar.";
         toast({ title: r?.already_linked ? "Domínio já vinculado" : "Domínio vinculado", description: desc });
       } else {
         const raw = r?.error || r?.data?.error?.message || "Erro Vercel";
@@ -230,7 +244,7 @@ export const BarbershopFormModal = ({ open, onOpenChange, profile }: Props) => {
           : raw;
         toast({ title: "Falha ao vincular", description: friendly, variant: "destructive" });
       }
-      await refreshStatus(domain);
+      await refreshStatus(normalizedDomain);
     } catch (e: any) {
       toast({ title: "Erro Vercel", description: e?.message, variant: "destructive" });
     } finally { setVercelBusy(null); }
@@ -467,15 +481,15 @@ export const BarbershopFormModal = ({ open, onOpenChange, profile }: Props) => {
           const DnsHelper = ({ domain }: { domain: string }) => {
             const s = statusByDomain[domain];
             if (!s || s.loading || s.error) return null;
-            const isApex = domain.split(".").length === 2;
-            const aValue = s.recommendedAValues?.[0] || "76.76.21.21";
+            const isApex = !s.apexName || domain === s.apexName;
+            const aValues = s.recommendedAValues?.length ? s.recommendedAValues : ["76.76.21.21"];
             const cnameValue = s.recommendedCname || "cname.vercel-dns.com";
             return (
               <div className="rounded-lg p-2.5 mt-2 text-[10.5px] leading-snug bg-amber-500/5 border border-amber-500/15 text-amber-200/85 space-y-1.5">
                 <p className="font-semibold text-amber-300/90">Configure o DNS no seu provedor:</p>
                 {isApex ? (
                   <div className="font-mono text-[10px]">
-                    <div>Tipo: <b>A</b> · Nome: <b>@</b> · Valor: <b>{aValue}</b></div>
+                    {aValues.map((value) => <div key={value}>Tipo: <b>A</b> · Nome: <b>@</b> · Valor: <b>{value}</b></div>)}
                   </div>
                 ) : (
                   <div className="font-mono text-[10px]">
@@ -489,11 +503,11 @@ export const BarbershopFormModal = ({ open, onOpenChange, profile }: Props) => {
             );
           };
 
-          const VercelActions = ({ domain }: { domain: string }) => (
+          const VercelActions = ({ domain, field }: { domain: string; field: "custom_domain" | "subdomain" }) => (
             <div className="flex flex-wrap gap-2 pt-1">
-              <Button type="button" size="sm" variant="default" disabled={!domain || vercelBusy !== null} onClick={() => handleVercelAdd(domain)}>
+              <Button type="button" size="sm" variant="default" disabled={!domain || vercelBusy !== null} onClick={() => handleVercelAdd(domain, field)}>
                 {vercelBusy === "add" ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin"/> : <Link2 className="w-3.5 h-3.5 mr-1.5"/>}
-                Vincular na Vercel
+                {isEdit ? "Vincular e salvar" : "Vincular"}
               </Button>
               <Button type="button" size="sm" variant="outline" disabled={!domain || vercelBusy !== null} onClick={() => handleVercelVerify(domain)}>
                 {vercelBusy === "verify" ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin"/> : <RefreshCw className="w-3.5 h-3.5 mr-1.5"/>}
@@ -621,7 +635,7 @@ export const BarbershopFormModal = ({ open, onOpenChange, profile }: Props) => {
                     </Button>
                   </div>
                 )}
-                {sub && !isVercelApp && <VercelActions domain={sub} />}
+                {sub && !isVercelApp && <VercelActions domain={sub} field="subdomain" />}
                 {sub && !isVercelApp && <DnsHelper domain={sub} />}
               </div>
 
@@ -647,7 +661,7 @@ export const BarbershopFormModal = ({ open, onOpenChange, profile }: Props) => {
                     </Button>
                   </div>
                 )}
-                {cd && <VercelActions domain={cd} />}
+                {cd && <VercelActions domain={cd} field="custom_domain" />}
                 {cd && <DnsHelper domain={cd} />}
               </div>
             </div>

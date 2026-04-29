@@ -49,6 +49,17 @@ const readList = (body: any, key: "domains" | "projects") => {
   return [];
 };
 
+function bestRecommendedA(config: any) {
+  const rows = Array.isArray(config?.recommendedIPv4) ? config.recommendedIPv4 : [];
+  const first = rows.find((row: any) => Array.isArray(row?.value) && row.value.length);
+  return first?.value || ["76.76.21.21"];
+}
+
+function bestRecommendedCname(config: any) {
+  const rows = Array.isArray(config?.recommendedCNAME) ? config.recommendedCNAME : [];
+  return String(rows.find((row: any) => row?.value)?.value || "cname.vercel-dns.com").replace(/\.$/, "");
+}
+
 async function getTeamContexts() {
   const seen = new Set<string>();
   const contexts: Array<string | null> = [];
@@ -286,15 +297,17 @@ Deno.serve(async (req) => {
         vercelProject(`/v9/projects/${project.id}/domains/${encodeURIComponent(domain)}`, {}, project.teamId || ""),
         vercelProject(`/v6/domains/${encodeURIComponent(domain)}/config`, {}, project.teamId || ""),
       ]);
+      const aValues = bestRecommendedA(config.body);
+      const cname = bestRecommendedCname(config.body);
       return json({
         ok: info.ok,
         domain,
         info: info.body,
-        config: config.body,
+        config: { ...(config.body || {}), live: !!info.body?.verified && config.body?.misconfigured === false },
         // Registros recomendados pra mostrar pro usuário
         recommended: {
-          a_root: { type: "A", name: "@", value: "76.76.21.21" },
-          cname_sub: { type: "CNAME", name: "<sub>", value: "cname.vercel-dns.com" },
+          a_root: { type: "A", name: "@", value: aValues },
+          cname_sub: { type: "CNAME", name: "<sub>", value: cname },
         },
       });
     }
