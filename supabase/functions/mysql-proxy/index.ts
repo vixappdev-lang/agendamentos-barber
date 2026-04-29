@@ -321,6 +321,189 @@ Deno.serve(async (req: Request) => {
       });
     }
 
+    // ============================================================
+    //  PUBLIC SITE QUERY  — sem JWT, whitelist rígida de sub-actions
+    // ============================================================
+    if (action === "public_query") {
+      const slug = String(body.slug || "").toLowerCase().trim();
+      const sub = String(body.sub || "").trim();
+      if (!/^[a-z0-9-]{1,64}$/.test(slug)) throw new Error("slug inválido");
+
+      const SITE_KEYS = [
+        "business_name","slogan","description","logo_url","whatsapp_number","phone_number","email",
+        "instagram","facebook","tiktok","google_maps_link","address","city","state","cep",
+        "location_lat","location_lng","opening_time","closing_time","lunch_start","lunch_end","days_off",
+        "site_mode","site_published","site_hero_title","site_hero_subtitle","site_hero_description",
+        "site_hero_images","site_about_title","site_about_description","site_gallery","site_primary",
+        "site_accent","site_bg","site_font_heading","site_font_body","site_logo_url","site_favicon_url",
+        "site_seo_title","site_seo_description","site_seo_og_image",
+      ];
+
+      const SUBS = new Set([
+        "site_settings","services","barbers","products","reviews_public",
+        "create_appointment","create_order","create_review",
+      ]);
+      if (!SUBS.has(sub)) throw new Error("sub não permitida");
+
+      const { data: shop, error: shopErr } = await admin
+        .from("barbershop_profiles")
+        .select("id, slug, name, mysql_profile_id, is_active, site_published, is_cloud, site_mode")
+        .eq("slug", slug)
+        .maybeSingle();
+      if (shopErr) throw new Error(`shop lookup: ${shopErr.message}`);
+      if (!shop || !shop.is_active || !shop.site_published) {
+        return new Response(JSON.stringify({ success: false, code: "NOT_FOUND" }), {
+          status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      if (shop.is_cloud) {
+        return new Response(JSON.stringify({
+          success: true, source: "cloud",
+          profile: { id: shop.id, slug: shop.slug, name: shop.name, site_mode: shop.site_mode },
+        }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      if (!shop.mysql_profile_id) {
+        return new Response(JSON.stringify({ success: false, code: "NOT_CONFIGURED" }), {
+          status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const pubProfile = await getProfile(admin, shop.mysql_profile_id);
+      const pubPassword = await decryptPassword(admin, pubProfile.password_encrypted);
+      let pubConn: any = null;
+      try {
+        pubConn = await connectMysql(pubProfile, pubPassword);
+
+        if (sub === "site_settings") {
+          const placeholders = SITE_KEYS.map(() => "?").join(",");
+          const [rows] = await pubConn.query(
+            `SELECT \`key\`, \`value\` FROM business_settings WHERE \`key\` IN (${placeholders})`,
+            SITE_KEYS,
+          );
+          const map: Record<string, string> = {};
+          for (const r of rows as any[]) map[String(r.key)] = r.value == null ? "" : String(r.value);
+          return new Response(JSON.stringify({
+            success: true, source: "mysql",
+            profile: { id: shop.id, slug: shop.slug, name: shop.name, site_mode: shop.site_mode },
+            data: map,
+          }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        }
+
+        if (sub === "services") {
+          const [rows] = await pubConn.query(
+            "SELECT id, title, subtitle, duration, price, image_url, sort_order FROM services WHERE active = 1 ORDER BY sort_order ASC, title ASC",
+          );
+          return new Response(JSON.stringify({ success: true, data: rows }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
+        if (sub === "barbers") {
+          const [rows] = await pubConn.query(
+            "SELECT id, name, specialty, avatar_url, sort_order FROM barbers WHERE active = 1 ORDER BY sort_order ASC, name ASC",
+          );
+          return new Response(JSON.stringify({ success: true, data: rows }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
+        if (sub === "products") {
+          const [rows] = await pubConn.query(
+            "SELECT id, title, description, price, image_url, sort_order FROM products WHERE active = 1 ORDER BY sort_order ASC, title ASC",
+          );
+          return new Response(JSON.stringify({ success: true, data: rows }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
+        if (sub === "reviews_public") {
+          const [rows] = await pubConn.query(
+            "SELECT id, customer_name, rating, comment, created_at FROM reviews WHERE status = 'approved' AND is_public = 1 ORDER BY created_at DESC LIMIT 30",
+          );
+          return new Response(JSON.stringify({ success: true, data: rows }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
+        if (sub === "create_appointment") {
+          const p = body.payload || {};
+          const customer_name = requireText(p.customer_name, "Nome", 120);
+          const customer_phone = String(p.customer_phone || "").replace(/\D/g, "").slice(0, 20) || null;
+          const customer_email = p.customer_email ? requireText(p.customer_email, "E-mail", 255) : null;
+          const service_id = p.service_id ? String(p.service_id).slice(0, 36) : null;
+          const barber_name = p.barber_name ? String(p.barber_name).slice(0, 120) : null;
+          const date = String(p.appointment_date || "");
+          const time = String(p.appointment_time || "");
+          if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) throw new Error("Data inválida");
+          if (!/^\d{2}:\d{2}(:\d{2})?$/.test(time)) throw new Error("Hora inválida");
+          const total_price = p.total_price != null && p.total_price !== "" ? Number(p.total_price) : null;
+          if (total_price != null && (!Number.isFinite(total_price) || total_price < 0 || total_price > 99999)) {
+            throw new Error("Preço inválido");
+          }
+          const notes = p.notes ? String(p.notes).slice(0, 500) : null;
+          const id = crypto.randomUUID();
+          await pubConn.query(
+            `INSERT INTO appointments (id, customer_name, customer_phone, customer_email, service_id, barber_name, appointment_date, appointment_time, status, total_price, notes)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?)`,
+            [id, customer_name, customer_phone, customer_email, service_id, barber_name, date, time, total_price, notes],
+          );
+          return new Response(JSON.stringify({ success: true, data: { id } }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
+        if (sub === "create_review") {
+          const p = body.payload || {};
+          const customer_name = requireText(p.customer_name, "Nome", 120);
+          const rating = Number(p.rating);
+          if (!Number.isInteger(rating) || rating < 1 || rating > 5) throw new Error("Nota inválida");
+          const comment = p.comment ? String(p.comment).slice(0, 1000) : null;
+          const customer_phone = p.customer_phone ? String(p.customer_phone).slice(0, 50) : null;
+          const id = crypto.randomUUID();
+          await pubConn.query(
+            `INSERT INTO reviews (id, customer_name, customer_phone, rating, comment, status, is_public) VALUES (?, ?, ?, ?, ?, 'approved', 1)`,
+            [id, customer_name, customer_phone, rating, comment],
+          );
+          return new Response(JSON.stringify({ success: true, data: { id } }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
+        if (sub === "create_order") {
+          const p = body.payload || {};
+          const customer_name = requireText(p.customer_name, "Nome", 120);
+          const customer_phone = String(p.customer_phone || "").replace(/\D/g, "").slice(0, 20) || null;
+          const total_price = Number(p.total_price);
+          if (!Number.isFinite(total_price) || total_price < 0) throw new Error("Total inválido");
+          const items = Array.isArray(p.items) ? p.items : [];
+          if (items.length === 0 || items.length > 50) throw new Error("Itens inválidos");
+          const id = crypto.randomUUID();
+          await pubConn.query(
+            `INSERT INTO orders (id, customer_name, customer_phone, delivery_mode, payment_method, total_price, status) VALUES (?, ?, ?, 'pickup', 'pix', ?, 'pending')`,
+            [id, customer_name, customer_phone, total_price],
+          );
+          for (const it of items) {
+            const pid = it.product_id ? String(it.product_id).slice(0, 36) : null;
+            const ptitle = String(it.product_title || "").slice(0, 255);
+            const pprice = Number(it.product_price) || 0;
+            const qty = Math.max(1, Math.min(99, Number(it.quantity) || 1));
+            if (!ptitle) continue;
+            await pubConn.query(
+              `INSERT INTO order_items (id, order_id, product_id, product_title, product_price, quantity) VALUES (?, ?, ?, ?, ?, ?)`,
+              [crypto.randomUUID(), id, pid, ptitle, pprice, qty],
+            );
+          }
+          return new Response(JSON.stringify({ success: true, data: { id } }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
+        throw new Error("sub não implementada");
+      } finally {
+        try { await pubConn?.end(); } catch { /* ignore */ }
+      }
+    }
+
     const isMysqlSessionRequest = action !== "save_profile" && Boolean(body.mysql_session);
     let mysqlSession: MysqlAdminSession | null = null;
     if (isMysqlSessionRequest) {

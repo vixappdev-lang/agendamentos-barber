@@ -136,6 +136,8 @@ export type Database = {
           owner_password: string
           permissions: Json
           phone: string | null
+          site_mode: string
+          site_published: boolean
           slug: string
           updated_at: string
         }
@@ -153,6 +155,8 @@ export type Database = {
           owner_password: string
           permissions?: Json
           phone?: string | null
+          site_mode?: string
+          site_published?: boolean
           slug: string
           updated_at?: string
         }
@@ -170,6 +174,8 @@ export type Database = {
           owner_password?: string
           permissions?: Json
           phone?: string | null
+          site_mode?: string
+          site_published?: boolean
           slug?: string
           updated_at?: string
         }
@@ -605,7 +611,36 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      barbershop_public: {
+        Row: {
+          id: string | null
+          is_active: boolean | null
+          is_cloud: boolean | null
+          name: string | null
+          site_mode: string | null
+          site_published: boolean | null
+          slug: string | null
+        }
+        Insert: {
+          id?: string | null
+          is_active?: boolean | null
+          is_cloud?: boolean | null
+          name?: string | null
+          site_mode?: string | null
+          site_published?: boolean | null
+          slug?: string | null
+        }
+        Update: {
+          id?: string | null
+          is_active?: boolean | null
+          is_cloud?: boolean | null
+          name?: string | null
+          site_mode?: string | null
+          site_published?: boolean | null
+          slug?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       activate_mysql_profile: {

@@ -12,6 +12,8 @@ import { toast } from "sonner";
 import LocationPickerModal from "@/components/LocationPickerModal";
 import { useThemeColors } from "@/hooks/useThemeColors";
 import { MessageTemplatesModal } from "@/components/admin/MessageTemplatesModal";
+import SettingsSiteTab from "@/components/admin/SettingsSiteTab";
+import { getAdminMysqlSession } from "@/lib/adminMysqlSession";
 import type { TemplateCategory } from "@/lib/messageTemplates";
 
 // Toggle card padrão (substitui checkboxes feios da aba Agendamento)
@@ -82,11 +84,12 @@ const TemplatePickerBtn = ({ onClick }: { onClick: () => void }) => (
 
 const dayLabels = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 
-type SettingsTab = "business" | "branding" | "hours" | "scheduling" | "payments" | "personalization" | "general";
+type SettingsTab = "business" | "branding" | "site" | "hours" | "scheduling" | "payments" | "personalization" | "general";
 
 const tabs: { id: SettingsTab; label: string; icon: typeof Store }[] = [
   { id: "business", label: "Dados", icon: Store },
   { id: "branding", label: "Visual", icon: Palette },
+  { id: "site", label: "Site", icon: Globe },
   { id: "personalization", label: "Personalização", icon: Wand2 },
   { id: "hours", label: "Horários", icon: Clock },
   { id: "scheduling", label: "Agendamento", icon: Calendar },
@@ -400,6 +403,18 @@ const Settings = () => {
                 </div>
               </div>
             </div>
+          )}
+
+          {/* ===== SITE PÚBLICO ===== */}
+          {activeTab === "site" && (
+            <SettingsSiteTab
+              settings={settings}
+              updateSetting={updateSetting}
+              barbershopId={getAdminMysqlSession()?.barbershop_id || null}
+              barbershopSlug={settings.business_slug || settings.tenant_slug || null}
+              initialSiteMode={(settings.site_mode as "full" | "booking") || "full"}
+              initialSitePublished={settings.site_published !== "false"}
+            />
           )}
 
           {/* ===== IDENTIDADE VISUAL ===== */}
