@@ -9,6 +9,7 @@ import { supabase as supabaseTyped } from "@/integrations/supabase/client";
 const supabase = supabaseTyped as any;
 import { toast } from "sonner";
 import { ModuleSection, Stat, EmptyState, PrimaryButton, GhostButton, TextField } from "@/components/admin/ModuleUI";
+import { ModuleHeader } from "@/components/admin/HelpModal";
 
 interface Session {
   id: string;
@@ -143,6 +144,26 @@ const Cashier = () => {
 
   return (
     <div className="space-y-5">
+      <ModuleHeader
+        title="Caixa"
+        description="Controle do dinheiro do dia: abertura, vendas avulsas, sangrias, suprimentos e fechamento conferido."
+        help={{
+          title: "Como funciona o Caixa",
+          intro: "O caixa registra TODO o dinheiro que entra e sai durante o expediente. Ele se conecta automaticamente com Comandas e Fiados.",
+          steps: [
+            { title: "Abrir o caixa", description: "Informe o saldo inicial (troco). Só pode haver uma sessão aberta por vez." },
+            { title: "Registrar movimentos", description: "Vendas avulsas, gorjetas, sangrias (retiradas) e despesas durante o dia." },
+            { title: "Integração automática", description: "Ao fechar uma comanda ou receber um fiado, o valor entra automaticamente no caixa aberto." },
+            { title: "Fechar o caixa", description: "O sistema mostra o saldo esperado. Você confere o dinheiro real e o sistema calcula a diferença (sobra/falta)." },
+          ],
+          tips: [
+            "Faça sangria sempre que o caixa estiver com muito dinheiro — segurança.",
+            "Se a diferença ao fechar for grande, revise os movimentos antes de confirmar.",
+            "O histórico de sessões fechadas alimenta o relatório financeiro.",
+          ],
+        }}
+      />
+
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <Stat label="Status" value={current ? "Aberto" : "Fechado"} tone={current ? "positive" : "neutral"} />
         <Stat label="Saldo inicial" value={fmt(current?.opening_balance || 0)} />
