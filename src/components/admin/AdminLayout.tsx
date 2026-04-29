@@ -102,9 +102,10 @@ const AdminLayout = () => {
     if (loading) return;
     const idle = (cb: () => void) =>
       "requestIdleCallback" in window
-        ? (window as any).requestIdleCallback(cb, { timeout: 2000 })
-        : setTimeout(cb, 800);
+        ? (window as any).requestIdleCallback(cb, { timeout: 1500 })
+        : setTimeout(cb, 200);
     idle(() => {
+      // todas as rotas — qualquer clique fica instantâneo após o 1º carregamento
       void import("@/pages/admin/Dashboard");
       void import("@/pages/admin/Services");
       void import("@/pages/admin/Barbers");
@@ -115,11 +116,18 @@ const AdminLayout = () => {
       void import("@/pages/admin/ChatProConfig");
       void import("@/pages/admin/Reviews");
       void import("@/pages/admin/Settings");
+      void import("@/pages/admin/Cashier");
+      void import("@/pages/admin/Commands");
+      void import("@/pages/admin/Commissions");
+      void import("@/pages/admin/Credit");
+      void import("@/pages/admin/Inventory");
+      void import("@/pages/admin/Suppliers");
       if (isSuperAdmin(userEmail)) {
         void import("@/pages/admin/Barbershops");
       }
     });
   }, [loading, userEmail]);
+
 
   // Hook de progresso (banner + welcome)
   const { steps, completedCount, totalCount, allDone, welcomeSeen, refresh } = useSetupProgress(userEmail);
