@@ -635,7 +635,7 @@ export const BarbershopFormModal = ({ open, onOpenChange, profile }: Props) => {
                     </Button>
                   </div>
                 )}
-                {sub && !isVercelApp && <VercelActions domain={sub} />}
+                {sub && !isVercelApp && <VercelActions domain={sub} field="subdomain" />}
                 {sub && !isVercelApp && <DnsHelper domain={sub} />}
               </div>
 
@@ -661,7 +661,7 @@ export const BarbershopFormModal = ({ open, onOpenChange, profile }: Props) => {
                     </Button>
                   </div>
                 )}
-                {cd && <VercelActions domain={cd} />}
+                {cd && <VercelActions domain={cd} field="custom_domain" />}
                 {cd && <DnsHelper domain={cd} />}
               </div>
             </div>
