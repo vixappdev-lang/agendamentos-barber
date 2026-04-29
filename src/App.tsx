@@ -12,6 +12,7 @@ import HostnameResolver from "./components/HostnameResolver";
 import MemberRouteGuard from "./components/MemberRouteGuard";
 import LoginRedirectGuard from "./components/LoginRedirectGuard";
 import { installAdminMysqlBridge } from "./lib/adminMysqlSession";
+import { installTenantPublicBridge } from "./lib/tenantPublicBridge";
 
 // Lazy: rotas secundárias e admin
 const NotFound = lazy(() => import("./pages/NotFound"));
@@ -54,6 +55,7 @@ const queryClient = new QueryClient({
 });
 
 installAdminMysqlBridge();
+installTenantPublicBridge();
 
 const PageLoader = () => (
   <div className="min-h-screen w-full flex items-center justify-center bg-background">
