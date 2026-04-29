@@ -19,6 +19,12 @@ import {
   Wallet,
   Building2,
   Star,
+  Receipt,
+  Banknote,
+  Percent,
+  CreditCard,
+  Package,
+  Truck,
 } from "lucide-react";
 import { isSuperAdmin } from "@/lib/superAdmin";
 import { clearAdminMysqlSession, getAdminMysqlSession } from "@/lib/adminMysqlSession";
@@ -35,17 +41,34 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { label: "Dashboard", path: "/admin", icon: LayoutDashboard },
-  { label: "Financeiro", path: "/admin/finance", icon: Wallet },
-  { label: "Serviços", path: "/admin/services", icon: Scissors },
-  { label: "Loja", path: "/admin/store", icon: ShoppingBag },
-  { label: "Barbeiros", path: "/admin/barbers", icon: Users },
   { label: "Agendamentos", path: "/admin/appointments", icon: CalendarDays },
+  { label: "Comandas", path: "/admin/commands", icon: Receipt },
+  { label: "Caixa", path: "/admin/cashier", icon: Banknote },
+  { label: "Financeiro", path: "/admin/finance", icon: Wallet },
+  { label: "Comissões", path: "/admin/commissions", icon: Percent },
+  { label: "Fiados", path: "/admin/credit", icon: CreditCard },
+  { label: "Serviços", path: "/admin/services", icon: Scissors },
+  { label: "Barbeiros", path: "/admin/barbers", icon: Users },
+  { label: "Loja", path: "/admin/store", icon: ShoppingBag },
+  { label: "Estoque", path: "/admin/inventory", icon: Package },
+  { label: "Fornecedores", path: "/admin/suppliers", icon: Truck },
   { label: "Cupons", path: "/admin/coupons", icon: Tag },
   { label: "Avaliações", path: "/admin/reviews", icon: Star },
   { label: "ChatPro", path: "/admin/confg", icon: MessageSquare },
   { label: "Perfis Barbearias", path: "/admin/barbershops", icon: Building2, superAdminOnly: true },
   { label: "Configurações", path: "/admin/settings", icon: Settings },
 ];
+
+// Mapeamento de path → permission key (para alguns onde a chave não bate com o slug)
+const PATH_PERMISSION: Record<string, string> = {
+  "/admin/confg": "chatpro",
+  "/admin/cashier": "cashier",
+  "/admin/commands": "commands",
+  "/admin/commissions": "finance", // depende de finance
+  "/admin/credit": "credit",
+  "/admin/inventory": "inventory",
+  "/admin/suppliers": "inventory",
+};
 
 const AdminLayout = () => {
   const [loading, setLoading] = useState(true);
