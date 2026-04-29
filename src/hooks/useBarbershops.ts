@@ -81,8 +81,10 @@ export const useCreateBarbershop = () => {
           owner_password: hash as string,
           phone: input.phone ?? null,
           address: input.address ?? null,
+          custom_domain: input.custom_domain ? input.custom_domain.toLowerCase() : null,
+          subdomain: input.subdomain ? input.subdomain.toLowerCase() : null,
           permissions: perms as any,
-        })
+        } as any)
         .select()
         .single();
       if (error) throw error;
