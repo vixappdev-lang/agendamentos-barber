@@ -137,14 +137,19 @@ export const BarbershopFormModal = ({ open, onOpenChange, profile }: Props) => {
       phone: form.phone || undefined,
       address: form.address || undefined,
       password: form.password || undefined,
+      custom_domain: form.custom_domain || "",
+      subdomain: form.subdomain || "",
     });
     if (!parsed.success) {
+      const issue = parsed.error.issues[0];
       toast({
         title: "Erro de validação",
-        description: parsed.error.issues[0].message,
+        description: issue.message,
         variant: "destructive",
       });
-      setTab("info");
+      const path = String(issue.path[0] || "");
+      if (path === "custom_domain" || path === "subdomain") setTab("domain");
+      else setTab("info");
       return;
     }
 
