@@ -4,9 +4,13 @@ import { Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { TenantSiteProvider, type TenantSiteValue } from "@/contexts/TenantSiteContext";
 
-const callPublic = async (slug: string, sub: string, payload?: any) => {
+export const callPublic = async (
+  identifier: { slug?: string; host?: string },
+  sub: string,
+  payload?: any,
+) => {
   const { data, error } = await supabase.functions.invoke("mysql-proxy", {
-    body: { action: "public_query", slug, sub, payload },
+    body: { action: "public_query", ...identifier, sub, payload },
   });
   if (error) return { data: null, error };
   if (data?.success === false) return { data: null, error: new Error(data.code || data.error || "Erro") };
