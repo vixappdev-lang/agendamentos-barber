@@ -21,6 +21,8 @@ export interface BarbershopProfile {
   is_active: boolean;
   site_mode: "full" | "booking";
   site_published: boolean;
+  custom_domain: string | null;
+  subdomain: string | null;
   permissions: Record<PermissionKey, boolean>;
   created_at: string;
   updated_at: string;
@@ -34,6 +36,8 @@ export interface BarbershopInput {
   password?: string; // plain — será hasheada via RPC
   phone?: string;
   address?: string;
+  custom_domain?: string | null;
+  subdomain?: string | null;
   permissions?: Record<PermissionKey, boolean>;
 }
 
