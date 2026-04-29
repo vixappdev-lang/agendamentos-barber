@@ -119,28 +119,12 @@ const Settings = () => {
   // Templates picker
   const [templateCategory, setTemplateCategory] = useState<TemplateCategory | null>(null);
 
-  // Cloud routing (publicação do site)
-  const [savingRouting, setSavingRouting] = useState(false);
+  // Cloud routing (publicação do site) — sincronizado no handleSave
   const adminSession = getAdminMysqlSession();
   const barbershopId = adminSession?.barbershop_id || null;
   const publicSlug = settings.tenant_slug || settings.business_slug || "";
   const publicUrl = publicSlug ? `${window.location.origin}/s/${publicSlug}` : "";
   const sitePublished = settings.site_published !== "false";
-
-  const saveSiteRouting = async () => {
-    if (!barbershopId) { toast.error("Perfil ainda não vinculado"); return; }
-    setSavingRouting(true);
-    const { error } = await supabase
-      .from("barbershop_profiles")
-      .update({
-        site_mode: (settings.site_mode as "full" | "booking") || "full",
-        site_published: sitePublished,
-      })
-      .eq("id", barbershopId);
-    setSavingRouting(false);
-    if (error) toast.error(error.message);
-    else toast.success("Publicação do site salva ✅");
-  };
 
   useEffect(() => {
     fetchSettings();
