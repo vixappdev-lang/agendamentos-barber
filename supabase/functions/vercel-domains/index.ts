@@ -29,16 +29,29 @@ async function cf(path: string, init: RequestInit = {}) {
 }
 
 // Encontra a zona Cloudflare correspondente ao domínio (tenta o domínio inteiro
-// e depois sobe um nível por vez). Retorna { id, name } ou null.
-async function cfFindZone(domain: string) {
+// e depois sobe um nível por vez). Retorna { ok, zone?, error? }.
+async function cfFindZone(domain: string): Promise<{ ok: true; zone: { id: string; name: string } | null } | { ok: false; error: string; code?: number }> {
   const parts = domain.split(".");
+  let lastError: { error: string; code?: number } | null = null;
   for (let i = 0; i < parts.length - 1; i++) {
     const candidate = parts.slice(i).join(".");
-    const r = await cf(`/zones?name=${encodeURIComponent(candidate)}&status=active`);
+    const r = await cf(`/zones?name=${encodeURIComponent(candidate)}`);
+    if (!r.ok) {
+      const err = r.body?.errors?.[0];
+      const msg = err?.message || `HTTP ${r.status}`;
+      const code = err?.code;
+      // 6003/9109/10000 = token inválido/sem permissão — não adianta tentar outros candidates
+      if (r.status === 401 || r.status === 403 || code === 6003 || code === 9109 || code === 10000) {
+        return { ok: false, error: `Cloudflare: ${msg} (code ${code ?? r.status}). Verifique se o CLOUDFLARE_API_TOKEN tem permissões "Zone:Read" + "DNS:Edit" e acesso à zona "${candidate}".` };
+      }
+      lastError = { error: msg, code };
+      continue;
+    }
     const zone = r.body?.result?.[0];
-    if (zone?.id) return { id: zone.id as string, name: zone.name as string };
+    if (zone?.id) return { ok: true, zone: { id: zone.id as string, name: zone.name as string } };
   }
-  return null;
+  if (lastError) return { ok: false, error: `Cloudflare: ${lastError.error}` };
+  return { ok: true, zone: null };
 }
 
 // Apaga registros A/AAAA/CNAME do mesmo nome que conflitam, e cria os novos.
@@ -434,13 +447,17 @@ Deno.serve(async (req) => {
       const cname = bestRecommendedCname(config.body);
 
       // Encontra zona Cloudflare
-      const zone = await cfFindZone(domain);
-      if (!zone) {
+      const zoneRes = await cfFindZone(domain);
+      if (!zoneRes.ok) {
+        return json({ ok: false, error: zoneRes.error });
+      }
+      if (!zoneRes.zone) {
         return json({
           ok: false,
-          error: `Zona Cloudflare não encontrada para "${domain}". Verifique se o domínio está adicionado na sua conta Cloudflare e se o token tem acesso à zona.`,
+          error: `Zona Cloudflare não encontrada para "${domain}". Adicione o domínio na sua conta Cloudflare e garanta que o token tem acesso à zona.`,
         });
       }
+      const zone = zoneRes.zone;
 
       const isApex = zone.name === domain;
       const records: Array<{ type: "A" | "CNAME"; content: string }> = isApex
@@ -448,7 +465,7 @@ Deno.serve(async (req) => {
         : [{ type: "CNAME" as const, content: cname }];
 
       const result = await cfApplyRecords(zone.id, zone.name, domain, records);
-      if (!result.ok) return json({ ok: false, error: result.error, zone: zone.name });
+      if (!result.ok) return json({ ok: false, error: `Cloudflare: ${result.error}`, zone: zone.name });
 
       // Dispara verificação na Vercel pra acelerar a propagação
       await vercelProject(
