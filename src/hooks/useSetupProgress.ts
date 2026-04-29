@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { getAdminMysqlSession } from "@/lib/adminMysqlSession";
+import { isSuperAdmin } from "@/lib/superAdmin";
 
 export interface SetupStep {
   id: string;
@@ -8,11 +9,12 @@ export interface SetupStep {
   desc: string;
   href: string;
   done: boolean;
+  superAdminOnly?: boolean;
 }
 
 const STEP_DEFS: Omit<SetupStep, "done">[] = [
-  { id: "mysql", title: "Banco MySQL conectado", desc: "Configure o servidor MySQL do seu perfil.", href: "/admin/barbershops" },
-  { id: "schema", title: "Schema importado", desc: "Importe o SQL inicial das tabelas.", href: "/admin/barbershops" },
+  { id: "mysql", title: "Banco MySQL conectado", desc: "Configure o servidor MySQL do seu perfil.", href: "/admin/barbershops", superAdminOnly: true },
+  { id: "schema", title: "Schema importado", desc: "Importe o SQL inicial das tabelas.", href: "/admin/barbershops", superAdminOnly: true },
   { id: "branding", title: "Logo e cores definidas", desc: "Personalize a identidade visual.", href: "/admin/settings" },
   { id: "site_content", title: "Conteúdo do site", desc: "Hero, sobre e textos principais.", href: "/admin/settings" },
   { id: "hours", title: "Horários configurados", desc: "Abertura, fechamento e dias off.", href: "/admin/settings" },
