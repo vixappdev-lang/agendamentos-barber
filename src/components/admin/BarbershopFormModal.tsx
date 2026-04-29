@@ -212,8 +212,18 @@ export const BarbershopFormModal = ({ open, onOpenChange, profile }: Props) => {
     setVercelBusy("add");
     try {
       const r = await callVercel("add", domain);
-      if (r?.ok) toast({ title: "Domínio vinculado", description: "Configure o DNS para finalizar." });
-      else toast({ title: "Falha ao vincular", description: r?.error || r?.data?.error?.message || "Erro Vercel", variant: "destructive" });
+      if (r?.ok) {
+        const desc = r?.moved_from
+          ? `Removido do projeto "${r.moved_from}" e vinculado aqui. Configure o DNS para finalizar.`
+          : "Configure o DNS para finalizar.";
+        toast({ title: "Domínio vinculado", description: desc });
+      } else {
+        const raw = r?.error || r?.data?.error?.message || "Erro Vercel";
+        const friendly = /already in use/i.test(String(raw))
+          ? "Esse domínio já está em outro projeto Vercel da sua conta e não pôde ser movido automaticamente (token sem permissão). Remova-o no dashboard da Vercel e tente novamente."
+          : raw;
+        toast({ title: "Falha ao vincular", description: friendly, variant: "destructive" });
+      }
       await refreshStatus(domain);
     } catch (e: any) {
       toast({ title: "Erro Vercel", description: e?.message, variant: "destructive" });
