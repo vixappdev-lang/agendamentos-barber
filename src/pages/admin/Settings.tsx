@@ -84,11 +84,12 @@ const TemplatePickerBtn = ({ onClick }: { onClick: () => void }) => (
 
 const dayLabels = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 
-type SettingsTab = "business" | "branding" | "hours" | "scheduling" | "payments" | "personalization" | "general";
+type SettingsTab = "business" | "branding" | "site" | "hours" | "scheduling" | "payments" | "personalization" | "general";
 
 const tabs: { id: SettingsTab; label: string; icon: typeof Store }[] = [
   { id: "business", label: "Dados", icon: Store },
   { id: "branding", label: "Visual", icon: Palette },
+  { id: "site", label: "Site", icon: Globe },
   { id: "personalization", label: "Personalização", icon: Wand2 },
   { id: "hours", label: "Horários", icon: Clock },
   { id: "scheduling", label: "Agendamento", icon: Calendar },
