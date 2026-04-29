@@ -407,62 +407,81 @@ const Settings = () => {
 
           {/* ===== IDENTIDADE VISUAL ===== */}
           {activeTab === "branding" && (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              <div className={cardStyle}>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-stretch">
+              {/* LOGO — compacta e alinhada */}
+              <div className={`${cardStyle} h-full flex flex-col`}>
                 <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
                   <Image className="w-4 h-4" style={{ color: iconColor }} /> Logo da Barbearia
                 </h3>
-                <div className="space-y-4">
-                  {/* Preview */}
+                <div className="flex items-center gap-4">
+                  {/* Preview compacto */}
                   <div
-                    className="w-full aspect-video rounded-xl flex items-center justify-center overflow-hidden"
-                    style={{ background: "hsl(0 0% 100% / 0.03)", border: "1px dashed hsl(0 0% 100% / 0.1)" }}
+                    className="w-24 h-24 rounded-xl flex items-center justify-center overflow-hidden shrink-0"
+                    style={{ background: "hsl(0 0% 100% / 0.03)", border: "1px dashed hsl(0 0% 100% / 0.12)" }}
                   >
                     {logoPreview ? (
-                      <img src={logoPreview} alt="Logo" className="max-w-full max-h-full object-contain" />
+                      <img src={logoPreview} alt="Logo" className="w-full h-full object-contain" />
                     ) : (
-                      <div className="text-center space-y-2">
-                        <Upload className="w-8 h-8 text-muted-foreground mx-auto" />
-                        <p className="text-xs text-muted-foreground">Nenhuma logo enviada</p>
-                      </div>
+                      <Upload className="w-6 h-6 text-muted-foreground" />
                     )}
                   </div>
-                  <label
-                    className="w-full py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 cursor-pointer transition-all"
-                    style={{
-                      background: "hsl(245 60% 55% / 0.1)",
-                      color: "hsl(245 60% 70%)",
-                      border: "1px solid hsl(245 60% 55% / 0.2)",
-                    }}
-                  >
-                    {uploadingLogo ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <Upload className="w-4 h-4" />
+                  {/* Ações */}
+                  <div className="flex-1 min-w-0 space-y-2">
+                    <label
+                      className="w-full py-2 rounded-lg text-xs font-semibold flex items-center justify-center gap-2 cursor-pointer transition-all"
+                      style={{
+                        background: "hsl(245 60% 55% / 0.1)",
+                        color: "hsl(245 60% 70%)",
+                        border: "1px solid hsl(245 60% 55% / 0.2)",
+                      }}
+                    >
+                      {uploadingLogo ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
+                      {uploadingLogo ? "Enviando..." : logoPreview ? "Trocar logo" : "Enviar logo"}
+                      <input type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} disabled={uploadingLogo} />
+                    </label>
+                    {logoPreview && (
+                      <button
+                        type="button"
+                        onClick={() => { setLogoPreview(null); updateSetting("logo_url", ""); }}
+                        className="w-full py-1.5 rounded-lg text-[11px] font-medium text-muted-foreground hover:text-destructive transition"
+                        style={{ border: "1px solid hsl(0 0% 100% / 0.06)" }}
+                      >
+                        Remover
+                      </button>
                     )}
-                    {uploadingLogo ? "Enviando..." : "Enviar Logo"}
-                    <input type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} disabled={uploadingLogo} />
-                  </label>
-                  <p className="text-[10px] text-muted-foreground">Formatos: PNG, JPG, SVG. Máximo: 2MB</p>
+                    <p className="text-[10px] text-muted-foreground leading-snug">PNG, JPG ou SVG · Máx 2MB · ideal quadrado</p>
+                  </div>
+                </div>
+
+                {/* Favicon */}
+                <div className="mt-auto pt-4 border-t border-white/5">
+                  <label className={labelStyle}>Favicon (URL)</label>
+                  <input
+                    className="glass-input"
+                    value={settings.site_favicon_url || ""}
+                    onChange={(e) => updateSetting("site_favicon_url", e.target.value)}
+                    placeholder="https://..."
+                  />
                 </div>
               </div>
 
-              <div className={cardStyle}>
+              {/* CORES */}
+              <div className={`${cardStyle} h-full flex flex-col`}>
                 <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
                   <Palette className="w-4 h-4" style={{ color: iconColor }} /> Cores do Tema
                 </h3>
-                <div className="grid gap-4">
+                <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className={labelStyle}>Cor Principal</label>
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2">
                       <input
                         type="color"
                         value={settings.primary_color || "#6C5CE7"}
                         onChange={(e) => updateSetting("primary_color", e.target.value)}
-                        className="w-10 h-10 rounded-lg cursor-pointer border-0 bg-transparent"
+                        className="w-10 h-10 rounded-lg cursor-pointer border-0 bg-transparent shrink-0"
                       />
                       <input
-                        className="glass-input flex-1"
+                        className="glass-input flex-1 min-w-0"
                         value={settings.primary_color || "#6C5CE7"}
                         onChange={(e) => updateSetting("primary_color", e.target.value)}
                         placeholder="#6C5CE7"
@@ -471,35 +490,36 @@ const Settings = () => {
                   </div>
                   <div>
                     <label className={labelStyle}>Cor Secundária</label>
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2">
                       <input
                         type="color"
                         value={settings.accent_color || "#A29BFE"}
                         onChange={(e) => updateSetting("accent_color", e.target.value)}
-                        className="w-10 h-10 rounded-lg cursor-pointer border-0 bg-transparent"
+                        className="w-10 h-10 rounded-lg cursor-pointer border-0 bg-transparent shrink-0"
                       />
                       <input
-                        className="glass-input flex-1"
+                        className="glass-input flex-1 min-w-0"
                         value={settings.accent_color || "#A29BFE"}
                         onChange={(e) => updateSetting("accent_color", e.target.value)}
                         placeholder="#A29BFE"
                       />
                     </div>
                   </div>
-                  {/* Preview */}
-                  <div>
-                    <label className={labelStyle}>Pré-visualização</label>
-                    <div className="flex gap-3 items-center p-3 rounded-xl" style={{ background: "hsl(0 0% 100% / 0.03)" }}>
-                      <div className="w-12 h-12 rounded-xl" style={{ background: settings.primary_color || "#6C5CE7" }} />
-                      <div className="w-12 h-12 rounded-xl" style={{ background: settings.accent_color || "#A29BFE" }} />
-                      <div className="flex-1">
-                        <p className="text-sm font-semibold" style={{ color: settings.primary_color || "#6C5CE7" }}>
-                          {settings.business_name || "Nome da Barbearia"}
-                        </p>
-                        <p className="text-xs" style={{ color: settings.accent_color || "#A29BFE" }}>
-                          {settings.slogan || "Slogan aqui"}
-                        </p>
-                      </div>
+                </div>
+
+                {/* Preview */}
+                <div className="mt-auto">
+                  <label className={labelStyle}>Pré-visualização</label>
+                  <div className="flex gap-3 items-center p-3 rounded-xl" style={{ background: "hsl(0 0% 100% / 0.03)" }}>
+                    <div className="w-10 h-10 rounded-lg shrink-0" style={{ background: settings.primary_color || "#6C5CE7" }} />
+                    <div className="w-10 h-10 rounded-lg shrink-0" style={{ background: settings.accent_color || "#A29BFE" }} />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold truncate" style={{ color: settings.primary_color || "#6C5CE7" }}>
+                        {settings.business_name || "Nome da Barbearia"}
+                      </p>
+                      <p className="text-xs truncate" style={{ color: settings.accent_color || "#A29BFE" }}>
+                        {settings.slogan || "Slogan aqui"}
+                      </p>
                     </div>
                   </div>
                 </div>
