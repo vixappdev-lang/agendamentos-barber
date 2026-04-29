@@ -468,16 +468,18 @@ export const BarbershopFormModal = ({ open, onOpenChange, profile }: Props) => {
             const s = statusByDomain[domain];
             if (!s || s.loading || s.error) return null;
             const isApex = domain.split(".").length === 2;
+            const aValue = s.recommendedAValues?.[0] || "76.76.21.21";
+            const cnameValue = s.recommendedCname || "cname.vercel-dns.com";
             return (
               <div className="rounded-lg p-2.5 mt-2 text-[10.5px] leading-snug bg-amber-500/5 border border-amber-500/15 text-amber-200/85 space-y-1.5">
                 <p className="font-semibold text-amber-300/90">Configure o DNS no seu provedor:</p>
                 {isApex ? (
                   <div className="font-mono text-[10px]">
-                    <div>Tipo: <b>A</b> · Nome: <b>@</b> · Valor: <b>76.76.21.21</b></div>
+                    <div>Tipo: <b>A</b> · Nome: <b>@</b> · Valor: <b>{aValue}</b></div>
                   </div>
                 ) : (
                   <div className="font-mono text-[10px]">
-                    <div>Tipo: <b>CNAME</b> · Nome: <b>{domain.split(".")[0]}</b> · Valor: <b>cname.vercel-dns.com</b></div>
+                    <div>Tipo: <b>CNAME</b> · Nome: <b>{domain.split(".")[0]}</b> · Valor: <b>{cnameValue}</b></div>
                   </div>
                 )}
                 {s.aValues?.length ? <div className="font-mono text-[10px] opacity-70">A atual: {s.aValues.join(", ")}</div> : null}
