@@ -106,6 +106,12 @@ export const useUpdateBarbershop = () => {
         phone: input.phone ?? null,
         address: input.address ?? null,
       };
+      if (input.custom_domain !== undefined) {
+        patch.custom_domain = input.custom_domain ? input.custom_domain.toLowerCase() : null;
+      }
+      if (input.subdomain !== undefined) {
+        patch.subdomain = input.subdomain ? input.subdomain.toLowerCase() : null;
+      }
       if (input.permissions) {
         patch.permissions = sanitizePermissions(input.permissions) as any;
       }
