@@ -356,17 +356,69 @@ export const BarbershopFormModal = ({ open, onOpenChange, profile }: Props) => {
           const sub = form.subdomain.trim();
           const cd = form.custom_domain.trim();
           const copy = (txt: string) => { if (!txt) return; navigator.clipboard.writeText(txt); toast({ title: "Copiado" }); };
+
+          const StatusBadge = ({ domain }: { domain: string }) => {
+            const s = statusByDomain[domain];
+            if (!s) return null;
+            if (s.loading) return <span className="text-[10px] text-muted-foreground flex items-center gap-1"><Loader2 className="w-3 h-3 animate-spin"/> Verificando…</span>;
+            if (s.error) return <span className="text-[10px] text-destructive flex items-center gap-1"><AlertTriangle className="w-3 h-3"/> {s.error}</span>;
+            if (s.verified && !s.misconfigured) return <span className="text-[10px] text-emerald-400 flex items-center gap-1"><CheckCircle2 className="w-3 h-3"/> Ativo · SSL OK</span>;
+            if (s.verified && s.misconfigured) return <span className="text-[10px] text-amber-400 flex items-center gap-1"><AlertTriangle className="w-3 h-3"/> Verificado · DNS pendente</span>;
+            return <span className="text-[10px] text-amber-400 flex items-center gap-1"><AlertTriangle className="w-3 h-3"/> Aguardando DNS</span>;
+          };
+
+          const DnsHelper = ({ domain }: { domain: string }) => {
+            const s = statusByDomain[domain];
+            if (!s || s.loading || s.error) return null;
+            const isApex = domain.split(".").length === 2;
+            return (
+              <div className="rounded-lg p-2.5 mt-2 text-[10.5px] leading-snug bg-amber-500/5 border border-amber-500/15 text-amber-200/85 space-y-1.5">
+                <p className="font-semibold text-amber-300/90">Configure o DNS no seu provedor:</p>
+                {isApex ? (
+                  <div className="font-mono text-[10px]">
+                    <div>Tipo: <b>A</b> · Nome: <b>@</b> · Valor: <b>76.76.21.21</b></div>
+                  </div>
+                ) : (
+                  <div className="font-mono text-[10px]">
+                    <div>Tipo: <b>CNAME</b> · Nome: <b>{domain.split(".")[0]}</b> · Valor: <b>cname.vercel-dns.com</b></div>
+                  </div>
+                )}
+                {s.aValues?.length ? <div className="font-mono text-[10px] opacity-70">A atual: {s.aValues.join(", ")}</div> : null}
+                {s.cnames?.length ? <div className="font-mono text-[10px] opacity-70">CNAME atual: {s.cnames.join(", ")}</div> : null}
+                <p className="opacity-80">SSL é emitido automaticamente após DNS propagar (~1 min).</p>
+              </div>
+            );
+          };
+
+          const VercelActions = ({ domain }: { domain: string }) => (
+            <div className="flex flex-wrap gap-2 pt-1">
+              <Button type="button" size="sm" variant="default" disabled={!domain || vercelBusy !== null} onClick={() => handleVercelAdd(domain)}>
+                {vercelBusy === "add" ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin"/> : <Link2 className="w-3.5 h-3.5 mr-1.5"/>}
+                Vincular na Vercel
+              </Button>
+              <Button type="button" size="sm" variant="outline" disabled={!domain || vercelBusy !== null} onClick={() => handleVercelVerify(domain)}>
+                {vercelBusy === "verify" ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin"/> : <RefreshCw className="w-3.5 h-3.5 mr-1.5"/>}
+                Verificar status
+              </Button>
+              <Button type="button" size="sm" variant="outline" disabled={!domain || vercelBusy !== null} onClick={() => handleVercelRemove(domain)}>
+                {vercelBusy === "remove" ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin"/> : <Trash2 className="w-3.5 h-3.5 mr-1.5"/>}
+                Remover
+              </Button>
+            </div>
+          );
+
           return (
             <div className="px-6 py-5 space-y-5">
               <div className="flex items-start gap-3 p-3 rounded-lg border border-border bg-muted/30">
                 <Info className="w-4 h-4 mt-0.5 text-primary shrink-0" />
                 <p className="text-xs text-muted-foreground leading-relaxed">
-                  Vincule um <b>subdomínio gratuito</b> (ex: <code>cliente.lovable.app</code>) e/ou um
-                  <b> domínio próprio</b> (que você comprou e adicionou na Vercel/Lovable).
-                  O site público resolverá automaticamente para esta barbearia.
+                  Vincule um <b>subdomínio gratuito</b> (ex: <code>barbearia-x.vercel.app</code>) ou um <b>domínio próprio</b> que você comprou.
+                  Os botões abaixo chamam a <b>API da Vercel</b> diretamente — adiciona, verifica DNS e mostra o status SSL em tempo real.
+                  O site público então resolverá automaticamente para esta barbearia.
                 </p>
               </div>
 
+              {/* URL padrão (sempre disponível) */}
               <div className="rounded-xl border border-border bg-card/40 p-4 space-y-2">
                 <Label className="flex items-center gap-1.5 text-xs uppercase tracking-wide">
                   <Globe className="w-3 h-3" /> URL padrão (sempre disponível)
@@ -382,18 +434,23 @@ export const BarbershopFormModal = ({ open, onOpenChange, profile }: Props) => {
                     <a href={slugUrl} target="_blank" rel="noreferrer"><ExternalLink className="w-3.5 h-3.5" /></a>
                   </Button>
                 </div>
+                <p className="text-[10px] text-muted-foreground">Funciona sempre, mesmo sem domínio configurado.</p>
               </div>
 
+              {/* Subdomínio (vercel.app ou seu domínio principal) */}
               <div className="rounded-xl border border-border bg-card/40 p-4 space-y-2">
-                <Label htmlFor="subdomain" className="flex items-center gap-1.5">
-                  Subdomínio gratuito
-                  <span className="text-[10px] text-muted-foreground font-normal">(.lovable.app / .vercel.app)</span>
-                </Label>
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="subdomain" className="flex items-center gap-1.5">
+                    Subdomínio
+                    <span className="text-[10px] text-muted-foreground font-normal">(.vercel.app ou seu domínio principal)</span>
+                  </Label>
+                  <StatusBadge domain={sub} />
+                </div>
                 <Input
                   id="subdomain"
                   value={form.subdomain}
                   onChange={(e) => update("subdomain", e.target.value.trim().toLowerCase())}
-                  placeholder="ex: barbearia-x.lovable.app"
+                  placeholder="ex: barbearia-x.vercel.app"
                 />
                 {sub && (
                   <div className="flex items-center gap-2 pt-1">
@@ -405,14 +462,16 @@ export const BarbershopFormModal = ({ open, onOpenChange, profile }: Props) => {
                     </Button>
                   </div>
                 )}
-                <p className="text-[10px] text-muted-foreground leading-snug">
-                  Configure no painel da Vercel/Lovable apontando este subdomínio para o projeto.
-                  Quando o visitante acessar, o site desta barbearia carregará automaticamente.
-                </p>
+                {sub && <VercelActions domain={sub} />}
+                {sub && <DnsHelper domain={sub} />}
               </div>
 
+              {/* Domínio próprio */}
               <div className="rounded-xl border border-border bg-card/40 p-4 space-y-2">
-                <Label htmlFor="custom_domain">Domínio próprio (existente)</Label>
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="custom_domain">Domínio próprio</Label>
+                  <StatusBadge domain={cd} />
+                </div>
                 <Input
                   id="custom_domain"
                   value={form.custom_domain}
@@ -429,15 +488,8 @@ export const BarbershopFormModal = ({ open, onOpenChange, profile }: Props) => {
                     </Button>
                   </div>
                 )}
-                <div className="rounded-lg p-2.5 text-[10.5px] leading-snug bg-amber-500/5 border border-amber-500/15 text-amber-200/80 space-y-1">
-                  <p className="font-semibold text-amber-300/90">Passo a passo na Vercel:</p>
-                  <ol className="list-decimal list-inside space-y-0.5">
-                    <li>Vercel → Projeto → Settings → Domains → <b>Add Domain</b></li>
-                    <li>Cole o domínio acima e siga as instruções DNS (CNAME ou A)</li>
-                    <li>Aguarde SSL (Let's Encrypt) ser emitido (~1 min)</li>
-                    <li>Salve aqui — o site público responderá automaticamente</li>
-                  </ol>
-                </div>
+                {cd && <VercelActions domain={cd} />}
+                {cd && <DnsHelper domain={cd} />}
               </div>
             </div>
           );
