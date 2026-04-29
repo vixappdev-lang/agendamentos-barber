@@ -32,13 +32,92 @@ async function vercel(path: string, init: RequestInit = {}) {
   return { ok: res.ok, status: res.status, body };
 }
 
-async function vercelProject(path: string, init: RequestInit = {}) {
-  const first = await vercel(withTeam(path), init);
-  if (first.ok || !VERCEL_TEAM_ID || first.status !== 404) return first;
+async function vercelProject(path: string, init: RequestInit = {}, teamId = VERCEL_TEAM_ID) {
+  const first = await vercel(withTeam(path, teamId), init);
+  if (first.ok || !teamId || first.status !== 404) return first;
 
   // Se o Team ID salvo estiver errado, tenta a conta padrão do token antes de falhar.
   const retryWithoutTeam = await vercel(path, init);
   return retryWithoutTeam.ok ? retryWithoutTeam : first;
+}
+
+const readList = (body: any, key: "domains" | "projects") => {
+  if (Array.isArray(body)) return body;
+  if (Array.isArray(body?.[key])) return body[key];
+  if (Array.isArray(body?.teams)) return body.teams;
+  if (Array.isArray(body?.data)) return body.data;
+  return [];
+};
+
+async function getTeamContexts() {
+  const seen = new Set<string>();
+  const contexts: Array<string | null> = [];
+  const add = (id?: string | null) => {
+    const key = id || "__personal__";
+    if (seen.has(key)) return;
+    seen.add(key);
+    contexts.push(id || null);
+  };
+  add(VERCEL_TEAM_ID || null);
+  add(null);
+
+  const teams = await vercel("/v2/teams");
+  const list = readList(teams.body, "projects");
+  for (const team of list) add(team?.id || team?.teamId || null);
+  return contexts;
+}
+
+async function listAccountDomains() {
+  const contexts = await getTeamContexts();
+  const rows = new Map<string, any>();
+  const errors: string[] = [];
+
+  for (const teamId of contexts) {
+    const r = await vercel(withTeam("/v5/domains", teamId || ""));
+    if (!r.ok) {
+      const msg = r.body?.error?.message || r.body?.error?.code;
+      if (msg) errors.push(String(msg));
+      continue;
+    }
+    for (const d of readList(r.body, "domains")) {
+      const name = String(d?.name || d?.domain || "").toLowerCase();
+      if (name && DOMAIN_RE.test(name) && !name.endsWith(".vercel.app")) {
+        rows.set(name, { ...d, name, source: teamId ? "team" : "personal" });
+      }
+    }
+  }
+
+  return { domains: [...rows.values()], errors };
+}
+
+async function listVisibleProjects() {
+  const contexts = await getTeamContexts();
+  const rows: any[] = [];
+  for (const teamId of contexts) {
+    const r = await vercel(withTeam("/v9/projects", teamId || ""));
+    if (!r.ok) continue;
+    for (const p of readList(r.body, "projects")) rows.push({ ...p, teamId });
+  }
+  return rows;
+}
+
+async function resolveProjectContext() {
+  if (!VERCEL_PROJECT_ID) return { ok: false, error: "VERCEL_PROJECT_ID ausente" } as const;
+
+  const configured = await vercelProject(`/v9/projects/${VERCEL_PROJECT_ID}`);
+  if (configured.ok) return { ok: true, id: VERCEL_PROJECT_ID, teamId: VERCEL_TEAM_ID || null } as const;
+
+  const projects = await listVisibleProjects();
+  const exact = projects.find((p) => p?.id === VERCEL_PROJECT_ID || p?.name === VERCEL_PROJECT_ID);
+  if (exact?.id || exact?.name) return { ok: true, id: exact.id || exact.name, teamId: exact.teamId || null } as const;
+  if (projects.length === 1 && (projects[0]?.id || projects[0]?.name)) {
+    return { ok: true, id: projects[0].id || projects[0].name, teamId: projects[0].teamId || null, auto: true } as const;
+  }
+
+  return {
+    ok: false,
+    error: `Projeto Vercel não encontrado. Projetos visíveis: ${projects.map((p) => `${p.name || "sem-nome"} (${p.id})`).slice(0, 8).join(", ") || "nenhum"}. Atualize VERCEL_PROJECT_ID/VERCEL_TEAM_ID com o projeto correto.`,
+  } as const;
 }
 
 const DOMAIN_RE = /^([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)(\.[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)+$/;
@@ -89,36 +168,46 @@ Deno.serve(async (req) => {
 
     // ADD
     if (action === "add") {
-      const r = await vercelProject(`/v10/projects/${VERCEL_PROJECT_ID}/domains`, {
+      const project = await resolveProjectContext();
+      if (!project.ok) return json({ ok: false, error: project.error }, 200);
+      const r = await vercelProject(`/v10/projects/${project.id}/domains`, {
         method: "POST",
         body: JSON.stringify({ name: domain }),
-      });
+      }, project.teamId || "");
       return json({ ok: r.ok, status: r.status, data: r.body });
     }
 
     // REMOVE
     if (action === "remove") {
+      const project = await resolveProjectContext();
+      if (!project.ok) return json({ ok: false, error: project.error }, 200);
       const r = await vercelProject(
-        `/v9/projects/${VERCEL_PROJECT_ID}/domains/${encodeURIComponent(domain)}`,
+        `/v9/projects/${project.id}/domains/${encodeURIComponent(domain)}`,
         { method: "DELETE" },
+        project.teamId || "",
       );
       return json({ ok: r.ok, status: r.status, data: r.body });
     }
 
     // VERIFY (dispara verificação)
     if (action === "verify") {
+      const project = await resolveProjectContext();
+      if (!project.ok) return json({ ok: false, error: project.error }, 200);
       const r = await vercelProject(
-        `/v9/projects/${VERCEL_PROJECT_ID}/domains/${encodeURIComponent(domain)}/verify`,
+        `/v9/projects/${project.id}/domains/${encodeURIComponent(domain)}/verify`,
         { method: "POST" },
+        project.teamId || "",
       );
       return json({ ok: r.ok, status: r.status, data: r.body });
     }
 
     // STATUS (config + domain info → registros DNS pendentes / verified)
     if (action === "status") {
+      const project = await resolveProjectContext();
+      if (!project.ok) return json({ ok: false, domain, info: {}, config: {}, error: project.error }, 200);
       const [info, config] = await Promise.all([
-        vercelProject(`/v9/projects/${VERCEL_PROJECT_ID}/domains/${encodeURIComponent(domain)}`),
-        vercelProject(`/v6/domains/${encodeURIComponent(domain)}/config`),
+        vercelProject(`/v9/projects/${project.id}/domains/${encodeURIComponent(domain)}`, {}, project.teamId || ""),
+        vercelProject(`/v6/domains/${encodeURIComponent(domain)}/config`, {}, project.teamId || ""),
       ]);
       return json({
         ok: info.ok,
@@ -135,24 +224,30 @@ Deno.serve(async (req) => {
 
     // LIST
     if (action === "list") {
-      const r = await vercelProject(`/v9/projects/${VERCEL_PROJECT_ID}/domains`);
-      if (!r.ok) {
-        const apiErr = r.body?.error?.message || r.body?.error?.code || "Erro desconhecido";
-        const hint =
-          r.body?.error?.code === "not_found"
-            ? `O VERCEL_PROJECT_ID (${VERCEL_PROJECT_ID}) não foi encontrado${VERCEL_TEAM_ID ? ` no team ${VERCEL_TEAM_ID}` : " na conta do token"}. Verifique: 1) Project ID em Vercel → Settings → General; 2) Team ID em Team Settings (deixe vazio se for conta pessoal); 3) o token tem acesso a esse team.`
-            : "";
-        return json({ ok: false, error: `Vercel: ${apiErr}${hint ? " — " + hint : ""}`, raw: r.body }, 200);
+      const project = await resolveProjectContext();
+      if (project.ok) {
+        const r = await vercelProject(`/v9/projects/${project.id}/domains`, {}, project.teamId || "");
+        if (r.ok) return json({ ok: true, data: r.body, project });
       }
-      return json({ ok: true, data: r.body });
+
+      // Fallback intencional: lista domínios da conta/team para o admin conseguir selecionar,
+      // mesmo que o Project ID salvo esteja errado. Vincular ainda exige projeto válido.
+      const account = await listAccountDomains();
+      return json({
+        ok: true,
+        fallback: true,
+        data: { domains: account.domains },
+        warning: project.ok ? null : project.error,
+      });
     }
 
     // DIAGNOSE — útil pra debug do admin
     if (action === "diagnose") {
-      const [user, projects, target] = await Promise.all([
+      const [user, projects, target, accountDomains] = await Promise.all([
         vercel(`/v2/user`),
-        vercel(withTeam(`/v9/projects`)),
+        listVisibleProjects(),
         vercelProject(`/v9/projects/${VERCEL_PROJECT_ID}`),
+        listAccountDomains(),
       ]);
       return json({
         ok: target.ok,
@@ -163,9 +258,8 @@ Deno.serve(async (req) => {
         token_user: user.body?.user
           ? { id: user.body.user.id, email: user.body.user.email, defaultTeamId: user.body.user.defaultTeamId }
           : user.body,
-        projects_visible: Array.isArray(projects.body?.projects)
-          ? projects.body.projects.map((p: any) => ({ id: p.id, name: p.name }))
-          : projects.body,
+        projects_visible: projects.map((p: any) => ({ id: p.id, name: p.name, teamId: p.teamId || null })),
+        account_domains: accountDomains.domains.map((d: any) => ({ name: d.name, verified: !!d.verified })),
         target_project: target.body,
       });
     }

@@ -123,6 +123,9 @@ export const BarbershopFormModal = ({ open, onOpenChange, profile }: Props) => {
       const { data, error } = await supabase.functions.invoke("vercel-domains", { body: { action: "list", domain: "" } });
       if (error) throw new Error(error.message);
       if (data?.error) throw new Error(data.error);
+      if (data?.warning) {
+        toast({ title: "Domínios listados com aviso", description: data.warning });
+      }
 
       const inner = data?.data ?? data;
       if (inner && typeof inner === "object" && inner.error) {
@@ -149,6 +152,7 @@ export const BarbershopFormModal = ({ open, onOpenChange, profile }: Props) => {
       const { data, error } = await supabase.functions.invoke("vercel-domains", { body: { action: "diagnose", domain: "" } });
       if (error) throw new Error(error.message);
       const visible = Array.isArray(data?.projects_visible) ? data.projects_visible : [];
+      const domains = Array.isArray(data?.account_domains) ? data.account_domains : [];
       const cfg = data?.configured || {};
       const targetOk = !!data?.ok;
       const summary = [
@@ -157,6 +161,7 @@ export const BarbershopFormModal = ({ open, onOpenChange, profile }: Props) => {
         `Token: ${data?.token_user?.email || "?"}`,
         `Encontrado: ${targetOk ? "SIM" : "NÃO"}`,
         `Projetos visíveis (${visible.length}): ${visible.slice(0, 5).map((p: any) => p.name).join(", ") || "nenhum"}`,
+        `Domínios visíveis: ${domains.length}`,
       ].join(" • ");
       toast({
         title: targetOk ? "Vercel OK" : "Vercel mal configurada",
@@ -183,6 +188,7 @@ export const BarbershopFormModal = ({ open, onOpenChange, profile }: Props) => {
     setStatusByDomain((p) => ({ ...p, [domain]: { ...(p[domain] || {}), loading: true } }));
     try {
       const r = await callVercel("status", domain);
+      if (r?.error) throw new Error(r.error);
       const info = r?.info || {};
       const config = r?.config || {};
       setStatusByDomain((p) => ({
@@ -207,7 +213,7 @@ export const BarbershopFormModal = ({ open, onOpenChange, profile }: Props) => {
     try {
       const r = await callVercel("add", domain);
       if (r?.ok) toast({ title: "Domínio vinculado", description: "Configure o DNS para finalizar." });
-      else toast({ title: "Falha ao vincular", description: r?.data?.error?.message || "Erro Vercel", variant: "destructive" });
+      else toast({ title: "Falha ao vincular", description: r?.error || r?.data?.error?.message || "Erro Vercel", variant: "destructive" });
       await refreshStatus(domain);
     } catch (e: any) {
       toast({ title: "Erro Vercel", description: e?.message, variant: "destructive" });
