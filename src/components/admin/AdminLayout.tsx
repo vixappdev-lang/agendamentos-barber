@@ -192,6 +192,12 @@ const AdminLayout = () => {
         </header>
         <main className="flex-1 p-4 sm:p-6 overflow-auto"><Outlet /></main>
       </div>
+
+      <WelcomeSetupModal
+        open={showWelcome}
+        adminName={userEmail?.split("@")[0] || null}
+        onComplete={() => setShowWelcome(false)}
+      />
     </div>
   );
 };
