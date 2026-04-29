@@ -207,6 +207,7 @@ export const BarbershopFormModal = ({ open, onOpenChange, profile }: Props) => {
           cnames: config.cnames,
           recommendedAValues: Array.isArray(config.recommendedIPv4?.[0]?.value) ? config.recommendedIPv4[0].value : undefined,
           recommendedCname: config.recommendedCNAME?.[0]?.value ? String(config.recommendedCNAME[0].value).replace(/\.$/, "") : undefined,
+          apexName: info.apexName,
         },
       }));
     } catch (e: any) {
@@ -214,17 +215,29 @@ export const BarbershopFormModal = ({ open, onOpenChange, profile }: Props) => {
     }
   };
 
-  const handleVercelAdd = async (domain: string) => {
+  const handleVercelAdd = async (domain: string, field?: "custom_domain" | "subdomain") => {
     if (!domain) { toast({ title: "Informe o domínio primeiro", variant: "destructive" }); return; }
+    const normalizedDomain = cleanDomain(domain);
     setVercelBusy("add");
     try {
-      const r = await callVercel("add", domain);
+      const r = await callVercel("add", normalizedDomain);
       if (r?.ok) {
+        if (field) update(field, normalizedDomain);
+        if (isEdit && profile) {
+          await updateMut.mutateAsync({
+            id: profile.id,
+            input: {
+              custom_domain: field === "custom_domain" ? normalizedDomain : form.custom_domain ? cleanDomain(form.custom_domain) : null,
+              subdomain: field === "subdomain" ? normalizedDomain : form.subdomain ? cleanDomain(form.subdomain) : null,
+            },
+          });
+          await queryClient.invalidateQueries({ queryKey: ["barbershop_profiles"] });
+        }
         const desc = r?.already_linked
-          ? "Esse domínio já estava vinculado ao projeto correto. Agora basta salvar este perfil."
+          ? "Esse domínio já estava vinculado ao projeto correto e foi salvo neste perfil."
           : r?.moved_from
-          ? `Removido do projeto "${r.moved_from}" e vinculado aqui. Configure o DNS para finalizar.`
-          : "Configure o DNS para finalizar.";
+          ? `Removido do projeto "${r.moved_from}", vinculado aqui e salvo neste perfil.`
+          : "Domínio vinculado e salvo neste perfil. Configure o DNS se ainda aparecer pendente.";
         toast({ title: r?.already_linked ? "Domínio já vinculado" : "Domínio vinculado", description: desc });
       } else {
         const raw = r?.error || r?.data?.error?.message || "Erro Vercel";
@@ -233,7 +246,7 @@ export const BarbershopFormModal = ({ open, onOpenChange, profile }: Props) => {
           : raw;
         toast({ title: "Falha ao vincular", description: friendly, variant: "destructive" });
       }
-      await refreshStatus(domain);
+      await refreshStatus(normalizedDomain);
     } catch (e: any) {
       toast({ title: "Erro Vercel", description: e?.message, variant: "destructive" });
     } finally { setVercelBusy(null); }
