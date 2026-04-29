@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { isSuperAdmin } from "@/lib/superAdmin";
 import { clearAdminMysqlSession, getAdminMysqlSession } from "@/lib/adminMysqlSession";
+import WelcomeSetupModal from "@/components/admin/WelcomeSetupModal";
 
 interface NavItem {
   label: string;
