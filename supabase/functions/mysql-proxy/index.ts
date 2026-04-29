@@ -522,6 +522,89 @@ Deno.serve(async (req: Request) => {
           });
         }
 
+        if (sub === "business_settings_all") {
+          const [rows] = await pubConn.query("SELECT `key`, `value` FROM business_settings");
+          return new Response(JSON.stringify({ success: true, data: rows }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
+        if (sub === "prize_wheel_slices") {
+          const [rows] = await pubConn.query(
+            "SELECT id, label, icon, image_url, discount_percent, discount_value, custom_prize, probability, sort_order FROM prize_wheel_slices WHERE active = 1 ORDER BY sort_order ASC",
+          );
+          return new Response(JSON.stringify({ success: true, data: rows }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
+        if (sub === "coupon_validate") {
+          const code = String(body.payload?.code || "").trim().toUpperCase().slice(0, 50);
+          if (!code) throw new Error("Cupom obrigatório");
+          const [rows] = await pubConn.query(
+            "SELECT id, code, discount_percent, discount_value, max_uses, current_uses, expires_at, active FROM coupons WHERE UPPER(code) = ? AND active = 1 LIMIT 1",
+            [code],
+          );
+          const row = (rows as any[])[0];
+          if (!row) return new Response(JSON.stringify({ success: false, code: "NOT_FOUND" }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+          if (row.expires_at && new Date(row.expires_at) < new Date()) {
+            return new Response(JSON.stringify({ success: false, code: "EXPIRED" }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+          }
+          if (row.max_uses != null && Number(row.current_uses) >= Number(row.max_uses)) {
+            return new Response(JSON.stringify({ success: false, code: "EXHAUSTED" }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+          }
+          return new Response(JSON.stringify({ success: true, data: row }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        }
+
+        if (sub === "appointments_by_email") {
+          const email = String(body.payload?.email || "").trim().toLowerCase().slice(0, 255);
+          if (!email) throw new Error("E-mail obrigatório");
+          const [rows] = await pubConn.query(
+            "SELECT id, customer_name, customer_email, customer_phone, service_id, barber_name, appointment_date, appointment_time, status, total_price, notes, created_at FROM appointments WHERE LOWER(customer_email) = ? ORDER BY appointment_date DESC, appointment_time DESC LIMIT 100",
+            [email],
+          );
+          return new Response(JSON.stringify({ success: true, data: rows }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
+        if (sub === "cancel_appointment") {
+          const id = String(body.payload?.id || "").slice(0, 64);
+          const email = String(body.payload?.email || "").trim().toLowerCase().slice(0, 255);
+          if (!id || !email) throw new Error("Dados inválidos");
+          const [result]: any = await pubConn.query(
+            "UPDATE appointments SET status = 'cancelled' WHERE id = ? AND LOWER(customer_email) = ? AND status IN ('pending','confirmed')",
+            [id, email],
+          );
+          return new Response(JSON.stringify({ success: true, data: { affected: result?.affectedRows || 0 } }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
+        if (sub === "orders_by_phone") {
+          const phone = String(body.payload?.phone || "").replace(/\D/g, "").slice(0, 20);
+          if (!phone) throw new Error("Telefone obrigatório");
+          const [rows] = await pubConn.query(
+            "SELECT id, customer_name, customer_phone, delivery_mode, status, total_price, payment_method, created_at FROM orders WHERE customer_phone = ? ORDER BY created_at DESC LIMIT 30",
+            [phone],
+          );
+          return new Response(JSON.stringify({ success: true, data: rows }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
+        if (sub === "order_items") {
+          const orderId = String(body.payload?.order_id || "").slice(0, 64);
+          if (!orderId) throw new Error("order_id obrigatório");
+          const [rows] = await pubConn.query(
+            "SELECT id, order_id, product_id, product_title, product_price, quantity FROM order_items WHERE order_id = ?",
+            [orderId],
+          );
+          return new Response(JSON.stringify({ success: true, data: rows }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
         throw new Error("sub não implementada");
       } finally {
         try { await pubConn?.end(); } catch { /* ignore */ }
