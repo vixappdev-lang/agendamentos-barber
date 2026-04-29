@@ -14,6 +14,7 @@ import { supabase as supabaseTyped } from "@/integrations/supabase/client";
 const supabase = supabaseTyped as any;
 import { toast } from "sonner";
 import { ModuleSection, Stat, EmptyState, PrimaryButton, GhostButton, TextField } from "@/components/admin/ModuleUI";
+import { ModuleHeader } from "@/components/admin/HelpModal";
 
 interface Rule {
   id: string;
