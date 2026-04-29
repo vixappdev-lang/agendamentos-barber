@@ -148,3 +148,25 @@ export const useLinkMysqlProfile = () => {
     onSuccess: () => qc.invalidateQueries({ queryKey: KEY }),
   });
 };
+
+export const useUpdateBarbershopSite = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, site_mode, site_published }: {
+      id: string;
+      site_mode?: "full" | "booking";
+      site_published?: boolean;
+    }) => {
+      const patch: Record<string, unknown> = {};
+      if (site_mode !== undefined) patch.site_mode = site_mode;
+      if (site_published !== undefined) patch.site_published = site_published;
+      if (Object.keys(patch).length === 0) return;
+      const { error } = await supabase
+        .from("barbershop_profiles")
+        .update(patch)
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: KEY }),
+  });
+};
