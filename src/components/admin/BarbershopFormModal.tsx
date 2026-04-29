@@ -114,19 +114,16 @@ export const BarbershopFormModal = ({ open, onOpenChange, profile }: Props) => {
     try {
       const { data, error } = await supabase.functions.invoke("vercel-domains", { body: { action: "list", domain: "" } });
       if (error) throw new Error(error.message);
-      // Edge function envelope: { ok, data: <vercel body> }
-      // Vercel /v9/projects/{id}/domains returns: { domains: [...], pagination: {...} }
-      // Erros da Vercel vêm como: { error: { code, message } }
+      if (data?.error) throw new Error(data.error);
+
       const inner = data?.data ?? data;
       if (inner && typeof inner === "object" && inner.error) {
-        const msg = inner.error?.message || inner.error?.code || "Erro Vercel";
-        throw new Error(msg);
+        throw new Error(inner.error?.message || inner.error?.code || "Erro Vercel");
       }
       let list: any[] = [];
       if (Array.isArray(inner)) list = inner;
       else if (Array.isArray(inner?.domains)) list = inner.domains;
       else if (Array.isArray(inner?.data)) list = inner.data;
-      else list = [];
 
       const cleaned = list
         .map((d: any) => ({ name: String(d?.name || d?.domain || ""), verified: !!d?.verified }))
@@ -135,6 +132,33 @@ export const BarbershopFormModal = ({ open, onOpenChange, profile }: Props) => {
       if (!cleaned.length) toast({ title: "Nenhum domínio próprio na Vercel", description: "Adicione um abaixo ou no painel da Vercel." });
     } catch (e: any) {
       toast({ title: "Erro ao listar domínios", description: e?.message || String(e), variant: "destructive" });
+    } finally { setLoadingDomains(false); }
+  };
+
+  const diagnoseVercel = async () => {
+    setLoadingDomains(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("vercel-domains", { body: { action: "diagnose" } });
+      if (error) throw new Error(error.message);
+      const visible = Array.isArray(data?.projects_visible) ? data.projects_visible : [];
+      const cfg = data?.configured || {};
+      const targetOk = !!data?.ok;
+      const summary = [
+        `Project ID: ${cfg.project_id || "(vazio)"}`,
+        `Team ID: ${cfg.team_id || "(vazio)"}`,
+        `Token: ${data?.token_user?.email || "?"}`,
+        `Encontrado: ${targetOk ? "SIM" : "NÃO"}`,
+        `Projetos visíveis (${visible.length}): ${visible.slice(0, 5).map((p: any) => p.name).join(", ") || "nenhum"}`,
+      ].join(" • ");
+      toast({
+        title: targetOk ? "Vercel OK" : "Vercel mal configurada",
+        description: summary,
+        variant: targetOk ? "default" : "destructive",
+      });
+       
+      console.log("[vercel diagnose]", data);
+    } catch (e: any) {
+      toast({ title: "Erro no diagnóstico", description: e?.message || String(e), variant: "destructive" });
     } finally { setLoadingDomains(false); }
   };
 
