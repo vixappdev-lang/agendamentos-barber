@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { isSuperAdmin } from "@/lib/superAdmin";
 import { clearAdminMysqlSession, getAdminMysqlSession } from "@/lib/adminMysqlSession";
+import WelcomeSetupModal from "@/components/admin/WelcomeSetupModal";
 
 interface NavItem {
   label: string;
@@ -48,6 +49,7 @@ const AdminLayout = () => {
   const [loading, setLoading] = useState(true);
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [showWelcome, setShowWelcome] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const t = useThemeColors();
@@ -93,6 +95,22 @@ const AdminLayout = () => {
       }
     });
   }, [loading, userEmail]);
+
+  // Verifica se admin já viu o modal de boas-vindas
+  useEffect(() => {
+    if (loading) return;
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("business_settings")
+        .select("value")
+        .eq("key", "welcome_completed")
+        .maybeSingle();
+      if (cancelled) return;
+      if (!data || data.value !== "true") setShowWelcome(true);
+    })();
+    return () => { cancelled = true; };
+  }, [loading]);
 
   const mysqlSession = getAdminMysqlSession();
   const visibleNavItems = navItems.filter((it) => {
@@ -174,6 +192,12 @@ const AdminLayout = () => {
         </header>
         <main className="flex-1 p-4 sm:p-6 overflow-auto"><Outlet /></main>
       </div>
+
+      <WelcomeSetupModal
+        open={showWelcome}
+        adminName={userEmail?.split("@")[0] || null}
+        onComplete={() => setShowWelcome(false)}
+      />
     </div>
   );
 };
