@@ -167,6 +167,16 @@ export const BarbershopFormModal = ({ open, onOpenChange, profile }: Props) => {
     finally { setVercelBusy(null); }
   };
 
+  // Auto-status quando aba Domínio abre
+  useEffect(() => {
+    if (tab !== "domain") return;
+    const sub = form.subdomain.trim();
+    const cd = form.custom_domain.trim();
+    if (sub) refreshStatus(sub);
+    if (cd) refreshStatus(cd);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tab, profile?.id]);
+
   useEffect(() => {
     if (profile) {
       setForm({
