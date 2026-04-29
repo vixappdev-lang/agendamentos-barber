@@ -497,19 +497,29 @@ Deno.serve(async (req: Request) => {
           const p = body.payload || {};
           const customer_name = requireText(p.customer_name, "Nome", 120);
           const customer_phone = String(p.customer_phone || "").replace(/\D/g, "").slice(0, 20) || null;
+          const customer_email = p.customer_email ? String(p.customer_email).slice(0, 255) : null;
           const total_price = Number(p.total_price);
           if (!Number.isFinite(total_price) || total_price < 0) throw new Error("Total inválido");
+          const delivery_mode = (p.delivery_mode === "delivery" ? "delivery" : "pickup");
+          const payment_method = p.payment_method ? String(p.payment_method).slice(0, 30) : "pix";
+          const address = p.address ? String(p.address).slice(0, 255) : null;
+          const address_number = p.address_number ? String(p.address_number).slice(0, 20) : null;
+          const address_complement = p.address_complement ? String(p.address_complement).slice(0, 120) : null;
+          const neighborhood = p.neighborhood ? String(p.neighborhood).slice(0, 120) : null;
+          const city = p.city ? String(p.city).slice(0, 120) : null;
+          const notes = p.notes ? String(p.notes).slice(0, 500) : null;
           const items = Array.isArray(p.items) ? p.items : [];
-          if (items.length === 0 || items.length > 50) throw new Error("Itens inválidos");
+          if (items.length > 50) throw new Error("Itens inválidos");
           const id = crypto.randomUUID();
           await pubConn.query(
-            `INSERT INTO orders (id, customer_name, customer_phone, delivery_mode, payment_method, total_price, status) VALUES (?, ?, ?, 'pickup', 'pix', ?, 'pending')`,
-            [id, customer_name, customer_phone, total_price],
+            `INSERT INTO orders (id, customer_name, customer_phone, customer_email, delivery_mode, payment_method, total_price, status, address, address_number, address_complement, neighborhood, city, notes)
+             VALUES (?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?, ?, ?, ?)`,
+            [id, customer_name, customer_phone, customer_email, delivery_mode, payment_method, total_price, address, address_number, address_complement, neighborhood, city, notes],
           );
           for (const it of items) {
             const pid = it.product_id ? String(it.product_id).slice(0, 36) : null;
-            const ptitle = String(it.product_title || "").slice(0, 255);
-            const pprice = Number(it.product_price) || 0;
+            const ptitle = String(it.product_title || it.title || "").slice(0, 255);
+            const pprice = Number(it.product_price ?? it.price) || 0;
             const qty = Math.max(1, Math.min(99, Number(it.quantity) || 1));
             if (!ptitle) continue;
             await pubConn.query(
@@ -518,6 +528,26 @@ Deno.serve(async (req: Request) => {
             );
           }
           return new Response(JSON.stringify({ success: true, data: { id } }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
+        if (sub === "add_order_items") {
+          const orderId = String(body.payload?.order_id || "").slice(0, 64);
+          const items = Array.isArray(body.payload?.items) ? body.payload.items : [];
+          if (!orderId || items.length === 0 || items.length > 50) throw new Error("Itens inválidos");
+          for (const it of items) {
+            const pid = it.product_id ? String(it.product_id).slice(0, 36) : null;
+            const ptitle = String(it.product_title || it.title || "").slice(0, 255);
+            const pprice = Number(it.product_price ?? it.price) || 0;
+            const qty = Math.max(1, Math.min(99, Number(it.quantity) || 1));
+            if (!ptitle) continue;
+            await pubConn.query(
+              `INSERT INTO order_items (id, order_id, product_id, product_title, product_price, quantity) VALUES (?, ?, ?, ?, ?, ?)`,
+              [crypto.randomUUID(), orderId, pid, ptitle, pprice, qty],
+            );
+          }
+          return new Response(JSON.stringify({ success: true, data: { affected: items.length } }), {
             headers: { ...corsHeaders, "Content-Type": "application/json" },
           });
         }
