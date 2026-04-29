@@ -513,10 +513,15 @@ export const BarbershopFormModal = ({ open, onOpenChange, profile }: Props) => {
                   <Label className="flex items-center gap-1.5 text-xs uppercase tracking-wide">
                     <Link2 className="w-3 h-3" /> Domínios já cadastrados na Vercel
                   </Label>
-                  <Button type="button" size="sm" variant="outline" disabled={loadingDomains} onClick={loadVercelDomains}>
-                    {loadingDomains ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5 mr-1.5" />}
-                    {vercelDomains.length ? "Atualizar lista" : "Listar domínios"}
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <Button type="button" size="sm" variant="ghost" disabled={loadingDomains} onClick={diagnoseVercel} title="Verifica se token, project_id e team_id estão corretos">
+                      Diagnosticar
+                    </Button>
+                    <Button type="button" size="sm" variant="outline" disabled={loadingDomains} onClick={loadVercelDomains}>
+                      {loadingDomains ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5 mr-1.5" />}
+                      {vercelDomains.length ? "Atualizar lista" : "Listar domínios"}
+                    </Button>
+                  </div>
                 </div>
                 {vercelDomains.length > 0 ? (
                   <div className="grid grid-cols-1 gap-1.5 max-h-44 overflow-y-auto pr-1">
