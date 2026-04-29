@@ -106,6 +106,24 @@ export const BarbershopFormModal = ({ open, onOpenChange, profile }: Props) => {
   };
   const [vercelBusy, setVercelBusy] = useState<"add" | "verify" | "remove" | null>(null);
   const [statusByDomain, setStatusByDomain] = useState<Record<string, VercelStatus>>({});
+  const [vercelDomains, setVercelDomains] = useState<{ name: string; verified?: boolean }[]>([]);
+  const [loadingDomains, setLoadingDomains] = useState(false);
+
+  const loadVercelDomains = async () => {
+    setLoadingDomains(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("vercel-domains", { body: { action: "list", domain: "" } });
+      if (error) throw new Error(error.message);
+      const list = (data?.data?.domains || data?.data || []) as any[];
+      const cleaned = list
+        .map((d) => ({ name: String(d.name || d.domain || ""), verified: !!d.verified }))
+        .filter((d) => d.name && !d.name.endsWith(".vercel.app"));
+      setVercelDomains(cleaned);
+      if (!cleaned.length) toast({ title: "Nenhum domínio próprio na Vercel", description: "Adicione um abaixo ou no painel da Vercel." });
+    } catch (e: any) {
+      toast({ title: "Erro ao listar domínios", description: e?.message, variant: "destructive" });
+    } finally { setLoadingDomains(false); }
+  };
 
   const callVercel = async (action: "add" | "remove" | "verify" | "status", domain: string) => {
     const { data, error } = await supabase.functions.invoke("vercel-domains", { body: { action, domain } });
