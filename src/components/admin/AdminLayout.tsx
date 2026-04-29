@@ -207,9 +207,9 @@ const AdminLayout = () => {
               </p>
               <p className="text-[10px] text-muted-foreground">Clique aqui para retomar a configuração inicial</p>
             </div>
-            <div className="hidden sm:block w-32 h-1.5 rounded-full overflow-hidden" style={{ background: "hsl(0 0% 100% / 0.06)" }}>
+            <div className="hidden sm:block w-32 h-1 rounded-full overflow-hidden" style={{ background: "hsl(0 0% 100% / 0.05)" }}>
               <div className="h-full rounded-full transition-all"
-                style={{ width: `${(completedCount / totalCount) * 100}%`, background: "linear-gradient(90deg, hsl(245 60% 60%), hsl(280 60% 60%))" }} />
+                style={{ width: `${(completedCount / totalCount) * 100}%`, background: "hsl(0 0% 70%)" }} />
             </div>
           </button>
         )}
