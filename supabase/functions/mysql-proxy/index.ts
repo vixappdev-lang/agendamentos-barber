@@ -338,7 +338,14 @@ Deno.serve(async (req: Request) => {
     // ============================================================
     if (action === "public_query") {
       const slug = String(body.slug || "").toLowerCase().trim();
-      const host = String(body.host || "").toLowerCase().trim().replace(/^https?:\/\//, "").split("/")[0].split(":")[0];
+      const host = String(body.host || "")
+        .toLowerCase()
+        .trim()
+        .replace(/^https?:\/\//, "")
+        .split("/")[0]
+        .split(":")[0]
+        .replace(/^www\./, "")
+        .replace(/\.$/, "");
       const sub = String(body.sub || "").trim();
 
       if (slug && !/^[a-z0-9-]{1,64}$/.test(slug)) throw new Error("slug inválido");
@@ -377,7 +384,7 @@ Deno.serve(async (req: Request) => {
         const r = await admin
           .from("barbershop_profiles")
           .select("id, slug, name, mysql_profile_id, is_active, site_published, is_cloud, site_mode, custom_domain, subdomain")
-          .or(`custom_domain.eq.${host},subdomain.eq.${host}`)
+          .or(`custom_domain.eq.${host},subdomain.eq.${host},custom_domain.eq.www.${host},subdomain.eq.www.${host}`)
           .maybeSingle();
         shop = r.data; shopErr = r.error;
       }
