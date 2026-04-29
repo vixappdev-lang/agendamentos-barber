@@ -318,6 +318,32 @@ const buildSeeds = (p: BarbershopProfile): string => {
     ["owner_email", p.owner_email],
     ["site_status", "ativo"],
     ["confirmation_mode", "auto"],
+    // ----- Site público -----
+    ["site_mode", "full"],
+    ["site_published", "true"],
+    ["site_hero_title", p.name],
+    ["site_hero_subtitle", "Barbearia Premium"],
+    ["site_hero_description", "Cortes modernos e atendimento de excelência."],
+    ["site_about_title", "Sobre nós"],
+    ["site_about_description", ""],
+    ["site_hero_images", "[]"],
+    ["site_gallery", "[]"],
+    ["site_primary", "#6E59F2"],
+    ["site_accent", "#8B7AFE"],
+    ["site_bg", "#0F1117"],
+    ["site_font_heading", "Playfair Display"],
+    ["site_font_body", "Inter"],
+    ["site_logo_url", ""],
+    ["site_favicon_url", ""],
+    ["site_seo_title", p.name],
+    ["site_seo_description", ""],
+    ["site_seo_og_image", ""],
+    // ----- Horários default -----
+    ["opening_time", "09:00"],
+    ["closing_time", "19:00"],
+    ["lunch_start", "12:00"],
+    ["lunch_end", "13:00"],
+    ["days_off", "0"],
   ];
   if (p.owner_name) settings.push(["owner_name", p.owner_name]);
   if (p.phone) settings.push(["phone", p.phone]);
