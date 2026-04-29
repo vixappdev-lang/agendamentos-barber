@@ -11,6 +11,7 @@ interface Props {
   open: boolean;
   onClose: () => void;
   adminName?: string | null;
+  adminEmail?: string | null;
 }
 
 type Slide = {
@@ -21,9 +22,9 @@ type Slide = {
   cta?: string;
 };
 
-const WelcomeSetupModal = ({ open, onClose, adminName }: Props) => {
+const WelcomeSetupModal = ({ open, onClose, adminName, adminEmail }: Props) => {
   const navigate = useNavigate();
-  const { steps, completedCount, totalCount, markWelcomeSeen } = useSetupProgress();
+  const { steps, completedCount, totalCount, markWelcomeSeen } = useSetupProgress(adminEmail || null);
   const [index, setIndex] = useState(0);
 
   // Bloqueia scroll
@@ -36,6 +37,20 @@ const WelcomeSetupModal = ({ open, onClose, adminName }: Props) => {
   // Reset ao abrir
   useEffect(() => { if (open) setIndex(0); }, [open]);
 
+  // Mapa de ícones por step id
+  const ICON_MAP: Record<string, typeof Sparkles> = {
+    mysql: Database, schema: FileCode, branding: Palette,
+    site_content: Type, hours: Clock, messages: MessageSquare, publish: Globe,
+  };
+
+  const stepSlides: Slide[] = steps.map((s, i) => ({
+    icon: ICON_MAP[s.id] || Sparkles,
+    title: `${i + 1}. ${s.title}`,
+    body: <p className="text-sm text-muted-foreground text-center">{s.desc}</p>,
+    href: s.href,
+    cta: s.id === "publish" ? "Publicar agora" : "Ir agora",
+  }));
+
   const slides: Slide[] = [
     {
       icon: Sparkles,
@@ -43,7 +58,7 @@ const WelcomeSetupModal = ({ open, onClose, adminName }: Props) => {
       body: (
         <div className="space-y-3 text-center">
           <p className="text-sm text-muted-foreground leading-relaxed">
-            Vamos configurar seu site e painel em <strong className="text-foreground">7 passos rápidos</strong>.
+            Vamos configurar seu site e painel em <strong className="text-foreground">{stepSlides.length} passos rápidos</strong>.
             Você pode pular agora e voltar depois pelo banner no topo.
           </p>
           <div className="flex items-center justify-center gap-2 text-[11px] text-muted-foreground pt-2">
@@ -53,13 +68,7 @@ const WelcomeSetupModal = ({ open, onClose, adminName }: Props) => {
         </div>
       ),
     },
-    { icon: Database, title: "1. Conecte seu MySQL", body: <p className="text-sm text-muted-foreground">Vá em <strong>Perfis Barbearias</strong> e conecte seu servidor MySQL. É lá que ficam todos os dados do seu site (zero peso no Cloud).</p>, href: "/admin/barbershops", cta: "Ir para Perfis" },
-    { icon: FileCode, title: "2. Importe o schema SQL", body: <p className="text-sm text-muted-foreground">Após conectar o MySQL, importe o SQL inicial para criar as tabelas necessárias automaticamente.</p>, href: "/admin/barbershops", cta: "Importar agora" },
-    { icon: Palette, title: "3. Logo e cores", body: <p className="text-sm text-muted-foreground">Em <strong>Configurações → Visual</strong> envie sua logo e escolha as cores principais do site.</p>, href: "/admin/settings", cta: "Personalizar visual" },
-    { icon: Type, title: "4. Conteúdo do site", body: <p className="text-sm text-muted-foreground">Em <strong>Configurações → Personalização</strong> defina o título do hero, descrição e seção sobre.</p>, href: "/admin/settings", cta: "Editar conteúdo" },
-    { icon: Clock, title: "5. Horários", body: <p className="text-sm text-muted-foreground">Em <strong>Configurações → Horários</strong> configure abertura, fechamento, almoço e dias off.</p>, href: "/admin/settings", cta: "Configurar horários" },
-    { icon: MessageSquare, title: "6. Mensagens automáticas", body: <p className="text-sm text-muted-foreground">Em <strong>Configurações → Agendamento</strong> escolha templates prontos para WhatsApp.</p>, href: "/admin/settings", cta: "Definir mensagens" },
-    { icon: Globe, title: "7. Publique seu site!", body: <p className="text-sm text-muted-foreground">Em <strong>Configurações → Personalização → Publicação</strong> ative o site e copie o link público.</p>, href: "/admin/settings", cta: "Publicar agora" },
+    ...stepSlides,
   ];
 
   const current = slides[index];

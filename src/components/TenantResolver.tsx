@@ -13,13 +13,27 @@ const callPublic = async (slug: string, sub: string, payload?: any) => {
   return { data, error: null };
 };
 
-const applyTheme = (s: Record<string, string>) => {
+const setMeta = (name: string, content: string, attr: "name" | "property" = "name") => {
+  if (!content) return;
+  let el = document.querySelector(`meta[${attr}='${name}']`) as HTMLMetaElement | null;
+  if (!el) { el = document.createElement("meta"); el.setAttribute(attr, name); document.head.appendChild(el); }
+  el.content = content;
+};
+
+const applyTheme = (s: Record<string, string>, profileName: string, slug: string) => {
   const root = document.documentElement;
   if (s.site_primary) root.style.setProperty("--tenant-primary", s.site_primary);
   if (s.site_accent) root.style.setProperty("--tenant-accent", s.site_accent);
   if (s.site_bg) root.style.setProperty("--tenant-bg", s.site_bg);
-  if (s.site_seo_title) document.title = s.site_seo_title;
-  else if (s.business_name) document.title = s.business_name;
+
+  const title = s.site_seo_title || s.business_name || profileName;
+  document.title = title;
+  setMeta("description", s.site_seo_description || s.description || "");
+  setMeta("og:title", title, "property");
+  setMeta("og:description", s.site_seo_description || s.description || "", "property");
+  setMeta("og:url", `${window.location.origin}/s/${slug}`, "property");
+  if (s.site_seo_og_image) setMeta("og:image", s.site_seo_og_image, "property");
+
   if (s.site_favicon_url) {
     let link = document.querySelector("link[rel='icon']") as HTMLLinkElement | null;
     if (!link) { link = document.createElement("link"); link.rel = "icon"; document.head.appendChild(link); }
@@ -53,7 +67,7 @@ const TenantResolver = () => {
         return;
       }
       const settings = (data.data || {}) as Record<string, string>;
-      applyTheme(settings);
+      applyTheme(settings, data.profile?.name || slug, slug);
       const value: TenantSiteValue = {
         profile: data.profile,
         source: data.source,
