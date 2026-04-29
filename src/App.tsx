@@ -22,6 +22,9 @@ const BaixarSource = lazy(() => import("./pages/BaixarSource"));
 const MemberLogin = lazy(() => import("./pages/MemberLogin"));
 const MemberArea = lazy(() => import("./pages/MemberArea"));
 const Avaliacao = lazy(() => import("./pages/Avaliacao"));
+const TenantResolver = lazy(() => import("./components/TenantResolver"));
+const TenantSite = lazy(() => import("./pages/tenant/TenantSite"));
+const TenantBooking = lazy(() => import("./pages/tenant/TenantBooking"));
 
 const AdminLogin = lazy(() => import("./pages/AdminLogin"));
 const AdminLayout = lazy(() => import("./components/admin/AdminLayout"));
@@ -74,6 +77,12 @@ const App = () => (
               <Route path="/navegacao" element={<Navigation />} />
               <Route path="/demo-site" element={<DemoSite />} />
               <Route path="/avaliacao" element={<Avaliacao />} />
+
+              {/* Site público por barbearia (MySQL isolado por slug) */}
+              <Route path="/s/:slug" element={<TenantResolver />}>
+                <Route index element={<TenantSite />} />
+                <Route path="agenda" element={<TenantBooking />} />
+              </Route>
 
               <Route element={<LoginRedirectGuard />}>
                 <Route path="/login" element={<MemberLogin />} />
