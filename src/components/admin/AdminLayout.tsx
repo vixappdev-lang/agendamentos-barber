@@ -220,6 +220,7 @@ const AdminLayout = () => {
       <WelcomeSetupModal
         open={showWelcome}
         adminName={userEmail?.split("@")[0] || null}
+        adminEmail={userEmail}
         onClose={() => { setShowWelcome(false); refresh(); }}
       />
     </div>
