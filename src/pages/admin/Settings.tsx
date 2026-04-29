@@ -172,6 +172,17 @@ const Settings = () => {
     updateSetting("days_off", updated.join(","));
   };
 
+  const uploadAsset = async (file: File, prefix: string): Promise<string | null> => {
+    if (!file.type.startsWith("image/")) { toast.error("Arquivo inválido"); return null; }
+    if (file.size > 4 * 1024 * 1024) { toast.error("Máx 4MB"); return null; }
+    const ext = file.name.split(".").pop();
+    const fileName = `${prefix}-${Date.now()}.${ext}`;
+    const { error } = await supabase.storage.from("public-assets").upload(fileName, file, { upsert: true });
+    if (error) { toast.error(error.message); return null; }
+    const { data: u } = supabase.storage.from("public-assets").getPublicUrl(fileName);
+    return u.publicUrl;
+  };
+
   const handleSave = async () => {
     setSaving(true);
     setSaved(false);
@@ -183,6 +194,17 @@ const Settings = () => {
       supabase.from("business_settings").upsert({ key, value }, { onConflict: "key" })
     );
     await Promise.all(promises);
+
+    // Sincroniza roteamento Cloud (site_mode + site_published) automaticamente
+    if (barbershopId) {
+      await supabase
+        .from("barbershop_profiles")
+        .update({
+          site_mode: ((settings.site_mode as "full" | "booking") || "full"),
+          site_published: settings.site_published !== "false",
+        })
+        .eq("id", barbershopId);
+    }
 
     setSaving(false);
     setSaved(true);
