@@ -1,218 +1,260 @@
-## Objetivo
 
-Criar um **sistema de Perfis de Barbearias** no painel admin (super admin: `admin-barber@gmail.com`) onde cada barbearia:
+## Descoberta importante (simplifica tudo)
 
-1. Tem seu **próprio perfil** (nome, slug, contato, dono, login email+senha).
-2. Tem seu **próprio MySQL** (host, porta, banco, usuário, senha) — obrigatório, sem mistura.
-3. Recebe um **arquivo `.sql` personalizado** para baixar e importar no phpMyAdmin contendo:
-   - Todas as tabelas do painel (services, appointments, etc.).
-   - Tabela `users` com o **email + senha hasheada** do dono já inserido como admin.
-   - Tabela `business_settings` com o nome da barbearia, slug, etc. já inseridos.
-4. A barbearia atual (Vila Nova / Lovable Cloud) aparece como **perfil seed travado** (cadeado — sem editar, excluir ou trocar para MySQL).
+O projeto já tem `src/lib/adminMysqlSession.ts` instalado em `App.tsx` que **substitui transparentemente** `supabase.from(table)` por chamadas ao `mysql-proxy` quando o admin está logado num perfil MySQL e está em `/admin/*`. `business_settings` já está na lista de tabelas proxiadas.
 
----
+**Consequência**: para "vincular tudo do site ao MySQL", **não preciso de driver novo nem refatorar páginas admin**. Basta:
 
-## Arquitetura final
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│ PAINEL DO SUPER ADMIN                                        │
-│  Menu lateral: ✦ Perfis Barbearias  (só super admin vê)      │
-│                                                              │
-│  ┌────────────────────────────────────────────────────────┐ │
-│  │ /admin/barbershops                                     │ │
-│  │   • Lista paginada (10/pág) de cards                   │ │
-│  │   • Vila Nova (Cloud, 🔒 travado)                      │ │
-│  │   • + Nova Barbearia                                   │ │
-│  │   • Cada card: nome, dono, status MySQL, ações:        │ │
-│  │       [Editar] [Configurar MySQL] [Baixar .sql]        │ │
-│  │       [Testar conexão] [Ativar/Desativar] [Excluir]    │ │
-│  └────────────────────────────────────────────────────────┘ │
-└─────────────────────────────────────────────────────────────┘
-```
-
-A aba "Banco de Dados" sai de Configurações.
+- Salvar as configs do site em `business_settings` com chaves prefixadas `site_*`. O bridge já roteia para o MySQL do perfil ativo.
+- Adicionar **uma única ação pública** no `mysql-proxy` para o site `/s/:slug` ler dados do MySQL daquele perfil sem JWT.
+- Cloud só ganha 2 colunas leves para roteamento (`site_mode`, `site_published`).
 
 ---
 
-## Schema novo: `barbershop_profiles`
+## 1. Migration (Cloud — minimalista)
 
 ```sql
-CREATE TABLE public.barbershop_profiles (
-  id              uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  slug            text UNIQUE NOT NULL,            -- "vila-nova", "barbearia-joao"
-  name            text NOT NULL,                   -- "Vila Nova Barbershop"
-  owner_name      text,                            -- nome do dono
-  owner_email     text NOT NULL,                   -- email de login do dono
-  owner_password  text NOT NULL,                   -- hash bcrypt (vai pro .sql)
-  phone           text,
-  address         text,
+ALTER TABLE public.barbershop_profiles
+  ADD COLUMN site_mode      text    NOT NULL DEFAULT 'full'
+    CHECK (site_mode IN ('full','booking')),
+  ADD COLUMN site_published boolean NOT NULL DEFAULT true;
 
-  -- conexão MySQL (FK opcional)
-  mysql_profile_id uuid REFERENCES public.mysql_profiles(id) ON DELETE SET NULL,
+CREATE INDEX barbershop_profiles_slug_pub_idx
+  ON public.barbershop_profiles (slug)
+  WHERE is_active = true AND site_published = true;
 
-  -- flags
-  is_cloud        boolean NOT NULL DEFAULT false,  -- true = roda no Cloud (caso Vila Nova)
-  is_locked       boolean NOT NULL DEFAULT false,  -- true = não pode editar/excluir
-  is_active       boolean NOT NULL DEFAULT true,
+CREATE OR REPLACE VIEW public.barbershop_public
+WITH (security_invoker=on) AS
+  SELECT id, slug, name, site_mode, site_published, is_cloud, is_active
+  FROM public.barbershop_profiles
+  WHERE is_active = true AND site_published = true;
 
-  created_at      timestamptz NOT NULL DEFAULT now(),
-  updated_at      timestamptz NOT NULL DEFAULT now()
-);
-
--- RLS: só super admin (validado por e-mail no código + role admin)
-ALTER TABLE public.barbershop_profiles ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "admin select barbershops"  ON public.barbershop_profiles FOR SELECT USING (has_role(auth.uid(), 'admin'));
-CREATE POLICY "admin insert barbershops"  ON public.barbershop_profiles FOR INSERT WITH CHECK (has_role(auth.uid(), 'admin'));
-CREATE POLICY "admin update barbershops"  ON public.barbershop_profiles FOR UPDATE USING (has_role(auth.uid(), 'admin') AND is_locked = false);
-CREATE POLICY "admin delete barbershops"  ON public.barbershop_profiles FOR DELETE USING (has_role(auth.uid(), 'admin') AND is_locked = false);
+GRANT SELECT ON public.barbershop_public TO anon, authenticated;
 ```
 
-**Senha do dono**: hasheada com **bcrypt** via função PG `crypt(senha, gen_salt('bf', 10))` (extensão `pgcrypto` já disponível). Vai assim no `.sql` exportado, pronta pra ser comparada via `password_verify` em PHP ou bcrypt em qualquer linguagem.
-
-**Senha MySQL**: continua criptografada via `pgsodium` (já existe).
-
-**Seed automático**: insert da Vila Nova com `is_cloud=true`, `is_locked=true`.
+Senha do dono, email, credenciais MySQL, permissions e is_locked **continuam fora da view** — só super-admin vê.
 
 ---
 
-## Arquivo `.sql` gerado por barbearia
+## 2. Edge function — nova ação `public_query`
 
-Quando o super admin clica **"📥 Baixar .sql"** num card de barbearia, é gerado um SQL **personalizado** com:
+Em `supabase/functions/mysql-proxy/index.ts`, adicionar **antes** do bloco de auth:
 
-```sql
--- =====================================================================
--- Barber SaaS — {{nome da barbearia}}
--- Gerado em {{data}} pelo painel admin
--- Importe este arquivo no phpMyAdmin do banco da sua barbearia.
--- =====================================================================
+```ts
+if (action === "public_query") {
+  // Sem JWT. Whitelist rígida de sub-actions read-only/booking.
+  const slug = String(body.slug || "").toLowerCase().trim();
+  const sub  = String(body.sub  || "").trim();
+  const ALLOWED_SUB = new Set([
+    "site_settings",   // SELECT key,value FROM business_settings WHERE key LIKE 'site_%' OR key IN (...)
+    "services",        // services ativos
+    "barbers",         // barbers ativos
+    "products",        // products ativos
+    "reviews_public",  // reviews status=approved is_public=1
+    "create_appointment",
+    "create_order",
+    "create_review",
+  ]);
+  if (!ALLOWED_SUB.has(sub)) throw new Error("sub não permitida");
 
-SET NAMES utf8mb4;
-SET FOREIGN_KEY_CHECKS = 0;
+  // Resolve barbearia + MySQL via service role
+  const { data: shop } = await admin
+    .from("barbershop_profiles")
+    .select("id, slug, mysql_profile_id, is_active, site_published, is_cloud")
+    .eq("slug", slug)
+    .maybeSingle();
+  if (!shop || !shop.is_active || !shop.site_published) {
+    return json({ success:false, code:"NOT_FOUND" });
+  }
+  if (shop.is_cloud) {
+    // Vila Nova → Cloud, devolve hint para o front consultar Supabase direto
+    return json({ success:true, source:"cloud" });
+  }
+  if (!shop.mysql_profile_id) {
+    return json({ success:false, code:"NOT_CONFIGURED" });
+  }
 
--- [Todas as 11 tabelas: services, barbers, appointments, products,
---  orders, order_items, coupons, business_settings, chatpro_config,
---  prize_wheel_slices, users]
-
--- Tabela `users` com login do dono
-CREATE TABLE `users` (
-  `id` CHAR(36) NOT NULL,
-  `email` VARCHAR(255) NOT NULL,
-  `password_hash` VARCHAR(255) NOT NULL,   -- bcrypt
-  `name` VARCHAR(255),
-  `role` ENUM('admin','barber','customer') DEFAULT 'admin',
-  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `uq_users_email` (`email`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
--- Seeds personalizados deste perfil
-INSERT INTO `users` (`id`, `email`, `password_hash`, `name`, `role`)
-VALUES ('{{uuid}}', '{{owner_email}}', '{{bcrypt_hash}}', '{{owner_name}}', 'admin');
-
-INSERT INTO `business_settings` (`id`, `key`, `value`) VALUES
-  (UUID(), 'business_name', '{{nome}}'),
-  (UUID(), 'business_slug', '{{slug}}'),
-  (UUID(), 'phone', '{{telefone}}'),
-  (UUID(), 'address', '{{endereço}}');
-
-SET FOREIGN_KEY_CHECKS = 1;
+  const profile = await getProfile(admin, shop.mysql_profile_id);
+  const password = await decryptPassword(admin, profile.password_encrypted);
+  const conn = await connectMysql(profile, password);
+  try {
+    // SQL fixo por sub-action, parâmetros via prepared statements.
+    // Validação Zod por sub. Nunca aceita SQL livre.
+    ...
+  } finally { await conn.end(); }
+}
 ```
 
-Toda vez que o perfil for editado, o `.sql` baixado reflete os novos valores. **Sem cache.**
+Cada sub-action tem SQL fixo no servidor:
+- `site_settings` → `SELECT key,value FROM business_settings WHERE key IN (whitelist de chaves site_*)`
+- `services` → `SELECT * FROM services WHERE active=1 ORDER BY sort_order`
+- `create_appointment` → valida payload com Zod estrito, faz `INSERT` parametrizado, retorna id
 
 ---
 
-## Fluxos de UI
+## 3. Aba "Site" nas Configurações (organizada)
 
-### A) Lista `/admin/barbershops`
+Em `src/pages/admin/Settings.tsx`:
 
-- Header: "Perfis de Barbearias" + botão **"+ Nova Barbearia"** (modal).
-- Cards (10 por página): cada um mostra
-  - Nome + slug
-  - Dono (email)
-  - Badge MySQL: 🟢 Conectado / ⚪ Não configurado / 🔴 Falha / ☁️ Cloud (locked)
-  - Ações: **Editar**, **Configurar MySQL**, **Baixar .sql**, **Testar**, **Excluir** (desabilitado se `is_locked`).
-- Paginação no rodapé (shadcn `Pagination`).
-- Vila Nova fixa no topo com ícone 🔒.
+1. Adicionar `{ id: "site", label: "Site", icon: Globe }` ao array `tabs` (entre "personalization" e "hours").
+2. Renderizar `<SettingsSiteTab settings={settings} updateSetting={updateSetting} barbershop={...} />` quando `activeTab === "site"`.
 
-### B) Modal "Nova Barbearia" / "Editar"
+Novo `src/components/admin/SettingsSiteTab.tsx` — **8 sub-cards organizados em accordion**, layout 2-colunas no desktop:
 
-- Campos: nome, slug (auto-gerado a partir do nome), nome do dono, email do dono, senha do dono (mostra/esconde), telefone, endereço.
-- Validação Zod: email válido, senha ≥ 8, slug `[a-z0-9-]+` único.
-- Senha é hasheada via RPC `hash_owner_password(plain)` antes de salvar.
+```
+┌─ 📡 Publicação ───────────────────────────────────┐
+│  • Switch: Site publicado                         │
+│  • Radio: Site Completo / Agendamento Direto      │
+│  • URL pública: app.com/s/<slug>  [📋] [↗]        │
+│  (Salva site_mode/site_published via Supabase     │
+│   direto — Cloud, pois é roteamento)              │
+└───────────────────────────────────────────────────┘
 
-### C) Modal "Configurar MySQL"
+┌─ 🎨 Identidade Visual ────────────────────────────┐
+│  • Logo (upload)        • Favicon (upload)        │
+│  • Color: Primária / Acento / Fundo               │
+│  • Select: Fonte títulos / Fonte corpo            │
+│  → site_logo_url, site_favicon_url, site_primary, │
+│    site_accent, site_bg, site_font_heading,       │
+│    site_font_body                                 │
+└───────────────────────────────────────────────────┘
 
-- Reaproveita a infra do `mysql_profiles` já existente.
-- Campos: host, porta, banco, usuário, senha, SSL.
-- Botão **"Testar conexão"** chama `mysql-proxy { action: 'test' }`.
-- Ao salvar: cria/atualiza linha em `mysql_profiles` e linka via `barbershop_profiles.mysql_profile_id`.
+┌─ 🖼 Hero ─────────────────────────────────────────┐
+│  • Título / Subtítulo / Descrição                 │
+│  • Imagens (upload múltiplo + reorder)            │
+│  → site_hero_title, site_hero_subtitle,           │
+│    site_hero_description, site_hero_images (JSON) │
+└───────────────────────────────────────────────────┘
 
-### D) Botão "Baixar .sql"
+┌─ 📖 Sobre ───────┐  ┌─ 🌆 Galeria ───────────────┐
+│  • Título        │  │  • Upload múltiplo         │
+│  • Descrição     │  │  → site_gallery (JSON)     │
+└──────────────────┘  └────────────────────────────┘
 
-- Chama `generateProfileSQL(profile)` no frontend.
-- Gera string SQL com schema + seeds personalizados + bcrypt hash da senha do dono.
-- Download via Blob.
+┌─ 📞 Contato ─────┐  ┌─ 🕐 Horários ──────────────┐
+│  • WhatsApp      │  │  • Abre / Fecha            │
+│  • Instagram     │  │  • Almoço início/fim       │
+│  • Endereço      │  │  • Dias off (chips)        │
+│  • Maps link     │  │                            │
+└──────────────────┘  └────────────────────────────┘
 
-### E) Botão "Instalar no MySQL agora" (extra, dentro do modal MySQL)
+┌─ 🔍 SEO ───────────────────────────────────────────┐
+│  • Title • Description • OG image                  │
+└────────────────────────────────────────────────────┘
 
-- Após testar conexão OK, oferece "Instalar schema agora".
-- Chama `mysql-proxy { action: 'install_schema', sql_text }` — executa o mesmo SQL direto no banco.
+[👁 Abrir prévia]   [💾 Salvar tudo]   Salvo • há 2s
+```
+
+**Onde os dados vão**:
+- `site_mode`, `site_published` → `barbershop_profiles` (Cloud, roteamento).
+- **Todo o resto** (`site_*` em `business_settings`) → MySQL do perfil via bridge (zero código novo, zero peso no Cloud).
 
 ---
 
-## Menu admin
+## 4. Rotas públicas `/s/:slug/*`
 
-Em `AdminLayout.tsx`, adicionar item **só para super admin**:
+`src/components/TenantResolver.tsx`:
+1. Lê `barbershop_public` por slug.
+2. Se não achou → 404 amigável.
+3. Carrega `site_settings` (todas as chaves `site_*` + `business_name`, `whatsapp_number`, etc.) via `public_query`.
+4. Aplica `<ThemeApplier>`: CSS vars, favicon, `<title>`.
+5. Provê `<TenantSiteContext>` com `{ profile, site, source }`.
 
+`src/App.tsx`:
 ```tsx
-{ label: "Perfis Barbearias", path: "/admin/barbershops", icon: Building2, superAdminOnly: true }
+<Route path="/s/:slug" element={<TenantResolver/>}>
+  <Route index            element={<TenantSite/>}/>     {/* full ou redirect */}
+  <Route path="agenda"    element={<TenantBooking/>}/>
+  <Route path="loja"      element={<TenantStore/>}/>
+  <Route path="avaliacao" element={<TenantReview/>}/>
+</Route>
 ```
 
-Filtrar `navItems` com base no e-mail do usuário logado (via `useAuth`).
+`TenantSite`:
+- Se `site_mode === "booking"` → `<Navigate to="agenda" replace/>`.
+- Senão renderiza landing dinâmica reaproveitando os componentes de `VilaNova.tsx` e `LandingExtras.tsx`, alimentada por `useSiteSettings()`.
 
-Remover a seção "Banco de Dados" da página `Settings.tsx` (se foi adicionada).
-
----
-
-## Arquivos novos / editados
-
-**Novos**
-- `supabase/migrations/<ts>_barbershop_profiles.sql` — tabela + RLS + seed Vila Nova + RPC `hash_owner_password`.
-- `src/pages/admin/Barbershops.tsx` — lista paginada.
-- `src/components/admin/BarbershopFormModal.tsx` — criar/editar perfil.
-- `src/components/admin/MysqlConfigModal.tsx` — configurar MySQL do perfil.
-- `src/lib/profileSqlGenerator.ts` — gera `.sql` personalizado por perfil.
-- `src/hooks/useBarbershops.ts` — React Query para CRUD.
-- `src/hooks/useSuperAdmin.ts` — boolean isSuperAdmin baseado no email.
-
-**Editados**
-- `src/components/admin/AdminLayout.tsx` — novo item "Perfis Barbearias" (só super admin).
-- `src/App.tsx` — rota `/admin/barbershops`.
-- `src/lib/sqlSchemaGenerator.ts` — adicionar tabela `users`, refatorar para receber seeds.
+`TenantBooking`, `TenantStore`, `TenantReview` são wrappers finos que reaproveitam os componentes existentes (`BookingFlow`, `ProductCard`, etc.) usando `useTenantSite().createAppointment / createOrder / createReview` (que chamam `public_query`).
 
 ---
 
-## Segurança
+## 5. Seeds no `.sql` exportado
 
-- Senha do dono: bcrypt (10 rounds) via `pgcrypto`.
-- Senha MySQL: pgsodium AES-256 (já existe).
-- RLS bloqueia tudo que não for admin; RPC `hash_owner_password` é `SECURITY DEFINER`.
-- Edge function `mysql-proxy` valida super admin pelo email no JWT.
-- Cards travados (`is_locked`) bloqueiam UPDATE/DELETE no banco via policy.
-- Validação Zod em todos os formulários.
-- Sem `dangerouslySetInnerHTML`, sem SQL livre no client.
+Em `src/lib/profileSqlGenerator.ts`, no array `settings`, adicionar:
+
+```ts
+["site_mode",          "full"],
+["site_published",     "true"],
+["site_hero_title",    p.name],
+["site_hero_subtitle", "Barbearia Premium"],
+["site_hero_description", "Cortes modernos e atendimento de excelência"],
+["site_about_title",   "Sobre nós"],
+["site_about_description", ""],
+["site_hero_images",   "[]"],
+["site_gallery",       "[]"],
+["site_primary",       "#6E59F2"],
+["site_accent",        "#8B7AFE"],
+["site_bg",            "#0F1117"],
+["site_font_heading",  "Playfair Display"],
+["site_font_body",     "Inter"],
+["site_logo_url",      ""],
+["site_favicon_url",   ""],
+["site_seo_title",     p.name],
+["site_seo_description", ""],
+["site_seo_og_image",  ""],
+["opening_time",       "09:00"],
+["closing_time",       "19:00"],
+["lunch_start",        "12:00"],
+["lunch_end",          "13:00"],
+["days_off",           "0"],
+```
+
+Tudo em `business_settings` — não cria tabela nova, retrocompatível.
 
 ---
 
-## Lista de implementação (ordem)
+## 6. Segurança
 
-1. ✅ Plan atualizado.
-2. ⏳ **Migration** (aguardando aprovação): tabela + RLS + RPC bcrypt + seed Vila Nova.
-3. ⏳ Refatorar `sqlSchemaGenerator.ts` (adicionar `users`, aceitar seeds).
-4. ⏳ Criar `profileSqlGenerator.ts`.
-5. ⏳ Criar hooks `useSuperAdmin`, `useBarbershops`.
-6. ⏳ Criar página `Barbershops.tsx` + modais.
-7. ⏳ Adicionar rota e item de menu (filtrado por super admin).
-8. ⏳ Limpar Settings.tsx (se houver aba Banco de Dados).
+- View `barbershop_public` esconde senha, email, credenciais, permissions.
+- `public_query` whitelist de sub-actions, SQL fixo por sub, prepared statements, Zod estrito por sub.
+- `create_appointment/order/review` valida tamanhos, formatos (telefone, data HH:mm, rating 1-5), captcha-ready (campo honeypot).
+- Sanitização de cores (`/^#[0-9a-f]{6}$/i`), URLs (`^https?://`), times (`^\d{2}:\d{2}$`).
+- `site_published=false` ⇒ slug retorna 404 público (preview interno usa rota admin).
+- Admin-MySQL bridge já valida sessão HMAC; só dono daquele perfil escreve nas chaves `site_*` daquele MySQL.
+
+---
+
+## 7. Arquivos
+
+**Migration**: `supabase/migrations/<ts>_barbershop_site_routing.sql`
+
+**Edge editado**: `supabase/functions/mysql-proxy/index.ts` (+bloco `public_query` com whitelist).
+
+**Frontend novo**:
+- `src/components/admin/SettingsSiteTab.tsx` — aba completa, 8 sub-cards.
+- `src/components/TenantResolver.tsx` — resolve slug + ThemeApplier.
+- `src/contexts/TenantSiteContext.tsx` — provider com `{profile, site, ...mutations}`.
+- `src/hooks/useSiteSettings.ts` — get/update via supabase ou public_query.
+- `src/pages/tenant/TenantSite.tsx` — landing dinâmica.
+- `src/pages/tenant/TenantBooking.tsx`, `TenantStore.tsx`, `TenantReview.tsx`.
+
+**Frontend editado**:
+- `src/App.tsx` — rotas `/s/:slug/*`.
+- `src/pages/admin/Settings.tsx` — nova tab "Site".
+- `src/lib/profileSqlGenerator.ts` — seeds `site_*`.
+- `src/hooks/useBarbershops.ts` — incluir `site_mode`, `site_published` no tipo + update.
+
+---
+
+## 8. Ordem de execução
+
+1. Migration `barbershop_site_routing`.
+2. Estender `mysql-proxy` com `public_query` + sub-actions whitelisted.
+3. Estender `profileSqlGenerator` com seeds `site_*`.
+4. Criar `SettingsSiteTab` + plugar em `Settings.tsx` como nova tab.
+5. Criar `TenantResolver` + `TenantSiteContext` + `useSiteSettings`.
+6. Criar `TenantSite` (landing) + `TenantBooking/Store/Review` (wrappers).
+7. Adicionar rotas `/s/:slug/*` em `App.tsx`.
+8. Smoke test: criar perfil → MySQL → editar Site → publicar → `/s/<slug>` (full + booking).
+
+Resultado: cada barbearia tem **site público próprio**, **isolado por MySQL**, **personalizável numa aba dedicada**, **zero peso adicional no Cloud**, e Vila Nova continua intacta.
