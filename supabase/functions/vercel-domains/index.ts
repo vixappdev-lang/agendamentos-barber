@@ -118,7 +118,38 @@ Deno.serve(async (req) => {
     // LIST
     if (action === "list") {
       const r = await vercel(`/v9/projects/${VERCEL_PROJECT_ID}/domains${teamQuery}`);
-      return json({ ok: r.ok, data: r.body });
+      if (!r.ok) {
+        const apiErr = r.body?.error?.message || r.body?.error?.code || "Erro desconhecido";
+        const hint =
+          r.body?.error?.code === "not_found"
+            ? `O VERCEL_PROJECT_ID (${VERCEL_PROJECT_ID}) não foi encontrado${VERCEL_TEAM_ID ? ` no team ${VERCEL_TEAM_ID}` : " na conta do token"}. Verifique: 1) Project ID em Vercel → Settings → General; 2) Team ID em Team Settings (deixe vazio se for conta pessoal); 3) o token tem acesso a esse team.`
+            : "";
+        return json({ ok: false, error: `Vercel: ${apiErr}${hint ? " — " + hint : ""}`, raw: r.body }, 200);
+      }
+      return json({ ok: true, data: r.body });
+    }
+
+    // DIAGNOSE — útil pra debug do admin
+    if (action === "diagnose") {
+      const [user, projects, target] = await Promise.all([
+        vercel(`/v2/user`),
+        vercel(`/v9/projects${teamQuery}`),
+        vercel(`/v9/projects/${VERCEL_PROJECT_ID}${teamQuery}`),
+      ]);
+      return json({
+        ok: target.ok,
+        configured: {
+          project_id: VERCEL_PROJECT_ID,
+          team_id: VERCEL_TEAM_ID || null,
+        },
+        token_user: user.body?.user
+          ? { id: user.body.user.id, email: user.body.user.email, defaultTeamId: user.body.user.defaultTeamId }
+          : user.body,
+        projects_visible: Array.isArray(projects.body?.projects)
+          ? projects.body.projects.map((p: any) => ({ id: p.id, name: p.name }))
+          : projects.body,
+        target_project: target.body,
+      });
     }
 
     return json({ error: "action desconhecida" }, 400);
