@@ -136,9 +136,9 @@ const AdminLayout = () => {
   const visibleNavItems = navItems.filter((it) => {
     if (it.superAdminOnly) return isSuperAdmin(userEmail);
     if (!mysqlSession?.permissions) return true;
-    const key = it.path === "/admin" ? "dashboard" : it.path.split("/").pop();
-    if (key === "confg") return mysqlSession.permissions.chatpro !== false;
-    return mysqlSession.permissions[key || ""] !== false;
+    const mapped = PATH_PERMISSION[it.path];
+    const key = mapped || (it.path === "/admin" ? "dashboard" : it.path.split("/").pop() || "");
+    return mysqlSession.permissions[key] !== false;
   });
 
   const handleLogout = async () => { clearAdminMysqlSession(); await supabase.auth.signOut(); navigate("/admin/login"); };
