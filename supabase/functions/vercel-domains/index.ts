@@ -105,7 +105,9 @@ async function resolveProjectContext() {
   if (!VERCEL_PROJECT_ID) return { ok: false, error: "VERCEL_PROJECT_ID ausente" } as const;
 
   const configured = await vercelProject(`/v9/projects/${VERCEL_PROJECT_ID}`);
-  if (configured.ok) return { ok: true, id: VERCEL_PROJECT_ID, teamId: VERCEL_TEAM_ID || null } as const;
+  if (configured.ok) {
+    return { ok: true, id: configured.body?.id || VERCEL_PROJECT_ID, teamId: VERCEL_TEAM_ID || null } as const;
+  }
 
   const projects = await listVisibleProjects();
   const exact = projects.find((p) => p?.id === VERCEL_PROJECT_ID || p?.name === VERCEL_PROJECT_ID);
