@@ -72,7 +72,10 @@ class PublicSelectQuery {
     for (const w of this.where) {
       if (w.op === "=") {
         rows = rows.filter((r) => {
-          if (w.column === "active" && w.value === true && !("active" in r)) return true;
+          if (w.column === "active" && w.value === true) {
+            if (!("active" in r)) return true;
+            return r.active === true || r.active === 1 || r.active === "1";
+          }
           return String(r[w.column]) === String(w.value);
         });
       }
