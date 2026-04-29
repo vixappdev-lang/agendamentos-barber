@@ -196,18 +196,23 @@ export const BarbershopFormModal = ({ open, onOpenChange, profile }: Props) => {
       if (r?.error) throw new Error(r.error);
       const info = r?.info || {};
       const config = r?.config || {};
+      // Compara o que a Vercel ESTÁ vendo no DNS público com o recomendado.
+      const recommendedA: string[] = Array.isArray(r?.recommended_a) ? r.recommended_a : [];
+      const currentA: string[] = Array.isArray(r?.current_a) ? r.current_a : (Array.isArray(config.aValues) ? config.aValues : []);
+      const dnsMatches = recommendedA.length > 0 && recommendedA.every((v) => currentA.includes(v));
       setStatusByDomain((p) => ({
         ...p,
         [domain]: {
           loading: false,
           verified: !!info.verified,
           misconfigured: !!config.misconfigured,
+          dnsMatches,
           nameservers: config.nameservers,
-          aValues: config.aValues,
+          aValues: currentA,
           cnames: config.cnames,
-          recommendedAValues: Array.isArray(config.recommendedIPv4?.[0]?.value) ? config.recommendedIPv4[0].value : undefined,
-          recommendedCname: config.recommendedCNAME?.[0]?.value ? String(config.recommendedCNAME[0].value).replace(/\.$/, "") : undefined,
-          apexName: info.apexName,
+          recommendedAValues: recommendedA.length ? recommendedA : (Array.isArray(config.recommendedIPv4?.[0]?.value) ? config.recommendedIPv4[0].value : undefined),
+          recommendedCname: r?.recommended_cname || (config.recommendedCNAME?.[0]?.value ? String(config.recommendedCNAME[0].value).replace(/\.$/, "") : undefined),
+          apexName: info.apexName || r?.apex_name,
         },
       }));
     } catch (e: any) {
