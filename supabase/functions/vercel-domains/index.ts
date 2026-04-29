@@ -11,8 +11,10 @@ const VERCEL_TOKEN = Deno.env.get("VERCEL_API_TOKEN") ?? "";
 const VERCEL_PROJECT_ID = Deno.env.get("VERCEL_PROJECT_ID") ?? "";
 const VERCEL_TEAM_ID = Deno.env.get("VERCEL_TEAM_ID") ?? "";
 
-const teamQuery = VERCEL_TEAM_ID ? `?teamId=${encodeURIComponent(VERCEL_TEAM_ID)}` : "";
-const teamAmp = VERCEL_TEAM_ID ? `&teamId=${encodeURIComponent(VERCEL_TEAM_ID)}` : "";
+const withTeam = (path: string, teamId = VERCEL_TEAM_ID) => {
+  if (!teamId) return path;
+  return `${path}${path.includes("?") ? "&" : "?"}teamId=${encodeURIComponent(teamId)}`;
+};
 
 async function vercel(path: string, init: RequestInit = {}) {
   const url = `https://api.vercel.com${path}`;
@@ -28,6 +30,15 @@ async function vercel(path: string, init: RequestInit = {}) {
   let body: any = null;
   try { body = text ? JSON.parse(text) : null; } catch { body = { raw: text }; }
   return { ok: res.ok, status: res.status, body };
+}
+
+async function vercelProject(path: string, init: RequestInit = {}) {
+  const first = await vercel(withTeam(path), init);
+  if (first.ok || !VERCEL_TEAM_ID || first.status !== 404) return first;
+
+  // Se o Team ID salvo estiver errado, tenta a conta padrão do token antes de falhar.
+  const retryWithoutTeam = await vercel(path, init);
+  return retryWithoutTeam.ok ? retryWithoutTeam : first;
 }
 
 const DOMAIN_RE = /^([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)(\.[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)+$/;
