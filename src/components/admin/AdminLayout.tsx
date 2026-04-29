@@ -99,7 +99,7 @@ const AdminLayout = () => {
   }, [loading, userEmail]);
 
   // Hook de progresso (banner + welcome)
-  const { steps, completedCount, totalCount, allDone, welcomeSeen, refresh } = useSetupProgress();
+  const { steps, completedCount, totalCount, allDone, welcomeSeen, refresh } = useSetupProgress(userEmail);
 
   useEffect(() => {
     if (loading) return;
