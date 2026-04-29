@@ -82,6 +82,9 @@ const App = () => (
               {/* Main site (eager) */}
               <Route path="/" element={<HostnameResolver fallback={<VilaNova />} />} />
 
+              {/* Site comercial LyneCloud — sempre global, ignora tenant */}
+              <Route path="/lynecloud" element={<LyneCloud />} />
+
               {/*
                 Rotas globais (sem slug) sob HostnameResolver em modo wrapper:
                 - Quando o hostname É um custom_domain/subdomain, herdam o tenant
