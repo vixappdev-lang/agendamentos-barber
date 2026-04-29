@@ -501,7 +501,8 @@ export const BarbershopFormModal = ({ open, onOpenChange, profile }: Props) => {
             if (s.loading) return <span className="text-[10px] text-muted-foreground flex items-center gap-1"><Loader2 className="w-3 h-3 animate-spin"/> Verificando…</span>;
             if (s.error) return <span className="text-[10px] text-destructive flex items-center gap-1"><AlertTriangle className="w-3 h-3"/> {s.error}</span>;
             if (s.verified && !s.misconfigured) return <span className="text-[10px] text-emerald-400 flex items-center gap-1"><CheckCircle2 className="w-3 h-3"/> Ativo · SSL OK</span>;
-            if (s.verified && s.misconfigured) return <span className="text-[10px] text-amber-400 flex items-center gap-1"><AlertTriangle className="w-3 h-3"/> Verificado · DNS pendente</span>;
+            if (s.verified && s.dnsMatches) return <span className="text-[10px] text-sky-400 flex items-center gap-1"><Loader2 className="w-3 h-3 animate-spin"/> DNS aplicado · emitindo SSL…</span>;
+            if (s.verified && s.misconfigured) return <span className="text-[10px] text-amber-400 flex items-center gap-1"><AlertTriangle className="w-3 h-3"/> Verificado · DNS ainda não propagou</span>;
             return <span className="text-[10px] text-amber-400 flex items-center gap-1"><AlertTriangle className="w-3 h-3"/> Aguardando DNS</span>;
           };
 
