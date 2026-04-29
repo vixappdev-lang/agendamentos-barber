@@ -126,7 +126,14 @@ class PublicInsertQuery {
     }
     if (this.table === "orders") {
       const v = Array.isArray(this.values) ? this.values[0] : this.values;
-      return { sub: "create_order", payload: { ...v, items: v.__items || [] } };
+      // CheckoutModal envia o order sem items; items virão no insert seguinte
+      // em order_items. Suporta também v.items inline.
+      return { sub: "create_order", payload: v };
+    }
+    if (this.table === "order_items") {
+      const arr = Array.isArray(this.values) ? this.values : [this.values];
+      const order_id = arr[0]?.order_id;
+      return { sub: "add_order_items", payload: { order_id, items: arr } };
     }
     return null;
   }
