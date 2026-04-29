@@ -4,7 +4,9 @@
  */
 import { useEffect, useMemo, useState } from "react";
 import { Wallet, Lock, Unlock, Plus, ArrowDown, ArrowUp, Loader2, Receipt } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase as supabaseTyped } from "@/integrations/supabase/client";
+// Tabelas dos novos módulos vivem só no MySQL do tenant — bridge intercepta em runtime.
+const supabase = supabaseTyped as any;
 import { toast } from "sonner";
 import { ModuleSection, Stat, EmptyState, PrimaryButton, GhostButton, TextField } from "@/components/admin/ModuleUI";
 
