@@ -71,7 +71,7 @@ const App = () => (
           <Suspense fallback={<PageLoader />}>
             <Routes>
               {/* Main site (eager) */}
-              <Route path="/" element={<VilaNova />} />
+              <Route path="/" element={<HostnameResolver fallback={<VilaNova />} />} />
 
               <Route path="/agenda" element={<Index />} />
               <Route path="/loja" element={<StorePage />} />
