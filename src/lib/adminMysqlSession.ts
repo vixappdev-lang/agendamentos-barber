@@ -47,6 +47,18 @@ const MYSQL_TABLES = new Set([
   "prize_wheel_slices",
   "user_permissions",
   "reviews",
+  // Novos módulos (Caixa, Comandas, Comissões, Fiados, Estoque, Fornecedores)
+  "cash_sessions",
+  "cash_movements",
+  "commands",
+  "command_items",
+  "commission_rules",
+  "commission_payouts",
+  "credit_accounts",
+  "credit_entries",
+  "suppliers",
+  "inventory_items",
+  "inventory_movements",
 ]);
 
 type Where = { column: string; op: string; value: unknown };
