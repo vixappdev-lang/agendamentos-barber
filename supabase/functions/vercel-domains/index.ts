@@ -170,11 +170,60 @@ Deno.serve(async (req) => {
     if (action === "add") {
       const project = await resolveProjectContext();
       if (!project.ok) return json({ ok: false, error: project.error }, 200);
-      const r = await vercelProject(`/v10/projects/${project.id}/domains`, {
-        method: "POST",
-        body: JSON.stringify({ name: domain }),
-      }, project.teamId || "");
-      return json({ ok: r.ok, status: r.status, data: r.body });
+      const force = body.force === true || body.force === "true";
+
+      const tryAdd = async () =>
+        vercelProject(`/v10/projects/${project.id}/domains`, {
+          method: "POST",
+          body: JSON.stringify({ name: domain }),
+        }, project.teamId || "");
+
+      let r = await tryAdd();
+
+      // Caso o domínio já esteja em outro projeto da MESMA conta, removemos de lá
+      // e re-tentamos automaticamente. Vercel devolve 409 com code "domain_already_in_use"
+      // ou mensagem "already in use by one of your projects".
+      const alreadyInUse =
+        !r.ok &&
+        (r.status === 409 || r.status === 400) &&
+        /already in use|domain_already_in_use|used by another/i.test(
+          JSON.stringify(r.body?.error || r.body || ""),
+        );
+
+      if (alreadyInUse) {
+        // descobrir em qual projeto está e remover
+        const projects = await listVisibleProjects();
+        let movedFrom: string | null = null;
+        for (const p of projects) {
+          if (!p?.id || p.id === project.id) continue;
+          const del = await vercelProject(
+            `/v9/projects/${p.id}/domains/${encodeURIComponent(domain)}`,
+            { method: "DELETE" },
+            p.teamId || "",
+          );
+          if (del.ok) { movedFrom = p.name || p.id; break; }
+        }
+
+        // também tenta remover de domínios "soltos" da conta
+        if (!movedFrom) {
+          await vercelProject(`/v6/domains/${encodeURIComponent(domain)}`, { method: "DELETE" }, project.teamId || "");
+        }
+
+        r = await tryAdd();
+        if (r.ok) {
+          return json({ ok: true, status: r.status, data: r.body, moved_from: movedFrom });
+        }
+      }
+
+      if (!r.ok) {
+        const msg =
+          r.body?.error?.message ||
+          r.body?.error?.code ||
+          (typeof r.body === "string" ? r.body : null) ||
+          `HTTP ${r.status}`;
+        return json({ ok: false, status: r.status, error: msg, data: r.body });
+      }
+      return json({ ok: true, status: r.status, data: r.body });
     }
 
     // REMOVE
