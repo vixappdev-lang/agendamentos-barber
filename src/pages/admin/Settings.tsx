@@ -988,6 +988,124 @@ const Settings = () => {
                     </div>
                   </div>
                 </div>
+
+                {/* PUBLICAÇÃO — vinculado ao Cloud (routing) */}
+                <div className={cardStyle}>
+                  <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                    <Globe className="w-4 h-4" style={{ color: iconColor }} /> Publicação do Site
+                  </h3>
+                  <div className="space-y-3">
+                    <button
+                      type="button"
+                      onClick={() => updateSetting("site_published", sitePublished ? "false" : "true")}
+                      className="w-full flex items-center justify-between p-3 rounded-xl transition-all"
+                      style={{
+                        background: sitePublished ? "hsl(140 60% 50% / 0.1)" : "hsl(0 0% 100% / 0.03)",
+                        border: `1px solid ${sitePublished ? "hsl(140 60% 50% / 0.3)" : "hsl(0 0% 100% / 0.06)"}`,
+                      }}
+                    >
+                      <div className="flex items-center gap-2">
+                        <CheckCircle className="w-4 h-4" style={{ color: sitePublished ? "hsl(140 60% 60%)" : "hsl(0 0% 50%)" }} />
+                        <span className="text-sm font-semibold">{sitePublished ? "Site publicado" : "Site oculto"}</span>
+                      </div>
+                      <div className="w-9 h-5 rounded-full flex items-center px-0.5"
+                        style={{
+                          background: sitePublished ? "hsl(140 60% 50%)" : "hsl(0 0% 22%)",
+                          justifyContent: sitePublished ? "flex-end" : "flex-start",
+                        }}>
+                        <div className="w-4 h-4 rounded-full bg-white" />
+                      </div>
+                    </button>
+
+                    <div>
+                      <label className={labelStyle}>URL pública</label>
+                      <div className="flex gap-2">
+                        <code className="flex-1 px-3 py-2.5 rounded-lg text-xs truncate" style={{ background: "hsl(0 0% 100% / 0.04)" }}>
+                          {publicUrl || "Defina o slug em Geral"}
+                        </code>
+                        <button
+                          type="button"
+                          onClick={() => { if (publicUrl) { navigator.clipboard.writeText(publicUrl); toast.success("Link copiado"); } }}
+                          disabled={!publicUrl}
+                          className="px-3 rounded-lg disabled:opacity-40"
+                          style={{ background: "hsl(245 60% 55% / 0.1)", border: "1px solid hsl(245 60% 55% / 0.2)", color: "hsl(245 60% 70%)" }}
+                          title="Copiar"
+                        >
+                          <Copy className="w-3.5 h-3.5" />
+                        </button>
+                        <a
+                          href={publicUrl || "#"}
+                          target="_blank"
+                          rel="noreferrer"
+                          className={`px-3 flex items-center rounded-lg ${!publicUrl ? "opacity-40 pointer-events-none" : ""}`}
+                          style={{ background: "hsl(245 60% 55% / 0.1)", border: "1px solid hsl(245 60% 55% / 0.2)", color: "hsl(245 60% 70%)" }}
+                          title="Abrir"
+                        >
+                          <Eye className="w-3.5 h-3.5" />
+                        </a>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={saveSiteRouting}
+                      disabled={savingRouting || !barbershopId}
+                      className="w-full inline-flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-all disabled:opacity-50"
+                      style={{ background: "hsl(245 60% 55%)", color: "white" }}
+                    >
+                      {savingRouting ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
+                      Salvar publicação
+                    </button>
+                    <p className="text-[10px] text-muted-foreground">
+                      Salva o status (publicado/oculto) e o modo do site no roteamento Cloud.
+                    </p>
+                  </div>
+                </div>
+
+                {/* GALERIA + SEO */}
+                <div className={cardStyle}>
+                  <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                    <ImageIcon className="w-4 h-4" style={{ color: iconColor }} /> Galeria & SEO
+                  </h3>
+                  <div className="grid gap-3">
+                    <div>
+                      <label className={labelStyle}>Galeria (URLs em JSON)</label>
+                      <textarea
+                        className="glass-input min-h-[70px] resize-none font-mono text-[11px]"
+                        value={settings.site_gallery || ""}
+                        onChange={(e) => updateSetting("site_gallery", e.target.value)}
+                        placeholder='["https://...", "https://..."]'
+                      />
+                    </div>
+                    <div>
+                      <label className={labelStyle}>SEO Title (≤60 caracteres)</label>
+                      <input
+                        className="glass-input"
+                        value={settings.site_seo_title || ""}
+                        onChange={(e) => updateSetting("site_seo_title", e.target.value)}
+                        placeholder="Nome | Barbearia em..."
+                      />
+                    </div>
+                    <div>
+                      <label className={labelStyle}>SEO Description (≤160 caracteres)</label>
+                      <textarea
+                        className="glass-input min-h-[60px] resize-none"
+                        value={settings.site_seo_description || ""}
+                        onChange={(e) => updateSetting("site_seo_description", e.target.value)}
+                        placeholder="Descrição para Google e redes sociais"
+                      />
+                    </div>
+                    <div>
+                      <label className={labelStyle}>OG Image (URL)</label>
+                      <input
+                        className="glass-input"
+                        value={settings.site_seo_og_image || ""}
+                        onChange={(e) => updateSetting("site_seo_og_image", e.target.value)}
+                        placeholder="https://..."
+                      />
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           )}
