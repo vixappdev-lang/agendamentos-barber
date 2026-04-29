@@ -103,11 +103,13 @@ export const BarbershopFormModal = ({ open, onOpenChange, profile }: Props) => {
         password: "",
         phone: profile.phone ?? "",
         address: profile.address ?? "",
+        custom_domain: profile.custom_domain ?? "",
+        subdomain: profile.subdomain ?? "",
       });
       setPermissions(sanitizePermissions(profile.permissions));
       setSlugTouched(true);
     } else {
-      setForm({ name: "", slug: "", owner_name: "", owner_email: "", password: "", phone: "", address: "" });
+      setForm({ name: "", slug: "", owner_name: "", owner_email: "", password: "", phone: "", address: "", custom_domain: "", subdomain: "" });
       setPermissions({ ...DEFAULT_PERMISSIONS });
       setSlugTouched(false);
     }
