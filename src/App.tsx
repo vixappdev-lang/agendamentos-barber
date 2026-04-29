@@ -8,6 +8,7 @@ import { lazy, Suspense } from "react";
 import { Loader2 } from "lucide-react";
 
 import VilaNova from "./pages/VilaNova"; // landing eager (LCP)
+import HostnameResolver from "./components/HostnameResolver";
 import MemberRouteGuard from "./components/MemberRouteGuard";
 import LoginRedirectGuard from "./components/LoginRedirectGuard";
 import { installAdminMysqlBridge } from "./lib/adminMysqlSession";
