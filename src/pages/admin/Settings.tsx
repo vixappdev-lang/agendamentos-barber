@@ -999,7 +999,53 @@ const Settings = () => {
                   </p>
                 </div>
 
-                {/* (Imagem do Hero movida para dentro de "Textos do Site" na coluna direita) */}
+                {/* Galeria movida para esquerda — equilibra altura com a coluna direita */}
+                <div className={`${cardStyle} flex-1`}>
+                  <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                    <ImageIcon className="w-4 h-4" style={{ color: iconColor }} /> Galeria
+                  </h3>
+                  {(() => {
+                    let gallery: string[] = [];
+                    try { gallery = JSON.parse(settings.site_gallery || "[]"); if (!Array.isArray(gallery)) gallery = []; } catch { gallery = []; }
+                    return (
+                      <>
+                        <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                          {gallery.map((url, i) => (
+                            <div key={i} className="relative group aspect-square rounded-lg overflow-hidden"
+                              style={{ background: "hsl(0 0% 100% / 0.03)", border: "1px solid hsl(0 0% 100% / 0.06)" }}>
+                              <img src={url} alt="" className="w-full h-full object-cover" />
+                              <button type="button"
+                                onClick={() => updateSetting("site_gallery", JSON.stringify(gallery.filter((_, j) => j !== i)))}
+                                className="absolute top-1 right-1 w-6 h-6 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition"
+                                style={{ background: "hsl(0 0% 0% / 0.7)" }}>
+                                <Trash2 className="w-3 h-3 text-white" />
+                              </button>
+                            </div>
+                          ))}
+                          <label className="aspect-square rounded-lg flex flex-col items-center justify-center gap-1 cursor-pointer transition hover:bg-white/5"
+                            style={{ background: "hsl(0 0% 100% / 0.025)", border: "1px dashed hsl(0 0% 100% / 0.15)" }}>
+                            <Plus className="w-5 h-5 text-muted-foreground" />
+                            <span className="text-[10px] text-muted-foreground">Enviar</span>
+                            <input type="file" accept="image/*" multiple className="hidden" onChange={async (e) => {
+                              const files = Array.from(e.target.files || []);
+                              const uploaded: string[] = [];
+                              for (const f of files) {
+                                const url = await uploadAsset(f, "gallery");
+                                if (url) uploaded.push(url);
+                              }
+                              if (uploaded.length) {
+                                updateSetting("site_gallery", JSON.stringify([...gallery, ...uploaded]));
+                                toast.success(`${uploaded.length} imagem(ns) adicionada(s)`);
+                              }
+                              e.target.value = "";
+                            }}/>
+                          </label>
+                        </div>
+                        <p className="text-[10px] text-muted-foreground">{gallery.length} imagem(ns) · clique no X para remover</p>
+                      </>
+                    );
+                  })()}
+                </div>
               </div>
 
               {/* ---------- COLUNA DIREITA ---------- */}
