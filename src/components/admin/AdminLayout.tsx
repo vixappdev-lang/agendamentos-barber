@@ -96,6 +96,22 @@ const AdminLayout = () => {
     });
   }, [loading, userEmail]);
 
+  // Verifica se admin já viu o modal de boas-vindas
+  useEffect(() => {
+    if (loading) return;
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("business_settings")
+        .select("value")
+        .eq("key", "welcome_completed")
+        .maybeSingle();
+      if (cancelled) return;
+      if (!data || data.value !== "true") setShowWelcome(true);
+    })();
+    return () => { cancelled = true; };
+  }, [loading]);
+
   const mysqlSession = getAdminMysqlSession();
   const visibleNavItems = navItems.filter((it) => {
     if (it.superAdminOnly) return isSuperAdmin(userEmail);
