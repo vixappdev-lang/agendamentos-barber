@@ -67,7 +67,7 @@ const TenantResolver = () => {
         return;
       }
       const settings = (data.data || {}) as Record<string, string>;
-      applyTheme(settings);
+      applyTheme(settings, data.profile?.name || slug, slug);
       const value: TenantSiteValue = {
         profile: data.profile,
         source: data.source,
