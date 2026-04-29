@@ -10,6 +10,73 @@ const corsHeaders = {
 const VERCEL_TOKEN = Deno.env.get("VERCEL_API_TOKEN") ?? "";
 const VERCEL_PROJECT_ID = Deno.env.get("VERCEL_PROJECT_ID") ?? "";
 const VERCEL_TEAM_ID = Deno.env.get("VERCEL_TEAM_ID") ?? "";
+const CF_TOKEN = Deno.env.get("CLOUDFLARE_API_TOKEN") ?? "";
+
+// ===== Cloudflare helpers =====
+async function cf(path: string, init: RequestInit = {}) {
+  const res = await fetch(`https://api.cloudflare.com/client/v4${path}`, {
+    ...init,
+    headers: {
+      ...(init.headers || {}),
+      Authorization: `Bearer ${CF_TOKEN}`,
+      "Content-Type": "application/json",
+    },
+  });
+  const text = await res.text();
+  let body: any = null;
+  try { body = text ? JSON.parse(text) : null; } catch { body = { raw: text }; }
+  return { ok: res.ok && body?.success !== false, status: res.status, body };
+}
+
+// Encontra a zona Cloudflare correspondente ao domínio (tenta o domínio inteiro
+// e depois sobe um nível por vez). Retorna { id, name } ou null.
+async function cfFindZone(domain: string) {
+  const parts = domain.split(".");
+  for (let i = 0; i < parts.length - 1; i++) {
+    const candidate = parts.slice(i).join(".");
+    const r = await cf(`/zones?name=${encodeURIComponent(candidate)}&status=active`);
+    const zone = r.body?.result?.[0];
+    if (zone?.id) return { id: zone.id as string, name: zone.name as string };
+  }
+  return null;
+}
+
+// Apaga registros A/AAAA/CNAME do mesmo nome que conflitam, e cria os novos.
+async function cfApplyRecords(zoneId: string, zoneName: string, domain: string, records: Array<{ type: "A" | "CNAME"; content: string }>) {
+  // "name" para CF é o FQDN (ele aceita assim).
+  const name = domain;
+  // 1) listar existentes que conflitam
+  const existing = await cf(`/zones/${zoneId}/dns_records?name=${encodeURIComponent(name)}`);
+  const conflicts = (existing.body?.result || []).filter((r: any) =>
+    ["A", "AAAA", "CNAME"].includes(r.type),
+  );
+
+  // 2) remover conflitos
+  for (const c of conflicts) {
+    await cf(`/zones/${zoneId}/dns_records/${c.id}`, { method: "DELETE" });
+  }
+
+  // 3) criar novos (proxied=false — Vercel exige DNS-only)
+  const created: any[] = [];
+  for (const rec of records) {
+    const r = await cf(`/zones/${zoneId}/dns_records`, {
+      method: "POST",
+      body: JSON.stringify({
+        type: rec.type,
+        name,
+        content: rec.content,
+        ttl: 1, // automático
+        proxied: false,
+      }),
+    });
+    if (!r.ok) {
+      return { ok: false, error: r.body?.errors?.[0]?.message || `CF error ${r.status}`, removed: conflicts.length, created };
+    }
+    created.push(r.body?.result);
+  }
+
+  return { ok: true, removed: conflicts.length, created, zone: zoneName };
+}
 
 const withTeam = (path: string, teamId = VERCEL_TEAM_ID) => {
   if (!teamId) return path;
