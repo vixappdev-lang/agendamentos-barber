@@ -162,6 +162,12 @@ const App = () => (
                   <Route path="confg" element={<ChatProConfig />} />
                   <Route path="barbershops" element={<Barbershops />} />
                   <Route path="reviews" element={<Reviews />} />
+                  <Route path="cashier" element={<Cashier />} />
+                  <Route path="commands" element={<Commands />} />
+                  <Route path="commissions" element={<Commissions />} />
+                  <Route path="credit" element={<Credit />} />
+                  <Route path="inventory" element={<Inventory />} />
+                  <Route path="suppliers" element={<Suppliers />} />
                   <Route path="settings" element={<Settings />} />
                 </Route>
               </Route>
