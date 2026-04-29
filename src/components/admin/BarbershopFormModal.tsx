@@ -27,6 +27,8 @@ const slugify = (s: string) =>
     .replace(/^-+|-+$/g, "")
     .slice(0, 60);
 
+const DOMAIN_RE = /^([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)(\.[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)+$/;
+
 const baseSchema = {
   name: z.string().trim().min(2, "Nome muito curto").max(120),
   slug: z
@@ -39,6 +41,18 @@ const baseSchema = {
   owner_email: z.string().trim().email("Email inválido").max(255),
   phone: z.string().trim().max(40).optional(),
   address: z.string().trim().max(255).optional(),
+  custom_domain: z
+    .string()
+    .trim()
+    .toLowerCase()
+    .refine((v) => v === "" || DOMAIN_RE.test(v), "Domínio inválido (ex: barbearia.com.br)")
+    .optional(),
+  subdomain: z
+    .string()
+    .trim()
+    .toLowerCase()
+    .refine((v) => v === "" || DOMAIN_RE.test(v), "Subdomínio inválido (ex: barbearia.lovable.app)")
+    .optional(),
 };
 
 const createSchema = z.object({
