@@ -22,11 +22,9 @@ type Slide = {
   cta?: string;
 };
 
-const WelcomeSetupModal = ({ open, onClose, adminName }: Props) => {
+const WelcomeSetupModal = ({ open, onClose, adminName, adminEmail }: Props) => {
   const navigate = useNavigate();
-  const { steps, completedCount, totalCount, markWelcomeSeen } = useSetupProgress(
-    adminName ? `${adminName}@gmail.com` : null,
-  );
+  const { steps, completedCount, totalCount, markWelcomeSeen } = useSetupProgress(adminEmail || null);
   const [index, setIndex] = useState(0);
 
   // Bloqueia scroll
