@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -82,6 +83,7 @@ interface Props {
 
 export const BarbershopFormModal = ({ open, onOpenChange, profile }: Props) => {
   const isEdit = !!profile;
+  const queryClient = useQueryClient();
   const createMut = useCreateBarbershop();
   const updateMut = useUpdateBarbershop();
   const loading = createMut.isPending || updateMut.isPending;
@@ -112,6 +114,7 @@ export const BarbershopFormModal = ({ open, onOpenChange, profile }: Props) => {
     cnames?: string[];
     recommendedAValues?: string[];
     recommendedCname?: string;
+    apexName?: string;
     error?: string;
   };
   const [vercelBusy, setVercelBusy] = useState<"add" | "verify" | "remove" | null>(null);
