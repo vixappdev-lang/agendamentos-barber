@@ -421,6 +421,50 @@ Deno.serve(async (req) => {
       });
     }
 
+    // CF_APPLY — cria/atualiza registros DNS no Cloudflare apontando pra Vercel
+    if (action === "cf_apply") {
+      if (!CF_TOKEN) return json({ ok: false, error: "Cloudflare não configurada (CLOUDFLARE_API_TOKEN ausente)" });
+
+      const project = await resolveProjectContext();
+      if (!project.ok) return json({ ok: false, error: project.error });
+
+      // Pega recomendações DNS reais da Vercel pra esse domínio.
+      const config = await vercelProject(`/v6/domains/${encodeURIComponent(domain)}/config`, {}, project.teamId || "");
+      const aValues = bestRecommendedA(config.body);
+      const cname = bestRecommendedCname(config.body);
+
+      // Encontra zona Cloudflare
+      const zone = await cfFindZone(domain);
+      if (!zone) {
+        return json({
+          ok: false,
+          error: `Zona Cloudflare não encontrada para "${domain}". Verifique se o domínio está adicionado na sua conta Cloudflare e se o token tem acesso à zona.`,
+        });
+      }
+
+      const isApex = zone.name === domain;
+      const records: Array<{ type: "A" | "CNAME"; content: string }> = isApex
+        ? aValues.map((v: string) => ({ type: "A" as const, content: v }))
+        : [{ type: "CNAME" as const, content: cname }];
+
+      const result = await cfApplyRecords(zone.id, zone.name, domain, records);
+      if (!result.ok) return json({ ok: false, error: result.error, zone: zone.name });
+
+      // Dispara verificação na Vercel pra acelerar a propagação
+      await vercelProject(
+        `/v9/projects/${project.id}/domains/${encodeURIComponent(domain)}/verify`,
+        { method: "POST" },
+        project.teamId || "",
+      );
+
+      return json({
+        ok: true,
+        zone: zone.name,
+        applied: records,
+        removed_conflicts: result.removed,
+      });
+    }
+
     return json({ error: "action desconhecida" }, 400);
   } catch (e) {
     return json({ error: e instanceof Error ? e.message : String(e) }, 500);
