@@ -167,13 +167,13 @@ export const BarbershopFormModal = ({ open, onOpenChange, profile }: Props) => {
     finally { setVercelBusy(null); }
   };
 
-  // Auto-status quando aba Domínio abre
+  // Auto-status quando aba Domínio abre — pula *.vercel.app (não suportado pela API)
   useEffect(() => {
     if (tab !== "domain") return;
     const sub = form.subdomain.trim();
     const cd = form.custom_domain.trim();
-    if (sub) refreshStatus(sub);
-    if (cd) refreshStatus(cd);
+    if (sub && !sub.endsWith(".vercel.app")) refreshStatus(sub);
+    if (cd && !cd.endsWith(".vercel.app")) refreshStatus(cd);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab, profile?.id]);
 
