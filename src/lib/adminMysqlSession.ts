@@ -52,9 +52,19 @@ const MYSQL_TABLES = new Set([
 type Where = { column: string; op: string; value: unknown };
 type Order = { column: string; ascending?: boolean };
 
+const isAdminPath = (path: string) => {
+  if (path.startsWith("/admin")) return true;
+  // suporta /s/:slug/admin
+  if (path.startsWith("/s/")) {
+    const seg = path.split("/").slice(1); // ["s", slug, ...]
+    if (seg[2] === "admin") return true;
+  }
+  return false;
+};
+
 const shouldProxyTable = (table: string) => {
   if (typeof window === "undefined") return false;
-  return window.location.pathname.startsWith("/admin") && !!getAdminMysqlSession() && MYSQL_TABLES.has(table);
+  return isAdminPath(window.location.pathname) && !!getAdminMysqlSession() && MYSQL_TABLES.has(table);
 };
 
 const normalizeColumns = (columns?: string) => {

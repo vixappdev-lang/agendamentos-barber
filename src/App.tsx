@@ -12,6 +12,7 @@ import HostnameResolver from "./components/HostnameResolver";
 import MemberRouteGuard from "./components/MemberRouteGuard";
 import LoginRedirectGuard from "./components/LoginRedirectGuard";
 import { installAdminMysqlBridge } from "./lib/adminMysqlSession";
+import { installTenantPublicBridge } from "./lib/tenantPublicBridge";
 
 // Lazy: rotas secundárias e admin
 const NotFound = lazy(() => import("./pages/NotFound"));
@@ -54,6 +55,7 @@ const queryClient = new QueryClient({
 });
 
 installAdminMysqlBridge();
+installTenantPublicBridge();
 
 const PageLoader = () => (
   <div className="min-h-screen w-full flex items-center justify-center bg-background">
@@ -73,11 +75,21 @@ const App = () => (
               {/* Main site (eager) */}
               <Route path="/" element={<HostnameResolver fallback={<VilaNova />} />} />
 
-              <Route path="/agenda" element={<Index />} />
-              <Route path="/loja" element={<StorePage />} />
-              <Route path="/navegacao" element={<Navigation />} />
-              <Route path="/demo-site" element={<DemoSite />} />
-              <Route path="/avaliacao" element={<Avaliacao />} />
+              {/*
+                Rotas globais (sem slug) sob HostnameResolver em modo wrapper:
+                - Quando o hostname É um custom_domain/subdomain, herdam o tenant
+                  e ficam dentro de TenantSiteProvider (dados vêm do MySQL daquela
+                  barbearia, idêntico a /s/<slug>/agenda etc.).
+                - Quando NÃO é (preview lovable.app, localhost, dev), funcionam
+                  como rotas globais como antes.
+              */}
+              <Route element={<HostnameResolver mode="wrapper" />}>
+                <Route path="/agenda" element={<Index />} />
+                <Route path="/loja" element={<StorePage />} />
+                <Route path="/navegacao" element={<Navigation />} />
+                <Route path="/demo-site" element={<DemoSite />} />
+                <Route path="/avaliacao" element={<Avaliacao />} />
+              </Route>
 
               {/* Site público por barbearia (mesmo projeto, mesmas páginas, sob o slug) */}
               <Route path="/s/:slug" element={<TenantResolver />}>
@@ -110,28 +122,35 @@ const App = () => (
                 <Route path="preview/agenda" element={<TenantBooking />} />
               </Route>
 
-              <Route element={<LoginRedirectGuard />}>
-                <Route path="/login" element={<MemberLogin />} />
-              </Route>
+              {/*
+                Login do cliente, área do membro e admin globais — também
+                envoltos pelo HostnameResolver para herdarem o tenant em
+                domínios customizados.
+              */}
+              <Route element={<HostnameResolver mode="wrapper" />}>
+                <Route element={<LoginRedirectGuard />}>
+                  <Route path="/login" element={<MemberLogin />} />
+                </Route>
 
-              <Route element={<MemberRouteGuard />}>
-                <Route path="/membro" element={<MemberArea />} />
-              </Route>
+                <Route element={<MemberRouteGuard />}>
+                  <Route path="/membro" element={<MemberArea />} />
+                </Route>
 
-              <Route path="/baixar-source" element={<BaixarSource />} />
-              <Route path="/admin/login" element={<AdminLogin />} />
-              <Route path="/admin" element={<AdminLayout />}>
-                <Route index element={<Dashboard />} />
-                <Route path="finance" element={<Finance />} />
-                <Route path="services" element={<Services />} />
-                <Route path="barbers" element={<Barbers />} />
-                <Route path="appointments" element={<Appointments />} />
-                <Route path="coupons" element={<Coupons />} />
-                <Route path="store" element={<StoreDashboard />} />
-                <Route path="confg" element={<ChatProConfig />} />
-                <Route path="barbershops" element={<Barbershops />} />
-                <Route path="reviews" element={<Reviews />} />
-                <Route path="settings" element={<Settings />} />
+                <Route path="/baixar-source" element={<BaixarSource />} />
+                <Route path="/admin/login" element={<AdminLogin />} />
+                <Route path="/admin" element={<AdminLayout />}>
+                  <Route index element={<Dashboard />} />
+                  <Route path="finance" element={<Finance />} />
+                  <Route path="services" element={<Services />} />
+                  <Route path="barbers" element={<Barbers />} />
+                  <Route path="appointments" element={<Appointments />} />
+                  <Route path="coupons" element={<Coupons />} />
+                  <Route path="store" element={<StoreDashboard />} />
+                  <Route path="confg" element={<ChatProConfig />} />
+                  <Route path="barbershops" element={<Barbershops />} />
+                  <Route path="reviews" element={<Reviews />} />
+                  <Route path="settings" element={<Settings />} />
+                </Route>
               </Route>
 
               {/* Legacy redirects */}

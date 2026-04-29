@@ -345,7 +345,9 @@ Deno.serve(async (req: Request) => {
 
       const SUBS = new Set([
         "site_settings","services","barbers","products","reviews_public",
-        "create_appointment","create_order","create_review",
+        "business_settings_all","prize_wheel_slices","coupon_validate",
+        "create_appointment","create_order","add_order_items","create_review",
+        "appointments_by_email","cancel_appointment","orders_by_phone","order_items",
       ]);
       if (!SUBS.has(sub)) throw new Error("sub não permitida");
 
@@ -495,19 +497,29 @@ Deno.serve(async (req: Request) => {
           const p = body.payload || {};
           const customer_name = requireText(p.customer_name, "Nome", 120);
           const customer_phone = String(p.customer_phone || "").replace(/\D/g, "").slice(0, 20) || null;
+          const customer_email = p.customer_email ? String(p.customer_email).slice(0, 255) : null;
           const total_price = Number(p.total_price);
           if (!Number.isFinite(total_price) || total_price < 0) throw new Error("Total inválido");
+          const delivery_mode = (p.delivery_mode === "delivery" ? "delivery" : "pickup");
+          const payment_method = p.payment_method ? String(p.payment_method).slice(0, 30) : "pix";
+          const address = p.address ? String(p.address).slice(0, 255) : null;
+          const address_number = p.address_number ? String(p.address_number).slice(0, 20) : null;
+          const address_complement = p.address_complement ? String(p.address_complement).slice(0, 120) : null;
+          const neighborhood = p.neighborhood ? String(p.neighborhood).slice(0, 120) : null;
+          const city = p.city ? String(p.city).slice(0, 120) : null;
+          const notes = p.notes ? String(p.notes).slice(0, 500) : null;
           const items = Array.isArray(p.items) ? p.items : [];
-          if (items.length === 0 || items.length > 50) throw new Error("Itens inválidos");
+          if (items.length > 50) throw new Error("Itens inválidos");
           const id = crypto.randomUUID();
           await pubConn.query(
-            `INSERT INTO orders (id, customer_name, customer_phone, delivery_mode, payment_method, total_price, status) VALUES (?, ?, ?, 'pickup', 'pix', ?, 'pending')`,
-            [id, customer_name, customer_phone, total_price],
+            `INSERT INTO orders (id, customer_name, customer_phone, customer_email, delivery_mode, payment_method, total_price, status, address, address_number, address_complement, neighborhood, city, notes)
+             VALUES (?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?, ?, ?, ?)`,
+            [id, customer_name, customer_phone, customer_email, delivery_mode, payment_method, total_price, address, address_number, address_complement, neighborhood, city, notes],
           );
           for (const it of items) {
             const pid = it.product_id ? String(it.product_id).slice(0, 36) : null;
-            const ptitle = String(it.product_title || "").slice(0, 255);
-            const pprice = Number(it.product_price) || 0;
+            const ptitle = String(it.product_title || it.title || "").slice(0, 255);
+            const pprice = Number(it.product_price ?? it.price) || 0;
             const qty = Math.max(1, Math.min(99, Number(it.quantity) || 1));
             if (!ptitle) continue;
             await pubConn.query(
@@ -516,6 +528,109 @@ Deno.serve(async (req: Request) => {
             );
           }
           return new Response(JSON.stringify({ success: true, data: { id } }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
+        if (sub === "add_order_items") {
+          const orderId = String(body.payload?.order_id || "").slice(0, 64);
+          const items = Array.isArray(body.payload?.items) ? body.payload.items : [];
+          if (!orderId || items.length === 0 || items.length > 50) throw new Error("Itens inválidos");
+          for (const it of items) {
+            const pid = it.product_id ? String(it.product_id).slice(0, 36) : null;
+            const ptitle = String(it.product_title || it.title || "").slice(0, 255);
+            const pprice = Number(it.product_price ?? it.price) || 0;
+            const qty = Math.max(1, Math.min(99, Number(it.quantity) || 1));
+            if (!ptitle) continue;
+            await pubConn.query(
+              `INSERT INTO order_items (id, order_id, product_id, product_title, product_price, quantity) VALUES (?, ?, ?, ?, ?, ?)`,
+              [crypto.randomUUID(), orderId, pid, ptitle, pprice, qty],
+            );
+          }
+          return new Response(JSON.stringify({ success: true, data: { affected: items.length } }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
+        if (sub === "business_settings_all") {
+          const [rows] = await pubConn.query("SELECT `key`, `value` FROM business_settings");
+          return new Response(JSON.stringify({ success: true, data: rows }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
+        if (sub === "prize_wheel_slices") {
+          const [rows] = await pubConn.query(
+            "SELECT id, label, icon, image_url, discount_percent, discount_value, custom_prize, probability, sort_order FROM prize_wheel_slices WHERE active = 1 ORDER BY sort_order ASC",
+          );
+          return new Response(JSON.stringify({ success: true, data: rows }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
+        if (sub === "coupon_validate") {
+          const code = String(body.payload?.code || "").trim().toUpperCase().slice(0, 50);
+          if (!code) throw new Error("Cupom obrigatório");
+          const [rows] = await pubConn.query(
+            "SELECT id, code, discount_percent, discount_value, max_uses, current_uses, expires_at, active FROM coupons WHERE UPPER(code) = ? AND active = 1 LIMIT 1",
+            [code],
+          );
+          const row = (rows as any[])[0];
+          if (!row) return new Response(JSON.stringify({ success: false, code: "NOT_FOUND" }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+          if (row.expires_at && new Date(row.expires_at) < new Date()) {
+            return new Response(JSON.stringify({ success: false, code: "EXPIRED" }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+          }
+          if (row.max_uses != null && Number(row.current_uses) >= Number(row.max_uses)) {
+            return new Response(JSON.stringify({ success: false, code: "EXHAUSTED" }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+          }
+          return new Response(JSON.stringify({ success: true, data: row }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        }
+
+        if (sub === "appointments_by_email") {
+          const email = String(body.payload?.email || "").trim().toLowerCase().slice(0, 255);
+          if (!email) throw new Error("E-mail obrigatório");
+          const [rows] = await pubConn.query(
+            "SELECT id, customer_name, customer_email, customer_phone, service_id, barber_name, appointment_date, appointment_time, status, total_price, notes, created_at FROM appointments WHERE LOWER(customer_email) = ? ORDER BY appointment_date DESC, appointment_time DESC LIMIT 100",
+            [email],
+          );
+          return new Response(JSON.stringify({ success: true, data: rows }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
+        if (sub === "cancel_appointment") {
+          const id = String(body.payload?.id || "").slice(0, 64);
+          const email = String(body.payload?.email || "").trim().toLowerCase().slice(0, 255);
+          if (!id || !email) throw new Error("Dados inválidos");
+          const [result]: any = await pubConn.query(
+            "UPDATE appointments SET status = 'cancelled' WHERE id = ? AND LOWER(customer_email) = ? AND status IN ('pending','confirmed')",
+            [id, email],
+          );
+          return new Response(JSON.stringify({ success: true, data: { affected: result?.affectedRows || 0 } }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
+        if (sub === "orders_by_phone") {
+          const phone = String(body.payload?.phone || "").replace(/\D/g, "").slice(0, 20);
+          if (!phone) throw new Error("Telefone obrigatório");
+          const [rows] = await pubConn.query(
+            "SELECT id, customer_name, customer_phone, delivery_mode, status, total_price, payment_method, created_at FROM orders WHERE customer_phone = ? ORDER BY created_at DESC LIMIT 30",
+            [phone],
+          );
+          return new Response(JSON.stringify({ success: true, data: rows }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
+        if (sub === "order_items") {
+          const orderId = String(body.payload?.order_id || "").slice(0, 64);
+          if (!orderId) throw new Error("order_id obrigatório");
+          const [rows] = await pubConn.query(
+            "SELECT id, order_id, product_id, product_title, product_price, quantity FROM order_items WHERE order_id = ?",
+            [orderId],
+          );
+          return new Response(JSON.stringify({ success: true, data: rows }), {
             headers: { ...corsHeaders, "Content-Type": "application/json" },
           });
         }
