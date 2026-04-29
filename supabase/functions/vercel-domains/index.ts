@@ -10,6 +10,73 @@ const corsHeaders = {
 const VERCEL_TOKEN = Deno.env.get("VERCEL_API_TOKEN") ?? "";
 const VERCEL_PROJECT_ID = Deno.env.get("VERCEL_PROJECT_ID") ?? "";
 const VERCEL_TEAM_ID = Deno.env.get("VERCEL_TEAM_ID") ?? "";
+const CF_TOKEN = Deno.env.get("CLOUDFLARE_API_TOKEN") ?? "";
+
+// ===== Cloudflare helpers =====
+async function cf(path: string, init: RequestInit = {}) {
+  const res = await fetch(`https://api.cloudflare.com/client/v4${path}`, {
+    ...init,
+    headers: {
+      ...(init.headers || {}),
+      Authorization: `Bearer ${CF_TOKEN}`,
+      "Content-Type": "application/json",
+    },
+  });
+  const text = await res.text();
+  let body: any = null;
+  try { body = text ? JSON.parse(text) : null; } catch { body = { raw: text }; }
+  return { ok: res.ok && body?.success !== false, status: res.status, body };
+}
+
+// Encontra a zona Cloudflare correspondente ao domínio (tenta o domínio inteiro
+// e depois sobe um nível por vez). Retorna { id, name } ou null.
+async function cfFindZone(domain: string) {
+  const parts = domain.split(".");
+  for (let i = 0; i < parts.length - 1; i++) {
+    const candidate = parts.slice(i).join(".");
+    const r = await cf(`/zones?name=${encodeURIComponent(candidate)}&status=active`);
+    const zone = r.body?.result?.[0];
+    if (zone?.id) return { id: zone.id as string, name: zone.name as string };
+  }
+  return null;
+}
+
+// Apaga registros A/AAAA/CNAME do mesmo nome que conflitam, e cria os novos.
+async function cfApplyRecords(zoneId: string, zoneName: string, domain: string, records: Array<{ type: "A" | "CNAME"; content: string }>) {
+  // "name" para CF é o FQDN (ele aceita assim).
+  const name = domain;
+  // 1) listar existentes que conflitam
+  const existing = await cf(`/zones/${zoneId}/dns_records?name=${encodeURIComponent(name)}`);
+  const conflicts = (existing.body?.result || []).filter((r: any) =>
+    ["A", "AAAA", "CNAME"].includes(r.type),
+  );
+
+  // 2) remover conflitos
+  for (const c of conflicts) {
+    await cf(`/zones/${zoneId}/dns_records/${c.id}`, { method: "DELETE" });
+  }
+
+  // 3) criar novos (proxied=false — Vercel exige DNS-only)
+  const created: any[] = [];
+  for (const rec of records) {
+    const r = await cf(`/zones/${zoneId}/dns_records`, {
+      method: "POST",
+      body: JSON.stringify({
+        type: rec.type,
+        name,
+        content: rec.content,
+        ttl: 1, // automático
+        proxied: false,
+      }),
+    });
+    if (!r.ok) {
+      return { ok: false, error: r.body?.errors?.[0]?.message || `CF error ${r.status}`, removed: conflicts.length, created };
+    }
+    created.push(r.body?.result);
+  }
+
+  return { ok: true, removed: conflicts.length, created, zone: zoneName };
+}
 
 const withTeam = (path: string, teamId = VERCEL_TEAM_ID) => {
   if (!teamId) return path;
@@ -351,6 +418,50 @@ Deno.serve(async (req) => {
         projects_visible: projects.map((p: any) => ({ id: p.id, name: p.name, teamId: p.teamId || null })),
         account_domains: accountDomains.domains.map((d: any) => ({ name: d.name, verified: !!d.verified })),
         target_project: target.body,
+      });
+    }
+
+    // CF_APPLY — cria/atualiza registros DNS no Cloudflare apontando pra Vercel
+    if (action === "cf_apply") {
+      if (!CF_TOKEN) return json({ ok: false, error: "Cloudflare não configurada (CLOUDFLARE_API_TOKEN ausente)" });
+
+      const project = await resolveProjectContext();
+      if (!project.ok) return json({ ok: false, error: project.error });
+
+      // Pega recomendações DNS reais da Vercel pra esse domínio.
+      const config = await vercelProject(`/v6/domains/${encodeURIComponent(domain)}/config`, {}, project.teamId || "");
+      const aValues = bestRecommendedA(config.body);
+      const cname = bestRecommendedCname(config.body);
+
+      // Encontra zona Cloudflare
+      const zone = await cfFindZone(domain);
+      if (!zone) {
+        return json({
+          ok: false,
+          error: `Zona Cloudflare não encontrada para "${domain}". Verifique se o domínio está adicionado na sua conta Cloudflare e se o token tem acesso à zona.`,
+        });
+      }
+
+      const isApex = zone.name === domain;
+      const records: Array<{ type: "A" | "CNAME"; content: string }> = isApex
+        ? aValues.map((v: string) => ({ type: "A" as const, content: v }))
+        : [{ type: "CNAME" as const, content: cname }];
+
+      const result = await cfApplyRecords(zone.id, zone.name, domain, records);
+      if (!result.ok) return json({ ok: false, error: result.error, zone: zone.name });
+
+      // Dispara verificação na Vercel pra acelerar a propagação
+      await vercelProject(
+        `/v9/projects/${project.id}/domains/${encodeURIComponent(domain)}/verify`,
+        { method: "POST" },
+        project.teamId || "",
+      );
+
+      return json({
+        ok: true,
+        zone: zone.name,
+        applied: records,
+        removed_conflicts: result.removed,
       });
     }
 

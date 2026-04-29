@@ -117,7 +117,7 @@ export const BarbershopFormModal = ({ open, onOpenChange, profile }: Props) => {
     apexName?: string;
     error?: string;
   };
-  const [vercelBusy, setVercelBusy] = useState<"add" | "verify" | "remove" | null>(null);
+  const [vercelBusy, setVercelBusy] = useState<"add" | "verify" | "remove" | "cf" | null>(null);
   const [statusByDomain, setStatusByDomain] = useState<Record<string, VercelStatus>>({});
   const [vercelDomains, setVercelDomains] = useState<{ name: string; verified?: boolean }[]>([]);
   const [loadingDomains, setLoadingDomains] = useState(false);
@@ -266,6 +266,27 @@ export const BarbershopFormModal = ({ open, onOpenChange, profile }: Props) => {
       else toast({ title: "Falha", description: r?.data?.error?.message, variant: "destructive" });
     } catch (e: any) { toast({ title: "Erro", description: e?.message, variant: "destructive" }); }
     finally { setVercelBusy(null); }
+  };
+
+  const handleCloudflareApply = async (domain: string) => {
+    if (!domain) { toast({ title: "Informe o domínio primeiro", variant: "destructive" }); return; }
+    const normalizedDomain = cleanDomain(domain);
+    setVercelBusy("cf");
+    try {
+      const { data, error } = await supabase.functions.invoke("vercel-domains", { body: { action: "cf_apply", domain: normalizedDomain } });
+      if (error) throw new Error(error.message);
+      if (data?.ok) {
+        toast({
+          title: "Cloudflare configurado",
+          description: `Registros aplicados na zona "${data.zone}" (${data.removed_conflicts} conflitos removidos). DNS propaga em ~1 min.`,
+        });
+        setTimeout(() => refreshStatus(normalizedDomain), 3000);
+      } else {
+        toast({ title: "Falha no Cloudflare", description: data?.error || "Erro desconhecido", variant: "destructive" });
+      }
+    } catch (e: any) {
+      toast({ title: "Erro Cloudflare", description: e?.message, variant: "destructive" });
+    } finally { setVercelBusy(null); }
   };
 
   // Auto-status quando aba Domínio abre — pula *.vercel.app (não suportado pela API)
@@ -516,6 +537,10 @@ export const BarbershopFormModal = ({ open, onOpenChange, profile }: Props) => {
               <Button type="button" size="sm" variant="outline" disabled={!domain || vercelBusy !== null} onClick={() => handleVercelRemove(domain)}>
                 {vercelBusy === "remove" ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin"/> : <Trash2 className="w-3.5 h-3.5 mr-1.5"/>}
                 Remover
+              </Button>
+              <Button type="button" size="sm" variant="secondary" disabled={!domain || vercelBusy !== null} onClick={() => handleCloudflareApply(domain)} title="Cria/atualiza registros DNS no Cloudflare automaticamente">
+                {vercelBusy === "cf" ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin"/> : <Globe className="w-3.5 h-3.5 mr-1.5"/>}
+                Configurar Cloudflare
               </Button>
             </div>
           );
