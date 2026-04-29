@@ -429,7 +429,7 @@ Deno.serve(async (req: Request) => {
         if (sub === "services") {
           const { data, error } = await admin
             .from("services")
-            .select("id,title,subtitle,duration,price,image_url,sort_order")
+            .select("id,title,subtitle,duration,price,image_url,active,sort_order")
             .eq("active", true)
             .order("sort_order", { ascending: true })
             .order("title", { ascending: true });
@@ -439,7 +439,7 @@ Deno.serve(async (req: Request) => {
         if (sub === "barbers") {
           const { data, error } = await admin
             .from("barbers")
-            .select("id,name,specialty,avatar_url,sort_order")
+            .select("id,name,specialty,avatar_url,active,sort_order")
             .eq("active", true)
             .order("sort_order", { ascending: true })
             .order("name", { ascending: true });
@@ -449,7 +449,7 @@ Deno.serve(async (req: Request) => {
         if (sub === "products") {
           const { data, error } = await admin
             .from("products")
-            .select("id,title,description,price,image_url,sort_order")
+            .select("id,title,description,price,image_url,active,sort_order")
             .eq("active", true)
             .order("sort_order", { ascending: true })
             .order("title", { ascending: true });
