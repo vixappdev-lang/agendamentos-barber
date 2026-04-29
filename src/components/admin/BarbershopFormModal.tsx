@@ -417,21 +417,24 @@ export const BarbershopFormModal = ({ open, onOpenChange, profile }: Props) => {
             </div>
           );
 
+          // Detecta se o "subdomínio" digitado é da própria Vercel (não pode ser criado via API)
+          const isVercelApp = sub.endsWith(".vercel.app");
+
           return (
             <div className="px-6 py-5 space-y-5">
               <div className="flex items-start gap-3 p-3 rounded-lg border border-border bg-muted/30">
                 <Info className="w-4 h-4 mt-0.5 text-primary shrink-0" />
                 <p className="text-xs text-muted-foreground leading-relaxed">
-                  Vincule um <b>subdomínio gratuito</b> (ex: <code>barbearia-x.vercel.app</code>) ou um <b>domínio próprio</b> que você comprou.
-                  Os botões abaixo chamam a <b>API da Vercel</b> diretamente — adiciona, verifica DNS e mostra o status SSL em tempo real.
-                  O site público então resolverá automaticamente para esta barbearia.
+                  <b>URL padrão</b> abaixo já funciona sempre — use-a para o subdomínio gratuito da Vercel via path.
+                  Para um <b>domínio próprio</b> (.com.br, .com…), preencha o campo correspondente e clique em
+                  <b> Vincular na Vercel</b>: a API adiciona, verifica DNS e emite SSL automaticamente.
                 </p>
               </div>
 
               {/* URL padrão (sempre disponível) */}
               <div className="rounded-xl border border-border bg-card/40 p-4 space-y-2">
                 <Label className="flex items-center gap-1.5 text-xs uppercase tracking-wide">
-                  <Globe className="w-3 h-3" /> URL padrão (sempre disponível)
+                  <Globe className="w-3 h-3" /> URL padrão (sempre disponível · grátis)
                 </Label>
                 <div className="flex items-center gap-2">
                   <code className="flex-1 px-2.5 py-2 rounded-lg text-[11px] truncate bg-muted/40 border border-border">
@@ -444,15 +447,17 @@ export const BarbershopFormModal = ({ open, onOpenChange, profile }: Props) => {
                     <a href={slugUrl} target="_blank" rel="noreferrer"><ExternalLink className="w-3.5 h-3.5" /></a>
                   </Button>
                 </div>
-                <p className="text-[10px] text-muted-foreground">Funciona sempre, mesmo sem domínio configurado.</p>
+                <p className="text-[10px] text-muted-foreground">
+                  Servida pelo domínio padrão do projeto Vercel (<code>.vercel.app</code>) — não exige DNS nem configuração.
+                </p>
               </div>
 
-              {/* Subdomínio (vercel.app ou seu domínio principal) */}
+              {/* Subdomínio personalizado (sub do SEU domínio principal — NUNCA *.vercel.app arbitrário) */}
               <div className="rounded-xl border border-border bg-card/40 p-4 space-y-2">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="subdomain" className="flex items-center gap-1.5">
-                    Subdomínio
-                    <span className="text-[10px] text-muted-foreground font-normal">(.vercel.app ou seu domínio principal)</span>
+                    Subdomínio do seu domínio principal
+                    <span className="text-[10px] text-muted-foreground font-normal">(opcional)</span>
                   </Label>
                   <StatusBadge domain={sub} />
                 </div>
@@ -460,9 +465,19 @@ export const BarbershopFormModal = ({ open, onOpenChange, profile }: Props) => {
                   id="subdomain"
                   value={form.subdomain}
                   onChange={(e) => update("subdomain", e.target.value.trim().toLowerCase())}
-                  placeholder="ex: barbearia-x.vercel.app"
+                  placeholder="ex: barbearia-x.meusistema.com.br"
                 />
-                {sub && (
+                <p className="text-[10px] text-muted-foreground">
+                  Se você tem um domínio principal (ex: <code>meusistema.com.br</code>), pode criar um subdomínio para cada barbearia.
+                  Subdomínios <code>*.vercel.app</code> arbitrários <b>não podem ser criados pela API</b> — use a URL padrão acima.
+                </p>
+                {isVercelApp && (
+                  <div className="rounded-lg p-2.5 text-[10.5px] bg-amber-500/5 border border-amber-500/15 text-amber-200/85">
+                    A Vercel não permite criar subdomínios <code>*.vercel.app</code> via API. Para esta barbearia use a <b>URL padrão</b>
+                    acima ou um <b>domínio próprio</b> abaixo.
+                  </div>
+                )}
+                {sub && !isVercelApp && (
                   <div className="flex items-center gap-2 pt-1">
                     <code className="flex-1 px-2.5 py-1.5 rounded-md text-[11px] bg-muted/40 border border-border truncate">
                       https://{sub}
@@ -472,8 +487,8 @@ export const BarbershopFormModal = ({ open, onOpenChange, profile }: Props) => {
                     </Button>
                   </div>
                 )}
-                {sub && <VercelActions domain={sub} />}
-                {sub && <DnsHelper domain={sub} />}
+                {sub && !isVercelApp && <VercelActions domain={sub} />}
+                {sub && !isVercelApp && <DnsHelper domain={sub} />}
               </div>
 
               {/* Domínio próprio */}
