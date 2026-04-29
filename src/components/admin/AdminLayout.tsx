@@ -96,21 +96,16 @@ const AdminLayout = () => {
     });
   }, [loading, userEmail]);
 
-  // Verifica se admin já viu o modal de boas-vindas
+  // Hook de progresso (banner + welcome)
+  const { steps, completedCount, totalCount, allDone, welcomeSeen, refresh } = useSetupProgress();
+
   useEffect(() => {
     if (loading) return;
-    let cancelled = false;
-    (async () => {
-      const { data } = await supabase
-        .from("business_settings")
-        .select("value")
-        .eq("key", "welcome_completed")
-        .maybeSingle();
-      if (cancelled) return;
-      if (!data || data.value !== "true") setShowWelcome(true);
-    })();
-    return () => { cancelled = true; };
-  }, [loading]);
+    if (welcomeSeen === false) setShowWelcome(true);
+  }, [loading, welcomeSeen]);
+
+  // Refresh progresso quando rota muda
+  useEffect(() => { if (!loading) refresh(); }, [location.pathname, loading, refresh]);
 
   const mysqlSession = getAdminMysqlSession();
   const visibleNavItems = navItems.filter((it) => {
