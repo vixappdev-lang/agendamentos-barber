@@ -93,7 +93,8 @@ const App = () => (
 
               {/* Site público por barbearia (mesmo projeto, mesmas páginas, sob o slug) */}
               <Route path="/s/:slug" element={<TenantResolver />}>
-                <Route index element={<Index />} />
+                {/* index NÃO declarado: TenantResolver renderiza VilaNova (full) ou Index (booking)
+                    diretamente quando a rota é a raiz, em vez de delegar ao Outlet. */}
                 <Route path="agenda" element={<Index />} />
                 <Route path="loja" element={<StorePage />} />
                 <Route path="avaliacao" element={<Avaliacao />} />
