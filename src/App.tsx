@@ -8,6 +8,7 @@ import { lazy, Suspense } from "react";
 import { Loader2 } from "lucide-react";
 
 import VilaNova from "./pages/VilaNova"; // landing eager (LCP)
+import HostnameResolver from "./components/HostnameResolver";
 import MemberRouteGuard from "./components/MemberRouteGuard";
 import LoginRedirectGuard from "./components/LoginRedirectGuard";
 import { installAdminMysqlBridge } from "./lib/adminMysqlSession";
@@ -70,7 +71,7 @@ const App = () => (
           <Suspense fallback={<PageLoader />}>
             <Routes>
               {/* Main site (eager) */}
-              <Route path="/" element={<VilaNova />} />
+              <Route path="/" element={<HostnameResolver fallback={<VilaNova />} />} />
 
               <Route path="/agenda" element={<Index />} />
               <Route path="/loja" element={<StorePage />} />

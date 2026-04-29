@@ -21,6 +21,8 @@ export interface BarbershopProfile {
   is_active: boolean;
   site_mode: "full" | "booking";
   site_published: boolean;
+  custom_domain: string | null;
+  subdomain: string | null;
   permissions: Record<PermissionKey, boolean>;
   created_at: string;
   updated_at: string;
@@ -34,6 +36,8 @@ export interface BarbershopInput {
   password?: string; // plain — será hasheada via RPC
   phone?: string;
   address?: string;
+  custom_domain?: string | null;
+  subdomain?: string | null;
   permissions?: Record<PermissionKey, boolean>;
 }
 
@@ -77,8 +81,10 @@ export const useCreateBarbershop = () => {
           owner_password: hash as string,
           phone: input.phone ?? null,
           address: input.address ?? null,
+          custom_domain: input.custom_domain ? input.custom_domain.toLowerCase() : null,
+          subdomain: input.subdomain ? input.subdomain.toLowerCase() : null,
           permissions: perms as any,
-        })
+        } as any)
         .select()
         .single();
       if (error) throw error;
@@ -100,6 +106,12 @@ export const useUpdateBarbershop = () => {
         phone: input.phone ?? null,
         address: input.address ?? null,
       };
+      if (input.custom_domain !== undefined) {
+        patch.custom_domain = input.custom_domain ? input.custom_domain.toLowerCase() : null;
+      }
+      if (input.subdomain !== undefined) {
+        patch.subdomain = input.subdomain ? input.subdomain.toLowerCase() : null;
+      }
       if (input.permissions) {
         patch.permissions = sanitizePermissions(input.permissions) as any;
       }

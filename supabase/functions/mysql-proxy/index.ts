@@ -326,8 +326,12 @@ Deno.serve(async (req: Request) => {
     // ============================================================
     if (action === "public_query") {
       const slug = String(body.slug || "").toLowerCase().trim();
+      const host = String(body.host || "").toLowerCase().trim().replace(/^https?:\/\//, "").split("/")[0].split(":")[0];
       const sub = String(body.sub || "").trim();
-      if (!/^[a-z0-9-]{1,64}$/.test(slug)) throw new Error("slug inválido");
+
+      if (slug && !/^[a-z0-9-]{1,64}$/.test(slug)) throw new Error("slug inválido");
+      if (host && !/^[a-z0-9.-]{1,253}$/.test(host)) throw new Error("host inválido");
+      if (!slug && !host) throw new Error("slug ou host obrigatório");
 
       const SITE_KEYS = [
         "business_name","slogan","description","logo_url","whatsapp_number","phone_number","email",
@@ -345,12 +349,30 @@ Deno.serve(async (req: Request) => {
       ]);
       if (!SUBS.has(sub)) throw new Error("sub não permitida");
 
-      const { data: shop, error: shopErr } = await admin
-        .from("barbershop_profiles")
-        .select("id, slug, name, mysql_profile_id, is_active, site_published, is_cloud, site_mode")
-        .eq("slug", slug)
-        .maybeSingle();
+      // Resolução: 1) por slug 2) por host (custom_domain ou subdomain)
+      let shop: any = null;
+      let shopErr: any = null;
+      if (slug) {
+        const r = await admin
+          .from("barbershop_profiles")
+          .select("id, slug, name, mysql_profile_id, is_active, site_published, is_cloud, site_mode, custom_domain, subdomain")
+          .eq("slug", slug)
+          .maybeSingle();
+        shop = r.data; shopErr = r.error;
+      } else {
+        const r = await admin
+          .from("barbershop_profiles")
+          .select("id, slug, name, mysql_profile_id, is_active, site_published, is_cloud, site_mode, custom_domain, subdomain")
+          .or(`custom_domain.eq.${host},subdomain.eq.${host}`)
+          .maybeSingle();
+        shop = r.data; shopErr = r.error;
+      }
       if (shopErr) throw new Error(`shop lookup: ${shopErr.message}`);
+      if (!shop || !shop.is_active || !shop.site_published) {
+        return new Response(JSON.stringify({ success: false, code: "NOT_FOUND" }), {
+          status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
       if (!shop || !shop.is_active || !shop.site_published) {
         return new Response(JSON.stringify({ success: false, code: "NOT_FOUND" }), {
           status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },

@@ -1,11 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { z } from "zod";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
-import { Eye, EyeOff, Loader2, Shield, Lock, Check } from "lucide-react";
+import { Eye, EyeOff, Loader2, Shield, Lock, Check, Globe, Copy, ExternalLink, Info } from "lucide-react";
 import {
   useCreateBarbershop,
   useUpdateBarbershop,
@@ -27,6 +27,8 @@ const slugify = (s: string) =>
     .replace(/^-+|-+$/g, "")
     .slice(0, 60);
 
+const DOMAIN_RE = /^([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)(\.[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)+$/;
+
 const baseSchema = {
   name: z.string().trim().min(2, "Nome muito curto").max(120),
   slug: z
@@ -39,6 +41,18 @@ const baseSchema = {
   owner_email: z.string().trim().email("Email inválido").max(255),
   phone: z.string().trim().max(40).optional(),
   address: z.string().trim().max(255).optional(),
+  custom_domain: z
+    .string()
+    .trim()
+    .toLowerCase()
+    .refine((v) => v === "" || DOMAIN_RE.test(v), "Domínio inválido (ex: barbearia.com.br)")
+    .optional(),
+  subdomain: z
+    .string()
+    .trim()
+    .toLowerCase()
+    .refine((v) => v === "" || DOMAIN_RE.test(v), "Subdomínio inválido (ex: barbearia.lovable.app)")
+    .optional(),
 };
 
 const createSchema = z.object({
@@ -71,11 +85,13 @@ export const BarbershopFormModal = ({ open, onOpenChange, profile }: Props) => {
     password: "",
     phone: "",
     address: "",
+    custom_domain: "",
+    subdomain: "",
   });
   const [permissions, setPermissions] = useState<Record<PermissionKey, boolean>>(DEFAULT_PERMISSIONS);
   const [showPwd, setShowPwd] = useState(false);
   const [slugTouched, setSlugTouched] = useState(false);
-  const [tab, setTab] = useState<"info" | "perms">("info");
+  const [tab, setTab] = useState<"info" | "domain" | "perms">("info");
 
   useEffect(() => {
     if (profile) {
@@ -87,11 +103,13 @@ export const BarbershopFormModal = ({ open, onOpenChange, profile }: Props) => {
         password: "",
         phone: profile.phone ?? "",
         address: profile.address ?? "",
+        custom_domain: profile.custom_domain ?? "",
+        subdomain: profile.subdomain ?? "",
       });
       setPermissions(sanitizePermissions(profile.permissions));
       setSlugTouched(true);
     } else {
-      setForm({ name: "", slug: "", owner_name: "", owner_email: "", password: "", phone: "", address: "" });
+      setForm({ name: "", slug: "", owner_name: "", owner_email: "", password: "", phone: "", address: "", custom_domain: "", subdomain: "" });
       setPermissions({ ...DEFAULT_PERMISSIONS });
       setSlugTouched(false);
     }
@@ -119,19 +137,29 @@ export const BarbershopFormModal = ({ open, onOpenChange, profile }: Props) => {
       phone: form.phone || undefined,
       address: form.address || undefined,
       password: form.password || undefined,
+      custom_domain: form.custom_domain || "",
+      subdomain: form.subdomain || "",
     });
     if (!parsed.success) {
+      const issue = parsed.error.issues[0];
       toast({
         title: "Erro de validação",
-        description: parsed.error.issues[0].message,
+        description: issue.message,
         variant: "destructive",
       });
-      setTab("info");
+      const path = String(issue.path[0] || "");
+      if (path === "custom_domain" || path === "subdomain") setTab("domain");
+      else setTab("info");
       return;
     }
 
     try {
-      const payload = { ...parsed.data, permissions: sanitizePermissions(permissions) } as any;
+      const cleaned = {
+        ...parsed.data,
+        custom_domain: parsed.data.custom_domain ? parsed.data.custom_domain : null,
+        subdomain: parsed.data.subdomain ? parsed.data.subdomain : null,
+      };
+      const payload = { ...cleaned, permissions: sanitizePermissions(permissions) } as any;
       if (isEdit && profile) {
         await updateMut.mutateAsync({ id: profile.id, input: payload });
         toast({ title: "Perfil atualizado", description: "Permissões e dados salvos." });
@@ -165,9 +193,10 @@ export const BarbershopFormModal = ({ open, onOpenChange, profile }: Props) => {
         </DialogHeader>
 
         {/* Tabs */}
-        <div className="px-6 pt-3 flex gap-2">
+        <div className="px-6 pt-3 flex gap-2 flex-wrap">
           {[
             { id: "info" as const, label: "Dados & Acesso" },
+            { id: "domain" as const, label: "Domínio do Site" },
             { id: "perms" as const, label: "Permissões do Painel" },
           ].map((t) => {
             const active = tab === t.id;
@@ -246,6 +275,99 @@ export const BarbershopFormModal = ({ open, onOpenChange, profile }: Props) => {
             </div>
           </div>
         )}
+
+        {/* DOMAIN */}
+        {tab === "domain" && (() => {
+          const slugUrl = form.slug ? `${window.location.origin}/s/${form.slug}` : "";
+          const sub = form.subdomain.trim();
+          const cd = form.custom_domain.trim();
+          const copy = (txt: string) => { if (!txt) return; navigator.clipboard.writeText(txt); toast({ title: "Copiado" }); };
+          return (
+            <div className="px-6 py-5 space-y-5">
+              <div className="flex items-start gap-3 p-3 rounded-lg border border-border bg-muted/30">
+                <Info className="w-4 h-4 mt-0.5 text-primary shrink-0" />
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Vincule um <b>subdomínio gratuito</b> (ex: <code>cliente.lovable.app</code>) e/ou um
+                  <b> domínio próprio</b> (que você comprou e adicionou na Vercel/Lovable).
+                  O site público resolverá automaticamente para esta barbearia.
+                </p>
+              </div>
+
+              <div className="rounded-xl border border-border bg-card/40 p-4 space-y-2">
+                <Label className="flex items-center gap-1.5 text-xs uppercase tracking-wide">
+                  <Globe className="w-3 h-3" /> URL padrão (sempre disponível)
+                </Label>
+                <div className="flex items-center gap-2">
+                  <code className="flex-1 px-2.5 py-2 rounded-lg text-[11px] truncate bg-muted/40 border border-border">
+                    {slugUrl || "Defina o slug primeiro"}
+                  </code>
+                  <Button type="button" size="icon" variant="outline" disabled={!slugUrl} onClick={() => copy(slugUrl)}>
+                    <Copy className="w-3.5 h-3.5" />
+                  </Button>
+                  <Button type="button" size="icon" variant="outline" disabled={!slugUrl} asChild>
+                    <a href={slugUrl} target="_blank" rel="noreferrer"><ExternalLink className="w-3.5 h-3.5" /></a>
+                  </Button>
+                </div>
+              </div>
+
+              <div className="rounded-xl border border-border bg-card/40 p-4 space-y-2">
+                <Label htmlFor="subdomain" className="flex items-center gap-1.5">
+                  Subdomínio gratuito
+                  <span className="text-[10px] text-muted-foreground font-normal">(.lovable.app / .vercel.app)</span>
+                </Label>
+                <Input
+                  id="subdomain"
+                  value={form.subdomain}
+                  onChange={(e) => update("subdomain", e.target.value.trim().toLowerCase())}
+                  placeholder="ex: barbearia-x.lovable.app"
+                />
+                {sub && (
+                  <div className="flex items-center gap-2 pt-1">
+                    <code className="flex-1 px-2.5 py-1.5 rounded-md text-[11px] bg-muted/40 border border-border truncate">
+                      https://{sub}
+                    </code>
+                    <Button type="button" size="icon" variant="outline" onClick={() => copy(`https://${sub}`)}>
+                      <Copy className="w-3.5 h-3.5" />
+                    </Button>
+                  </div>
+                )}
+                <p className="text-[10px] text-muted-foreground leading-snug">
+                  Configure no painel da Vercel/Lovable apontando este subdomínio para o projeto.
+                  Quando o visitante acessar, o site desta barbearia carregará automaticamente.
+                </p>
+              </div>
+
+              <div className="rounded-xl border border-border bg-card/40 p-4 space-y-2">
+                <Label htmlFor="custom_domain">Domínio próprio (existente)</Label>
+                <Input
+                  id="custom_domain"
+                  value={form.custom_domain}
+                  onChange={(e) => update("custom_domain", e.target.value.trim().toLowerCase())}
+                  placeholder="ex: barbearia-x.com.br"
+                />
+                {cd && (
+                  <div className="flex items-center gap-2 pt-1">
+                    <code className="flex-1 px-2.5 py-1.5 rounded-md text-[11px] bg-muted/40 border border-border truncate">
+                      https://{cd}
+                    </code>
+                    <Button type="button" size="icon" variant="outline" onClick={() => copy(`https://${cd}`)}>
+                      <Copy className="w-3.5 h-3.5" />
+                    </Button>
+                  </div>
+                )}
+                <div className="rounded-lg p-2.5 text-[10.5px] leading-snug bg-amber-500/5 border border-amber-500/15 text-amber-200/80 space-y-1">
+                  <p className="font-semibold text-amber-300/90">Passo a passo na Vercel:</p>
+                  <ol className="list-decimal list-inside space-y-0.5">
+                    <li>Vercel → Projeto → Settings → Domains → <b>Add Domain</b></li>
+                    <li>Cole o domínio acima e siga as instruções DNS (CNAME ou A)</li>
+                    <li>Aguarde SSL (Let's Encrypt) ser emitido (~1 min)</li>
+                    <li>Salve aqui — o site público responderá automaticamente</li>
+                  </ol>
+                </div>
+              </div>
+            </div>
+          );
+        })()}
 
         {/* PERMISSIONS */}
         {tab === "perms" && (

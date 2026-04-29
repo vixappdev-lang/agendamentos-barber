@@ -125,6 +125,7 @@ export type Database = {
         Row: {
           address: string | null
           created_at: string
+          custom_domain: string | null
           id: string
           is_active: boolean
           is_cloud: boolean
@@ -139,11 +140,13 @@ export type Database = {
           site_mode: string
           site_published: boolean
           slug: string
+          subdomain: string | null
           updated_at: string
         }
         Insert: {
           address?: string | null
           created_at?: string
+          custom_domain?: string | null
           id?: string
           is_active?: boolean
           is_cloud?: boolean
@@ -158,11 +161,13 @@ export type Database = {
           site_mode?: string
           site_published?: boolean
           slug: string
+          subdomain?: string | null
           updated_at?: string
         }
         Update: {
           address?: string | null
           created_at?: string
+          custom_domain?: string | null
           id?: string
           is_active?: boolean
           is_cloud?: boolean
@@ -177,6 +182,7 @@ export type Database = {
           site_mode?: string
           site_published?: boolean
           slug?: string
+          subdomain?: string | null
           updated_at?: string
         }
         Relationships: [
