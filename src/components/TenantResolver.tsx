@@ -1,8 +1,13 @@
-import { useEffect, useMemo, useState } from "react";
-import { Outlet, useParams } from "react-router-dom";
+import { lazy, Suspense, useEffect, useMemo, useState } from "react";
+import { Outlet, useParams, useLocation } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { TenantSiteProvider, type TenantSiteValue } from "@/contexts/TenantSiteContext";
+
+// Renderiza a landing completa (mesmo layout do Vila Nova) quando site_mode=full e
+// estamos na raiz do tenant (/s/:slug sem subpath).
+const TenantHome = lazy(() => import("@/pages/VilaNova"));
+const TenantBookingHome = lazy(() => import("@/pages/Index"));
 
 export const callPublic = async (
   identifier: { slug?: string; host?: string },
@@ -54,6 +59,7 @@ const NotFound = ({ slug }: { slug: string }) => (
 
 const TenantResolver = () => {
   const { slug = "" } = useParams();
+  const location = useLocation();
   const [state, setState] = useState<{
     loading: boolean;
     error: string | null;
@@ -91,6 +97,22 @@ const TenantResolver = () => {
     </div>;
   }
   if (state.error || !ctx) return <NotFound slug={slug} />;
+
+  // Se a rota for exatamente /s/:slug (sem subpath), respeitar site_mode:
+  //   full    → landing completa (clone do VilaNova) puxando dados do tenant
+  //   booking → vai direto pro fluxo de agendamento (Index)
+  const path = location.pathname.replace(/\/+$/, "");
+  const isRoot = path === `/s/${slug}` || path === `/s/${slug}/`;
+  if (isRoot) {
+    const Home = ctx.profile.site_mode === "booking" ? TenantBookingHome : TenantHome;
+    return (
+      <TenantSiteProvider value={ctx}>
+        <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>}>
+          <Home />
+        </Suspense>
+      </TenantSiteProvider>
+    );
+  }
 
   return (
     <TenantSiteProvider value={ctx}>
