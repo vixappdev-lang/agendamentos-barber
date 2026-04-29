@@ -24,15 +24,37 @@ export const MessageTemplatesModal = ({ open, category, onOpenChange, onPick }: 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto p-0">
-        <DialogHeader className="px-6 pt-6 pb-3 border-b border-border">
-          <DialogTitle className="flex items-center gap-2 text-base">
-            <Sparkles className="w-4 h-4 text-primary" />
-            {TITLES[category]}
+      <DialogContent
+        className="max-w-2xl max-h-[85vh] overflow-hidden p-0 border-0 shadow-2xl"
+        style={{
+          background: "hsl(220 25% 7% / 0.98)",
+          backdropFilter: "blur(20px)",
+        }}
+      >
+        {/* Header */}
+        <DialogHeader
+          className="px-6 pt-5 pb-4"
+          style={{
+            background: "linear-gradient(135deg, hsl(245 60% 55% / 0.12), hsl(280 60% 55% / 0.04))",
+            borderBottom: "1px solid hsl(0 0% 100% / 0.06)",
+          }}
+        >
+          <DialogTitle className="flex items-center gap-2.5 text-base font-semibold">
+            <div
+              className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+              style={{ background: "hsl(245 60% 55% / 0.18)" }}
+            >
+              <Sparkles className="w-4 h-4" style={{ color: "hsl(245 60% 75%)" }} />
+            </div>
+            <span className="text-foreground">{TITLES[category]}</span>
           </DialogTitle>
+          <p className="text-[11px] text-muted-foreground mt-1 ml-[42px]">
+            Escolha um modelo profissional para começar rápido.
+          </p>
         </DialogHeader>
 
-        <div className="p-5 grid gap-3">
+        {/* Lista */}
+        <div className="p-5 grid gap-2.5 max-h-[65vh] overflow-y-auto scrollbar-hide">
           {items.map((t) => (
             <button
               key={t.id}
@@ -41,22 +63,40 @@ export const MessageTemplatesModal = ({ open, category, onOpenChange, onPick }: 
                 onPick(t.body);
                 onOpenChange(false);
               }}
-              className="text-left group rounded-xl border border-border bg-card/40 hover:bg-card/70 hover:border-primary/40 transition-all p-4"
+              className="text-left group rounded-xl p-4 transition-all hover:scale-[1.005]"
+              style={{
+                background: "hsl(0 0% 100% / 0.025)",
+                border: "1px solid hsl(0 0% 100% / 0.05)",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = "hsl(245 60% 55% / 0.06)";
+                e.currentTarget.style.borderColor = "hsl(245 60% 55% / 0.25)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "hsl(0 0% 100% / 0.025)";
+                e.currentTarget.style.borderColor = "hsl(0 0% 100% / 0.05)";
+              }}
             >
-              <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center justify-between mb-1.5">
                 <h4 className="text-sm font-bold text-foreground">{t.label}</h4>
                 <span
-                  className="text-[10px] px-2 py-0.5 rounded-full inline-flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                  className="text-[10px] px-2 py-1 rounded-full inline-flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity font-semibold"
                   style={{
-                    background: "hsl(245 60% 55% / 0.12)",
-                    color: "hsl(245 60% 70%)",
+                    background: "hsl(245 60% 55% / 0.18)",
+                    color: "hsl(245 60% 80%)",
                   }}
                 >
-                  <Check className="w-3 h-3" /> Usar
+                  <Check className="w-3 h-3" /> Usar este
                 </span>
               </div>
-              <p className="text-[11px] text-muted-foreground mb-2">{t.preview}</p>
-              <pre className="text-[11px] text-foreground/80 leading-relaxed whitespace-pre-wrap font-sans bg-background/40 rounded-lg p-3 border border-border/60 max-h-[160px] overflow-y-auto">
+              <p className="text-[11px] text-muted-foreground mb-2.5 leading-relaxed">{t.preview}</p>
+              <pre
+                className="text-[11px] text-foreground/80 leading-relaxed whitespace-pre-wrap font-sans rounded-lg p-3 max-h-[140px] overflow-y-auto scrollbar-hide"
+                style={{
+                  background: "hsl(220 25% 4% / 0.5)",
+                  border: "1px solid hsl(0 0% 100% / 0.04)",
+                }}
+              >
                 {t.body}
               </pre>
             </button>
