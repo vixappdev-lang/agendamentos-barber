@@ -192,13 +192,41 @@ class PublicInsertQuery {
   then(resolve: any, reject: any) { return this.execute().then(resolve, reject); }
 }
 
+/**
+ * Update no modo público — só suporta cancelamento de appointment do próprio
+ * usuário (precisa do customer_email para validar no servidor).
+ *
+ * Uso esperado: supabase.from("appointments").update({ status: "cancelled" })
+ *   .eq("id", aptId).eq("customer_email", email)
+ */
+class PublicUpdateQuery {
+  private where: Where[] = [];
+  constructor(private table: string, private values: any) {}
+  eq(c: string, v: unknown) { this.where.push({ column: c, op: "=", value: v }); return this; }
+  async execute() {
+    const t = activeTenant;
+    if (!t) return { data: null, error: new Error("Tenant não disponível") };
+    if (this.table === "appointments" && this.values?.status === "cancelled") {
+      const id = this.where.find((w) => w.column === "id")?.value;
+      const email = this.where.find((w) => w.column === "customer_email")?.value;
+      if (!id) return { data: null, error: new Error("id obrigatório") };
+      // Se não passou email, exige um já presente em sessão futura (por ora barra).
+      if (!email) return { data: null, error: new Error("customer_email obrigatório para cancelar") };
+      const { data, error } = await t.publicQuery("cancel_appointment", { id, email });
+      if (error) return { data: null, error };
+      return { data, error: null };
+    }
+    return { data: null, error: new Error(`Update público não suportado para "${this.table}"`) };
+  }
+  then(resolve: any, reject: any) { return this.execute().then(resolve, reject); }
+}
+
 class PublicTableProxy {
   constructor(private table: string) {}
   select(columns = "*", options?: any) { return new PublicSelectQuery(this.table, columns, options); }
   insert(values: any) { return new PublicInsertQuery(this.table, values); }
-  // upsert/update/delete não suportados no modo público (intencional)
   upsert(_v: any, _o?: any) { return { then: (_r: any, j: any) => j(new Error(`upsert público não permitido para "${this.table}"`)) }; }
-  update(_v: any) { return { eq: () => ({ then: (_r: any, j: any) => j(new Error(`update público não permitido`)) }) }; }
+  update(values: any) { return new PublicUpdateQuery(this.table, values); }
   delete() { return { eq: () => ({ then: (_r: any, j: any) => j(new Error(`delete público não permitido`)) }) }; }
 }
 
