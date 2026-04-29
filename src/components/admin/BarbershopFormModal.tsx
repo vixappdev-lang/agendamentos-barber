@@ -224,13 +224,11 @@ export const BarbershopFormModal = ({ open, onOpenChange, profile }: Props) => {
       if (r?.ok) {
         if (field) update(field, normalizedDomain);
         if (isEdit && profile) {
-          await updateMut.mutateAsync({
-            id: profile.id,
-            input: {
-              custom_domain: field === "custom_domain" ? normalizedDomain : form.custom_domain ? cleanDomain(form.custom_domain) : null,
-              subdomain: field === "subdomain" ? normalizedDomain : form.subdomain ? cleanDomain(form.subdomain) : null,
-            },
-          });
+          const patch = field === "subdomain"
+            ? { subdomain: normalizedDomain }
+            : { custom_domain: normalizedDomain };
+          const { error: saveErr } = await supabase.from("barbershop_profiles").update(patch).eq("id", profile.id);
+          if (saveErr) throw saveErr;
           await queryClient.invalidateQueries({ queryKey: ["barbershop_profiles"] });
         }
         const desc = r?.already_linked
