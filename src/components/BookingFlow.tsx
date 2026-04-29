@@ -252,14 +252,18 @@ const BookingFlow = ({ service, onClose, user }: BookingFlowProps) => {
       valor: service.price.toFixed(2),
     };
 
-    // Auto: dispara confirmação imediata.
-    // Manual: envia "pedido recebido" se sendOnBook estiver ativo.
-    if (confirmationMode === "auto" && sendOnConfirm) {
-      const fallback = `✅ *Agendamento Confirmado!*\n\nOlá *${fullName}*\n💈 ${service.title}\n✂️ ${selectedBarber?.name}\n📅 ${dateFormatted} às ${selectedTime}\n💰 R$ ${service.price.toFixed(2)}\n\n*${vars.barbearia}* 💈`;
-      await sendWhatsApp(digitsOnly, settings.msg_on_confirm || "", fallback, vars);
-    } else if (confirmationMode === "manual" && sendOnBook) {
-      const fallback = `Olá *${fullName}*! Recebemos seu agendamento de *${service.title}* para *${dateFormatted}* às *${selectedTime}*. Em breve confirmaremos. — *${vars.barbearia}* 💈`;
-      await sendWhatsApp(digitsOnly, settings.msg_on_book || "", fallback, vars);
+    // Auto: dispara confirmação imediata. Manual: envia "pedido recebido" se sendOnBook ativo.
+    // WhatsApp NÃO pode bloquear a UX: erro aqui não impede a confirmação.
+    try {
+      if (confirmationMode === "auto" && sendOnConfirm) {
+        const fallback = `✅ *Agendamento Confirmado!*\n\nOlá *${fullName}*\n💈 ${service.title}\n✂️ ${selectedBarber?.name}\n📅 ${dateFormatted} às ${selectedTime}\n💰 R$ ${service.price.toFixed(2)}\n\n*${vars.barbearia}* 💈`;
+        await sendWhatsApp(digitsOnly, settings.msg_on_confirm || "", fallback, vars);
+      } else if (confirmationMode === "manual" && sendOnBook) {
+        const fallback = `Olá *${fullName}*! Recebemos seu agendamento de *${service.title}* para *${dateFormatted}* às *${selectedTime}*. Em breve confirmaremos. — *${vars.barbearia}* 💈`;
+        await sendWhatsApp(digitsOnly, settings.msg_on_book || "", fallback, vars);
+      }
+    } catch (waErr) {
+      console.warn("[BookingFlow] WhatsApp falhou (não-bloqueante):", waErr);
     }
 
     setSubmitting(false);
