@@ -41,6 +41,12 @@ const Finance = lazy(() => import("./pages/admin/Finance"));
 const ChatProConfig = lazy(() => import("./pages/admin/ChatProConfig"));
 const Barbershops = lazy(() => import("./pages/admin/Barbershops"));
 const Reviews = lazy(() => import("./pages/admin/Reviews"));
+const Cashier = lazy(() => import("./pages/admin/Cashier"));
+const Commands = lazy(() => import("./pages/admin/Commands"));
+const Commissions = lazy(() => import("./pages/admin/Commissions"));
+const Credit = lazy(() => import("./pages/admin/Credit"));
+const Inventory = lazy(() => import("./pages/admin/Inventory"));
+const Suppliers = lazy(() => import("./pages/admin/Suppliers"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -116,6 +122,12 @@ const App = () => (
                   <Route path="store" element={<StoreDashboard />} />
                   <Route path="confg" element={<ChatProConfig />} />
                   <Route path="reviews" element={<Reviews />} />
+                  <Route path="cashier" element={<Cashier />} />
+                  <Route path="commands" element={<Commands />} />
+                  <Route path="commissions" element={<Commissions />} />
+                  <Route path="credit" element={<Credit />} />
+                  <Route path="inventory" element={<Inventory />} />
+                  <Route path="suppliers" element={<Suppliers />} />
                   <Route path="settings" element={<Settings />} />
                 </Route>
                 {/* Legado da preview minimalista, mantido como rota oculta */}
@@ -150,6 +162,12 @@ const App = () => (
                   <Route path="confg" element={<ChatProConfig />} />
                   <Route path="barbershops" element={<Barbershops />} />
                   <Route path="reviews" element={<Reviews />} />
+                  <Route path="cashier" element={<Cashier />} />
+                  <Route path="commands" element={<Commands />} />
+                  <Route path="commissions" element={<Commissions />} />
+                  <Route path="credit" element={<Credit />} />
+                  <Route path="inventory" element={<Inventory />} />
+                  <Route path="suppliers" element={<Suppliers />} />
                   <Route path="settings" element={<Settings />} />
                 </Route>
               </Route>
