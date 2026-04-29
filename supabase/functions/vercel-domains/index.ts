@@ -447,13 +447,17 @@ Deno.serve(async (req) => {
       const cname = bestRecommendedCname(config.body);
 
       // Encontra zona Cloudflare
-      const zone = await cfFindZone(domain);
-      if (!zone) {
+      const zoneRes = await cfFindZone(domain);
+      if (!zoneRes.ok) {
+        return json({ ok: false, error: zoneRes.error });
+      }
+      if (!zoneRes.zone) {
         return json({
           ok: false,
-          error: `Zona Cloudflare não encontrada para "${domain}". Verifique se o domínio está adicionado na sua conta Cloudflare e se o token tem acesso à zona.`,
+          error: `Zona Cloudflare não encontrada para "${domain}". Adicione o domínio na sua conta Cloudflare e garanta que o token tem acesso à zona.`,
         });
       }
+      const zone = zoneRes.zone;
 
       const isApex = zone.name === domain;
       const records: Array<{ type: "A" | "CNAME"; content: string }> = isApex
@@ -461,7 +465,7 @@ Deno.serve(async (req) => {
         : [{ type: "CNAME" as const, content: cname }];
 
       const result = await cfApplyRecords(zone.id, zone.name, domain, records);
-      if (!result.ok) return json({ ok: false, error: result.error, zone: zone.name });
+      if (!result.ok) return json({ ok: false, error: `Cloudflare: ${result.error}`, zone: zone.name });
 
       // Dispara verificação na Vercel pra acelerar a propagação
       await vercelProject(
