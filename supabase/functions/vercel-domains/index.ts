@@ -105,7 +105,9 @@ async function resolveProjectContext() {
   if (!VERCEL_PROJECT_ID) return { ok: false, error: "VERCEL_PROJECT_ID ausente" } as const;
 
   const configured = await vercelProject(`/v9/projects/${VERCEL_PROJECT_ID}`);
-  if (configured.ok) return { ok: true, id: VERCEL_PROJECT_ID, teamId: VERCEL_TEAM_ID || null } as const;
+  if (configured.ok) {
+    return { ok: true, id: configured.body?.id || VERCEL_PROJECT_ID, teamId: VERCEL_TEAM_ID || null } as const;
+  }
 
   const projects = await listVisibleProjects();
   const exact = projects.find((p) => p?.id === VERCEL_PROJECT_ID || p?.name === VERCEL_PROJECT_ID);
@@ -170,7 +172,18 @@ Deno.serve(async (req) => {
     if (action === "add") {
       const project = await resolveProjectContext();
       if (!project.ok) return json({ ok: false, error: project.error }, 200);
-      const force = body.force === true || body.force === "true";
+
+      // A API da Vercel não é idempotente: se o domínio JÁ está neste mesmo
+      // projeto, o POST pode devolver domain_already_in_use. Antes de criar,
+      // consultamos o domínio no projeto alvo e tratamos como sucesso real.
+      const current = await vercelProject(
+        `/v9/projects/${project.id}/domains/${encodeURIComponent(domain)}`,
+        {},
+        project.teamId || "",
+      );
+      if (current.ok && current.body?.projectId === project.id) {
+        return json({ ok: true, status: current.status, data: current.body, already_linked: true });
+      }
 
       const tryAdd = async () =>
         vercelProject(`/v10/projects/${project.id}/domains`, {
@@ -191,10 +204,25 @@ Deno.serve(async (req) => {
         );
 
       if (alreadyInUse) {
+        const conflictProjectId = r.body?.error?.projectId || r.body?.error?.domain?.projectId;
+        if (conflictProjectId === project.id) {
+          return json({ ok: true, status: r.status, data: r.body?.error?.domain || r.body, already_linked: true });
+        }
+
         // descobrir em qual projeto está e remover
         const projects = await listVisibleProjects();
         let movedFrom: string | null = null;
+        if (conflictProjectId) {
+          const conflict = projects.find((p) => p?.id === conflictProjectId);
+          const del = await vercelProject(
+            `/v9/projects/${conflictProjectId}/domains/${encodeURIComponent(domain)}`,
+            { method: "DELETE" },
+            conflict?.teamId || project.teamId || "",
+          );
+          if (del.ok) movedFrom = conflict?.name || conflictProjectId;
+        }
         for (const p of projects) {
+          if (movedFrom) break;
           if (!p?.id || p.id === project.id) continue;
           const del = await vercelProject(
             `/v9/projects/${p.id}/domains/${encodeURIComponent(domain)}`,

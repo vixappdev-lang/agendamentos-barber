@@ -110,6 +110,8 @@ export const BarbershopFormModal = ({ open, onOpenChange, profile }: Props) => {
     nameservers?: string[];
     aValues?: string[];
     cnames?: string[];
+    recommendedAValues?: string[];
+    recommendedCname?: string;
     error?: string;
   };
   const [vercelBusy, setVercelBusy] = useState<"add" | "verify" | "remove" | null>(null);
@@ -200,6 +202,8 @@ export const BarbershopFormModal = ({ open, onOpenChange, profile }: Props) => {
           nameservers: config.nameservers,
           aValues: config.aValues,
           cnames: config.cnames,
+          recommendedAValues: Array.isArray(config.recommendedIPv4?.[0]?.value) ? config.recommendedIPv4[0].value : undefined,
+          recommendedCname: config.recommendedCNAME?.[0]?.value ? String(config.recommendedCNAME[0].value).replace(/\.$/, "") : undefined,
         },
       }));
     } catch (e: any) {
@@ -213,10 +217,12 @@ export const BarbershopFormModal = ({ open, onOpenChange, profile }: Props) => {
     try {
       const r = await callVercel("add", domain);
       if (r?.ok) {
-        const desc = r?.moved_from
+        const desc = r?.already_linked
+          ? "Esse domínio já estava vinculado ao projeto correto. Agora basta salvar este perfil."
+          : r?.moved_from
           ? `Removido do projeto "${r.moved_from}" e vinculado aqui. Configure o DNS para finalizar.`
           : "Configure o DNS para finalizar.";
-        toast({ title: "Domínio vinculado", description: desc });
+        toast({ title: r?.already_linked ? "Domínio já vinculado" : "Domínio vinculado", description: desc });
       } else {
         const raw = r?.error || r?.data?.error?.message || "Erro Vercel";
         const friendly = /already in use/i.test(String(raw))
@@ -462,16 +468,18 @@ export const BarbershopFormModal = ({ open, onOpenChange, profile }: Props) => {
             const s = statusByDomain[domain];
             if (!s || s.loading || s.error) return null;
             const isApex = domain.split(".").length === 2;
+            const aValue = s.recommendedAValues?.[0] || "76.76.21.21";
+            const cnameValue = s.recommendedCname || "cname.vercel-dns.com";
             return (
               <div className="rounded-lg p-2.5 mt-2 text-[10.5px] leading-snug bg-amber-500/5 border border-amber-500/15 text-amber-200/85 space-y-1.5">
                 <p className="font-semibold text-amber-300/90">Configure o DNS no seu provedor:</p>
                 {isApex ? (
                   <div className="font-mono text-[10px]">
-                    <div>Tipo: <b>A</b> · Nome: <b>@</b> · Valor: <b>76.76.21.21</b></div>
+                    <div>Tipo: <b>A</b> · Nome: <b>@</b> · Valor: <b>{aValue}</b></div>
                   </div>
                 ) : (
                   <div className="font-mono text-[10px]">
-                    <div>Tipo: <b>CNAME</b> · Nome: <b>{domain.split(".")[0]}</b> · Valor: <b>cname.vercel-dns.com</b></div>
+                    <div>Tipo: <b>CNAME</b> · Nome: <b>{domain.split(".")[0]}</b> · Valor: <b>{cnameValue}</b></div>
                   </div>
                 )}
                 {s.aValues?.length ? <div className="font-mono text-[10px] opacity-70">A atual: {s.aValues.join(", ")}</div> : null}
