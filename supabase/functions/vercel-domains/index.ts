@@ -61,11 +61,18 @@ Deno.serve(async (req) => {
     if (!roleRow) return json({ error: "Forbidden" }, 403);
 
     const body = await req.json().catch(() => ({}));
-    const action = String(body.action || "");
-    const domain = String(body.domain || "").trim().toLowerCase();
+    const action = String(body.action || "").trim().toLowerCase();
+    const domain = String(body.domain || "")
+      .trim()
+      .toLowerCase()
+      .replace(/^https?:\/\//, "")
+      .replace(/\/.*$/, "")
+      .replace(/:\d+$/, "")
+      .replace(/\.$/, "");
+    const actionsWithoutDomain = new Set(["list", "diagnose"]);
 
     if (!action) return json({ error: "action obrigatório" }, 400);
-    if (action !== "list" && (!domain || !DOMAIN_RE.test(domain))) {
+    if (!actionsWithoutDomain.has(action) && (!domain || !DOMAIN_RE.test(domain))) {
       return json({ error: "Domínio inválido" }, 400);
     }
 
