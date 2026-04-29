@@ -232,10 +232,10 @@ export const BarbershopFormModal = ({ open, onOpenChange, profile }: Props) => {
           await queryClient.invalidateQueries({ queryKey: ["barbershop_profiles"] });
         }
         const desc = r?.already_linked
-          ? "Esse domínio já estava vinculado ao projeto correto e foi salvo neste perfil."
+          ? isEdit ? "Esse domínio já estava vinculado ao projeto correto e foi salvo neste perfil." : "Esse domínio já estava vinculado ao projeto correto. Agora crie o perfil para salvar."
           : r?.moved_from
-          ? `Removido do projeto "${r.moved_from}", vinculado aqui e salvo neste perfil.`
-          : "Domínio vinculado e salvo neste perfil. Configure o DNS se ainda aparecer pendente.";
+          ? isEdit ? `Removido do projeto "${r.moved_from}", vinculado aqui e salvo neste perfil.` : `Removido do projeto "${r.moved_from}" e vinculado aqui. Agora crie o perfil para salvar.`
+          : isEdit ? "Domínio vinculado e salvo neste perfil. Configure o DNS se ainda aparecer pendente." : "Domínio vinculado. Agora crie o perfil para salvar.";
         toast({ title: r?.already_linked ? "Domínio já vinculado" : "Domínio vinculado", description: desc });
       } else {
         const raw = r?.error || r?.data?.error?.message || "Erro Vercel";
@@ -507,7 +507,7 @@ export const BarbershopFormModal = ({ open, onOpenChange, profile }: Props) => {
             <div className="flex flex-wrap gap-2 pt-1">
               <Button type="button" size="sm" variant="default" disabled={!domain || vercelBusy !== null} onClick={() => handleVercelAdd(domain, field)}>
                 {vercelBusy === "add" ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin"/> : <Link2 className="w-3.5 h-3.5 mr-1.5"/>}
-                Vincular e salvar
+                {isEdit ? "Vincular e salvar" : "Vincular"}
               </Button>
               <Button type="button" size="sm" variant="outline" disabled={!domain || vercelBusy !== null} onClick={() => handleVercelVerify(domain)}>
                 {vercelBusy === "verify" ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin"/> : <RefreshCw className="w-3.5 h-3.5 mr-1.5"/>}
