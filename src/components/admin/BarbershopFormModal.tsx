@@ -193,9 +193,10 @@ export const BarbershopFormModal = ({ open, onOpenChange, profile }: Props) => {
         </DialogHeader>
 
         {/* Tabs */}
-        <div className="px-6 pt-3 flex gap-2">
+        <div className="px-6 pt-3 flex gap-2 flex-wrap">
           {[
             { id: "info" as const, label: "Dados & Acesso" },
+            { id: "domain" as const, label: "Domínio do Site" },
             { id: "perms" as const, label: "Permissões do Painel" },
           ].map((t) => {
             const active = tab === t.id;
