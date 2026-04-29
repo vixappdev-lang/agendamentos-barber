@@ -91,7 +91,36 @@ class PublicSelectQuery {
     const t = activeTenant;
     if (!t) return { data: null, error: new Error("Tenant não disponível") };
 
-    // Tabelas com sub específica
+    // Casos especiais: tabelas com leitura pública parametrizada
+    if (this.table === "appointments") {
+      const emailFilter = this.where.find((w) => w.column === "customer_email" && w.op === "=");
+      if (!emailFilter) return { data: null, error: new Error("appointments público requer filtro por customer_email") };
+      const { data, error } = await t.publicQuery("appointments_by_email", { email: emailFilter.value });
+      if (error) return { data: null, error, count: null };
+      const rows = this.filterAndShape((data?.data || data || []) as any[]);
+      const final = this.singleMode === "none" ? rows : rows[0] ?? null;
+      return { data: final, error: null, count: rows.length };
+    }
+    if (this.table === "orders") {
+      const phoneFilter = this.where.find((w) => w.column === "customer_phone" && w.op === "=");
+      if (!phoneFilter) return { data: null, error: new Error("orders público requer filtro por customer_phone") };
+      const { data, error } = await t.publicQuery("orders_by_phone", { phone: phoneFilter.value });
+      if (error) return { data: null, error, count: null };
+      const rows = this.filterAndShape((data?.data || data || []) as any[]);
+      const final = this.singleMode === "none" ? rows : rows[0] ?? null;
+      return { data: final, error: null, count: rows.length };
+    }
+    if (this.table === "order_items") {
+      const orderFilter = this.where.find((w) => w.column === "order_id" && w.op === "=");
+      if (!orderFilter) return { data: null, error: new Error("order_items público requer filtro por order_id") };
+      const { data, error } = await t.publicQuery("order_items", { order_id: orderFilter.value });
+      if (error) return { data: null, error, count: null };
+      const rows = (data?.data || data || []) as any[];
+      const final = this.singleMode === "none" ? rows : rows[0] ?? null;
+      return { data: final, error: null, count: rows.length };
+    }
+
+    // Tabelas com sub específica (lista pública)
     const sub = READ_SUBS[this.table];
     if (sub) {
       const { data, error } = await t.publicQuery(sub);
