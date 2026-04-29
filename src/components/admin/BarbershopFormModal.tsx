@@ -110,6 +110,8 @@ export const BarbershopFormModal = ({ open, onOpenChange, profile }: Props) => {
     nameservers?: string[];
     aValues?: string[];
     cnames?: string[];
+    recommendedAValues?: string[];
+    recommendedCname?: string;
     error?: string;
   };
   const [vercelBusy, setVercelBusy] = useState<"add" | "verify" | "remove" | null>(null);
@@ -200,6 +202,8 @@ export const BarbershopFormModal = ({ open, onOpenChange, profile }: Props) => {
           nameservers: config.nameservers,
           aValues: config.aValues,
           cnames: config.cnames,
+          recommendedAValues: Array.isArray(config.recommendedIPv4?.[0]?.value) ? config.recommendedIPv4[0].value : undefined,
+          recommendedCname: config.recommendedCNAME?.[0]?.value ? String(config.recommendedCNAME[0].value).replace(/\.$/, "") : undefined,
         },
       }));
     } catch (e: any) {
