@@ -79,10 +79,35 @@ const App = () => (
               <Route path="/demo-site" element={<DemoSite />} />
               <Route path="/avaliacao" element={<Avaliacao />} />
 
-              {/* Site público por barbearia (MySQL isolado por slug) */}
+              {/* Site público por barbearia (mesmo projeto, mesmas páginas, sob o slug) */}
               <Route path="/s/:slug" element={<TenantResolver />}>
-                <Route index element={<TenantSite />} />
-                <Route path="agenda" element={<TenantBooking />} />
+                <Route index element={<Index />} />
+                <Route path="agenda" element={<Index />} />
+                <Route path="loja" element={<StorePage />} />
+                <Route path="avaliacao" element={<Avaliacao />} />
+                <Route path="navegacao" element={<Navigation />} />
+                <Route element={<LoginRedirectGuard />}>
+                  <Route path="login" element={<MemberLogin />} />
+                </Route>
+                <Route element={<MemberRouteGuard />}>
+                  <Route path="membro" element={<MemberArea />} />
+                </Route>
+                <Route path="admin/login" element={<AdminLogin />} />
+                <Route path="admin" element={<AdminLayout />}>
+                  <Route index element={<Dashboard />} />
+                  <Route path="finance" element={<Finance />} />
+                  <Route path="services" element={<Services />} />
+                  <Route path="barbers" element={<Barbers />} />
+                  <Route path="appointments" element={<Appointments />} />
+                  <Route path="coupons" element={<Coupons />} />
+                  <Route path="store" element={<StoreDashboard />} />
+                  <Route path="confg" element={<ChatProConfig />} />
+                  <Route path="reviews" element={<Reviews />} />
+                  <Route path="settings" element={<Settings />} />
+                </Route>
+                {/* Legado da preview minimalista, mantido como rota oculta */}
+                <Route path="preview" element={<TenantSite />} />
+                <Route path="preview/agenda" element={<TenantBooking />} />
               </Route>
 
               <Route element={<LoginRedirectGuard />}>
