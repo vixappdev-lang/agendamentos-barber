@@ -106,6 +106,24 @@ export const BarbershopFormModal = ({ open, onOpenChange, profile }: Props) => {
   };
   const [vercelBusy, setVercelBusy] = useState<"add" | "verify" | "remove" | null>(null);
   const [statusByDomain, setStatusByDomain] = useState<Record<string, VercelStatus>>({});
+  const [vercelDomains, setVercelDomains] = useState<{ name: string; verified?: boolean }[]>([]);
+  const [loadingDomains, setLoadingDomains] = useState(false);
+
+  const loadVercelDomains = async () => {
+    setLoadingDomains(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("vercel-domains", { body: { action: "list", domain: "" } });
+      if (error) throw new Error(error.message);
+      const list = (data?.data?.domains || data?.data || []) as any[];
+      const cleaned = list
+        .map((d) => ({ name: String(d.name || d.domain || ""), verified: !!d.verified }))
+        .filter((d) => d.name && !d.name.endsWith(".vercel.app"));
+      setVercelDomains(cleaned);
+      if (!cleaned.length) toast({ title: "Nenhum domínio próprio na Vercel", description: "Adicione um abaixo ou no painel da Vercel." });
+    } catch (e: any) {
+      toast({ title: "Erro ao listar domínios", description: e?.message, variant: "destructive" });
+    } finally { setLoadingDomains(false); }
+  };
 
   const callVercel = async (action: "add" | "remove" | "verify" | "status", domain: string) => {
     const { data, error } = await supabase.functions.invoke("vercel-domains", { body: { action, domain } });
@@ -450,6 +468,46 @@ export const BarbershopFormModal = ({ open, onOpenChange, profile }: Props) => {
                 <p className="text-[10px] text-muted-foreground">
                   Servida pelo domínio padrão do projeto Vercel (<code>.vercel.app</code>) — não exige DNS nem configuração.
                 </p>
+              </div>
+
+              {/* Selecionar de domínios JÁ EXISTENTES na Vercel */}
+              <div className="rounded-xl border border-border bg-card/40 p-4 space-y-3">
+                <div className="flex items-center justify-between gap-2">
+                  <Label className="flex items-center gap-1.5 text-xs uppercase tracking-wide">
+                    <Link2 className="w-3 h-3" /> Domínios já cadastrados na Vercel
+                  </Label>
+                  <Button type="button" size="sm" variant="outline" disabled={loadingDomains} onClick={loadVercelDomains}>
+                    {loadingDomains ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5 mr-1.5" />}
+                    {vercelDomains.length ? "Atualizar lista" : "Listar domínios"}
+                  </Button>
+                </div>
+                {vercelDomains.length > 0 ? (
+                  <div className="grid grid-cols-1 gap-1.5 max-h-44 overflow-y-auto pr-1">
+                    {vercelDomains.map((d) => {
+                      const isPicked = form.custom_domain === d.name || form.subdomain === d.name;
+                      return (
+                        <div key={d.name} className={`flex items-center justify-between gap-2 rounded-lg border px-2.5 py-1.5 text-xs ${isPicked ? "border-primary/50 bg-primary/5" : "border-border bg-muted/20"}`}>
+                          <div className="flex items-center gap-2 min-w-0">
+                            {d.verified ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" /> : <AlertTriangle className="w-3.5 h-3.5 text-amber-400 shrink-0" />}
+                            <code className="truncate">{d.name}</code>
+                          </div>
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            <Button type="button" size="sm" variant="ghost" className="h-7 px-2 text-[10.5px]" onClick={() => update("custom_domain", d.name)}>
+                              Usar como próprio
+                            </Button>
+                            <Button type="button" size="sm" variant="ghost" className="h-7 px-2 text-[10.5px]" onClick={() => update("subdomain", d.name)}>
+                              Usar como sub
+                            </Button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <p className="text-[10.5px] text-muted-foreground">
+                    Clique em <b>Listar domínios</b> para puxar todos os domínios já vinculados ao seu projeto Vercel e atribuir um para esta barbearia. Se vier vazia, adicione abaixo digitando o domínio e clicando <b>Vincular na Vercel</b>.
+                  </p>
+                )}
               </div>
 
               {/* Subdomínio personalizado (sub do SEU domínio principal — NUNCA *.vercel.app arbitrário) */}
