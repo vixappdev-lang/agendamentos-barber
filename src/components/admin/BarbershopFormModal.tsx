@@ -117,7 +117,7 @@ export const BarbershopFormModal = ({ open, onOpenChange, profile }: Props) => {
     apexName?: string;
     error?: string;
   };
-  const [vercelBusy, setVercelBusy] = useState<"add" | "verify" | "remove" | null>(null);
+  const [vercelBusy, setVercelBusy] = useState<"add" | "verify" | "remove" | "cf" | null>(null);
   const [statusByDomain, setStatusByDomain] = useState<Record<string, VercelStatus>>({});
   const [vercelDomains, setVercelDomains] = useState<{ name: string; verified?: boolean }[]>([]);
   const [loadingDomains, setLoadingDomains] = useState(false);
