@@ -213,10 +213,12 @@ export const BarbershopFormModal = ({ open, onOpenChange, profile }: Props) => {
     try {
       const r = await callVercel("add", domain);
       if (r?.ok) {
-        const desc = r?.moved_from
+        const desc = r?.already_linked
+          ? "Esse domínio já estava vinculado ao projeto correto. Agora basta salvar este perfil."
+          : r?.moved_from
           ? `Removido do projeto "${r.moved_from}" e vinculado aqui. Configure o DNS para finalizar.`
           : "Configure o DNS para finalizar.";
-        toast({ title: "Domínio vinculado", description: desc });
+        toast({ title: r?.already_linked ? "Domínio já vinculado" : "Domínio vinculado", description: desc });
       } else {
         const raw = r?.error || r?.data?.error?.message || "Erro Vercel";
         const friendly = /already in use/i.test(String(raw))
