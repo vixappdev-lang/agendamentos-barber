@@ -538,6 +538,10 @@ export const BarbershopFormModal = ({ open, onOpenChange, profile }: Props) => {
                 {vercelBusy === "remove" ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin"/> : <Trash2 className="w-3.5 h-3.5 mr-1.5"/>}
                 Remover
               </Button>
+              <Button type="button" size="sm" variant="secondary" disabled={!domain || vercelBusy !== null} onClick={() => handleCloudflareApply(domain)} title="Cria/atualiza registros DNS no Cloudflare automaticamente">
+                {vercelBusy === "cf" ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin"/> : <Globe className="w-3.5 h-3.5 mr-1.5"/>}
+                Configurar Cloudflare
+              </Button>
             </div>
           );
 
