@@ -23,6 +23,7 @@ const DemoSite = lazy(() => import("./pages/DemoSite"));
 const BaixarSource = lazy(() => import("./pages/BaixarSource"));
 const MemberLogin = lazy(() => import("./pages/MemberLogin"));
 const MemberArea = lazy(() => import("./pages/MemberArea"));
+const NotificationsPage = lazy(() => import("./pages/NotificationsPage"));
 const Avaliacao = lazy(() => import("./pages/Avaliacao"));
 const AvaliarPedido = lazy(() => import("./pages/AvaliarPedido"));
 const TenantResolver = lazy(() => import("./components/TenantResolver"));
