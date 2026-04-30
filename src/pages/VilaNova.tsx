@@ -9,12 +9,16 @@ import { findStockImage } from "@/data/stockImages";
 import { TeamSection, TestimonialsSection, FAQSection } from "@/components/landing/LandingExtras";
 import DirectionsModalSimple from "@/components/DirectionsModalSimple";
 
-import heroImg1 from "@/assets/vilanova-hero-1.jpg";
-import heroImg2 from "@/assets/vilanova-hero-2.jpg";
-import heroImg3 from "@/assets/vilanova-hero-3.jpg";
-import galleryImg1 from "@/assets/vilanova-gallery-1.jpg";
-import galleryImg2 from "@/assets/vilanova-gallery-2.jpg";
-import galleryImg3 from "@/assets/vilanova-gallery-3.jpg";
+import heroImg1 from "@/assets/styllus/hero-1.jpg";
+import heroImg2 from "@/assets/styllus/hero-2.jpg";
+import heroImg3 from "@/assets/styllus/hero-3.jpg";
+import galleryImg1 from "@/assets/styllus/gallery-1.jpg";
+import galleryImg2 from "@/assets/styllus/gallery-2.jpg";
+import galleryImg3 from "@/assets/styllus/gallery-3.jpg";
+import galleryImg4 from "@/assets/styllus/gallery-4.jpg";
+import galleryImg5 from "@/assets/styllus/gallery-5.jpg";
+import galleryImg6 from "@/assets/styllus/gallery-6.jpg";
+import brandLogo from "@/assets/styllus/logo.png";
 
 const heroImages = [heroImg1, heroImg2, heroImg3];
 const galleryImages = [heroImg1, heroImg2, heroImg3, galleryImg1, galleryImg2, galleryImg3];
