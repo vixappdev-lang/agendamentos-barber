@@ -122,6 +122,7 @@ const App = () => (
                 </Route>
                 <Route element={<MemberRouteGuard />}>
                   <Route path="membro" element={<MemberArea />} />
+                  <Route path="membro/notificacoes" element={<NotificationsPage />} />
                 </Route>
                 <Route path="admin/login" element={<AdminLogin />} />
                 <Route path="admin" element={<AdminLayout />}>
