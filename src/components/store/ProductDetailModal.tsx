@@ -188,6 +188,35 @@ const ProductDetailModal = ({ product, onClose, onAdd }: Props) => {
             </div>
           )}
 
+          {/* Reviews */}
+          {reviews.length > 0 && (
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-wider mb-2" style={{ color: t.textMuted }}>
+                Avaliações ({reviews.length})
+              </p>
+              <div className="space-y-2 max-h-64 overflow-y-auto scrollbar-hide pr-1">
+                {reviews.map((r) => (
+                  <div key={r.id} className="rounded-xl p-3" style={{ background: t.cardBgSubtle, border: `1px solid ${t.borderSubtle}` }}>
+                    <div className="flex items-center justify-between gap-2 mb-1">
+                      <p className="text-xs font-semibold truncate" style={{ color: t.textPrimary }}>{r.customer_name}</p>
+                      <div className="flex items-center gap-0.5 shrink-0">
+                        {[1, 2, 3, 4, 5].map((i) => (
+                          <Star key={i} className="w-3 h-3" style={{
+                            color: i <= r.rating ? "hsl(45 95% 60%)" : t.textSubtle,
+                            fill: i <= r.rating ? "hsl(45 95% 60%)" : "transparent",
+                          }} />
+                        ))}
+                      </div>
+                    </div>
+                    {r.comment && (
+                      <p className="text-xs leading-relaxed" style={{ color: t.textSecondary }}>"{r.comment}"</p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Quantidade + add */}
           <div className="flex items-center gap-3 pt-2">
             <div className="flex items-center gap-1 rounded-xl p-1" style={{ background: t.cardBgSubtle, border: `1px solid ${t.borderSubtle}` }}>
