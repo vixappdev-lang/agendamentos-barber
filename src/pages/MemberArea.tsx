@@ -417,6 +417,7 @@ const MemberArea = () => {
           <OrderTracker
             onClose={() => setTab("upcoming")}
             customerPhone={(user?.user_metadata?.phone as string) || ""}
+            customerEmail={user?.email || ""}
           />
         )}
 
