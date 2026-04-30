@@ -70,44 +70,50 @@ const CartDrawer = ({ open, onClose, items, total, count, updateQty, remove, cle
                   <p className="text-xs opacity-60" style={{ color: t.textSecondary }}>Adicione produtos para continuar.</p>
                 </div>
               ) : (
-                items.map((it) => (
-                  <motion.div
-                    key={it.id}
-                    layout
-                    initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}
-                    className="flex items-center gap-3 p-3 rounded-xl"
-                    style={{ background: t.cardBgSubtle, border: `1px solid ${t.borderSubtle}` }}
-                  >
-                    <div className="w-14 h-14 rounded-lg overflow-hidden shrink-0" style={{ background: t.cardBg }}>
-                      {it.image_url ? (
-                        <img src={it.image_url} alt={it.title} className="w-full h-full object-cover" />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center"><Package className="w-5 h-5" style={{ color: t.textSubtle }} /></div>
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-bold truncate" style={{ color: t.textPrimary }}>{it.title}</p>
-                      <p className="text-sm font-black mt-0.5" style={{ color: t.textPrimary }}>
-                        R$ {(it.price * it.quantity).toFixed(2).replace(".", ",")}
-                      </p>
-                      <div className="flex items-center gap-1 mt-1.5 rounded-lg w-fit p-0.5" style={{ background: t.cardBg, border: `1px solid ${t.borderSubtle}` }}>
-                        <button onClick={() => updateQty(it.id, it.quantity - 1)}
-                          className="w-6 h-6 rounded-md flex items-center justify-center hover:opacity-70" style={{ color: t.textPrimary }}>
-                          <Minus className="w-3 h-3" />
-                        </button>
-                        <span className="w-7 text-center text-[11px] font-bold" style={{ color: t.textPrimary }}>{it.quantity}</span>
-                        <button onClick={() => updateQty(it.id, it.quantity + 1)}
-                          className="w-6 h-6 rounded-md flex items-center justify-center hover:opacity-70" style={{ color: t.textPrimary }}>
-                          <Plus className="w-3 h-3" />
-                        </button>
+                <AnimatePresence initial={false}>
+                  {items.map((it) => (
+                    <motion.div
+                      key={it.id}
+                      layout
+                      initial={{ opacity: 0, x: 20, height: 0 }}
+                      animate={{ opacity: 1, x: 0, height: "auto" }}
+                      exit={{ opacity: 0, x: 40, height: 0, marginTop: 0, paddingTop: 0, paddingBottom: 0 }}
+                      transition={{ type: "spring", damping: 26, stiffness: 320 }}
+                      className="flex items-center gap-3 p-3 rounded-xl overflow-hidden"
+                      style={{ background: t.cardBgSubtle, border: `1px solid ${t.borderSubtle}` }}
+                    >
+                      <div className="w-14 h-14 rounded-lg overflow-hidden shrink-0" style={{ background: t.cardBg }}>
+                        {it.image_url ? (
+                          <img src={it.image_url} alt={it.title} className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center"><Package className="w-5 h-5" style={{ color: t.textSubtle }} /></div>
+                        )}
                       </div>
-                    </div>
-                    <button onClick={() => remove(it.id)} className="p-2 rounded-lg shrink-0 self-start"
-                      style={{ background: "hsl(0 60% 50% / 0.1)" }} aria-label="Remover">
-                      <Trash2 className="w-3.5 h-3.5" style={{ color: "hsl(0 60% 60%)" }} />
-                    </button>
-                  </motion.div>
-                ))
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-bold truncate" style={{ color: t.textPrimary }}>{it.title}</p>
+                        <p className="text-sm font-black mt-0.5" style={{ color: t.textPrimary }}>
+                          R$ {(it.price * it.quantity).toFixed(2).replace(".", ",")}
+                        </p>
+                        <div className="flex items-center gap-1 mt-1.5 rounded-lg w-fit p-0.5" style={{ background: t.cardBg, border: `1px solid ${t.borderSubtle}` }}>
+                          <button onClick={() => updateQty(it.id, it.quantity - 1)}
+                            className="w-6 h-6 rounded-md flex items-center justify-center transition-all hover:opacity-70 active:scale-90" style={{ color: t.textPrimary }}>
+                            <Minus className="w-3 h-3" />
+                          </button>
+                          <span className="w-7 text-center text-[11px] font-bold tabular-nums" style={{ color: t.textPrimary }}>{it.quantity}</span>
+                          <button onClick={() => updateQty(it.id, it.quantity + 1)}
+                            className="w-6 h-6 rounded-md flex items-center justify-center transition-all hover:opacity-70 active:scale-90" style={{ color: t.textPrimary }}>
+                            <Plus className="w-3 h-3" />
+                          </button>
+                        </div>
+                      </div>
+                      <button onClick={() => remove(it.id)}
+                        className="p-2 rounded-lg shrink-0 self-start transition-all hover:scale-110 active:scale-95"
+                        style={{ background: "hsl(0 60% 50% / 0.1)" }} aria-label="Remover">
+                        <Trash2 className="w-3.5 h-3.5" style={{ color: "hsl(0 60% 60%)" }} />
+                      </button>
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
               )}
             </div>
 
