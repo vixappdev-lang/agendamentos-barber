@@ -24,6 +24,7 @@ const Finance = () => {
   const [chartData, setChartData] = useState<any[]>([]);
   const [topServices, setTopServices] = useState<any[]>([]);
   const [barberRanking, setBarberRanking] = useState<any[]>([]);
+  const [rawAppointments, setRawAppointments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => { fetchData(); }, [period, session.barberName, session.isBarberOnly]);
