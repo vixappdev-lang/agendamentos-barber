@@ -21,7 +21,8 @@ interface ProductRow {
   category: string | null;
 }
 
-const PRODUCT_CATEGORIES: { value: string; label: string }[] = [
+interface CategoryOption { value: string; label: string; icon?: string }
+const FALLBACK_CATEGORIES: CategoryOption[] = [
   { value: "cabelo", label: "Cabelo" },
   { value: "barba", label: "Barba" },
   { value: "pos_barba", label: "Pós-barba" },
