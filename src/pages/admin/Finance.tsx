@@ -120,7 +120,31 @@ const Finance = () => {
       }
     }
     setBarberRanking(Object.values(barberMap).sort((a, b) => b.revenue - a.revenue));
+    setRawAppointments(apptList);
     setLoading(false);
+  };
+
+  const exportCSV = () => {
+    const rows = [
+      ["Data", "Hora", "Cliente", "Telefone", "Barbeiro", "Status", "Valor"],
+      ...rawAppointments.map((a) => [
+        a.appointment_date,
+        a.appointment_time,
+        a.customer_name,
+        a.customer_phone || "",
+        a.barber_name || "",
+        a.status,
+        Number(a.total_price || 0).toFixed(2),
+      ]),
+    ];
+    const csv = rows.map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(",")).join("\n");
+    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `financeiro_${period}_${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   const formatCurrency = (value: number) => new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
