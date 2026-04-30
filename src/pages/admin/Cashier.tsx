@@ -10,6 +10,7 @@ const supabase = supabaseTyped as any;
 import { toast } from "sonner";
 import { ModuleSection, Stat, EmptyState, PrimaryButton, GhostButton, TextField } from "@/components/admin/ModuleUI";
 import { ModuleHeader } from "@/components/admin/HelpModal";
+import { usePanelSession } from "@/hooks/usePanelSession";
 
 interface Session {
   id: string;
@@ -48,6 +49,7 @@ const fmt = (n: number) =>
   Number(n || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
 const Cashier = () => {
+  const session = usePanelSession();
   const [sessions, setSessions] = useState<Session[]>([]);
   const [movements, setMovements] = useState<Movement[]>([]);
   const [loading, setLoading] = useState(true);
@@ -67,15 +69,18 @@ const Cashier = () => {
 
   const load = async () => {
     setLoading(true);
-    const [s, m] = await Promise.all([
-      supabase.from("cash_sessions").select("*").order("opened_at", { ascending: false }).limit(50),
-      supabase.from("cash_movements").select("*").order("created_at", { ascending: false }).limit(200),
-    ]);
+    let sQ = supabase.from("cash_sessions").select("*").order("opened_at", { ascending: false }).limit(50);
+    let mQ = supabase.from("cash_movements").select("*").order("created_at", { ascending: false }).limit(200);
+    // Isolamento: barbeiro vê apenas seus próprios movimentos/sessões
+    if (session.isBarberOnly && session.barberName) {
+      mQ = mQ.eq("barber_name", session.barberName);
+    }
+    const [s, m] = await Promise.all([sQ, mQ]);
     setSessions((s.data as Session[]) || []);
     setMovements((m.data as Movement[]) || []);
     setLoading(false);
   };
-  useEffect(() => { load(); }, []);
+  useEffect(() => { if (!session.loading) load(); }, [session.loading, session.barberName]);
 
   const openSession = async () => {
     const { error } = await supabase.from("cash_sessions").insert({
@@ -93,13 +98,14 @@ const Cashier = () => {
     if (!current) return toast.error("Abra o caixa primeiro");
     const amt = Number(movAmount);
     if (!Number.isFinite(amt) || amt <= 0) return toast.error("Valor inválido");
+    const barberName = session.isBarberOnly && session.barberName ? session.barberName : (movBarber || null);
     const { error } = await supabase.from("cash_movements").insert({
       session_id: current.id,
       kind: movKind,
       amount: amt,
       payment_method: movMethod || null,
       description: movDesc || null,
-      barber_name: movBarber || null,
+      barber_name: barberName,
     });
     if (error) return toast.error(error.message);
     toast.success("Movimento registrado");

@@ -9,6 +9,7 @@ const supabase = supabaseTyped as any;
 import { toast } from "sonner";
 import { ModuleSection, Stat, EmptyState, PrimaryButton, GhostButton, TextField } from "@/components/admin/ModuleUI";
 import { ModuleHeader } from "@/components/admin/HelpModal";
+import { usePanelSession } from "@/hooks/usePanelSession";
 
 interface Command {
   id: string;
@@ -45,6 +46,7 @@ interface Barber { id: string; name: string; }
 const fmt = (n: number) => Number(n || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
 const Commands = () => {
+  const session = usePanelSession();
   const [commands, setCommands] = useState<Command[]>([]);
   const [items, setItems] = useState<CommandItem[]>([]);
   const [services, setServices] = useState<Service[]>([]);
@@ -67,8 +69,12 @@ const Commands = () => {
 
   const load = async () => {
     setLoading(true);
+    let cQ = supabase.from("commands").select("*").order("opened_at", { ascending: false }).limit(100);
+    if (session.isBarberOnly && session.barberName) {
+      cQ = cQ.eq("barber_name", session.barberName);
+    }
     const [c, i, s, p, b] = await Promise.all([
-      supabase.from("commands").select("*").order("opened_at", { ascending: false }).limit(100),
+      cQ,
       supabase.from("command_items").select("*").order("created_at", { ascending: true }).limit(500),
       supabase.from("services").select("id, title, price").eq("active", true),
       supabase.from("products").select("id, title, price").eq("active", true),
@@ -81,7 +87,7 @@ const Commands = () => {
     setBarbers((b.data as Barber[]) || []);
     setLoading(false);
   };
-  useEffect(() => { load(); }, []);
+  useEffect(() => { if (!session.loading) load(); }, [session.loading, session.barberName]);
 
   const opens = commands.filter((c) => c.status === "open");
   const closeds = commands.filter((c) => c.status === "closed");
@@ -91,10 +97,11 @@ const Commands = () => {
 
   const createCommand = async () => {
     if (!newName.trim()) return toast.error("Nome do cliente é obrigatório");
+    const barberName = session.isBarberOnly && session.barberName ? session.barberName : (newBarber || null);
     const { error } = await supabase.from("commands").insert({
       customer_name: newName.trim(),
       customer_phone: newPhone || null,
-      barber_name: newBarber || null,
+      barber_name: barberName,
       status: "open", subtotal: 0, discount: 0, total: 0,
     });
     if (error) return toast.error(error.message);
