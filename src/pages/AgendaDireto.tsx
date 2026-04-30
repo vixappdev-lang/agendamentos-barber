@@ -8,6 +8,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { z } from "zod";
 import { useThemeColors } from "@/hooks/useThemeColors";
+import { useDevToolsBlock } from "@/hooks/useDevToolsBlock";
 import { supabase } from "@/integrations/supabase/client";
 import {
   MOCK_CATEGORIES, MOCK_BARBERS, MOCK_TIMES,
