@@ -9,6 +9,7 @@ import { findStockImage } from "@/data/stockImages";
 import { TeamSection, TestimonialsSection, FAQSection } from "@/components/landing/LandingExtras";
 import MapLibreDirections from "@/components/MapLibreDirections";
 import AllServicesModal from "@/components/AllServicesModal";
+import GalleryModal from "@/components/GalleryModal";
 import { useDevToolsBlock } from "@/hooks/useDevToolsBlock";
 
 import heroImg1 from "@/assets/styllus/hero-1.jpg";
@@ -23,7 +24,7 @@ import galleryImg6 from "@/assets/styllus/gallery-6.jpg";
 import brandLogo from "@/assets/styllus/logo.png";
 
 const heroImages = [heroImg1, heroImg2, heroImg3];
-const galleryImages = [galleryImg1, galleryImg2, galleryImg3, galleryImg4, galleryImg5, galleryImg6];
+const defaultGalleryImages = [galleryImg1, galleryImg2, galleryImg3, galleryImg4, galleryImg5, galleryImg6];
 
 interface DBService {
   id: string; title: string; subtitle: string | null; price: number;
@@ -49,6 +50,7 @@ const VilaNova = () => {
   const [scrolled, setScrolled] = useState(false);
   const [directionsOpen, setDirectionsOpen] = useState(false);
   const [allServicesOpen, setAllServicesOpen] = useState(false);
+  const [galleryModalOpen, setGalleryModalOpen] = useState(false);
 
   // Auth state
   const [user, setUser] = useState<AuthUser | null>(null);
@@ -693,41 +695,100 @@ const VilaNova = () => {
       <TeamSection barbers={barbers} />
 
       {/* ─── GALLERY ─── */}
-      <section id="galeria" className="py-20 sm:py-28 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-[1600px] mx-auto">
-          <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-12 sm:mb-16">
-            <div className="flex items-center justify-center gap-3 mb-5">
-              <div className="w-10 h-px" style={{ background: t.borderSubtle }} />
-              <span className="text-[11px] font-bold uppercase tracking-[0.35em]" style={{ color: t.textMuted }}>Galeria</span>
-              <div className="w-10 h-px" style={{ background: t.borderSubtle }} />
-            </div>
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight" style={{ color: t.textPrimary }}>Nosso trabalho</h2>
-          </motion.div>
-
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-2 sm:gap-3 lg:gap-4">
-            {galleryImages.map((img, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, scale: 0.95 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.06 }}
-                className="relative rounded-2xl overflow-hidden cursor-pointer group aspect-square"
-                style={{ border: `1px solid ${t.borderSubtle}` }}
-                onClick={() => setLightboxIndex(i)}
-              >
-                <img src={img} alt={`Galeria ${i + 1}`} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" loading="lazy" />
-                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all duration-300 flex items-center justify-center">
-                  <div className="w-12 h-12 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                    style={{ background: "hsl(0 0% 100% / 0.15)", backdropFilter: "blur(8px)" }}>
-                    <Star className="w-5 h-5 text-white" />
+      {(() => {
+        // Read dynamic gallery from settings (uploaded via Admin → Personalização)
+        let dynamicGallery: string[] = [];
+        try {
+          const raw = settings.site_gallery;
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            if (Array.isArray(parsed)) dynamicGallery = parsed.filter((x) => typeof x === "string" && x.length > 0);
+          }
+        } catch { dynamicGallery = []; }
+        const galleryImages: string[] = dynamicGallery.length > 0 ? dynamicGallery : defaultGalleryImages;
+        const visibleImages = galleryImages.slice(0, 6);
+        const hasMore = galleryImages.length > 6;
+        return (
+          <>
+            <section id="galeria" className="py-20 sm:py-28 px-4 sm:px-6 lg:px-8">
+              <div className="max-w-[1600px] mx-auto">
+                <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-12 sm:mb-16">
+                  <div className="flex items-center justify-center gap-3 mb-5">
+                    <div className="w-10 h-px" style={{ background: t.borderSubtle }} />
+                    <span className="text-[11px] font-bold uppercase tracking-[0.35em]" style={{ color: t.textMuted }}>Galeria</span>
+                    <div className="w-10 h-px" style={{ background: t.borderSubtle }} />
                   </div>
+                  <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight" style={{ color: t.textPrimary }}>Nosso trabalho</h2>
+                </motion.div>
+
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-2 sm:gap-3 lg:gap-4">
+                  {visibleImages.map((img, i) => (
+                    <motion.div
+                      key={i}
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      whileInView={{ opacity: 1, scale: 1 }}
+                      viewport={{ once: true }}
+                      transition={{ delay: i * 0.06 }}
+                      className="relative rounded-2xl overflow-hidden cursor-pointer group aspect-square"
+                      style={{ border: `1px solid ${t.borderSubtle}` }}
+                      onClick={() => setLightboxIndex(i)}
+                    >
+                      <img src={img} alt={`Galeria ${i + 1}`} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" loading="lazy" />
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all duration-300 flex items-center justify-center">
+                        <div className="w-12 h-12 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                          style={{ background: "hsl(0 0% 100% / 0.15)", backdropFilter: "blur(8px)" }}>
+                          <Star className="w-5 h-5 text-white" />
+                        </div>
+                      </div>
+                    </motion.div>
+                  ))}
                 </div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
+
+                {hasMore && (
+                  <div className="flex justify-center mt-8 sm:mt-10">
+                    <button
+                      onClick={() => setGalleryModalOpen(true)}
+                      className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl text-sm font-bold transition-all hover:translate-y-[-2px] active:scale-[0.98]"
+                      style={{ background: t.btnBg, color: t.btnColor, boxShadow: t.cardShadow }}
+                    >
+                      Ver mais ({galleryImages.length - 6}+) <ChevronRight className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
+              </div>
+            </section>
+
+            {/* Gallery Modal (full grid) */}
+            <GalleryModal
+              open={galleryModalOpen}
+              onClose={() => setGalleryModalOpen(false)}
+              images={galleryImages}
+            />
+
+            {/* ─── LIGHTBOX (single-image preview from grid) ─── */}
+            <AnimatePresence>
+              {lightboxIndex !== null && (
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                  className="fixed inset-0 z-50 flex items-center justify-center p-4"
+                  style={{ background: "hsl(0 0% 0% / 0.92)", backdropFilter: "blur(20px)" }}
+                  onClick={() => setLightboxIndex(null)}>
+                  <button className="absolute top-5 right-5 p-2.5 rounded-xl" style={{ background: "hsl(0 0% 100% / 0.1)" }} onClick={() => setLightboxIndex(null)}>
+                    <X className="w-5 h-5" />
+                  </button>
+                  <div className="absolute bottom-5 left-1/2 -translate-x-1/2 flex gap-2">
+                    {visibleImages.map((_, i) => (
+                      <button key={i} onClick={(e) => { e.stopPropagation(); setLightboxIndex(i); }}
+                        className="w-2 h-2 rounded-full transition-all"
+                        style={{ background: i === lightboxIndex ? "hsl(0 0% 90%)" : "hsl(0 0% 100% / 0.2)" }} />
+                    ))}
+                  </div>
+                  <img src={visibleImages[lightboxIndex] || galleryImages[lightboxIndex]} alt="" className="max-w-full max-h-[85vh] rounded-2xl object-contain" onClick={(e) => e.stopPropagation()} />
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </>
+        );
+      })()}
 
       {/* ─── DEPOIMENTOS ─── */}
       <TestimonialsSection />
@@ -872,27 +933,7 @@ const VilaNova = () => {
         selColor={selColor}
       />
 
-      {/* ─── LIGHTBOX ─── */}
-      <AnimatePresence>
-        {lightboxIndex !== null && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4"
-            style={{ background: "hsl(0 0% 0% / 0.92)", backdropFilter: "blur(20px)" }}
-            onClick={() => setLightboxIndex(null)}>
-            <button className="absolute top-5 right-5 p-2.5 rounded-xl" style={{ background: "hsl(0 0% 100% / 0.1)" }} onClick={() => setLightboxIndex(null)}>
-              <X className="w-5 h-5" />
-            </button>
-            <div className="absolute bottom-5 left-1/2 -translate-x-1/2 flex gap-2">
-              {galleryImages.map((_, i) => (
-                <button key={i} onClick={(e) => { e.stopPropagation(); setLightboxIndex(i); }}
-                  className="w-2 h-2 rounded-full transition-all"
-                  style={{ background: i === lightboxIndex ? "hsl(0 0% 90%)" : "hsl(0 0% 100% / 0.2)" }} />
-              ))}
-            </div>
-            <img src={galleryImages[lightboxIndex]} alt="" className="max-w-full max-h-[85vh] rounded-2xl object-contain" onClick={(e) => e.stopPropagation()} />
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* Lightbox now rendered inside dynamic gallery block above */}
 
       {/* ─── BOOKING MODAL ─── */}
       <AnimatePresence>
