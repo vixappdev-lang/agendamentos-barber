@@ -54,6 +54,7 @@ const Inventory = lazy(() => import("./pages/admin/Inventory"));
 const Suppliers = lazy(() => import("./pages/admin/Suppliers"));
 const UsersAdmin = lazy(() => import("./pages/admin/Users"));
 const WhatsAppTemplates = lazy(() => import("./pages/admin/WhatsAppTemplates"));
+const GoogleCalendar = lazy(() => import("./pages/admin/GoogleCalendar"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
