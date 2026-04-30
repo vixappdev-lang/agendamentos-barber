@@ -24,6 +24,7 @@ const BaixarSource = lazy(() => import("./pages/BaixarSource"));
 const MemberLogin = lazy(() => import("./pages/MemberLogin"));
 const MemberArea = lazy(() => import("./pages/MemberArea"));
 const Avaliacao = lazy(() => import("./pages/Avaliacao"));
+const AvaliarPedido = lazy(() => import("./pages/AvaliarPedido"));
 const TenantResolver = lazy(() => import("./components/TenantResolver"));
 const TenantSite = lazy(() => import("./pages/tenant/TenantSite"));
 const TenantBooking = lazy(() => import("./pages/tenant/TenantBooking"));
@@ -102,6 +103,7 @@ const App = () => (
                 <Route path="/navegacao" element={<Navigation />} />
                 <Route path="/demo-site" element={<DemoSite />} />
                 <Route path="/avaliacao" element={<Avaliacao />} />
+                <Route path="/avaliar-pedido/:token" element={<AvaliarPedido />} />
               </Route>
 
               {/* Site público por barbearia (mesmo projeto, mesmas páginas, sob o slug) */}
