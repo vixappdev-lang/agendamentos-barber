@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { ShoppingBag, Plus } from "lucide-react";
+import { ShoppingBag, Plus, Star } from "lucide-react";
 import { useThemeColors } from "@/hooks/useThemeColors";
 
 interface ProductCardProps {
@@ -12,9 +12,10 @@ interface ProductCardProps {
   };
   onSelect: () => void;
   index: number;
+  rating?: { avg: number; count: number };
 }
 
-const ProductCard = ({ product, onSelect, index }: ProductCardProps) => {
+const ProductCard = ({ product, onSelect, index, rating }: ProductCardProps) => {
   const t = useThemeColors();
 
   return (
@@ -54,6 +55,14 @@ const ProductCard = ({ product, onSelect, index }: ProductCardProps) => {
         >
           {product.title}
         </h3>
+        {rating && rating.count > 0 && (
+          <div className="flex items-center gap-1 -mt-0.5">
+            <Star className="w-3 h-3" style={{ color: "hsl(45 95% 60%)", fill: "hsl(45 95% 60%)" }} />
+            <span className="text-[10px] font-semibold" style={{ color: t.textSecondary }}>
+              {rating.avg.toFixed(1)} <span className="opacity-50">({rating.count})</span>
+            </span>
+          </div>
+        )}
         <p
           className="hidden sm:block text-[11px] leading-snug line-clamp-2 opacity-70"
           style={{ color: t.textSecondary }}
