@@ -331,8 +331,8 @@ const VilaNova = () => {
         <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-10 xl:px-16 h-16 sm:h-20 grid grid-cols-[auto_1fr_auto] items-center gap-6">
           {/* Logo */}
           <a href="#" className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: "hsl(0 0% 95%)" }}>
-              <Scissors className="w-4 h-4" style={{ color: "hsl(220 20% 7%)" }} />
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full overflow-hidden flex-shrink-0 ring-1 ring-white/15" style={{ background: "hsl(0 0% 95%)" }}>
+              <img src={settings.site_logo_url || brandLogo} alt={settings.business_name || "Logo"} className="w-full h-full object-cover" />
             </div>
             <span className="text-lg font-extrabold tracking-tight">{settings.business_name || "GenesisBarber"}</span>
           </a>
