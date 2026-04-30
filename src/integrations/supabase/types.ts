@@ -633,6 +633,48 @@ export type Database = {
         }
         Relationships: []
       }
+      notifications: {
+        Row: {
+          appointment_id: string | null
+          created_at: string
+          customer_email: string | null
+          customer_phone: string | null
+          id: string
+          link: string | null
+          message: string
+          order_id: string | null
+          read_at: string | null
+          title: string
+          type: string
+        }
+        Insert: {
+          appointment_id?: string | null
+          created_at?: string
+          customer_email?: string | null
+          customer_phone?: string | null
+          id?: string
+          link?: string | null
+          message: string
+          order_id?: string | null
+          read_at?: string | null
+          title: string
+          type?: string
+        }
+        Update: {
+          appointment_id?: string | null
+          created_at?: string
+          customer_email?: string | null
+          customer_phone?: string | null
+          id?: string
+          link?: string | null
+          message?: string
+          order_id?: string | null
+          read_at?: string | null
+          title?: string
+          type?: string
+        }
+        Relationships: []
+      }
       order_items: {
         Row: {
           created_at: string
