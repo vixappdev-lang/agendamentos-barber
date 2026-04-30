@@ -785,11 +785,25 @@ const VilaNova = () => {
                 <div className="flex items-center gap-2.5 text-xs" style={{ color: t.textSecondary }}>
                   <Phone className="w-3.5 h-3.5 shrink-0" /> {settings.whatsapp_number || "(00) 00000-0000"}
                 </div>
-                {settings.instagram && (
-                  <div className="flex items-center gap-2.5 text-xs" style={{ color: t.textSecondary }}>
-                    <Instagram className="w-3.5 h-3.5 shrink-0" /> {settings.instagram}
-                  </div>
-                )}
+                {settings.instagram && (() => {
+                  // extrai handle (@usuario) do link ou texto
+                  const raw = settings.instagram.trim();
+                  const match = raw.match(/instagram\.com\/([^/?#]+)/i);
+                  const handle = match ? match[1].replace(/\/$/, "") : raw.replace(/^@/, "");
+                  const url = match ? raw : `https://www.instagram.com/${handle}`;
+                  return (
+                    <a
+                      href={url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2.5 text-xs transition-opacity hover:opacity-100"
+                      style={{ color: t.textSecondary }}
+                    >
+                      <Instagram className="w-3.5 h-3.5 shrink-0" />
+                      <span className="font-semibold">@{handle}</span>
+                    </a>
+                  );
+                })()}
                 {settings.address && (
                   <button
                     onClick={() => setDirectionsOpen(true)}
