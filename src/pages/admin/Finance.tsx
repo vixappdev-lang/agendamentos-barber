@@ -11,8 +11,11 @@ import { useThemeColors } from "@/hooks/useThemeColors";
 
 type Period = "day" | "week" | "month";
 
+import { usePanelSession } from "@/hooks/usePanelSession";
+
 const Finance = () => {
   const t = useThemeColors();
+  const session = usePanelSession();
   const [period, setPeriod] = useState<Period>("month");
   const [stats, setStats] = useState({
     revenue: 0, expenses: 0, netProfit: 0,
