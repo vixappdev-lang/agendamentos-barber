@@ -587,13 +587,16 @@ _Equipe Styllus_`;
                 Horário
               </h2>
               <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
-                {MOCK_TIMES.map((tm) => {
+                {(availableTimes.length > 0 ? availableTimes : MOCK_TIMES).map((tm) => {
                   const active = tm === time;
+                  const blocked = date ? rules.isSlotBlocked(date, tm, barber?.name || null) : false;
                   return (
                     <button
                       key={tm}
-                      onClick={() => setTime(tm)}
-                      className="h-11 rounded-xl text-[13px] font-semibold transition-all hover:translate-y-[-1px]"
+                      onClick={() => !blocked && setTime(tm)}
+                      disabled={blocked}
+                      title={blocked ? "Indisponível" : tm}
+                      className="h-11 rounded-xl text-[13px] font-semibold transition-all hover:translate-y-[-1px] disabled:opacity-30 disabled:cursor-not-allowed disabled:line-through"
                       style={
                         active
                           ? { background: t.textPrimary, color: t.pageBg, border: `1px solid ${t.textPrimary}` }
@@ -604,6 +607,11 @@ _Equipe Styllus_`;
                     </button>
                   );
                 })}
+                {date && availableTimes.length === 0 && !rules.loading && (
+                  <p className="col-span-full text-center text-[12px] opacity-60 py-4">
+                    Nenhum horário disponível neste dia.
+                  </p>
+                )}
               </div>
             </motion.div>
           )}
