@@ -36,6 +36,7 @@ const easeSoft = [0.22, 1, 0.36, 1] as const;
 
 const AgendaDireto = () => {
   const t = useThemeColors();
+  useDevToolsBlock();
   const navigate = useNavigate();
   const [activeCat, setActiveCat] = useState(MOCK_CATEGORIES[0].id);
   const [search, setSearch] = useState("");
