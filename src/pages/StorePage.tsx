@@ -104,7 +104,7 @@ const StorePage = () => {
     );
   }, [search, products]);
 
-  // Group filtered products by category, preserving insertion order from sort_order
+  // Group filtered products by category, ordered by category sort_order
   const groupedProducts = useMemo(() => {
     const groups = new Map<string, DBProduct[]>();
     for (const p of filteredProducts) {
@@ -112,8 +112,12 @@ const StorePage = () => {
       if (!groups.has(key)) groups.set(key, []);
       groups.get(key)!.push(p);
     }
-    return Array.from(groups.entries());
-  }, [filteredProducts]);
+    return Array.from(groups.entries()).sort((a, b) => {
+      const sa = categoryMap[a[0]]?.sort ?? 999;
+      const sb = categoryMap[b[0]]?.sort ?? 999;
+      return sa - sb;
+    });
+  }, [filteredProducts, categoryMap]);
 
   const handleAddToCart = (product: DBProduct, qty: number = 1) => {
     cartAdd({ id: product.id, title: product.title, price: Number(product.price), image_url: product.image_url }, qty);
