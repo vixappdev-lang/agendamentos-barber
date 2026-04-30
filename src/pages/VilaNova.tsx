@@ -452,10 +452,19 @@ const VilaNova = () => {
 
         <motion.div style={{ opacity: heroOpacity }} className="relative z-10 h-full flex flex-col justify-end pb-12 sm:pb-20 px-4 sm:px-6 lg:px-8 max-w-[1600px] mx-auto w-full">
           <motion.div initial={{ y: 50, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.4, duration: 0.9 }}>
-            <div className="flex items-center gap-3 mb-5">
-              <div className="w-10 h-px" style={{ background: "hsl(0 0% 100% / 0.3)" }} />
-              <span className="text-[11px] sm:text-xs font-bold uppercase tracking-[0.35em]" style={{ color: "hsl(0 0% 100% / 0.5)" }}>
-                {settings.hero_subtitle || "Barbearia Premium"}
+            <div className="mb-5">
+              <span
+                className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-[11px] sm:text-xs font-semibold tracking-wide"
+                style={{
+                  background: "hsl(0 0% 100% / 0.08)",
+                  border: "1px solid hsl(0 0% 100% / 0.14)",
+                  backdropFilter: "blur(18px) saturate(140%)",
+                  WebkitBackdropFilter: "blur(18px) saturate(140%)",
+                  color: "hsl(0 0% 95%)",
+                }}
+              >
+                <span className="w-1.5 h-1.5 rounded-full" style={{ background: "hsl(140 60% 55%)" }} />
+                {settings.hero_subtitle || "Estilo e precisão há 20 anos"}
               </span>
             </div>
             <h1 className="text-5xl sm:text-7xl lg:text-8xl font-black leading-[0.9] tracking-tighter mb-5">
