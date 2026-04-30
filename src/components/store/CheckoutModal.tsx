@@ -116,13 +116,21 @@ const CheckoutModal = ({
       return toast.error("Preencha o endereço completo");
     }
 
+    const couponLine = appliedCoupon
+      ? `\n🎟️ *Cupom:* ${appliedCoupon.code} (-R$ ${discount.toFixed(2)})`
+      : "";
+    const noteWithCoupon = appliedCoupon
+      ? `${form.notes ? form.notes + " | " : ""}Cupom ${appliedCoupon.code} -R$ ${discount.toFixed(2)} (subtotal R$ ${subtotal.toFixed(2)})`
+      : form.notes;
+
     if (mode === "whatsapp") {
       const itemsText = items.map((i) => `• ${i.quantity}x ${i.title} - R$ ${(i.price * i.quantity).toFixed(2)}`).join("\n");
       const deliveryText = deliveryMode === "delivery"
         ? `\n📍 ${form.address}, ${form.number}\n🏘️ ${form.neighborhood} — ${form.city}`
         : "\n🏪 Retirada no local";
       const payText = paymentMethod === "pix" ? "PIX" : "Na entrega";
-      const msg = `🛒 *Novo Pedido*\n\n👤 ${form.name}\n📱 ${form.phone}\n\n📦 *Itens:*\n${itemsText}\n\n💰 *Total:* R$ ${total.toFixed(2)}\n💳 *Pagamento:* ${payText}${deliveryText}\n\n📝 ${form.notes || "—"}`;
+      const subtotalLine = appliedCoupon ? `💵 *Subtotal:* R$ ${subtotal.toFixed(2)}\n` : "";
+      const msg = `🛒 *Novo Pedido*\n\n👤 ${form.name}\n📱 ${form.phone}\n\n📦 *Itens:*\n${itemsText}\n\n${subtotalLine}${couponLine ? couponLine + "\n" : ""}💰 *Total:* R$ ${total.toFixed(2)}\n💳 *Pagamento:* ${payText}${deliveryText}\n\n📝 ${form.notes || "—"}`;
       window.open(`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(msg)}`, "_blank");
       goToOrders();
       return;
@@ -139,7 +147,7 @@ const CheckoutModal = ({
       address_complement: form.complement || null,
       neighborhood: deliveryMode === "delivery" ? form.neighborhood : null,
       city: deliveryMode === "delivery" ? form.city : null,
-      notes: form.notes || null,
+      notes: noteWithCoupon || null,
       total_price: total,
       status: "pending",
       payment_method: paymentMethod,
@@ -158,6 +166,22 @@ const CheckoutModal = ({
       product_price: i.price,
       quantity: i.quantity,
     })));
+
+    // Incrementa uso do cupom (best-effort)
+    if (appliedCoupon) {
+      const { data: cur } = await supabase
+        .from("coupons")
+        .select("current_uses")
+        .eq("code", appliedCoupon.code)
+        .maybeSingle();
+      if (cur) {
+        await supabase
+          .from("coupons")
+          .update({ current_uses: (cur.current_uses ?? 0) + 1 })
+          .eq("code", appliedCoupon.code);
+      }
+    }
+
     setSubmitting(false);
 
     if (paymentMethod === "delivery") {
