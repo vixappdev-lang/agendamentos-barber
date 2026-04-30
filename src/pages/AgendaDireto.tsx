@@ -79,7 +79,52 @@ const AgendaDireto = () => {
     });
   }, []);
 
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        setSignedUserId(session.user.id);
+        const meta = session.user.user_metadata as { full_name?: string; phone?: string };
+        if (meta?.full_name) setName(meta.full_name);
+        if (meta?.phone) setPhone(formatPhone(meta.phone));
+      }
+    });
+  }, []);
+
+  // Fetch profissionais e serviços reais
+  useEffect(() => {
+    (async () => {
+      const [bRes, sRes, settingsRes] = await Promise.all([
+        supabase.from("barbers").select("id,name,specialty,avatar_url").eq("active", true).order("sort_order"),
+        supabase.from("services").select("id,title,subtitle,price,duration,image_url,category").eq("active", true).order("sort_order"),
+        supabase.from("business_settings").select("value").eq("key", "late_policy").maybeSingle(),
+      ]);
+      if (bRes.data) setRealBarbers(bRes.data as any);
+      if (sRes.data) setRealServices(sRes.data.map((s: any) => ({ ...s, price: Number(s.price) })));
+      if (settingsRes.data?.value) setLatePolicy(settingsRes.data.value);
+    })();
+  }, []);
+
   const filteredServices = useMemo(() => {
+    // Se há serviços reais, usa-os agrupando por category
+    if (realServices.length > 0) {
+      const cat = MOCK_CATEGORIES.find((c) => c.id === activeCat);
+      const catKey = cat?.id || "geral";
+      const matched = realServices.filter((s) => (s.category || "geral") === catKey || activeCat === "todos");
+      const list = matched.length > 0 ? matched : realServices;
+      const q = search.trim().toLowerCase();
+      const final = !q ? list : list.filter((s) =>
+        s.title.toLowerCase().includes(q) || (s.subtitle || "").toLowerCase().includes(q)
+      );
+      return final.map((s) => ({
+        id: s.id,
+        title: s.title,
+        subtitle: s.subtitle || "",
+        price: s.price,
+        duration: s.duration,
+        image: s.image_url || "/placeholder.svg",
+        amenities: undefined as string[] | undefined,
+      })) as MockService[];
+    }
     const cat = MOCK_CATEGORIES.find((c) => c.id === activeCat);
     if (!cat) return [];
     if (!search.trim()) return cat.services;
@@ -87,7 +132,7 @@ const AgendaDireto = () => {
     return cat.services.filter(
       (s) => s.title.toLowerCase().includes(q) || s.subtitle.toLowerCase().includes(q)
     );
-  }, [activeCat, search]);
+  }, [activeCat, search, realServices]);
 
   const dates = useMemo(() => {
     const out: { iso: string; day: string; weekday: string; month: string }[] = [];
