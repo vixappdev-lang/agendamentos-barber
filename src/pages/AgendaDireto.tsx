@@ -39,9 +39,15 @@ const AgendaDireto = () => {
   const t = useThemeColors();
   useDevToolsBlock();
   const navigate = useNavigate();
+  const rules = useBookingRules();
   const [activeCat, setActiveCat] = useState(MOCK_CATEGORIES[0].id);
   const [search, setSearch] = useState("");
   const [step, setStep] = useState<Step>("list");
+
+  // Dados reais
+  const [realBarbers, setRealBarbers] = useState<Array<{ id: string; name: string; specialty: string | null; avatar_url: string | null }>>([]);
+  const [realServices, setRealServices] = useState<Array<{ id: string; title: string; subtitle: string | null; price: number; duration: string; image_url: string | null; category: string | null }>>([]);
+  const [latePolicy, setLatePolicy] = useState("");
 
   const [service, setService] = useState<MockService | null>(null);
   const [barber, setBarber] = useState<MockBarber | null>(null);
