@@ -38,6 +38,7 @@ const steps = ["Serviço", "Barbeiro", "Data & Hora", "Seus Dados", "Confirmar"]
 
 const VilaNova = () => {
   const t = useThemeColors();
+  useDevToolsBlock();
   const [heroIndex, setHeroIndex] = useState(0);
   const [services, setServices] = useState<DBService[]>([]);
   const [barbers, setBarbers] = useState<DBBarber[]>([]);
