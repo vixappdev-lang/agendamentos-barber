@@ -5,6 +5,7 @@ import ProductCard from "@/components/ProductCard";
 import CheckoutModal from "@/components/store/CheckoutModal";
 import OrderTracker from "@/components/store/OrderTracker";
 import AuthRequiredModal from "@/components/store/AuthRequiredModal";
+import ProductDetailModal from "@/components/store/ProductDetailModal";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { useThemeColors } from "@/hooks/useThemeColors";
@@ -14,6 +15,8 @@ import type { User as AuthUser } from "@supabase/supabase-js";
 interface DBProduct {
   id: string; title: string; description: string | null; price: number;
   image_url: string | null; active: boolean; sort_order: number;
+  long_description?: string | null; brand?: string | null; weight?: string | null;
+  stock?: number | null; highlights?: string[] | null; gallery?: string[] | null;
 }
 
 interface CartItem {
