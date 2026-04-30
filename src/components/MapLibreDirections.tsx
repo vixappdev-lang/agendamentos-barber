@@ -1,8 +1,5 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { X, MapPin, Navigation, ExternalLink, Loader2 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
-import maplibregl from "maplibre-gl";
-import "maplibre-gl/dist/maplibre-gl.css";
+import { X, MapPin, Navigation, ExternalLink } from "lucide-react";
 import { useThemeColors } from "@/hooks/useThemeColors";
 
 interface Props {
@@ -12,127 +9,24 @@ interface Props {
   businessName?: string;
 }
 
-interface Coords {
-  lat: number;
-  lon: number;
-}
-
+/**
+ * Modal "Como chegar" usando Google Maps Embed (sem API key).
+ * Simples, detalhado e familiar — exatamente como o usuário pediu.
+ */
 const MapLibreDirections = ({ open, onClose, address, businessName }: Props) => {
   const t = useThemeColors();
-  const containerRef = useRef<HTMLDivElement | null>(null);
-  const mapRef = useRef<maplibregl.Map | null>(null);
-  const [coords, setCoords] = useState<Coords | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
-  // Geocode via Nominatim (gratuito, sem API key)
-  useEffect(() => {
-    if (!open || !address) return;
-    let cancelled = false;
-    setLoading(true);
-    setError(null);
-    setCoords(null);
-
-    fetch(
-      `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(address)}`,
-      { headers: { Accept: "application/json" } }
-    )
-      .then((r) => r.json())
-      .then((data: Array<{ lat: string; lon: string }>) => {
-        if (cancelled) return;
-        if (!data?.length) {
-          setError("Endereço não encontrado.");
-          setLoading(false);
-          return;
-        }
-        setCoords({ lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon) });
-        setLoading(false);
-      })
-      .catch(() => {
-        if (cancelled) return;
-        setError("Falha ao carregar mapa.");
-        setLoading(false);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [open, address]);
-
-  // Inicializa o mapa
-  useEffect(() => {
-    if (!open || !coords || !containerRef.current) return;
-    if (mapRef.current) return;
-
-    // Voyager tiles (CARTO) — fundo branco com muitos detalhes (ruas, POIs, ícones), estilo Google Maps
-    const tilesUrl = "https://cartodb-basemaps-{s}.global.ssl.fastly.net/rastertiles/voyager/{z}/{x}/{y}.png";
-
-    const map = new maplibregl.Map({
-      container: containerRef.current,
-      style: {
-        version: 8,
-        sources: {
-          carto: {
-            type: "raster",
-            tiles: ["a", "b", "c"].map((s) => tilesUrl.replace("{s}", s)),
-            tileSize: 256,
-            attribution: "© OpenStreetMap · © CARTO",
-          },
-        },
-        layers: [{ id: "carto-tiles", type: "raster", source: "carto" }],
-      },
-      center: [coords.lon, coords.lat],
-      zoom: 17,
-      attributionControl: false,
-    });
-
-    map.addControl(new maplibregl.NavigationControl({ showCompass: false }), "top-right");
-    map.addControl(new maplibregl.AttributionControl({ compact: true }), "bottom-left");
-
-    // Marker custom
-    const el = document.createElement("div");
-    el.style.cssText = `
-      width: 36px; height: 36px; border-radius: 50%;
-      background: hsl(0 80% 55%); display: flex; align-items: center; justify-content: center;
-      box-shadow: 0 4px 14px hsl(0 0% 0% / 0.4), 0 0 0 4px hsl(0 0% 100% / 0.95);
-      cursor: pointer;
-    `;
-    el.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg>`;
-
-    new maplibregl.Marker({ element: el })
-      .setLngLat([coords.lon, coords.lat])
-      .addTo(map);
-
-    mapRef.current = map;
-
-    return () => {
-      map.remove();
-      mapRef.current = null;
-    };
-  }, [open, coords, t.isLight]);
-
-  // Cleanup quando fecha
-  useEffect(() => {
-    if (!open && mapRef.current) {
-      mapRef.current.remove();
-      mapRef.current = null;
-    }
-  }, [open]);
+  const encodedAddress = encodeURIComponent(address || "");
+  // Google Maps Embed sem API key (público, sempre funciona)
+  const mapSrc = `https://www.google.com/maps?q=${encodedAddress}&hl=pt-BR&z=17&output=embed`;
 
   const openExternalGPS = () => {
-    const encoded = encodeURIComponent(address);
     const ua = navigator.userAgent || navigator.vendor;
     const isIOS = /iPad|iPhone|iPod/.test(ua);
-    if (coords) {
-      // OSM directions (gratuito)
-      const url = isIOS
-        ? `maps://?daddr=${coords.lat},${coords.lon}`
-        : `https://www.openstreetmap.org/directions?from=&to=${coords.lat}%2C${coords.lon}`;
-      window.open(url, "_blank");
-    } else {
-      const url = `https://www.openstreetmap.org/search?query=${encoded}`;
-      window.open(url, "_blank");
-    }
+    const url = isIOS
+      ? `maps://?daddr=${encodedAddress}`
+      : `https://www.google.com/maps/dir/?api=1&destination=${encodedAddress}`;
+    window.open(url, "_blank");
   };
 
   return (
@@ -171,24 +65,27 @@ const MapLibreDirections = ({ open, onClose, address, businessName }: Props) => 
                   <p className="text-[11px] truncate" style={{ color: t.textMuted }}>{businessName || "Barbearia"}</p>
                 </div>
               </div>
-              <button onClick={onClose} className="p-2 rounded-xl shrink-0" style={{ background: t.cardBgSubtle }}>
+              <button onClick={onClose} className="p-2 rounded-xl shrink-0" style={{ background: t.cardBgSubtle }} aria-label="Fechar">
                 <X className="w-4 h-4" style={{ color: t.textMuted }} />
               </button>
             </div>
 
-            {/* Map */}
-            <div className="relative w-full aspect-[4/3] sm:aspect-video" style={{ background: "hsl(0 0% 100%)" }}>
-              {loading && (
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <Loader2 className="w-6 h-6 animate-spin opacity-50" />
-                </div>
-              )}
-              {error && (
+            {/* Map (Google) */}
+            <div className="relative w-full aspect-[4/3] sm:aspect-video bg-white">
+              {address ? (
+                <iframe
+                  title="Como chegar"
+                  src={mapSrc}
+                  className="absolute inset-0 w-full h-full border-0"
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                  allowFullScreen
+                />
+              ) : (
                 <div className="absolute inset-0 flex items-center justify-center text-center px-6">
-                  <p className="text-xs opacity-60">{error}</p>
+                  <p className="text-xs opacity-60">Endereço não configurado.</p>
                 </div>
               )}
-              <div ref={containerRef} className="absolute inset-0 w-full h-full" />
             </div>
 
             {/* Address + Actions */}
@@ -204,13 +101,9 @@ const MapLibreDirections = ({ open, onClose, address, businessName }: Props) => 
                 style={{ background: t.btnBg, color: t.btnColor, boxShadow: t.cardShadow }}
               >
                 <Navigation className="w-4 h-4" />
-                Abrir rota
+                Abrir rota no GPS
                 <ExternalLink className="w-3.5 h-3.5 opacity-60" />
               </button>
-
-              <p className="text-[10px] text-center" style={{ color: t.textMuted }}>
-                Mapa via OpenStreetMap · Sem custo
-              </p>
             </div>
           </motion.div>
         </motion.div>
