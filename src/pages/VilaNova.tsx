@@ -545,9 +545,9 @@ const VilaNova = () => {
                 {/* Stats */}
                 <div className="grid grid-cols-3 gap-4">
                   {[
-                    { number: "5+", label: "Anos" },
-                    { number: "3K+", label: "Clientes" },
-                    { number: "5.0", label: "Avaliação" },
+                    { number: settings.business_years || "20+", label: "Anos" },
+                    { number: settings.business_clients || "10K+", label: "Clientes" },
+                    { number: settings.business_rating || "5.0", label: "Avaliação" },
                   ].map((stat) => (
                     <div key={stat.label} className="text-center p-4 rounded-xl" style={{ background: t.cardBg, border: `1px solid ${t.isLight ? 'hsl(220 12% 88%)' : t.borderSubtle}`, boxShadow: t.isLight ? '0 1px 3px hsl(220 15% 20% / 0.04)' : 'none' }}>
                       <span className="text-2xl sm:text-3xl font-black block" style={{ color: t.textPrimary }}>{stat.number}</span>
