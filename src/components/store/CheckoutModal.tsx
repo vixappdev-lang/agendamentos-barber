@@ -240,10 +240,70 @@ const CheckoutModal = ({
                   <span className="font-semibold" style={{ color: t.textPrimary }}>R$ {(item.price * item.quantity).toFixed(2)}</span>
                 </div>
               ))}
+              {appliedCoupon && (
+                <>
+                  <div className="flex items-center justify-between text-xs pt-2" style={{ borderTop: `1px solid ${t.borderSubtle}` }}>
+                    <span style={{ color: t.textSecondary }}>Subtotal</span>
+                    <span style={{ color: t.textPrimary }}>R$ {subtotal.toFixed(2)}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="flex items-center gap-1" style={{ color: "hsl(140 60% 55%)" }}>
+                      <Tag className="w-3 h-3" /> Cupom {appliedCoupon.code}
+                      <span className="opacity-70">
+                        ({appliedCoupon.type === "percent" ? `${appliedCoupon.raw}%` : `R$ ${appliedCoupon.raw.toFixed(2)}`})
+                      </span>
+                    </span>
+                    <span className="font-semibold" style={{ color: "hsl(140 60% 55%)" }}>− R$ {discount.toFixed(2)}</span>
+                  </div>
+                </>
+              )}
               <div className="pt-2 flex items-center justify-between text-sm font-bold" style={{ borderTop: `1px solid ${t.borderSubtle}` }}>
                 <span style={{ color: t.textPrimary }}>Total</span>
                 <span style={{ color: t.accentPurple }}>R$ {total.toFixed(2)}</span>
               </div>
+            </div>
+
+            {/* Cupom */}
+            <div>
+              <label className={labelCls} style={{ color: t.textMuted }}>Cupom de desconto</label>
+              {appliedCoupon ? (
+                <div className="flex items-center justify-between gap-2 p-3 rounded-xl"
+                  style={{ background: "hsl(140 60% 45% / 0.1)", border: "1px solid hsl(140 60% 45% / 0.3)" }}>
+                  <div className="flex items-center gap-2 min-w-0">
+                    <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style={{ background: "hsl(140 60% 45% / 0.2)" }}>
+                      <Tag className="w-3.5 h-3.5" style={{ color: "hsl(140 60% 60%)" }} />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-xs font-bold truncate" style={{ color: "hsl(140 60% 70%)" }}>{appliedCoupon.code}</p>
+                      <p className="text-[10px] opacity-80" style={{ color: "hsl(140 60% 60%)" }}>
+                        Você economizou R$ {discount.toFixed(2)}
+                      </p>
+                    </div>
+                  </div>
+                  <button onClick={removeCoupon} className="text-[10px] font-semibold px-2 py-1 rounded-lg uppercase tracking-wider"
+                    style={{ background: "hsl(0 0% 100% / 0.06)", color: t.textMuted }}>
+                    Remover
+                  </button>
+                </div>
+              ) : (
+                <div className="flex gap-2">
+                  <input
+                    className={inputCls + " flex-1 uppercase"}
+                    style={{ background: t.inputBg, border: `1px solid ${t.inputBorder}`, color: t.textPrimary }}
+                    value={couponInput}
+                    onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
+                    onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); applyCoupon(); } }}
+                    placeholder="DIGITE O CÓDIGO"
+                    maxLength={32}
+                  />
+                  <button onClick={applyCoupon} disabled={validating || !couponInput.trim()}
+                    className="px-4 rounded-xl text-xs font-bold transition-all disabled:opacity-50 flex items-center gap-1.5"
+                    style={{ background: t.accentPurpleBg, color: t.accentPurple, border: `1px solid ${t.accentPurpleBorder}` }}>
+                    {validating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Tag className="w-3.5 h-3.5" />}
+                    Aplicar
+                  </button>
+                </div>
+              )}
             </div>
 
             <div>
