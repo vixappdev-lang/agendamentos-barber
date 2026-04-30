@@ -23,6 +23,7 @@ const DemoSite = lazy(() => import("./pages/DemoSite"));
 const BaixarSource = lazy(() => import("./pages/BaixarSource"));
 const MemberLogin = lazy(() => import("./pages/MemberLogin"));
 const MemberArea = lazy(() => import("./pages/MemberArea"));
+const NotificationsPage = lazy(() => import("./pages/NotificationsPage"));
 const Avaliacao = lazy(() => import("./pages/Avaliacao"));
 const AvaliarPedido = lazy(() => import("./pages/AvaliarPedido"));
 const TenantResolver = lazy(() => import("./components/TenantResolver"));
@@ -121,6 +122,7 @@ const App = () => (
                 </Route>
                 <Route element={<MemberRouteGuard />}>
                   <Route path="membro" element={<MemberArea />} />
+                  <Route path="membro/notificacoes" element={<NotificationsPage />} />
                 </Route>
                 <Route path="admin/login" element={<AdminLogin />} />
                 <Route path="admin" element={<AdminLayout />}>
@@ -161,6 +163,7 @@ const App = () => (
 
                 <Route element={<MemberRouteGuard />}>
                   <Route path="/membro" element={<MemberArea />} />
+                  <Route path="/membro/notificacoes" element={<NotificationsPage />} />
                 </Route>
 
                 <Route path="/baixar-source" element={<BaixarSource />} />

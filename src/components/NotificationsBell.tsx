@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Bell, Check, CheckCheck, Inbox } from "lucide-react";
+import { Bell, Check, CheckCheck, Inbox, ArrowRight } from "lucide-react";
+import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 
 interface Notification {
@@ -226,6 +227,15 @@ const NotificationsBell = ({ email, iconColor = "hsl(0 0% 70%)" }: Props) => {
                 </ul>
               )}
             </div>
+            <Link
+              to="/membro/notificacoes"
+              onClick={() => setOpen(false)}
+              className="flex items-center justify-center gap-1.5 py-2.5 text-[11px] font-semibold transition-colors hover:bg-white/5 border-t border-white/5"
+              style={{ color: "hsl(245 60% 70%)" }}
+            >
+              Ver todas as notificações
+              <ArrowRight className="w-3 h-3" />
+            </Link>
           </motion.div>
         )}
       </AnimatePresence>
