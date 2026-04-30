@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { z } from "zod";
 import { useThemeColors } from "@/hooks/useThemeColors";
 import { useDevToolsBlock } from "@/hooks/useDevToolsBlock";
+import { useBookingRules } from "@/hooks/useBookingRules";
 import { supabase } from "@/integrations/supabase/client";
 import {
   MOCK_CATEGORIES, MOCK_BARBERS, MOCK_TIMES,
@@ -38,9 +39,15 @@ const AgendaDireto = () => {
   const t = useThemeColors();
   useDevToolsBlock();
   const navigate = useNavigate();
+  const rules = useBookingRules();
   const [activeCat, setActiveCat] = useState(MOCK_CATEGORIES[0].id);
   const [search, setSearch] = useState("");
   const [step, setStep] = useState<Step>("list");
+
+  // Dados reais
+  const [realBarbers, setRealBarbers] = useState<Array<{ id: string; name: string; specialty: string | null; avatar_url: string | null }>>([]);
+  const [realServices, setRealServices] = useState<Array<{ id: string; title: string; subtitle: string | null; price: number; duration: string; image_url: string | null; category: string | null }>>([]);
+  const [latePolicy, setLatePolicy] = useState("");
 
   const [service, setService] = useState<MockService | null>(null);
   const [barber, setBarber] = useState<MockBarber | null>(null);
@@ -72,7 +79,52 @@ const AgendaDireto = () => {
     });
   }, []);
 
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        setSignedUserId(session.user.id);
+        const meta = session.user.user_metadata as { full_name?: string; phone?: string };
+        if (meta?.full_name) setName(meta.full_name);
+        if (meta?.phone) setPhone(formatPhone(meta.phone));
+      }
+    });
+  }, []);
+
+  // Fetch profissionais e serviços reais
+  useEffect(() => {
+    (async () => {
+      const [bRes, sRes, settingsRes] = await Promise.all([
+        supabase.from("barbers").select("id,name,specialty,avatar_url").eq("active", true).order("sort_order"),
+        supabase.from("services").select("id,title,subtitle,price,duration,image_url,category").eq("active", true).order("sort_order"),
+        supabase.from("business_settings").select("value").eq("key", "late_policy").maybeSingle(),
+      ]);
+      if (bRes.data) setRealBarbers(bRes.data as any);
+      if (sRes.data) setRealServices(sRes.data.map((s: any) => ({ ...s, price: Number(s.price) })));
+      if (settingsRes.data?.value) setLatePolicy(settingsRes.data.value);
+    })();
+  }, []);
+
   const filteredServices = useMemo(() => {
+    // Se há serviços reais, usa-os agrupando por category
+    if (realServices.length > 0) {
+      const cat = MOCK_CATEGORIES.find((c) => c.id === activeCat);
+      const catKey = cat?.id || "geral";
+      const matched = realServices.filter((s) => (s.category || "geral") === catKey || activeCat === "todos");
+      const list = matched.length > 0 ? matched : realServices;
+      const q = search.trim().toLowerCase();
+      const final = !q ? list : list.filter((s) =>
+        s.title.toLowerCase().includes(q) || (s.subtitle || "").toLowerCase().includes(q)
+      );
+      return final.map((s) => ({
+        id: s.id,
+        title: s.title,
+        subtitle: s.subtitle || "",
+        price: s.price,
+        duration: s.duration,
+        image: s.image_url || "/placeholder.svg",
+        amenities: undefined as string[] | undefined,
+      })) as MockService[];
+    }
     const cat = MOCK_CATEGORIES.find((c) => c.id === activeCat);
     if (!cat) return [];
     if (!search.trim()) return cat.services;
@@ -80,12 +132,17 @@ const AgendaDireto = () => {
     return cat.services.filter(
       (s) => s.title.toLowerCase().includes(q) || s.subtitle.toLowerCase().includes(q)
     );
-  }, [activeCat, search]);
+  }, [activeCat, search, realServices]);
 
+  // Datas vindas do hook centralizado (respeita admin)
   const dates = useMemo(() => {
+    if (rules.dates.length > 0) {
+      return rules.dates.map((d) => ({ iso: d.iso, day: d.day, weekday: d.weekday, month: d.month }));
+    }
+    // Fallback enquanto carrega
     const out: { iso: string; day: string; weekday: string; month: string }[] = [];
     const now = new Date();
-    for (let i = 0; i < 14; i++) {
+    for (let i = 0; i < 7; i++) {
       const d = new Date(now);
       d.setDate(d.getDate() + i);
       out.push({
@@ -96,7 +153,14 @@ const AgendaDireto = () => {
       });
     }
     return out;
-  }, []);
+  }, [rules.dates]);
+
+  // Horários do dia escolhido
+  const availableTimes = useMemo(() => {
+    if (!date) return [] as string[];
+    const list = rules.getTimesFor(date, barber?.name || null);
+    return list.length > 0 ? list : [];
+  }, [date, barber, rules]);
 
   const reset = () => {
     setStep("list");
@@ -229,11 +293,45 @@ _Equipe Styllus_`;
   };
 
   const confirmBooking = async () => {
+    if (!service || !barber || !date || !time) {
+      toast.error("Dados incompletos");
+      return;
+    }
     setConfirming(true);
-    await sendWhatsAppConfirmation();
-    setConfirming(false);
-    setSuccessOpen(true);
-    setStep("done");
+    try {
+      // Verifica conflito em tempo real antes de inserir
+      if (rules.isSlotBlocked(date, time, barber.name)) {
+        toast.error("Horário acabou de ser ocupado. Escolha outro.");
+        setStep("datetime");
+        return;
+      }
+
+      // INSERT real (apenas se for serviço real do banco — UUID válido)
+      const isRealService = realServices.some((s) => s.id === service.id);
+      if (isRealService) {
+        const { error } = await supabase.from("appointments").insert({
+          customer_name: name.trim() || "Cliente",
+          customer_phone: onlyDigits(phone),
+          customer_email: signedUserId ? phoneToEmail(phone) : phoneToEmail(phone),
+          service_id: service.id,
+          barber_name: barber.name,
+          appointment_date: date,
+          appointment_time: time,
+          total_price: service.price,
+          status: rules.defaultStatus,
+        });
+        if (error) {
+          toast.error("Erro ao salvar: " + error.message);
+          return;
+        }
+      }
+
+      await sendWhatsAppConfirmation();
+      setSuccessOpen(true);
+      setStep("done");
+    } finally {
+      setConfirming(false);
+    }
   };
 
   const stepTitles: Record<Step, string> = {
@@ -429,7 +527,18 @@ _Equipe Styllus_`;
               <h2 className="text-[10px] uppercase tracking-[0.3em] opacity-50 font-bold mt-7 mb-3">
                 Profissionais
               </h2>
-              {MOCK_BARBERS.map((b, i) => {
+              {(realBarbers.length > 0
+                ? realBarbers.map((rb, idx) => ({
+                    id: rb.id,
+                    name: rb.name,
+                    specialty: rb.specialty || "Profissional",
+                    rating: 5,
+                    accent: ["hsl(220 80% 60%)", "hsl(280 70% 60%)", "hsl(150 60% 50%)", "hsl(30 90% 60%)"][idx % 4],
+                    initials: rb.name.split(" ").map((n) => n[0]).slice(0, 2).join("").toUpperCase(),
+                    avatar_url: rb.avatar_url,
+                  } as MockBarber & { avatar_url: string | null }))
+                : MOCK_BARBERS.map((b) => ({ ...b, avatar_url: null as string | null }))
+              ).map((b, i) => {
                 const active = barber?.id === b.id;
                 return (
                   <motion.button
@@ -441,14 +550,22 @@ _Equipe Styllus_`;
                     className="w-full flex items-center gap-3 p-3.5 rounded-2xl text-left transition-all hover:translate-y-[-1px]"
                     style={active ? glassCardActive : glassCard}
                   >
-                    <div
-                      className="w-12 h-12 rounded-full flex items-center justify-center font-bold text-[14px] flex-shrink-0 text-white"
-                      style={{
-                        background: `linear-gradient(135deg, ${b.accent}, ${b.accent.replace(/(\d+)%\)$/, (m, l) => `${Math.max(0, parseInt(l) - 15)}%)`)})`,
-                      }}
-                    >
-                      {b.initials}
-                    </div>
+                    {b.avatar_url ? (
+                      <img
+                        src={b.avatar_url}
+                        alt={b.name}
+                        className="w-12 h-12 rounded-full object-cover flex-shrink-0"
+                      />
+                    ) : (
+                      <div
+                        className="w-12 h-12 rounded-full flex items-center justify-center font-bold text-[14px] flex-shrink-0 text-white"
+                        style={{
+                          background: `linear-gradient(135deg, ${b.accent}, ${b.accent.replace(/(\d+)%\)$/, (m, l) => `${Math.max(0, parseInt(l) - 15)}%)`)})`,
+                        }}
+                      >
+                        {b.initials}
+                      </div>
+                    )}
                     <div className="flex-1 min-w-0">
                       <p className="font-semibold text-[14px] truncate">{b.name}</p>
                       <p className="text-[12px] opacity-60 truncate">{b.specialty}</p>
@@ -504,13 +621,16 @@ _Equipe Styllus_`;
                 Horário
               </h2>
               <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
-                {MOCK_TIMES.map((tm) => {
+                {(availableTimes.length > 0 ? availableTimes : MOCK_TIMES).map((tm) => {
                   const active = tm === time;
+                  const blocked = date ? rules.isSlotBlocked(date, tm, barber?.name || null) : false;
                   return (
                     <button
                       key={tm}
-                      onClick={() => setTime(tm)}
-                      className="h-11 rounded-xl text-[13px] font-semibold transition-all hover:translate-y-[-1px]"
+                      onClick={() => !blocked && setTime(tm)}
+                      disabled={blocked}
+                      title={blocked ? "Indisponível" : tm}
+                      className="h-11 rounded-xl text-[13px] font-semibold transition-all hover:translate-y-[-1px] disabled:opacity-30 disabled:cursor-not-allowed disabled:line-through"
                       style={
                         active
                           ? { background: t.textPrimary, color: t.pageBg, border: `1px solid ${t.textPrimary}` }
@@ -521,6 +641,11 @@ _Equipe Styllus_`;
                     </button>
                   );
                 })}
+                {date && availableTimes.length === 0 && !rules.loading && (
+                  <p className="col-span-full text-center text-[12px] opacity-60 py-4">
+                    Nenhum horário disponível neste dia.
+                  </p>
+                )}
               </div>
             </motion.div>
           )}
@@ -658,7 +783,30 @@ _Equipe Styllus_`;
                 </>
               )}
 
-              <p className="text-[11px] opacity-50 mt-6 text-center">
+              {/* Aviso pré-confirmação */}
+              <div
+                className="mt-5 rounded-2xl p-4 flex items-start gap-3"
+                style={{
+                  ...glassCard,
+                  borderColor: isLight ? "hsl(38 90% 60% / 0.4)" : "hsl(38 90% 60% / 0.25)",
+                }}
+              >
+                <div
+                  className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+                  style={{ background: "hsl(38 90% 60% / 0.15)" }}
+                >
+                  <Clock className="w-4 h-4" style={{ color: "hsl(38 90% 50%)" }} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[12.5px] font-bold leading-tight">Antes de confirmar</p>
+                  <p className="text-[11.5px] opacity-70 leading-snug mt-1">
+                    {latePolicy ||
+                      "Chegue 5 minutos antes do horário marcado. Atrasos superiores a 15 minutos podem implicar remarcação ou cancelamento do atendimento."}
+                  </p>
+                </div>
+              </div>
+
+              <p className="text-[11px] opacity-50 mt-4 text-center">
                 Ao confirmar você receberá uma mensagem no WhatsApp com os detalhes.
               </p>
             </motion.div>
