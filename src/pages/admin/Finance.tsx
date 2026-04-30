@@ -231,6 +231,18 @@ const Finance = () => {
           >
             <Download className="w-3.5 h-3.5" /> CSV
           </button>
+          <button
+            onClick={exportPDF}
+            disabled={loading}
+            className="px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all disabled:opacity-40"
+            style={{
+              background: "hsl(0 80% 60% / 0.15)",
+              color: "hsl(0 80% 70%)",
+              border: "1px solid hsl(0 80% 60% / 0.3)",
+            }}
+          >
+            <FileText className="w-3.5 h-3.5" /> PDF Mensal
+          </button>
         </div>
       </div>
 
