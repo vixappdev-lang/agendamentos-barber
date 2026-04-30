@@ -101,11 +101,11 @@ const AgendaDireto = () => {
   const progress = ["list", "barber", "datetime", "info", "confirm"].indexOf(step) + 1;
 
   return (
-    <div className="min-h-screen w-full" style={{ background: t.bg, color: t.textPrimary }}>
+    <div className="min-h-screen w-full" style={{ background: t.pageBg, color: t.textPrimary }}>
       {/* Topbar */}
       <header
         className="sticky top-0 z-40 backdrop-blur-xl border-b"
-        style={{ background: `${t.bg}cc`, borderColor: t.borderSubtle }}
+        style={{ background: `${t.pageBg}cc`, borderColor: t.borderSubtle }}
       >
         <div className="w-full max-w-[1100px] mx-auto px-4 sm:px-6 h-14 flex items-center gap-3">
           <button
@@ -173,7 +173,7 @@ const AgendaDireto = () => {
                       className="flex items-center gap-2 px-4 h-10 rounded-full text-sm whitespace-nowrap transition-all"
                       style={{
                         background: active ? t.textPrimary : t.cardBgSubtle,
-                        color: active ? t.bg : t.textPrimary,
+                        color: active ? t.pageBg : t.textPrimary,
                         border: `1px solid ${active ? t.textPrimary : t.borderSubtle}`,
                         fontWeight: active ? 600 : 500,
                       }}
@@ -267,7 +267,7 @@ const AgendaDireto = () => {
                         className="w-6 h-6 rounded-full flex items-center justify-center"
                         style={{ background: t.textPrimary }}
                       >
-                        <Check className="w-3.5 h-3.5" style={{ color: t.bg }} />
+                        <Check className="w-3.5 h-3.5" style={{ color: t.pageBg }} />
                       </div>
                     )}
                   </motion.button>
@@ -297,7 +297,7 @@ const AgendaDireto = () => {
                       className="flex flex-col items-center justify-center min-w-[64px] h-20 rounded-2xl transition-all"
                       style={{
                         background: active ? t.textPrimary : t.cardBg,
-                        color: active ? t.bg : t.textPrimary,
+                        color: active ? t.pageBg : t.textPrimary,
                         border: `1px solid ${active ? t.textPrimary : t.borderSubtle}`,
                       }}
                     >
@@ -320,7 +320,7 @@ const AgendaDireto = () => {
                       className="h-11 rounded-xl text-sm font-semibold transition-all"
                       style={{
                         background: active ? t.textPrimary : t.cardBg,
-                        color: active ? t.bg : t.textPrimary,
+                        color: active ? t.pageBg : t.textPrimary,
                         border: `1px solid ${active ? t.textPrimary : t.borderSubtle}`,
                       }}
                     >
@@ -419,7 +419,7 @@ const AgendaDireto = () => {
                 className="w-20 h-20 rounded-full flex items-center justify-center mb-6"
                 style={{ background: t.textPrimary }}
               >
-                <Check className="w-10 h-10" style={{ color: t.bg }} />
+                <Check className="w-10 h-10" style={{ color: t.pageBg }} />
               </motion.div>
               <h2 className="text-2xl font-black mb-2">Tudo certo!</h2>
               <p className="text-sm opacity-70 max-w-xs">
@@ -428,7 +428,7 @@ const AgendaDireto = () => {
               <button
                 onClick={reset}
                 className="mt-8 px-6 h-11 rounded-full font-semibold text-sm"
-                style={{ background: t.textPrimary, color: t.bg }}
+                style={{ background: t.textPrimary, color: t.pageBg }}
               >
                 Novo agendamento
               </button>
@@ -441,7 +441,7 @@ const AgendaDireto = () => {
       {step !== "list" && step !== "done" && (
         <div
           className="fixed bottom-0 left-0 right-0 z-40 px-4 py-4 backdrop-blur-xl border-t"
-          style={{ background: `${t.bg}e6`, borderColor: t.borderSubtle }}
+          style={{ background: `${t.pageBg}e6`, borderColor: t.borderSubtle }}
         >
           <div className="max-w-[1100px] mx-auto flex items-center gap-3">
             <button
@@ -454,7 +454,7 @@ const AgendaDireto = () => {
             <button
               onClick={step === "confirm" ? confirmBooking : goNext}
               className="flex-1 h-12 rounded-full font-bold text-sm flex items-center justify-center gap-2"
-              style={{ background: t.textPrimary, color: t.bg }}
+              style={{ background: t.textPrimary, color: t.pageBg }}
             >
               {step === "confirm" ? "Confirmar agendamento" : "Continuar"}
               <ArrowRight className="w-4 h-4" />
