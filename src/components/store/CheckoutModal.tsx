@@ -1,8 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Package, Truck, Store, QrCode, Copy, Check } from "lucide-react";
+import { X, Truck, Store, QrCode, Copy, Check, Banknote } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 import { useThemeColors } from "@/hooks/useThemeColors";
 
 interface CartItem {
@@ -21,17 +22,25 @@ interface CheckoutModalProps {
   whatsappNumber: string;
   pixKey: string;
   pixType: string;
+  prefill?: { name?: string; phone?: string; email?: string };
 }
 
 type DeliveryMode = "delivery" | "pickup";
+type PaymentMethod = "pix" | "delivery";
 type Step = "info" | "payment" | "confirmed";
 
-const CheckoutModal = ({ items, onClose, onSuccess, mode, whatsappNumber, pixKey, pixType }: CheckoutModalProps) => {
+const CheckoutModal = ({
+  items, onClose, onSuccess, mode, whatsappNumber, pixKey, pixType, prefill,
+}: CheckoutModalProps) => {
   const t = useThemeColors();
+  const navigate = useNavigate();
   const [step, setStep] = useState<Step>("info");
   const [deliveryMode, setDeliveryMode] = useState<DeliveryMode>("pickup");
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("pix");
   const [form, setForm] = useState({
-    name: "", phone: "", email: "",
+    name: prefill?.name || "",
+    phone: prefill?.phone || "",
+    email: prefill?.email || "",
     address: "", number: "", complement: "", neighborhood: "", city: "",
     notes: "",
   });
@@ -40,24 +49,26 @@ const CheckoutModal = ({ items, onClose, onSuccess, mode, whatsappNumber, pixKey
 
   const total = items.reduce((s, i) => s + i.price * i.quantity, 0);
 
+  const goToOrders = () => {
+    onSuccess();
+    setTimeout(() => navigate("/membro?tab=orders"), 200);
+  };
+
   const handleSubmit = async () => {
-    if (!form.name || !form.phone) {
-      toast.error("Preencha nome e telefone");
-      return;
-    }
+    if (!form.name || !form.phone) return toast.error("Preencha nome e telefone");
     if (deliveryMode === "delivery" && (!form.address || !form.neighborhood)) {
-      toast.error("Preencha o endereço completo");
-      return;
+      return toast.error("Preencha o endereço completo");
     }
 
     if (mode === "whatsapp") {
-      const itemsText = items.map(i => `• ${i.quantity}x ${i.title} - R$ ${(i.price * i.quantity).toFixed(2)}`).join("\n");
+      const itemsText = items.map((i) => `• ${i.quantity}x ${i.title} - R$ ${(i.price * i.quantity).toFixed(2)}`).join("\n");
       const deliveryText = deliveryMode === "delivery"
-        ? `\n📍 *Endereço:* ${form.address}, ${form.number} ${form.complement ? `- ${form.complement}` : ""}\n🏘️ *Bairro:* ${form.neighborhood}\n🏙️ *Cidade:* ${form.city}`
-        : "\n🏪 *Retirada no local*";
-      const msg = `🛒 *Novo Pedido*\n\n👤 *Nome:* ${form.name}\n📱 *Telefone:* ${form.phone}\n\n📦 *Itens:*\n${itemsText}\n\n💰 *Total:* R$ ${total.toFixed(2)}${deliveryText}\n\n📝 *Obs:* ${form.notes || "Nenhuma"}`;
+        ? `\n📍 ${form.address}, ${form.number}\n🏘️ ${form.neighborhood} — ${form.city}`
+        : "\n🏪 Retirada no local";
+      const payText = paymentMethod === "pix" ? "PIX" : "Na entrega";
+      const msg = `🛒 *Novo Pedido*\n\n👤 ${form.name}\n📱 ${form.phone}\n\n📦 *Itens:*\n${itemsText}\n\n💰 *Total:* R$ ${total.toFixed(2)}\n💳 *Pagamento:* ${payText}${deliveryText}\n\n📝 ${form.notes || "—"}`;
       window.open(`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(msg)}`, "_blank");
-      onSuccess();
+      goToOrders();
       return;
     }
 
@@ -75,6 +86,7 @@ const CheckoutModal = ({ items, onClose, onSuccess, mode, whatsappNumber, pixKey
       notes: form.notes || null,
       total_price: total,
       status: "pending",
+      payment_method: paymentMethod,
     }).select("id").single();
 
     if (error || !order) {
@@ -83,17 +95,21 @@ const CheckoutModal = ({ items, onClose, onSuccess, mode, whatsappNumber, pixKey
       return;
     }
 
-    const orderItems = items.map(i => ({
+    await supabase.from("order_items").insert(items.map((i) => ({
       order_id: order.id,
       product_id: i.id,
       product_title: i.title,
       product_price: i.price,
       quantity: i.quantity,
-    }));
-
-    await supabase.from("order_items").insert(orderItems);
+    })));
     setSubmitting(false);
-    setStep("payment");
+
+    if (paymentMethod === "delivery") {
+      setStep("confirmed");
+      setTimeout(goToOrders, 1500);
+    } else {
+      setStep("payment");
+    }
   };
 
   const handleCopyPix = () => {
@@ -105,20 +121,23 @@ const CheckoutModal = ({ items, onClose, onSuccess, mode, whatsappNumber, pixKey
 
   const handleConfirmPayment = () => {
     setStep("confirmed");
-    toast.success("Pedido realizado com sucesso! 🎉");
-    setTimeout(() => onSuccess(), 2000);
+    toast.success("Pedido realizado! 🎉");
+    setTimeout(goToOrders, 1500);
   };
+
+  const labelCls = "text-[10px] font-semibold uppercase tracking-wider mb-1 block";
+  const inputCls = "w-full rounded-xl px-4 py-3 text-sm outline-none transition-all";
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
       className="fixed inset-0 z-[80] flex items-center justify-center p-4"
       style={{ background: t.overlayBg, backdropFilter: "blur(12px)" }}
       onClick={onClose}>
-      <motion.div initial={{ scale: 0.9, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.9, opacity: 0 }}
-        className="w-full max-w-md p-5 space-y-4 max-h-[90vh] overflow-y-auto scrollbar-hide rounded-2xl"
-        style={{ background: t.modalCardBg, border: `1px solid ${t.border}`, boxShadow: t.cardShadowLg, backdropFilter: t.isLight ? 'none' : 'blur(28px)' }}
+      <motion.div initial={{ scale: 0.94, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.94, opacity: 0 }}
+        className="w-full max-w-md p-5 space-y-4 max-h-[92vh] overflow-y-auto scrollbar-hide rounded-2xl"
+        style={{ background: t.modalCardBg, border: `1px solid ${t.border}`, boxShadow: t.cardShadowLg }}
         onClick={(e) => e.stopPropagation()}>
-        
+
         <div className="flex items-center justify-between">
           <h2 className="text-base font-bold" style={{ color: t.textPrimary }}>
             {step === "info" ? "Finalizar Pedido" : step === "payment" ? "Pagamento PIX" : "Pedido Confirmado!"}
@@ -143,22 +162,22 @@ const CheckoutModal = ({ items, onClose, onSuccess, mode, whatsappNumber, pixKey
             </div>
 
             <div>
-              <label className="text-[10px] font-semibold uppercase tracking-wider mb-1 block" style={{ color: t.textMuted }}>Nome *</label>
-              <input className="w-full rounded-xl px-4 py-3 text-sm outline-none transition-all" style={{ background: t.inputBg, border: `1px solid ${t.inputBorder}`, color: t.textPrimary }} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Seu nome completo" />
+              <label className={labelCls} style={{ color: t.textMuted }}>Nome *</label>
+              <input className={inputCls} style={{ background: t.inputBg, border: `1px solid ${t.inputBorder}`, color: t.textPrimary }} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-[10px] font-semibold uppercase tracking-wider mb-1 block" style={{ color: t.textMuted }}>Telefone *</label>
-                <input className="w-full rounded-xl px-4 py-3 text-sm outline-none transition-all" style={{ background: t.inputBg, border: `1px solid ${t.inputBorder}`, color: t.textPrimary }} value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="(11) 99999-9999" />
+                <label className={labelCls} style={{ color: t.textMuted }}>Telefone *</label>
+                <input className={inputCls} style={{ background: t.inputBg, border: `1px solid ${t.inputBorder}`, color: t.textPrimary }} value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="(11) 99999-9999" />
               </div>
               <div>
-                <label className="text-[10px] font-semibold uppercase tracking-wider mb-1 block" style={{ color: t.textMuted }}>Email</label>
-                <input className="w-full rounded-xl px-4 py-3 text-sm outline-none transition-all" style={{ background: t.inputBg, border: `1px solid ${t.inputBorder}`, color: t.textPrimary }} value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="email@email.com" />
+                <label className={labelCls} style={{ color: t.textMuted }}>Email</label>
+                <input className={inputCls} style={{ background: t.inputBg, border: `1px solid ${t.inputBorder}`, color: t.textPrimary }} value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="email@email.com" />
               </div>
             </div>
 
             <div>
-              <label className="text-[10px] font-semibold uppercase tracking-wider mb-2 block" style={{ color: t.textMuted }}>Recebimento</label>
+              <label className={labelCls + " mb-2"} style={{ color: t.textMuted }}>Recebimento</label>
               <div className="grid grid-cols-2 gap-2">
                 {([
                   { id: "pickup" as DeliveryMode, label: "Retirar no local", icon: Store },
@@ -171,8 +190,27 @@ const CheckoutModal = ({ items, onClose, onSuccess, mode, whatsappNumber, pixKey
                       border: `1.5px solid ${deliveryMode === opt.id ? t.accentPurpleBorder : t.borderSubtle}`,
                       color: deliveryMode === opt.id ? t.accentPurple : t.textMuted,
                     }}>
-                    <opt.icon className="w-4 h-4" />
-                    {opt.label}
+                    <opt.icon className="w-4 h-4" /> {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <label className={labelCls + " mb-2"} style={{ color: t.textMuted }}>Pagamento *</label>
+              <div className="grid grid-cols-2 gap-2">
+                {([
+                  { id: "pix" as PaymentMethod, label: "PIX", icon: QrCode },
+                  { id: "delivery" as PaymentMethod, label: "Na entrega", icon: Banknote },
+                ] as const).map((opt) => (
+                  <button key={opt.id} onClick={() => setPaymentMethod(opt.id)}
+                    className="flex items-center gap-2 p-3 rounded-xl text-xs font-semibold transition-all"
+                    style={{
+                      background: paymentMethod === opt.id ? t.accentPurpleBg : t.cardBgSubtle,
+                      border: `1.5px solid ${paymentMethod === opt.id ? t.accentPurpleBorder : t.borderSubtle}`,
+                      color: paymentMethod === opt.id ? t.accentPurple : t.textMuted,
+                    }}>
+                    <opt.icon className="w-4 h-4" /> {opt.label}
                   </button>
                 ))}
               </div>
@@ -180,30 +218,29 @@ const CheckoutModal = ({ items, onClose, onSuccess, mode, whatsappNumber, pixKey
 
             <AnimatePresence>
               {deliveryMode === "delivery" && (
-                <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }}
-                  className="space-y-3 overflow-hidden">
+                <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="space-y-3 overflow-hidden">
                   <div>
-                    <label className="text-[10px] font-semibold uppercase tracking-wider mb-1 block" style={{ color: t.textMuted }}>Endereço *</label>
-                    <input className="w-full rounded-xl px-4 py-3 text-sm outline-none transition-all" style={{ background: t.inputBg, border: `1px solid ${t.inputBorder}`, color: t.textPrimary }} value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} placeholder="Rua, Avenida..." />
+                    <label className={labelCls} style={{ color: t.textMuted }}>Endereço *</label>
+                    <input className={inputCls} style={{ background: t.inputBg, border: `1px solid ${t.inputBorder}`, color: t.textPrimary }} value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} placeholder="Rua, Avenida..." />
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="text-[10px] font-semibold uppercase tracking-wider mb-1 block" style={{ color: t.textMuted }}>Número</label>
-                      <input className="w-full rounded-xl px-4 py-3 text-sm outline-none transition-all" style={{ background: t.inputBg, border: `1px solid ${t.inputBorder}`, color: t.textPrimary }} value={form.number} onChange={(e) => setForm({ ...form, number: e.target.value })} placeholder="123" />
+                      <label className={labelCls} style={{ color: t.textMuted }}>Número</label>
+                      <input className={inputCls} style={{ background: t.inputBg, border: `1px solid ${t.inputBorder}`, color: t.textPrimary }} value={form.number} onChange={(e) => setForm({ ...form, number: e.target.value })} />
                     </div>
                     <div>
-                      <label className="text-[10px] font-semibold uppercase tracking-wider mb-1 block" style={{ color: t.textMuted }}>Complemento</label>
-                      <input className="w-full rounded-xl px-4 py-3 text-sm outline-none transition-all" style={{ background: t.inputBg, border: `1px solid ${t.inputBorder}`, color: t.textPrimary }} value={form.complement} onChange={(e) => setForm({ ...form, complement: e.target.value })} placeholder="Apto, Bloco..." />
+                      <label className={labelCls} style={{ color: t.textMuted }}>Complemento</label>
+                      <input className={inputCls} style={{ background: t.inputBg, border: `1px solid ${t.inputBorder}`, color: t.textPrimary }} value={form.complement} onChange={(e) => setForm({ ...form, complement: e.target.value })} />
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="text-[10px] font-semibold uppercase tracking-wider mb-1 block" style={{ color: t.textMuted }}>Bairro *</label>
-                      <input className="w-full rounded-xl px-4 py-3 text-sm outline-none transition-all" style={{ background: t.inputBg, border: `1px solid ${t.inputBorder}`, color: t.textPrimary }} value={form.neighborhood} onChange={(e) => setForm({ ...form, neighborhood: e.target.value })} placeholder="Centro" />
+                      <label className={labelCls} style={{ color: t.textMuted }}>Bairro *</label>
+                      <input className={inputCls} style={{ background: t.inputBg, border: `1px solid ${t.inputBorder}`, color: t.textPrimary }} value={form.neighborhood} onChange={(e) => setForm({ ...form, neighborhood: e.target.value })} />
                     </div>
                     <div>
-                      <label className="text-[10px] font-semibold uppercase tracking-wider mb-1 block" style={{ color: t.textMuted }}>Cidade</label>
-                      <input className="w-full rounded-xl px-4 py-3 text-sm outline-none transition-all" style={{ background: t.inputBg, border: `1px solid ${t.inputBorder}`, color: t.textPrimary }} value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} placeholder="São Paulo" />
+                      <label className={labelCls} style={{ color: t.textMuted }}>Cidade</label>
+                      <input className={inputCls} style={{ background: t.inputBg, border: `1px solid ${t.inputBorder}`, color: t.textPrimary }} value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} />
                     </div>
                   </div>
                 </motion.div>
@@ -211,16 +248,14 @@ const CheckoutModal = ({ items, onClose, onSuccess, mode, whatsappNumber, pixKey
             </AnimatePresence>
 
             <div>
-              <label className="text-[10px] font-semibold uppercase tracking-wider mb-1 block" style={{ color: t.textMuted }}>Observações</label>
-              <textarea className="w-full rounded-xl px-4 py-3 text-sm resize-none outline-none transition-all" rows={2} style={{ background: t.inputBg, border: `1px solid ${t.inputBorder}`, color: t.textPrimary }} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} placeholder="Alguma observação..." />
+              <label className={labelCls} style={{ color: t.textMuted }}>Observações</label>
+              <textarea className={inputCls + " resize-none"} rows={2} style={{ background: t.inputBg, border: `1px solid ${t.inputBorder}`, color: t.textPrimary }} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
             </div>
 
             <button onClick={handleSubmit} disabled={submitting}
               className="w-full py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all disabled:opacity-50"
               style={{ background: t.btnBg, color: t.btnColor }}>
-              {submitting ? (
-                <><div className="w-4 h-4 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: t.btnColor, borderTopColor: "transparent" }} /> Enviando...</>
-              ) : mode === "whatsapp" ? "📱 Enviar pelo WhatsApp" : "Confirmar Pedido"}
+              {submitting ? "Enviando..." : mode === "whatsapp" ? "Enviar pelo WhatsApp" : "Confirmar Pedido"}
             </button>
           </div>
         )}
@@ -234,7 +269,7 @@ const CheckoutModal = ({ items, onClose, onSuccess, mode, whatsappNumber, pixKey
               <p className="text-sm mb-1" style={{ color: t.textMuted }}>Valor a pagar:</p>
               <p className="text-2xl font-bold" style={{ color: t.accentPurple }}>R$ {total.toFixed(2)}</p>
             </div>
-            <div className="p-3 rounded-xl" style={{ background: t.cardBgSubtle, border: `1px solid ${t.borderSubtle}` }}>
+            <div className="p-3 rounded-xl text-left" style={{ background: t.cardBgSubtle, border: `1px solid ${t.borderSubtle}` }}>
               <p className="text-[10px] uppercase tracking-wider mb-1" style={{ color: t.textMuted }}>Chave PIX ({pixType})</p>
               <div className="flex items-center gap-2">
                 <p className="text-sm font-mono flex-1 truncate" style={{ color: t.textPrimary }}>{pixKey || "Não configurada"}</p>
@@ -245,11 +280,10 @@ const CheckoutModal = ({ items, onClose, onSuccess, mode, whatsappNumber, pixKey
                 )}
               </div>
             </div>
-            <p className="text-[11px]" style={{ color: t.textMuted }}>Após realizar o pagamento, clique em confirmar abaixo.</p>
             <button onClick={handleConfirmPayment}
               className="w-full py-3 rounded-xl font-bold text-sm transition-all"
               style={{ background: "hsl(140 60% 45%)", color: "white" }}>
-              ✅ Já paguei!
+              ✅ Já paguei
             </button>
           </div>
         )}
@@ -258,10 +292,7 @@ const CheckoutModal = ({ items, onClose, onSuccess, mode, whatsappNumber, pixKey
           <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="text-center space-y-3 py-4">
             <div className="text-5xl">🎉</div>
             <h3 className="text-lg font-bold" style={{ color: t.textPrimary }}>Pedido Realizado!</h3>
-            <p className="text-sm" style={{ color: t.textMuted }}>Seu pedido foi recebido e está sendo processado.</p>
-            <div className="p-3 rounded-xl" style={{ background: t.accentPurpleBg, border: `1px solid ${t.accentPurpleBorder}` }}>
-              <p className="text-xs" style={{ color: t.accentPurple }}>Status: Pendente</p>
-            </div>
+            <p className="text-sm" style={{ color: t.textMuted }}>Acompanhe na área do cliente.</p>
           </motion.div>
         )}
       </motion.div>

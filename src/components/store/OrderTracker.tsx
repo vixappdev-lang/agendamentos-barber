@@ -32,20 +32,31 @@ const STATUSES = [
 interface OrderTrackerProps {
   onClose: () => void;
   customerPhone: string;
+  customerEmail?: string;
 }
 
-const OrderTracker = ({ onClose, customerPhone }: OrderTrackerProps) => {
+const OrderTracker = ({ onClose, customerPhone, customerEmail }: OrderTrackerProps) => {
   const t = useThemeColors();
   const [orders, setOrders] = useState<Order[]>([]);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [items, setItems] = useState<OrderItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [phone, setPhone] = useState(customerPhone);
-  const [searched, setSearched] = useState(!!customerPhone);
+  const [searched, setSearched] = useState(!!customerPhone || !!customerEmail);
 
   useEffect(() => {
-    if (customerPhone) searchOrders(customerPhone);
-  }, [customerPhone]);
+    if (customerEmail) searchByEmail(customerEmail);
+    else if (customerPhone) searchOrders(customerPhone);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [customerEmail, customerPhone]);
+
+  const searchByEmail = async (email: string) => {
+    setLoading(true);
+    setSearched(true);
+    const { data } = await supabase.from("orders").select("*").eq("customer_email", email).order("created_at", { ascending: false }).limit(20);
+    setOrders((data as Order[]) || []);
+    setLoading(false);
+  };
 
   useEffect(() => {
     const channel = supabase.channel("order-tracker")
