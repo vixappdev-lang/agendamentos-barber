@@ -933,27 +933,7 @@ const VilaNova = () => {
         selColor={selColor}
       />
 
-      {/* ─── LIGHTBOX ─── */}
-      <AnimatePresence>
-        {lightboxIndex !== null && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4"
-            style={{ background: "hsl(0 0% 0% / 0.92)", backdropFilter: "blur(20px)" }}
-            onClick={() => setLightboxIndex(null)}>
-            <button className="absolute top-5 right-5 p-2.5 rounded-xl" style={{ background: "hsl(0 0% 100% / 0.1)" }} onClick={() => setLightboxIndex(null)}>
-              <X className="w-5 h-5" />
-            </button>
-            <div className="absolute bottom-5 left-1/2 -translate-x-1/2 flex gap-2">
-              {galleryImages.map((_, i) => (
-                <button key={i} onClick={(e) => { e.stopPropagation(); setLightboxIndex(i); }}
-                  className="w-2 h-2 rounded-full transition-all"
-                  style={{ background: i === lightboxIndex ? "hsl(0 0% 90%)" : "hsl(0 0% 100% / 0.2)" }} />
-              ))}
-            </div>
-            <img src={galleryImages[lightboxIndex]} alt="" className="max-w-full max-h-[85vh] rounded-2xl object-contain" onClick={(e) => e.stopPropagation()} />
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* Lightbox now rendered inside dynamic gallery block above */}
 
       {/* ─── BOOKING MODAL ─── */}
       <AnimatePresence>
