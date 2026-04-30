@@ -610,8 +610,8 @@ const VilaNova = () => {
             </p>
           </motion.div>
 
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {services.map((service, i) => (
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {services.slice(0, 4).map((service, i) => (
               <motion.div
                 key={service.id}
                 initial={{ opacity: 0, y: 25 }}
@@ -631,7 +631,7 @@ const VilaNova = () => {
                         src={imgSrc}
                         alt={service.title}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                        loading="lazy"
+                        decoding="async"
                         onError={(e) => {
                           const el = e.currentTarget as HTMLImageElement;
                           if (stock && el.src !== stock) el.src = stock;
@@ -669,6 +669,24 @@ const VilaNova = () => {
               </motion.div>
             ))}
           </div>
+
+          {services.length > 4 && (
+            <div className="flex justify-center mt-10">
+              <button
+                onClick={() => setAllServicesOpen(true)}
+                className="inline-flex items-center gap-2 px-7 py-3.5 rounded-full text-sm font-bold transition-all hover:translate-y-[-1px] active:scale-[0.98]"
+                style={{
+                  background: t.isLight ? "hsl(0 0% 100%)" : "hsl(0 0% 100% / 0.06)",
+                  border: `1px solid ${t.isLight ? "hsl(220 12% 88%)" : "hsl(0 0% 100% / 0.12)"}`,
+                  backdropFilter: "blur(20px)",
+                  color: t.textPrimary,
+                }}
+              >
+                Ver todos os serviços ({services.length})
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            </div>
+          )}
         </div>
       </section>
 
