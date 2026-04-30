@@ -432,18 +432,17 @@ const VilaNova = () => {
       {/* ─── HERO ─── */}
       <section ref={heroRef} className="relative h-screen min-h-[600px] max-h-[1000px] overflow-hidden">
         <motion.div style={{ scale: heroScale }} className="absolute inset-0">
-          <AnimatePresence mode="wait">
-            <motion.img
-              key={heroIndex}
-              src={heroImages[heroIndex]}
+          {heroImages.map((img, i) => (
+            <img
+              key={i}
+              src={img}
               alt={settings.business_name || "Barbearia Styllus"}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 1.2 }}
-              className="absolute inset-0 w-full h-full object-cover"
+              decoding="async"
+              fetchPriority={i === 0 ? "high" : "low"}
+              className="absolute inset-0 w-full h-full object-cover transition-opacity duration-[1200ms] ease-in-out"
+              style={{ opacity: i === heroIndex ? 1 : 0 }}
             />
-          </AnimatePresence>
+          ))}
         </motion.div>
 
         <div className="absolute inset-0" style={{
