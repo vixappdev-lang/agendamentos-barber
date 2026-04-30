@@ -175,22 +175,48 @@ const OrderTracker = ({ onClose, customerPhone, customerEmail }: OrderTrackerPro
         {selectedOrder && (
           <div className="space-y-4">
             {selectedOrder.status !== "cancelled" && (
-              <div className="flex items-center justify-between px-2">
-                {["pending", "confirmed", "preparing", "delivering", "completed"].map((step, i) => {
-                  const active = getStepIndex(selectedOrder.status) >= i;
-                  const st = getStatus(step);
-                  return (
-                    <div key={step} className="flex flex-col items-center gap-1 flex-1">
-                      <div className="w-8 h-8 rounded-full flex items-center justify-center transition-all"
-                        style={{ background: active ? `${st.color.replace(")", " / 0.2)")}` : t.cardBgSubtle }}>
-                        <st.icon className="w-4 h-4" style={{ color: active ? st.color : t.textSubtle }} />
+              <div className="relative px-2 pt-2">
+                {/* Linha de fundo */}
+                <div className="absolute top-[18px] left-[10%] right-[10%] h-[2px] rounded-full"
+                  style={{ background: t.borderSubtle }} />
+                {/* Linha de progresso animada */}
+                <motion.div
+                  className="absolute top-[18px] left-[10%] h-[2px] rounded-full"
+                  style={{ background: "hsl(140 60% 45%)" }}
+                  initial={{ width: "0%" }}
+                  animate={{
+                    width: `${Math.max(0, Math.min(100, (getStepIndex(selectedOrder.status) / 4) * 80))}%`,
+                  }}
+                  transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+                />
+                <div className="relative flex items-start justify-between">
+                  {["pending", "confirmed", "preparing", "delivering", "completed"].map((step, i) => {
+                    const stepIdx = getStepIndex(selectedOrder.status);
+                    const active = stepIdx >= i;
+                    const current = stepIdx === i;
+                    const st = getStatus(step);
+                    return (
+                      <div key={step} className="flex flex-col items-center gap-1.5 flex-1">
+                        <motion.div
+                          className="w-9 h-9 rounded-full flex items-center justify-center transition-all relative z-10"
+                          style={{
+                            background: active ? st.color : t.cardBgSubtle,
+                            border: `2px solid ${active ? st.color : t.borderSubtle}`,
+                            boxShadow: current ? `0 0 0 4px ${st.color.replace(")", " / 0.2)")}` : "none",
+                          }}
+                          animate={current ? { scale: [1, 1.08, 1] } : { scale: 1 }}
+                          transition={current ? { duration: 1.6, repeat: Infinity, ease: "easeInOut" } : { duration: 0.3 }}
+                        >
+                          <st.icon className="w-4 h-4" style={{ color: active ? "white" : t.textSubtle }} />
+                        </motion.div>
+                        <span className="text-[8px] font-semibold text-center leading-tight px-0.5"
+                          style={{ color: active ? st.color : t.textSubtle }}>
+                          {st.label}
+                        </span>
                       </div>
-                      <span className="text-[8px] font-semibold text-center" style={{ color: active ? st.color : t.textSubtle }}>
-                        {st.label}
-                      </span>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
+                </div>
               </div>
             )}
 
