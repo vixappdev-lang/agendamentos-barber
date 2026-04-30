@@ -88,11 +88,24 @@ const StorePage = () => {
 
   const filteredProducts = useMemo(() => {
     if (!search) return products;
+    const q = search.toLowerCase();
     return products.filter((p) =>
-      p.title.toLowerCase().includes(search.toLowerCase()) ||
-      (p.description || "").toLowerCase().includes(search.toLowerCase())
+      p.title.toLowerCase().includes(q) ||
+      (p.description || "").toLowerCase().includes(q) ||
+      (p.brand || "").toLowerCase().includes(q)
     );
   }, [search, products]);
+
+  // Group filtered products by category, preserving insertion order from sort_order
+  const groupedProducts = useMemo(() => {
+    const groups = new Map<string, DBProduct[]>();
+    for (const p of filteredProducts) {
+      const key = (p.category || "geral").toLowerCase();
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key)!.push(p);
+    }
+    return Array.from(groups.entries());
+  }, [filteredProducts]);
 
   const handleAddToCart = (product: DBProduct, qty: number = 1) => {
     cartAdd({ id: product.id, title: product.title, price: Number(product.price), image_url: product.image_url }, qty);
