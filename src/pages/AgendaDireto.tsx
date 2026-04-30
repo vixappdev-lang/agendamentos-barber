@@ -418,11 +418,8 @@ const AgendaDireto = () => {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: i * 0.04, ease: easeSoft }}
                     onClick={() => setBarber(b)}
-                    className="w-full flex items-center gap-3 p-3.5 rounded-2xl text-left transition-all"
-                    style={{
-                      ...glassCard,
-                      border: `1px solid ${active ? t.textPrimary : subtleBorder}`,
-                    }}
+                    className="w-full flex items-center gap-3 p-3.5 rounded-2xl text-left transition-all hover:translate-y-[-1px]"
+                    style={active ? glassCardActive : glassCard}
                   >
                     <div
                       className="w-12 h-12 rounded-full flex items-center justify-center font-bold text-[14px] flex-shrink-0 text-white"
