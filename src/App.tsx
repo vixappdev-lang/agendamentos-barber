@@ -52,6 +52,7 @@ const Credit = lazy(() => import("./pages/admin/Credit"));
 const Inventory = lazy(() => import("./pages/admin/Inventory"));
 const Suppliers = lazy(() => import("./pages/admin/Suppliers"));
 const UsersAdmin = lazy(() => import("./pages/admin/Users"));
+const WhatsAppTemplates = lazy(() => import("./pages/admin/WhatsAppTemplates"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
