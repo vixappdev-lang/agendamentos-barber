@@ -57,6 +57,7 @@ const navItems: NavItem[] = [
   { label: "Cupons", path: "/admin/coupons", icon: Tag },
   { label: "Avaliações", path: "/admin/reviews", icon: Star },
   { label: "ChatPro", path: "/admin/confg", icon: MessageSquare, superAdminOnly: true },
+  { label: "Templates WhatsApp", path: "/admin/whatsapp-templates", icon: MessageSquare },
   { label: "Usuários", path: "/admin/users", icon: UserCog, superAdminOnly: true },
   { label: "Perfis Barbearias", path: "/admin/barbershops", icon: Building2, superAdminOnly: true },
   { label: "Configurações", path: "/admin/settings", icon: Settings },
