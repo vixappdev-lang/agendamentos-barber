@@ -177,7 +177,7 @@ const MapLibreDirections = ({ open, onClose, address, businessName }: Props) => 
             </div>
 
             {/* Map */}
-            <div className="relative w-full aspect-[4/3] sm:aspect-video" style={{ background: t.cardBgSubtle }}>
+            <div className="relative w-full aspect-[4/3] sm:aspect-video" style={{ background: "hsl(0 0% 100%)" }}>
               {loading && (
                 <div className="absolute inset-0 flex items-center justify-center">
                   <Loader2 className="w-6 h-6 animate-spin opacity-50" />
