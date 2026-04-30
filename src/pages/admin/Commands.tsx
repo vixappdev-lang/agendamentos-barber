@@ -97,10 +97,11 @@ const Commands = () => {
 
   const createCommand = async () => {
     if (!newName.trim()) return toast.error("Nome do cliente é obrigatório");
+    const barberName = session.isBarberOnly && session.barberName ? session.barberName : (newBarber || null);
     const { error } = await supabase.from("commands").insert({
       customer_name: newName.trim(),
       customer_phone: newPhone || null,
-      barber_name: newBarber || null,
+      barber_name: barberName,
       status: "open", subtotal: 0, discount: 0, total: 0,
     });
     if (error) return toast.error(error.message);
