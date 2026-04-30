@@ -176,17 +176,39 @@ const AgendaDireto = () => {
   const sendWhatsAppConfirmation = async () => {
     if (!service || !barber || !date || !time || !phone) return;
     const dt = new Date(date + "T00:00").toLocaleDateString("pt-BR", {
-      weekday: "long", day: "2-digit", month: "long",
+      weekday: "long", day: "2-digit", month: "long", year: "numeric",
     });
+    const firstName = (name || "Cliente").split(" ")[0];
+    const priceFmt = `R$ ${service.price.toFixed(2).replace(".", ",")}`;
+    const protocolo = Math.random().toString(36).slice(2, 8).toUpperCase();
+
     const msg =
-      `*Barbearia Styllus* · Agendamento confirmado ✅\n\n` +
-      `👤 ${name || "Cliente"}\n` +
-      `✂️ ${service.title}\n` +
-      `🧔 ${barber.name}\n` +
-      `📅 ${dt} às ${time}\n` +
-      `💵 R$ ${service.price.toFixed(2).replace(".", ",")}\n\n` +
-      `📍 Rua Jatobás, 41 - Coqueiral de Aracruz/ES\n\n` +
-      `Te esperamos! Para remarcar ou cancelar, responda esta mensagem.`;
+`✂️ *BARBEARIA STYLLUS*
+━━━━━━━━━━━━━━━━━━━━
+
+Olá, *${firstName}*! 👋
+Seu agendamento foi *confirmado* com sucesso. ✅
+
+📋 *DETALHES DO ATENDIMENTO*
+• Serviço: *${service.title}*
+• Profissional: *${barber.name}*
+• Duração: ${service.duration}
+• Investimento: *${priceFmt}*
+
+📅 *DATA E HORÁRIO*
+${dt} — *${time}h*
+
+📍 *ENDEREÇO*
+Rua Jatobás, 41 — Coqueiral de Aracruz/ES
+
+━━━━━━━━━━━━━━━━━━━━
+🔖 Protocolo: *#${protocolo}*
+
+🕐 *Recomendamos chegar 5 min antes.*
+Para *remarcar* ou *cancelar*, basta responder esta mensagem.
+
+Estamos te esperando! 💈
+_Equipe Styllus_`;
 
     try {
       const { data, error } = await supabase.functions.invoke("chatpro", {
@@ -199,7 +221,6 @@ const AgendaDireto = () => {
       if (data?.success) {
         toast.success("WhatsApp enviado!", { description: "Confirmação chegou no seu celular." });
       } else if (data?.reason === "chatpro_not_configured") {
-        // silencioso — ChatPro não está configurado ainda
         console.info("ChatPro não configurado no admin.");
       }
     } catch (e) {
