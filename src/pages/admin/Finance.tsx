@@ -37,32 +37,44 @@ const Finance = () => {
     else { const month = new Date(now); month.setDate(month.getDate() - 30); dateFrom = month.toISOString().split("T")[0]; }
 
     // Considera tanto agendamentos confirmados quanto concluídos como receita realizada
-    const { data: appointments } = await supabase
+    let apptQuery = supabase
       .from("appointments")
       .select("*")
       .gte("appointment_date", dateFrom)
       .in("status", ["confirmed", "completed"]);
+    if (session.isBarberOnly && session.barberName) {
+      apptQuery = apptQuery.eq("barber_name", session.barberName);
+    }
+    const { data: appointments } = await apptQuery;
     const apptList = appointments ?? [];
     const revenue = apptList.reduce((sum, a) => sum + (Number(a.total_price) || 0), 0);
     const totalAttendances = apptList.length;
     const avgTicket = totalAttendances > 0 ? revenue / totalAttendances : 0;
 
-    // Pedidos da loja entregues / pagos contam como receita
-    const { data: orders } = await supabase
-      .from("orders")
-      .select("*")
-      .gte("created_at", dateFrom)
-      .in("status", ["paid", "delivered", "completed", "confirmed"]);
-    const orderList = orders ?? [];
-    const productRevenue = orderList.reduce((sum, o) => sum + (Number(o.total_price) || 0), 0);
-    const productSales = orderList.length;
+    // Pedidos da loja: barbeiros não veem (são receita compartilhada da barbearia)
+    let productRevenue = 0;
+    let productSales = 0;
+    if (!session.isBarberOnly) {
+      const { data: orders } = await supabase
+        .from("orders")
+        .select("*")
+        .gte("created_at", dateFrom)
+        .in("status", ["paid", "delivered", "completed", "confirmed"]);
+      const orderList = orders ?? [];
+      productRevenue = orderList.reduce((sum, o) => sum + (Number(o.total_price) || 0), 0);
+      productSales = orderList.length;
+    }
 
-    // Pedidos cancelados como "perda" (apenas informativo)
-    const { data: cancelled } = await supabase
+    // Cancelados
+    let cancQuery = supabase
       .from("appointments")
       .select("total_price")
       .gte("appointment_date", dateFrom)
       .eq("status", "cancelled");
+    if (session.isBarberOnly && session.barberName) {
+      cancQuery = cancQuery.eq("barber_name", session.barberName);
+    }
+    const { data: cancelled } = await cancQuery;
     const expenses = (cancelled ?? []).reduce((s, a) => s + (Number(a.total_price) || 0), 0);
 
     const grossRevenue = revenue + productRevenue;
