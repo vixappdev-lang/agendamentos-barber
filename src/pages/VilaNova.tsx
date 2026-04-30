@@ -9,15 +9,19 @@ import { findStockImage } from "@/data/stockImages";
 import { TeamSection, TestimonialsSection, FAQSection } from "@/components/landing/LandingExtras";
 import DirectionsModalSimple from "@/components/DirectionsModalSimple";
 
-import heroImg1 from "@/assets/vilanova-hero-1.jpg";
-import heroImg2 from "@/assets/vilanova-hero-2.jpg";
-import heroImg3 from "@/assets/vilanova-hero-3.jpg";
-import galleryImg1 from "@/assets/vilanova-gallery-1.jpg";
-import galleryImg2 from "@/assets/vilanova-gallery-2.jpg";
-import galleryImg3 from "@/assets/vilanova-gallery-3.jpg";
+import heroImg1 from "@/assets/styllus/hero-1.jpg";
+import heroImg2 from "@/assets/styllus/hero-2.jpg";
+import heroImg3 from "@/assets/styllus/hero-3.jpg";
+import galleryImg1 from "@/assets/styllus/gallery-1.jpg";
+import galleryImg2 from "@/assets/styllus/gallery-2.jpg";
+import galleryImg3 from "@/assets/styllus/gallery-3.jpg";
+import galleryImg4 from "@/assets/styllus/gallery-4.jpg";
+import galleryImg5 from "@/assets/styllus/gallery-5.jpg";
+import galleryImg6 from "@/assets/styllus/gallery-6.jpg";
+import brandLogo from "@/assets/styllus/logo.png";
 
 const heroImages = [heroImg1, heroImg2, heroImg3];
-const galleryImages = [heroImg1, heroImg2, heroImg3, galleryImg1, galleryImg2, galleryImg3];
+const galleryImages = [galleryImg1, galleryImg2, galleryImg3, galleryImg4, galleryImg5, galleryImg6];
 
 interface DBService {
   id: string; title: string; subtitle: string | null; price: number;
@@ -327,8 +331,8 @@ const VilaNova = () => {
         <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-10 xl:px-16 h-16 sm:h-20 grid grid-cols-[auto_1fr_auto] items-center gap-6">
           {/* Logo */}
           <a href="#" className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: "hsl(0 0% 95%)" }}>
-              <Scissors className="w-4 h-4" style={{ color: "hsl(220 20% 7%)" }} />
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full overflow-hidden flex-shrink-0 ring-1 ring-white/15" style={{ background: "hsl(0 0% 95%)" }}>
+              <img src={settings.site_logo_url || brandLogo} alt={settings.business_name || "Logo"} className="w-full h-full object-cover" />
             </div>
             <span className="text-lg font-extrabold tracking-tight">{settings.business_name || "GenesisBarber"}</span>
           </a>
@@ -432,7 +436,7 @@ const VilaNova = () => {
             <motion.img
               key={heroIndex}
               src={heroImages[heroIndex]}
-              alt="Barbearia Vila Nova"
+              alt={settings.business_name || "Barbearia Styllus"}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -557,10 +561,10 @@ const VilaNova = () => {
               <div className="lg:col-span-7">
                 <div className="grid grid-cols-2 gap-3 sm:gap-4">
                   {[
-                    { src: heroImg1, alt: "Interior" },
-                    { src: heroImg2, alt: "Barba profissional" },
-                    { src: galleryImg1, alt: "Ferramentas profissionais" },
-                    { src: heroImg3, alt: "Corte moderno" },
+                    { src: galleryImg1, alt: "Corte profissional" },
+                    { src: galleryImg2, alt: "Estilo e precisão" },
+                    { src: galleryImg3, alt: "Acabamento perfeito" },
+                    { src: galleryImg4, alt: "Visual moderno" },
                   ].map((img) => (
                     <div
                       key={img.alt}
