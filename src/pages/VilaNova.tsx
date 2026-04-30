@@ -9,6 +9,7 @@ import { findStockImage } from "@/data/stockImages";
 import { TeamSection, TestimonialsSection, FAQSection } from "@/components/landing/LandingExtras";
 import MapLibreDirections from "@/components/MapLibreDirections";
 import AllServicesModal from "@/components/AllServicesModal";
+import { useDevToolsBlock } from "@/hooks/useDevToolsBlock";
 
 import heroImg1 from "@/assets/styllus/hero-1.jpg";
 import heroImg2 from "@/assets/styllus/hero-2.jpg";
