@@ -561,10 +561,10 @@ const VilaNova = () => {
               <div className="lg:col-span-7">
                 <div className="grid grid-cols-2 gap-3 sm:gap-4">
                   {[
-                    { src: heroImg1, alt: "Interior" },
-                    { src: heroImg2, alt: "Barba profissional" },
-                    { src: galleryImg1, alt: "Ferramentas profissionais" },
-                    { src: heroImg3, alt: "Corte moderno" },
+                    { src: galleryImg1, alt: "Corte profissional" },
+                    { src: galleryImg2, alt: "Estilo e precisão" },
+                    { src: galleryImg3, alt: "Acabamento perfeito" },
+                    { src: galleryImg4, alt: "Visual moderno" },
                   ].map((img) => (
                     <div
                       key={img.alt}
