@@ -229,24 +229,38 @@ const StorePage = () => {
         </section>
       </main>
 
-      {/* Floating cart */}
+      {/* Floating cart — abre o drawer */}
       <AnimatePresence>
-        {cartCount > 0 && (
+        {cartCount > 0 && !showCart && (
           <motion.div initial={{ y: 80, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 80, opacity: 0 }}
             transition={{ type: "spring", damping: 22, stiffness: 280 }}
             className="fixed bottom-4 sm:bottom-6 left-4 right-4 max-w-md sm:max-w-lg mx-auto z-40">
-            <button onClick={openCheckout}
+            <button onClick={() => setShowCart(true)}
               className="w-full flex items-center justify-between px-5 py-4 rounded-2xl font-bold text-sm transition-all hover:translate-y-[-1px] active:scale-[0.99]"
               style={{ background: t.btnBg, color: t.btnColor, boxShadow: "0 12px 32px hsl(0 0% 0% / 0.25)" }}>
               <span className="flex items-center gap-2">
                 <ShoppingBag className="w-5 h-5" />
-                {cartCount} {cartCount === 1 ? "item" : "itens"}
+                {cartCount} {cartCount === 1 ? "item" : "itens"} · ver carrinho
               </span>
               <span>R$ {cartTotal.toFixed(2).replace(".", ",")}</span>
             </button>
           </motion.div>
         )}
       </AnimatePresence>
+
+      <CartDrawer
+        open={showCart}
+        onClose={() => setShowCart(false)}
+        items={cart}
+        total={cartTotal}
+        count={cartCount}
+        updateQty={updateQty}
+        remove={remove}
+        clear={clear}
+        isLogged={!!cartUser}
+        onCheckout={() => { setShowCart(false); openCheckout(); }}
+      />
+
 
       <AnimatePresence>
         {detailProduct && (
