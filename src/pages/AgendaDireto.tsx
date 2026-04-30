@@ -303,14 +303,13 @@ _Equipe Styllus_`;
         }}
       >
         <div className="w-full max-w-[1100px] mx-auto px-4 sm:px-6 h-16 flex items-center gap-3">
-          <button
-            onClick={goBack}
-            className="w-10 h-10 rounded-full flex items-center justify-center transition-all hover:scale-105 active:scale-95"
-            aria-label="Voltar"
+          <div
+            className="w-10 h-10 rounded-2xl flex items-center justify-center shrink-0"
             style={{ background: glassCard.background as string, border: glassCard.border as string }}
+            aria-hidden
           >
-            <ArrowLeft className="w-4 h-4" />
-          </button>
+            <Sparkles className="w-4 h-4 opacity-70" />
+          </div>
           <div className="flex-1 min-w-0">
             <p className="text-[10px] uppercase tracking-[0.3em] opacity-50 font-semibold">Agendamento</p>
             <h1 className="text-[15px] font-bold truncate -mt-0.5">{stepTitles[step]}</h1>
