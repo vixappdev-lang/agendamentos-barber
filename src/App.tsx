@@ -163,6 +163,7 @@ const App = () => (
 
                 <Route element={<MemberRouteGuard />}>
                   <Route path="/membro" element={<MemberArea />} />
+                  <Route path="/membro/notificacoes" element={<NotificationsPage />} />
                 </Route>
 
                 <Route path="/baixar-source" element={<BaixarSource />} />
