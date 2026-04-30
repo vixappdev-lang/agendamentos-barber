@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowLeft, ArrowRight, Calendar, Check, ChevronRight, Clock, Loader2,
-  Lock, Mail, Phone, Search, Sparkles, Star, User2,
+  Lock, MessageCircle, Phone, Search, Sparkles, Star, User2, X,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -11,7 +11,8 @@ import { useThemeColors } from "@/hooks/useThemeColors";
 import { supabase } from "@/integrations/supabase/client";
 import {
   MOCK_CATEGORIES, MOCK_BARBERS, MOCK_TIMES,
-  type MockService, type MockBarber,
+  MOCK_AMENITIES, MOCK_BARBERSHOP_AMENITIES,
+  type MockService, type MockBarber, type MockAmenity,
 } from "@/data/agendaDiretoMock";
 
 type Step = "list" | "barber" | "datetime" | "auth" | "confirm" | "done";
@@ -30,6 +31,8 @@ const phoneSchema = z.string().refine((v) => onlyDigits(v).length >= 10, "Telefo
 const nameSchema = z.string().trim().min(2, "Nome muito curto").max(80);
 const passwordSchema = z.string().min(6, "Mínimo 6 caracteres").max(72);
 
+const easeSoft = [0.22, 1, 0.36, 1] as const;
+
 const AgendaDireto = () => {
   const t = useThemeColors();
   const navigate = useNavigate();
@@ -42,16 +45,20 @@ const AgendaDireto = () => {
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
 
-  // Auth state
   const [authMode, setAuthMode] = useState<"new" | "existing">("new");
-  const [existingChecked, setExistingChecked] = useState(false);
   const [phone, setPhone] = useState("");
   const [name, setName] = useState("");
   const [password, setPassword] = useState("");
   const [authLoading, setAuthLoading] = useState(false);
   const [signedUserId, setSignedUserId] = useState<string | null>(null);
 
-  // Already-logged user shortcut
+  // amenity modal
+  const [amenityOpen, setAmenityOpen] = useState<MockAmenity | null>(null);
+
+  // success modal
+  const [successOpen, setSuccessOpen] = useState(false);
+  const [confirming, setConfirming] = useState(false);
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
@@ -94,7 +101,8 @@ const AgendaDireto = () => {
     setService(null); setBarber(null);
     setDate(""); setTime("");
     if (!signedUserId) { setPhone(""); setName(""); }
-    setPassword(""); setExistingChecked(false); setAuthMode("new");
+    setPassword(""); setAuthMode("new");
+    setSuccessOpen(false);
   };
 
   const stepOrder: Step[] = signedUserId
@@ -112,16 +120,6 @@ const AgendaDireto = () => {
     const i = stepOrder.indexOf(step);
     if (i <= 0) { navigate(-1); return; }
     setStep(stepOrder[i - 1]);
-  };
-
-  // Detect if phone already has account → toggles to login mode
-  const checkPhone = async (raw: string) => {
-    setPhone(formatPhone(raw));
-    setExistingChecked(false);
-    if (onlyDigits(raw).length < 10) return;
-    // Probe by attempting an OTP-less signin with dummy password to detect account existence is unreliable.
-    // Better UX: just keep both modes available via tabs, and let signIn fail gracefully.
-    setExistingChecked(true);
   };
 
   const submitAuth = async () => {
@@ -149,15 +147,13 @@ const AgendaDireto = () => {
         if (!n.success) return toast.error(n.error.errors[0].message);
 
         const { data, error } = await supabase.auth.signUp({
-          email,
-          password,
+          email, password,
           options: {
             emailRedirectTo: window.location.origin,
             data: { full_name: name.trim(), phone: onlyDigits(phone) },
           },
         });
         if (error) {
-          // If already registered, switch to login mode
           if (error.message.toLowerCase().includes("registered") || error.message.toLowerCase().includes("already")) {
             setAuthMode("existing");
             toast.info("Você já tem conta. Digite sua senha para entrar.");
@@ -175,10 +171,45 @@ const AgendaDireto = () => {
     }
   };
 
-  const confirmBooking = () => {
-    toast.success("Agendamento confirmado!", {
-      description: "Em produção, você receberia confirmação por WhatsApp.",
+  const sendWhatsAppConfirmation = async () => {
+    if (!service || !barber || !date || !time || !phone) return;
+    const dt = new Date(date + "T00:00").toLocaleDateString("pt-BR", {
+      weekday: "long", day: "2-digit", month: "long",
     });
+    const msg =
+      `*Barbearia Styllus* · Agendamento confirmado ✅\n\n` +
+      `👤 ${name || "Cliente"}\n` +
+      `✂️ ${service.title}\n` +
+      `🧔 ${barber.name}\n` +
+      `📅 ${dt} às ${time}\n` +
+      `💵 R$ ${service.price.toFixed(2).replace(".", ",")}\n\n` +
+      `📍 Rua Jatobás, 41 - Coqueiral de Aracruz/ES\n\n` +
+      `Te esperamos! Para remarcar ou cancelar, responda esta mensagem.`;
+
+    try {
+      const { data, error } = await supabase.functions.invoke("chatpro", {
+        body: { action: "send_message", phone: onlyDigits(phone), message: msg },
+      });
+      if (error) {
+        console.warn("ChatPro invoke error:", error);
+        return;
+      }
+      if (data?.success) {
+        toast.success("WhatsApp enviado!", { description: "Confirmação chegou no seu celular." });
+      } else if (data?.reason === "chatpro_not_configured") {
+        // silencioso — ChatPro não está configurado ainda
+        console.info("ChatPro não configurado no admin.");
+      }
+    } catch (e) {
+      console.warn("ChatPro fail:", e);
+    }
+  };
+
+  const confirmBooking = async () => {
+    setConfirming(true);
+    await sendWhatsAppConfirmation();
+    setConfirming(false);
+    setSuccessOpen(true);
     setStep("done");
   };
 
@@ -191,27 +222,35 @@ const AgendaDireto = () => {
     done: "Tudo certo",
   };
 
-  const totalSteps = stepOrder.length - 1; // exclude "done"
+  const totalSteps = stepOrder.length - 1;
   const progress = stepOrder.indexOf(step) + 1;
   const isLight = t.isLight;
+
   const glassCard: React.CSSProperties = {
-    background: isLight ? "hsl(0 0% 100% / 0.7)" : "hsl(0 0% 100% / 0.03)",
-    backdropFilter: "blur(20px) saturate(140%)",
-    WebkitBackdropFilter: "blur(20px) saturate(140%)",
-    border: `1px solid ${isLight ? "hsl(220 12% 88%)" : "hsl(0 0% 100% / 0.06)"}`,
+    background: isLight ? "hsl(0 0% 100% / 0.65)" : "hsl(0 0% 100% / 0.025)",
+    backdropFilter: "blur(24px) saturate(140%)",
+    WebkitBackdropFilter: "blur(24px) saturate(140%)",
+    border: `1px solid ${isLight ? "hsl(220 14% 90%)" : "hsl(0 0% 100% / 0.05)"}`,
   };
-  const subtleBorder = isLight ? "hsl(220 12% 88%)" : "hsl(0 0% 100% / 0.06)";
+  const subtleBorder = isLight ? "hsl(220 14% 90%)" : "hsl(0 0% 100% / 0.05)";
+  const softBg = isLight ? "hsl(220 14% 96%)" : "hsl(0 0% 100% / 0.04)";
+
+  // Comodidades da barbearia (filtradas)
+  const shopAmenities = MOCK_AMENITIES.filter((a) => MOCK_BARBERSHOP_AMENITIES.includes(a.id));
+  const serviceAmenities = service?.amenities
+    ? MOCK_AMENITIES.filter((a) => service.amenities!.includes(a.id))
+    : shopAmenities;
 
   return (
     <div className="min-h-screen w-full" style={{ background: t.pageBg, color: t.textPrimary }}>
-      {/* Subtle glow background */}
+      {/* Soft ambient backdrop */}
       <div
         aria-hidden
         className="fixed inset-0 pointer-events-none -z-0"
         style={{
           background: isLight
-            ? "radial-gradient(1000px 500px at 50% -10%, hsl(220 30% 95%) 0%, transparent 60%)"
-            : "radial-gradient(1000px 500px at 50% -10%, hsl(220 30% 12% / 0.6) 0%, transparent 60%)",
+            ? "radial-gradient(1200px 600px at 50% -10%, hsl(220 30% 96%) 0%, transparent 60%)"
+            : "radial-gradient(1200px 600px at 50% -10%, hsl(220 30% 10% / 0.5) 0%, transparent 60%)",
         }}
       />
 
@@ -219,14 +258,14 @@ const AgendaDireto = () => {
       <header
         className="sticky top-0 z-40 backdrop-blur-2xl"
         style={{
-          background: isLight ? "hsl(0 0% 100% / 0.75)" : `${t.pageBg}cc`,
+          background: isLight ? "hsl(0 0% 100% / 0.78)" : `${t.pageBg}d9`,
           borderBottom: `1px solid ${subtleBorder}`,
         }}
       >
         <div className="w-full max-w-[1100px] mx-auto px-4 sm:px-6 h-16 flex items-center gap-3">
           <button
             onClick={goBack}
-            className="w-10 h-10 rounded-full flex items-center justify-center transition-colors hover:bg-white/5"
+            className="w-10 h-10 rounded-full flex items-center justify-center transition-all hover:scale-105 active:scale-95"
             aria-label="Voltar"
             style={{ background: glassCard.background as string, border: glassCard.border as string }}
           >
@@ -243,13 +282,13 @@ const AgendaDireto = () => {
           )}
         </div>
         {step !== "done" && (
-          <div className="h-[2px] w-full" style={{ background: subtleBorder }}>
+          <div className="h-[2px] w-full overflow-hidden" style={{ background: subtleBorder }}>
             <motion.div
               className="h-full rounded-full"
               style={{ background: t.textPrimary }}
-              initial={{ width: 0 }}
+              initial={false}
               animate={{ width: `${(progress / totalSteps) * 100}%` }}
-              transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+              transition={{ duration: 0.5, ease: easeSoft }}
             />
           </div>
         )}
@@ -260,10 +299,8 @@ const AgendaDireto = () => {
           {/* ── STEP 1: LIST ── */}
           {step === "list" && (
             <motion.div key="list" {...fade}>
-              <div
-                className="flex items-center gap-3 px-4 h-12 rounded-2xl mb-5"
-                style={glassCard}
-              >
+              {/* Search */}
+              <div className="flex items-center gap-3 px-4 h-12 rounded-2xl mb-5" style={glassCard}>
                 <Search className="w-4 h-4 opacity-50" />
                 <input
                   value={search}
@@ -272,6 +309,32 @@ const AgendaDireto = () => {
                   className="flex-1 bg-transparent outline-none text-[14px] placeholder:opacity-40"
                 />
               </div>
+
+              {/* Comodidades */}
+              <section className="mb-6">
+                <div className="flex items-baseline justify-between mb-2.5">
+                  <h2 className="text-[10px] uppercase tracking-[0.3em] opacity-50 font-bold">
+                    Comodidades
+                  </h2>
+                  <span className="text-[11px] opacity-40">Toque para detalhes</span>
+                </div>
+                <div className="flex gap-2.5 overflow-x-auto pb-1.5 -mx-4 px-4 sm:mx-0 sm:px-0 scrollbar-none">
+                  {shopAmenities.map((a) => (
+                    <button
+                      key={a.id}
+                      onClick={() => setAmenityOpen(a)}
+                      className="flex-shrink-0 w-[68px] h-[68px] rounded-2xl flex flex-col items-center justify-center gap-1 transition-all hover:translate-y-[-1px] active:scale-95"
+                      style={glassCard}
+                      aria-label={a.label}
+                    >
+                      <a.icon className="w-[18px] h-[18px] opacity-80" strokeWidth={1.6} />
+                      <span className="text-[9.5px] font-semibold opacity-70 leading-none">
+                        {a.label}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </section>
 
               {/* Categories */}
               <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 scrollbar-none">
@@ -303,9 +366,9 @@ const AgendaDireto = () => {
                 {filteredServices.map((s, i) => (
                   <motion.button
                     key={s.id}
-                    initial={{ opacity: 0, y: 8 }}
+                    initial={{ opacity: 0, y: 6 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: i * 0.04, ease: [0.22, 1, 0.36, 1] }}
+                    transition={{ delay: Math.min(i * 0.035, 0.2), ease: easeSoft }}
                     onClick={() => { setService(s); setStep("barber"); }}
                     className="w-full flex items-center gap-4 p-3 rounded-2xl text-left transition-all hover:translate-y-[-1px] group"
                     style={glassCard}
@@ -324,7 +387,7 @@ const AgendaDireto = () => {
                         <span className="font-bold text-[14px]">R$ {s.price}</span>
                       </div>
                     </div>
-                    <ChevronRight className="w-5 h-5 opacity-30 flex-shrink-0 transition-transform group-hover:translate-x-0.5 group-hover:opacity-60" />
+                    <ChevronRight className="w-5 h-5 opacity-30 flex-shrink-0 transition-all group-hover:translate-x-0.5 group-hover:opacity-60" />
                   </motion.button>
                 ))}
               </div>
@@ -343,18 +406,24 @@ const AgendaDireto = () => {
                 return (
                   <motion.button
                     key={b.id}
-                    initial={{ opacity: 0, x: -8 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: i * 0.05 }}
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.04, ease: easeSoft }}
                     onClick={() => setBarber(b)}
                     className="w-full flex items-center gap-3 p-3.5 rounded-2xl text-left transition-all"
                     style={{
                       ...glassCard,
                       border: `1px solid ${active ? t.textPrimary : subtleBorder}`,
-                      transform: active ? "scale(1.005)" : "scale(1)",
                     }}
                   >
-                    <img src={b.avatar} alt={b.name} className="w-12 h-12 rounded-full object-cover" />
+                    <div
+                      className="w-12 h-12 rounded-full flex items-center justify-center font-bold text-[14px] flex-shrink-0 text-white"
+                      style={{
+                        background: `linear-gradient(135deg, ${b.accent}, ${b.accent.replace(/(\d+)%\)$/, (m, l) => `${Math.max(0, parseInt(l) - 15)}%)`)})`,
+                      }}
+                    >
+                      {b.initials}
+                    </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-semibold text-[14px] truncate">{b.name}</p>
                       <p className="text-[12px] opacity-60 truncate">{b.specialty}</p>
@@ -363,12 +432,13 @@ const AgendaDireto = () => {
                       <Star className="w-3 h-3 fill-current" /> {b.rating.toFixed(1)}
                     </span>
                     {active && (
-                      <div
+                      <motion.div
+                        initial={{ scale: 0 }} animate={{ scale: 1 }}
                         className="w-6 h-6 rounded-full flex items-center justify-center"
                         style={{ background: t.textPrimary }}
                       >
                         <Check className="w-3.5 h-3.5" style={{ color: t.pageBg }} />
-                      </div>
+                      </motion.div>
                     )}
                   </motion.button>
                 );
@@ -437,7 +507,7 @@ const AgendaDireto = () => {
             <motion.div key="auth" {...fade}>
               <SelectedServiceCard service={service!} glass={glassCard} />
 
-              <div className="mt-7 mb-4 flex items-center gap-2 p-1 rounded-full w-fit" style={glassCard}>
+              <div className="mt-7 mb-4 flex items-center gap-1 p-1 rounded-full w-fit" style={glassCard}>
                 {(["new", "existing"] as const).map((m) => (
                   <button
                     key={m}
@@ -457,7 +527,7 @@ const AgendaDireto = () => {
                 <div className="flex items-start gap-3 mb-1">
                   <div
                     className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
-                    style={{ background: isLight ? "hsl(220 12% 94%)" : "hsl(0 0% 100% / 0.05)" }}
+                    style={{ background: softBg }}
                   >
                     <Sparkles className="w-4 h-4 opacity-70" />
                   </div>
@@ -488,7 +558,7 @@ const AgendaDireto = () => {
                 <Field icon={<Phone className="w-4 h-4 opacity-50" />} glass={glassCard}>
                   <input
                     value={phone}
-                    onChange={(e) => checkPhone(e.target.value)}
+                    onChange={(e) => setPhone(formatPhone(e.target.value))}
                     placeholder="(00) 00000-0000"
                     inputMode="tel"
                     className="w-full bg-transparent outline-none text-[15px] placeholder:opacity-40"
@@ -507,8 +577,8 @@ const AgendaDireto = () => {
                 </Field>
 
                 <p className="text-[11px] opacity-50 leading-relaxed flex items-start gap-2 mt-1">
-                  <Mail className="w-3 h-3 mt-0.5 flex-shrink-0" />
-                  Ao continuar, você concorda em receber notificações sobre seu agendamento.
+                  <MessageCircle className="w-3 h-3 mt-0.5 flex-shrink-0" />
+                  Você receberá a confirmação por WhatsApp e poderá acompanhar tudo na Área do Cliente.
                 </p>
               </div>
             </motion.div>
@@ -542,49 +612,53 @@ const AgendaDireto = () => {
                 <Divider color={subtleBorder} />
                 <Row label="Cliente" value={name || "—"} sub={phone} />
               </div>
-              <p className="text-[11px] opacity-50 mt-4 text-center">
-                Esta tela é um preview. O agendamento não será gravado no painel.
+
+              {/* Comodidades inclusas no serviço */}
+              {serviceAmenities.length > 0 && (
+                <>
+                  <h2 className="text-[10px] uppercase tracking-[0.3em] opacity-50 font-bold mt-7 mb-3">
+                    Comodidades inclusas
+                  </h2>
+                  <div className="flex flex-wrap gap-2">
+                    {serviceAmenities.map((a) => (
+                      <button
+                        key={a.id}
+                        onClick={() => setAmenityOpen(a)}
+                        className="inline-flex items-center gap-2 px-3 h-9 rounded-full text-[12px] transition-all hover:translate-y-[-1px]"
+                        style={glassCard}
+                      >
+                        <a.icon className="w-3.5 h-3.5 opacity-80" strokeWidth={1.7} />
+                        <span className="font-semibold opacity-80">{a.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+
+              <p className="text-[11px] opacity-50 mt-6 text-center">
+                Ao confirmar você receberá uma mensagem no WhatsApp com os detalhes.
               </p>
             </motion.div>
           )}
 
-          {/* ── STEP 6: DONE ── */}
-          {step === "done" && (
+          {/* ── STEP 6: DONE (placeholder, modal mostra real) ── */}
+          {step === "done" && !successOpen && (
             <motion.div
               key="done"
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ ease: [0.22, 1, 0.36, 1] }}
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }}
               className="flex flex-col items-center justify-center text-center py-20"
             >
-              <motion.div
-                initial={{ scale: 0 }} animate={{ scale: 1 }}
-                transition={{ type: "spring", delay: 0.1, stiffness: 200, damping: 15 }}
-                className="w-20 h-20 rounded-full flex items-center justify-center mb-6"
-                style={{ background: t.textPrimary }}
-              >
-                <Check className="w-10 h-10" style={{ color: t.pageBg }} strokeWidth={3} />
-              </motion.div>
-              <h2 className="text-3xl font-black mb-2">Tudo certo!</h2>
-              <p className="text-sm opacity-60 max-w-xs">
-                Agendamento confirmado. Você pode acompanhar tudo na sua Área do Cliente.
-              </p>
-              <div className="flex gap-3 mt-8">
-                <button
-                  onClick={reset}
-                  className="px-6 h-11 rounded-full font-semibold text-sm"
-                  style={{ ...glassCard }}
-                >
-                  Novo agendamento
-                </button>
-                <button
-                  onClick={() => navigate("/membro")}
-                  className="px-6 h-11 rounded-full font-bold text-sm"
-                  style={{ background: t.textPrimary, color: t.pageBg }}
-                >
-                  Área do Cliente
-                </button>
+              <div className="w-16 h-16 rounded-full flex items-center justify-center mb-4" style={{ background: t.textPrimary }}>
+                <Check className="w-8 h-8" style={{ color: t.pageBg }} strokeWidth={3} />
               </div>
+              <h2 className="text-2xl font-black mb-2">Agendamento confirmado</h2>
+              <button
+                onClick={reset}
+                className="mt-6 px-6 h-11 rounded-full font-semibold text-sm"
+                style={glassCard}
+              >
+                Novo agendamento
+              </button>
             </motion.div>
           )}
         </AnimatePresence>
@@ -609,24 +683,20 @@ const AgendaDireto = () => {
             </button>
             <button
               onClick={
-                step === "confirm"
-                  ? confirmBooking
-                  : step === "auth"
-                  ? submitAuth
+                step === "confirm" ? confirmBooking
+                  : step === "auth" ? submitAuth
                   : goNext
               }
-              disabled={authLoading}
+              disabled={authLoading || confirming}
               className="flex-1 h-12 rounded-full font-bold text-[13px] flex items-center justify-center gap-2 disabled:opacity-60 transition-transform active:scale-[0.98]"
               style={{ background: t.textPrimary, color: t.pageBg }}
             >
-              {authLoading ? (
+              {(authLoading || confirming) ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
               ) : (
                 <>
-                  {step === "confirm"
-                    ? "Confirmar agendamento"
-                    : step === "auth"
-                    ? authMode === "new" ? "Criar conta e continuar" : "Entrar e continuar"
+                  {step === "confirm" ? "Confirmar agendamento"
+                    : step === "auth" ? (authMode === "new" ? "Criar conta e continuar" : "Entrar e continuar")
                     : "Continuar"}
                   <ArrowRight className="w-4 h-4" />
                 </>
@@ -635,15 +705,38 @@ const AgendaDireto = () => {
           </div>
         </div>
       )}
+
+      {/* Amenity modal */}
+      <AnimatePresence>
+        {amenityOpen && (
+          <AmenityModal amenity={amenityOpen} onClose={() => setAmenityOpen(null)} t={t} glass={glassCard} softBg={softBg} />
+        )}
+      </AnimatePresence>
+
+      {/* Success modal */}
+      <AnimatePresence>
+        {successOpen && service && barber && (
+          <SuccessModal
+            onNew={reset}
+            onMember={() => navigate("/membro")}
+            service={service}
+            barber={barber}
+            date={date}
+            time={time}
+            t={t}
+            glass={glassCard}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 };
 
 const fade = {
-  initial: { opacity: 0, y: 12 },
+  initial: { opacity: 0, y: 8 },
   animate: { opacity: 1, y: 0 },
-  exit: { opacity: 0, y: -12 },
-  transition: { duration: 0.28, ease: [0.22, 1, 0.36, 1] as const },
+  exit: { opacity: 0, y: -8 },
+  transition: { duration: 0.32, ease: easeSoft },
 };
 
 const SelectedServiceCard = ({
@@ -684,5 +777,165 @@ const Row = ({
 const Divider = ({ color }: { color: string }) => (
   <div className="h-px w-full" style={{ background: color }} />
 );
+
+// ─── Amenity modal ────────────────────────────────────────────────────────────
+const AmenityModal = ({
+  amenity, onClose, t, glass, softBg,
+}: {
+  amenity: MockAmenity; onClose: () => void;
+  t: ReturnType<typeof useThemeColors>;
+  glass: React.CSSProperties;
+  softBg: string;
+}) => {
+  const Icon = amenity.icon;
+  return (
+    <motion.div
+      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      transition={{ duration: 0.2 }}
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4"
+      style={{ background: "hsl(0 0% 0% / 0.55)", backdropFilter: "blur(8px)" }}
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ y: 40, opacity: 0, scale: 0.98 }}
+        animate={{ y: 0, opacity: 1, scale: 1 }}
+        exit={{ y: 40, opacity: 0, scale: 0.98 }}
+        transition={{ ease: easeSoft, duration: 0.32 }}
+        className="w-full max-w-md rounded-3xl p-6 relative"
+        style={{ ...glass, background: t.pageBg }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 w-8 h-8 rounded-full flex items-center justify-center transition-all hover:scale-105"
+          style={{ background: softBg }}
+          aria-label="Fechar"
+        >
+          <X className="w-4 h-4" />
+        </button>
+        <div
+          className="w-14 h-14 rounded-2xl flex items-center justify-center mb-4"
+          style={{ background: softBg }}
+        >
+          <Icon className="w-6 h-6" strokeWidth={1.6} />
+        </div>
+        <h3 className="text-xl font-black mb-2">{amenity.label}</h3>
+        <p className="text-[14px] opacity-70 leading-relaxed">{amenity.description}</p>
+        <button
+          onClick={onClose}
+          className="mt-6 w-full h-12 rounded-full font-bold text-[13px]"
+          style={{ background: t.textPrimary, color: t.pageBg }}
+        >
+          Entendi
+        </button>
+      </motion.div>
+    </motion.div>
+  );
+};
+
+// ─── Success modal ────────────────────────────────────────────────────────────
+const SuccessModal = ({
+  onNew, onMember, service, barber, date, time, t, glass,
+}: {
+  onNew: () => void;
+  onMember: () => void;
+  service: MockService;
+  barber: MockBarber;
+  date: string; time: string;
+  t: ReturnType<typeof useThemeColors>;
+  glass: React.CSSProperties;
+}) => {
+  const dt = date
+    ? new Date(date + "T00:00").toLocaleDateString("pt-BR", {
+        weekday: "long", day: "2-digit", month: "long",
+      })
+    : "";
+  return (
+    <motion.div
+      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ background: "hsl(0 0% 0% / 0.6)", backdropFilter: "blur(10px)" }}
+    >
+      <motion.div
+        initial={{ scale: 0.9, opacity: 0, y: 20 }}
+        animate={{ scale: 1, opacity: 1, y: 0 }}
+        exit={{ scale: 0.95, opacity: 0 }}
+        transition={{ ease: easeSoft, duration: 0.4 }}
+        className="w-full max-w-md rounded-3xl p-7 text-center relative overflow-hidden"
+        style={{ ...glass, background: t.pageBg }}
+      >
+        {/* Subtle gradient accent */}
+        <div
+          aria-hidden
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            background: t.isLight
+              ? "radial-gradient(400px 200px at 50% 0%, hsl(140 60% 90% / 0.4), transparent 70%)"
+              : "radial-gradient(400px 200px at 50% 0%, hsl(140 60% 30% / 0.18), transparent 70%)",
+          }}
+        />
+        <div className="relative">
+          <motion.div
+            initial={{ scale: 0, rotate: -30 }}
+            animate={{ scale: 1, rotate: 0 }}
+            transition={{ type: "spring", stiffness: 220, damping: 16, delay: 0.05 }}
+            className="w-20 h-20 mx-auto rounded-full flex items-center justify-center mb-5 relative"
+            style={{ background: t.textPrimary }}
+          >
+            <Check className="w-10 h-10" style={{ color: t.pageBg }} strokeWidth={3} />
+            {/* ripple */}
+            <motion.div
+              initial={{ scale: 1, opacity: 0.4 }}
+              animate={{ scale: 2, opacity: 0 }}
+              transition={{ duration: 1.4, ease: "easeOut", repeat: Infinity, repeatDelay: 0.4 }}
+              className="absolute inset-0 rounded-full border-2"
+              style={{ borderColor: t.textPrimary }}
+            />
+          </motion.div>
+
+          <h2 className="text-2xl font-black mb-1">Agendamento confirmado!</h2>
+          <p className="text-[13px] opacity-60 mb-6">
+            Enviamos a confirmação no seu WhatsApp.
+          </p>
+
+          <div className="rounded-2xl p-4 text-left space-y-2 mb-6" style={{ background: t.isLight ? "hsl(220 14% 96%)" : "hsl(0 0% 100% / 0.04)" }}>
+            <div className="flex items-center justify-between text-[13px]">
+              <span className="opacity-60">Serviço</span>
+              <span className="font-bold truncate ml-3">{service.title}</span>
+            </div>
+            <div className="flex items-center justify-between text-[13px]">
+              <span className="opacity-60">Profissional</span>
+              <span className="font-bold truncate ml-3">{barber.name}</span>
+            </div>
+            <div className="flex items-center justify-between text-[13px]">
+              <span className="opacity-60">Quando</span>
+              <span className="font-bold truncate ml-3 capitalize">{dt} · {time}</span>
+            </div>
+            <div className="flex items-center justify-between text-[13px] pt-1.5 border-t" style={{ borderColor: t.isLight ? "hsl(220 14% 90%)" : "hsl(0 0% 100% / 0.06)" }}>
+              <span className="opacity-60">Total</span>
+              <span className="font-black text-base">R$ {service.price}</span>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <button
+              onClick={onMember}
+              className="h-12 rounded-full font-bold text-[13px]"
+              style={{ background: t.textPrimary, color: t.pageBg }}
+            >
+              Ir para Área do Cliente
+            </button>
+            <button
+              onClick={onNew}
+              className="h-11 rounded-full font-semibold text-[12.5px] opacity-70 hover:opacity-100 transition-opacity"
+            >
+              Fazer novo agendamento
+            </button>
+          </div>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+};
 
 export default AgendaDireto;
