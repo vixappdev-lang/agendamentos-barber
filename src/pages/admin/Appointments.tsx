@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { CalendarDays, Search, ChevronLeft, ChevronRight, Check, X, Clock } from "lucide-react";
 import { format, startOfMonth, endOfMonth, addMonths, subMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { usePanelSession } from "@/hooks/usePanelSession";
 
 interface Appointment {
   id: string;
@@ -26,6 +27,7 @@ const statusColors: Record<string, { bg: string; text: string; label: string }> 
 };
 
 const Appointments = () => {
+  const session = usePanelSession();
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [selectedDate, setSelectedDate] = useState<string>("");
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -33,6 +35,7 @@ const Appointments = () => {
   const [filterMode, setFilterMode] = useState<"day" | "month">("month");
 
   useEffect(() => {
+    if (session.loading) return;
     fetchAppointments();
 
     const channel = supabase
@@ -45,7 +48,7 @@ const Appointments = () => {
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, [selectedDate, currentMonth, filterMode]);
+  }, [selectedDate, currentMonth, filterMode, session.loading, session.barberName]);
 
   const fetchAppointments = async () => {
     let query = supabase
@@ -60,6 +63,11 @@ const Appointments = () => {
       const start = format(startOfMonth(currentMonth), "yyyy-MM-dd");
       const end = format(endOfMonth(currentMonth), "yyyy-MM-dd");
       query = query.gte("appointment_date", start).lte("appointment_date", end);
+    }
+
+    // Isolamento: barbeiro só vê os próprios agendamentos
+    if (session.isBarberOnly && session.barberName) {
+      query = query.eq("barber_name", session.barberName);
     }
 
     const { data } = await query;
