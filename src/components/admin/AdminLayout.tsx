@@ -25,6 +25,7 @@ import {
   CreditCard,
   Package,
   Truck,
+  UserCog,
 } from "lucide-react";
 import { isSuperAdmin } from "@/lib/superAdmin";
 import { clearAdminMysqlSession, getAdminMysqlSession } from "@/lib/adminMysqlSession";
@@ -55,7 +56,7 @@ const navItems: NavItem[] = [
   { label: "Cupons", path: "/admin/coupons", icon: Tag },
   { label: "Avaliações", path: "/admin/reviews", icon: Star },
   { label: "ChatPro", path: "/admin/confg", icon: MessageSquare, superAdminOnly: true },
-  { label: "Usuários", path: "/admin/users", icon: Users, superAdminOnly: true },
+  { label: "Usuários", path: "/admin/users", icon: UserCog, superAdminOnly: true },
   { label: "Perfis Barbearias", path: "/admin/barbershops", icon: Building2, superAdminOnly: true },
   { label: "Configurações", path: "/admin/settings", icon: Settings },
 ];
