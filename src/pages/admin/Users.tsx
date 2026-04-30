@@ -184,11 +184,14 @@ const Users = () => {
       if (password_hash) payload.password_hash = password_hash;
 
       if (editing) {
-        const { error } = await supabase.from("panel_users").update(payload).eq("id", editing);
+        const { error } = await supabase.from("panel_users").update(payload as any).eq("id", editing);
         if (error) throw error;
         toast.success("Usuário atualizado");
       } else {
-        const { error } = await supabase.from("panel_users").insert(payload);
+        if (!payload.password_hash) {
+          throw new Error("Senha obrigatória para novo usuário");
+        }
+        const { error } = await supabase.from("panel_users").insert(payload as any);
         if (error) throw error;
         toast.success("Usuário criado");
       }
