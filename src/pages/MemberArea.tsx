@@ -46,7 +46,7 @@ const MemberArea = () => {
   const [allServices, setAllServices] = useState<DBService[]>([]);
   const [serviceMap, setServiceMap] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState<"upcoming" | "history" | "pix">("upcoming");
+  const [tab, setTab] = useState<"upcoming" | "history" | "pix" | "orders">("upcoming");
 
   // PIX state
   const [pixAmount, setPixAmount] = useState("");
