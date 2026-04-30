@@ -88,6 +88,33 @@ export type Database = {
           },
         ]
       }
+      available_time_slots: {
+        Row: {
+          active: boolean
+          created_at: string
+          id: string
+          slot_time: string
+          sort_order: number
+          weekday: number | null
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          slot_time: string
+          sort_order?: number
+          weekday?: number | null
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          slot_time?: string
+          sort_order?: number
+          weekday?: number | null
+        }
+        Relationships: []
+      }
       barbers: {
         Row: {
           active: boolean
@@ -118,6 +145,30 @@ export type Database = {
           sort_order?: number
           specialty?: string | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      barbershop_amenities: {
+        Row: {
+          active: boolean
+          amenity_key: string
+          created_at: string
+          id: string
+          sort_order: number
+        }
+        Insert: {
+          active?: boolean
+          amenity_key: string
+          created_at?: string
+          id?: string
+          sort_order?: number
+        }
+        Update: {
+          active?: boolean
+          amenity_key?: string
+          created_at?: string
+          id?: string
+          sort_order?: number
         }
         Relationships: []
       }
@@ -219,6 +270,77 @@ export type Database = {
         }
         Relationships: []
       }
+      cashier_movements: {
+        Row: {
+          amount: number
+          category: string | null
+          created_at: string
+          description: string | null
+          id: string
+          session_id: string
+          type: string
+        }
+        Insert: {
+          amount: number
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          session_id: string
+          type: string
+        }
+        Update: {
+          amount?: number
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          session_id?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cashier_movements_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "cashier_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cashier_sessions: {
+        Row: {
+          closed_at: string | null
+          closing_amount: number | null
+          created_at: string
+          id: string
+          notes: string | null
+          opened_at: string
+          opening_amount: number
+          panel_user_id: string | null
+        }
+        Insert: {
+          closed_at?: string | null
+          closing_amount?: number | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          opened_at?: string
+          opening_amount?: number
+          panel_user_id?: string | null
+        }
+        Update: {
+          closed_at?: string | null
+          closing_amount?: number | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          opened_at?: string
+          opening_amount?: number
+          panel_user_id?: string | null
+        }
+        Relationships: []
+      }
       chatpro_config: {
         Row: {
           created_at: string
@@ -243,6 +365,119 @@ export type Database = {
           instance_id?: string
           token?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      command_items: {
+        Row: {
+          command_id: string
+          created_at: string
+          id: string
+          price: number
+          qty: number
+          ref_id: string | null
+          title: string
+          type: string
+        }
+        Insert: {
+          command_id: string
+          created_at?: string
+          id?: string
+          price: number
+          qty?: number
+          ref_id?: string | null
+          title: string
+          type: string
+        }
+        Update: {
+          command_id?: string
+          created_at?: string
+          id?: string
+          price?: number
+          qty?: number
+          ref_id?: string | null
+          title?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "command_items_command_id_fkey"
+            columns: ["command_id"]
+            isOneToOne: false
+            referencedRelation: "commands"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      commands: {
+        Row: {
+          barber_name: string | null
+          closed_at: string | null
+          customer_name: string
+          customer_phone: string | null
+          id: string
+          opened_at: string
+          panel_user_id: string | null
+          status: string
+          total: number
+        }
+        Insert: {
+          barber_name?: string | null
+          closed_at?: string | null
+          customer_name: string
+          customer_phone?: string | null
+          id?: string
+          opened_at?: string
+          panel_user_id?: string | null
+          status?: string
+          total?: number
+        }
+        Update: {
+          barber_name?: string | null
+          closed_at?: string | null
+          customer_name?: string
+          customer_phone?: string | null
+          id?: string
+          opened_at?: string
+          panel_user_id?: string | null
+          status?: string
+          total?: number
+        }
+        Relationships: []
+      }
+      commissions: {
+        Row: {
+          amount: number
+          appointment_id: string | null
+          barber_id: string | null
+          barber_name: string | null
+          created_at: string
+          id: string
+          paid: boolean
+          paid_at: string | null
+          percent: number | null
+        }
+        Insert: {
+          amount: number
+          appointment_id?: string | null
+          barber_id?: string | null
+          barber_name?: string | null
+          created_at?: string
+          id?: string
+          paid?: boolean
+          paid_at?: string | null
+          percent?: number | null
+        }
+        Update: {
+          amount?: number
+          appointment_id?: string | null
+          barber_id?: string | null
+          barber_name?: string | null
+          created_at?: string
+          id?: string
+          paid?: boolean
+          paid_at?: string | null
+          percent?: number | null
         }
         Relationships: []
       }
@@ -281,6 +516,71 @@ export type Database = {
           max_uses?: number | null
         }
         Relationships: []
+      }
+      credit_accounts: {
+        Row: {
+          balance: number
+          created_at: string
+          customer_name: string
+          customer_phone: string | null
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          balance?: number
+          created_at?: string
+          customer_name: string
+          customer_phone?: string | null
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          balance?: number
+          created_at?: string
+          customer_name?: string
+          customer_phone?: string | null
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      credit_movements: {
+        Row: {
+          account_id: string
+          amount: number
+          appointment_id: string | null
+          created_at: string
+          description: string | null
+          id: string
+          type: string
+        }
+        Insert: {
+          account_id: string
+          amount: number
+          appointment_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          type: string
+        }
+        Update: {
+          account_id?: string
+          amount?: number
+          appointment_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "credit_movements_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "credit_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       mysql_profiles: {
         Row: {
@@ -435,6 +735,45 @@ export type Database = {
         }
         Relationships: []
       }
+      panel_users: {
+        Row: {
+          active: boolean
+          barber_id: string | null
+          created_at: string
+          email: string
+          full_name: string
+          id: string
+          password_hash: string
+          permissions: Json
+          role: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          barber_id?: string | null
+          created_at?: string
+          email: string
+          full_name: string
+          id?: string
+          password_hash: string
+          permissions?: Json
+          role?: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          barber_id?: string | null
+          created_at?: string
+          email?: string
+          full_name?: string
+          id?: string
+          password_hash?: string
+          permissions?: Json
+          role?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       prize_wheel_slices: {
         Row: {
           active: boolean
@@ -561,6 +900,7 @@ export type Database = {
       services: {
         Row: {
           active: boolean | null
+          category: string | null
           created_at: string | null
           duration: string
           id: string
@@ -573,6 +913,7 @@ export type Database = {
         }
         Insert: {
           active?: boolean | null
+          category?: string | null
           created_at?: string | null
           duration: string
           id?: string
@@ -585,6 +926,7 @@ export type Database = {
         }
         Update: {
           active?: boolean | null
+          category?: string | null
           created_at?: string | null
           duration?: string
           id?: string
@@ -594,6 +936,42 @@ export type Database = {
           subtitle?: string | null
           title?: string
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      suppliers: {
+        Row: {
+          active: boolean
+          contact: string | null
+          created_at: string
+          email: string | null
+          id: string
+          name: string
+          notes: string | null
+          phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          contact?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          contact?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          updated_at?: string
         }
         Relationships: []
       }
@@ -664,6 +1042,19 @@ export type Database = {
         Returns: boolean
       }
       hash_owner_password: { Args: { _plain: string }; Returns: string }
+      hash_panel_password: { Args: { _plain: string }; Returns: string }
+      verify_panel_login: {
+        Args: { _email: string; _plain: string }
+        Returns: {
+          active: boolean
+          barber_id: string
+          email: string
+          full_name: string
+          id: string
+          permissions: Json
+          role: string
+        }[]
+      }
     }
     Enums: {
       app_role: "admin" | "user"
