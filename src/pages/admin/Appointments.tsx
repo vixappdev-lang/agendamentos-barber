@@ -10,6 +10,7 @@ interface Appointment {
   id: string;
   customer_name: string;
   customer_phone: string | null;
+  customer_email: string | null;
   barber_name: string | null;
   appointment_date: string;
   appointment_time: string;
