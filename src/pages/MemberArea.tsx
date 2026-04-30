@@ -399,15 +399,26 @@ const MemberArea = () => {
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-1 p-1 rounded-xl mb-6" style={{ background: t.cardBgSubtle, border: `1px solid ${borderColor}` }}>
-          {(["upcoming", "history", "pix"] as const).map((tabKey) => (
-            <button key={tabKey} onClick={() => setTab(tabKey)}
-              className="flex-1 py-2.5 rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-1.5"
+        <div className="flex gap-1 p-1 rounded-xl mb-6 overflow-x-auto scrollbar-hide" style={{ background: t.cardBgSubtle, border: `1px solid ${borderColor}` }}>
+          {((["upcoming", "history", "pix", ...(settings.store_enabled === "true" ? ["orders" as const] : [])]) as const).map((tabKey) => (
+            <button key={tabKey} onClick={() => setTab(tabKey as any)}
+              className="flex-1 min-w-[88px] py-2.5 rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-1.5"
               style={{ background: tab === tabKey ? btnBg : "transparent", color: tab === tabKey ? btnColor : t.textMuted }}>
-              {tabKey === "upcoming" ? `Próximos (${upcoming.length})` : tabKey === "history" ? `Histórico (${history.length})` : <><CreditCard className="w-3.5 h-3.5" /> PIX</>}
+              {tabKey === "upcoming" ? `Próximos (${upcoming.length})`
+                : tabKey === "history" ? `Histórico (${history.length})`
+                : tabKey === "pix" ? <><CreditCard className="w-3.5 h-3.5" /> PIX</>
+                : <><Package className="w-3.5 h-3.5" /> Pedidos</>}
             </button>
           ))}
         </div>
+
+        {/* Orders Tab */}
+        {tab === "orders" && (
+          <OrderTracker
+            onClose={() => setTab("upcoming")}
+            customerPhone={(user?.user_metadata?.phone as string) || ""}
+          />
+        )}
 
         {/* PIX Tab */}
         {tab === "pix" && (
