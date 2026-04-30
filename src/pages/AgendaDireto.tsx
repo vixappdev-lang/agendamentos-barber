@@ -804,8 +804,16 @@ const AmenityModal = ({
         animate={{ y: 0, opacity: 1, scale: 1 }}
         exit={{ y: 40, opacity: 0, scale: 0.98 }}
         transition={{ ease: easeSoft, duration: 0.32 }}
-        className="w-full max-w-md rounded-3xl p-6 relative"
-        style={{ ...glass, background: t.pageBg }}
+        className="w-full max-w-md rounded-3xl p-6 relative overflow-hidden"
+        style={{
+          background: t.isLight
+            ? "hsl(0 0% 100% / 0.92)"
+            : "linear-gradient(180deg, hsl(220 18% 9% / 0.92), hsl(220 20% 5% / 0.92))",
+          backdropFilter: "blur(40px) saturate(160%)",
+          WebkitBackdropFilter: "blur(40px) saturate(160%)",
+          border: t.isLight ? "1px solid hsl(220 14% 88%)" : "1px solid hsl(0 0% 100% / 0.1)",
+          boxShadow: "0 24px 60px hsl(0 0% 0% / 0.45)",
+        }}
         onClick={(e) => e.stopPropagation()}
       >
         <button
