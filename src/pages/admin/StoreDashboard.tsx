@@ -51,6 +51,7 @@ const StoreDashboard = () => {
         {activeTab === "products" && <Products />}
         {activeTab === "categories" && <Categories />}
         {activeTab === "orders" && <Orders />}
+        {activeTab === "reviews" && <ProductReviews />}
         {activeTab === "settings" && <StoreSettings />}
       </motion.div>
     </div>
