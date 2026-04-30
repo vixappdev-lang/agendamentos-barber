@@ -807,12 +807,12 @@ const AmenityModal = ({
         className="w-full max-w-md rounded-3xl p-6 relative overflow-hidden"
         style={{
           background: t.isLight
-            ? "hsl(0 0% 100% / 0.92)"
-            : "linear-gradient(180deg, hsl(220 18% 9% / 0.92), hsl(220 20% 5% / 0.92))",
-          backdropFilter: "blur(40px) saturate(160%)",
-          WebkitBackdropFilter: "blur(40px) saturate(160%)",
-          border: t.isLight ? "1px solid hsl(220 14% 88%)" : "1px solid hsl(0 0% 100% / 0.1)",
-          boxShadow: "0 24px 60px hsl(0 0% 0% / 0.45)",
+            ? "hsl(0 0% 100%)"
+            : "hsl(220 18% 9%)",
+          backdropFilter: "blur(16px)",
+          WebkitBackdropFilter: "blur(16px)",
+          border: t.isLight ? "1px solid hsl(220 14% 88%)" : "1px solid hsl(0 0% 100% / 0.08)",
+          boxShadow: "0 16px 40px hsl(0 0% 0% / 0.35)",
         }}
         onClick={(e) => e.stopPropagation()}
       >
