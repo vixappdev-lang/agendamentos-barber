@@ -117,11 +117,47 @@ const Orders = () => {
   const totalPages = Math.ceil(filteredOrders.length / ITEMS_PER_PAGE);
   const paginatedOrders = filteredOrders.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE);
 
+  const STATUS_MESSAGES: Record<string, (name: string, id: string) => string> = {
+    confirmed: (n) => `✅ Olá *${n}*! Seu pedido foi *confirmado* e já entrou na fila de preparo. Em breve te avisamos! 🙌`,
+    preparing: (n) => `👨‍🍳 *${n}*, seu pedido está sendo *preparado* agora! Logo, logo sai pra você. ⚡`,
+    delivering: (n) => `🛵 *${n}*, seu pedido *saiu para entrega*! Fique de olho — o entregador já está a caminho. 📍`,
+    completed: (n, id) => `🎉 *${n}*, seu pedido foi *concluído*! Esperamos que tenha curtido. \n\n⭐ Avalie sua experiência: ${window.location.origin}/avaliar-pedido/${id}\n\nObrigado pela preferência! 💚`,
+    cancelled: (n) => `❌ *${n}*, infelizmente seu pedido foi *cancelado*. Em caso de dúvidas, entre em contato conosco.`,
+  };
+
+  const sendWhatsApp = async (phone: string, message: string) => {
+    try {
+      await supabase.functions.invoke("chatpro", {
+        body: { action: "send_message", phone, message },
+      });
+    } catch (err) {
+      console.warn("WhatsApp notification failed:", err);
+    }
+  };
+
   const updateStatus = async (orderId: string, status: string) => {
-    const { error } = await supabase.from("orders").update({ status }).eq("id", orderId);
+    const order = orders.find((o) => o.id === orderId);
+    let reviewToken: string | null = null;
+    const updates: any = { status };
+
+    // Generate review token on completion
+    if (status === "completed" && order && !(order as any).review_token) {
+      reviewToken = crypto.randomUUID();
+      updates.review_token = reviewToken;
+    }
+
+    const { error } = await supabase.from("orders").update(updates).eq("id", orderId);
     if (error) { toast.error("Erro ao atualizar"); return; }
     toast.success(`Status: ${STATUSES.find(s => s.id === status)?.label}`);
     if (selectedOrder?.id === orderId) setSelectedOrder({ ...selectedOrder, status });
+
+    // Send WhatsApp notification
+    if (order?.customer_phone && STATUS_MESSAGES[status]) {
+      const tokenForLink = reviewToken || (order as any).review_token || orderId;
+      const msg = STATUS_MESSAGES[status](order.customer_name, tokenForLink);
+      sendWhatsApp(order.customer_phone, msg);
+      toast.success("📲 Cliente notificado via WhatsApp", { duration: 2000 });
+    }
   };
 
   const deleteOrder = async (orderId: string) => {
