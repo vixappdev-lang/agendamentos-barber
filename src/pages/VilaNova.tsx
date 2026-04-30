@@ -854,12 +854,22 @@ const VilaNova = () => {
         </div>
       </footer>
 
-      {/* ─── DIRECTIONS MODAL ─── */}
-      <DirectionsModalSimple
+      {/* ─── DIRECTIONS MODAL (MapLibre) ─── */}
+      <MapLibreDirections
         open={directionsOpen}
         onClose={() => setDirectionsOpen(false)}
         address={settings.address || ""}
         businessName={settings.business_name}
+      />
+
+      {/* ─── ALL SERVICES MODAL ─── */}
+      <AllServicesModal
+        open={allServicesOpen}
+        onClose={() => setAllServicesOpen(false)}
+        services={services}
+        onPick={(s) => { setSelectedService(s); setCurrentStep(0); }}
+        selBg={selBg}
+        selColor={selColor}
       />
 
       {/* ─── LIGHTBOX ─── */}
