@@ -119,6 +119,25 @@ const ProductDetailModal = ({ product, onClose, onAdd }: Props) => {
               {product.weight && (
                 <p className="text-xs mt-1 opacity-60" style={{ color: t.textSecondary }}>{product.weight}</p>
               )}
+              {reviews.length > 0 && (
+                <div className="flex items-center gap-1.5 mt-1.5">
+                  <div className="flex items-center gap-0.5">
+                    {[1, 2, 3, 4, 5].map((i) => (
+                      <Star
+                        key={i}
+                        className="w-3.5 h-3.5"
+                        style={{
+                          color: i <= Math.round(avgRating) ? "hsl(45 95% 60%)" : t.textSubtle,
+                          fill: i <= Math.round(avgRating) ? "hsl(45 95% 60%)" : "transparent",
+                        }}
+                      />
+                    ))}
+                  </div>
+                  <span className="text-xs font-semibold" style={{ color: t.textSecondary }}>
+                    {avgRating.toFixed(1)} <span className="opacity-60">({reviews.length})</span>
+                  </span>
+                </div>
+              )}
               {product.description && (
                 <p className="text-sm mt-2 leading-relaxed" style={{ color: t.textSecondary }}>{product.description}</p>
               )}
