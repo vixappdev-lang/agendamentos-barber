@@ -4,10 +4,12 @@ import { motion } from "framer-motion";
 import {
   DollarSign, TrendingUp, Users, ShoppingBag, Receipt,
   ArrowUpRight, ArrowDownRight, Calendar, Filter, Wallet,
-  BarChart3, Trophy, Percent, CreditCard, PiggyBank, Download
+  BarChart3, Trophy, Percent, CreditCard, PiggyBank, Download, FileText
 } from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, Bar, CartesianGrid } from "recharts";
 import { useThemeColors } from "@/hooks/useThemeColors";
+import { generateFinanceReport } from "@/lib/generateFinanceReport";
+import { toast } from "sonner";
 
 type Period = "day" | "week" | "month";
 
