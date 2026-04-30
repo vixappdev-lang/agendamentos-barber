@@ -13,6 +13,7 @@ import LocationPickerModal from "@/components/LocationPickerModal";
 import { useThemeColors } from "@/hooks/useThemeColors";
 import { MessageTemplatesModal } from "@/components/admin/MessageTemplatesModal";
 import { getAdminMysqlSession } from "@/lib/adminMysqlSession";
+import { MOCK_AMENITIES } from "@/data/agendaDiretoMock";
 import type { TemplateCategory } from "@/lib/messageTemplates";
 
 // Toggle card padrão (substitui checkboxes feios da aba Agendamento)
@@ -111,6 +112,8 @@ const Settings = () => {
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [pixQrConfigs, setPixQrConfigs] = useState<PixQrConfig[]>([]);
   const [newPixValue, setNewPixValue] = useState("");
+  const [activeAmenities, setActiveAmenities] = useState<string[]>([]);
+  const [savingAmenities, setSavingAmenities] = useState(false);
 
   // Database connection test
   const [dbTesting, setDbTesting] = useState(false);
@@ -141,7 +144,42 @@ const Settings = () => {
 
   useEffect(() => {
     fetchSettings();
+    fetchAmenities();
   }, []);
+
+  const fetchAmenities = async () => {
+    const { data } = await supabase
+      .from("barbershop_amenities")
+      .select("amenity_key")
+      .eq("active", true)
+      .order("sort_order");
+    if (data) setActiveAmenities(data.map((r: any) => r.amenity_key));
+  };
+
+  const toggleAmenity = async (key: string) => {
+    const isActive = activeAmenities.includes(key);
+    // Limit 4 selected (matches AgendaDireto layout)
+    if (!isActive && activeAmenities.length >= 4) {
+      toast.error("Máximo de 4 comodidades");
+      return;
+    }
+    setSavingAmenities(true);
+    try {
+      if (isActive) {
+        // delete row
+        await supabase.from("barbershop_amenities").delete().eq("amenity_key", key);
+        setActiveAmenities((prev) => prev.filter((k) => k !== key));
+      } else {
+        const sortOrder = activeAmenities.length;
+        await supabase.from("barbershop_amenities").insert({ amenity_key: key, active: true, sort_order: sortOrder });
+        setActiveAmenities((prev) => [...prev, key]);
+      }
+    } catch (e: any) {
+      toast.error("Erro: " + (e.message || "tente novamente"));
+    } finally {
+      setSavingAmenities(false);
+    }
+  };
 
   const fetchSettings = async () => {
     const { data } = await supabase.from("business_settings").select("*");
