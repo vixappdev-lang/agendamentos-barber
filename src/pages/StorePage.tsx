@@ -6,6 +6,8 @@ import CheckoutModal from "@/components/store/CheckoutModal";
 import OrderTracker from "@/components/store/OrderTracker";
 import AuthRequiredModal from "@/components/store/AuthRequiredModal";
 import ProductDetailModal from "@/components/store/ProductDetailModal";
+import CartDrawer from "@/components/store/CartDrawer";
+import { useCart } from "@/hooks/useCart";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { useThemeColors } from "@/hooks/useThemeColors";
@@ -19,19 +21,18 @@ interface DBProduct {
   stock?: number | null; highlights?: string[] | null; gallery?: string[] | null;
 }
 
-interface CartItem {
-  id: string; title: string; price: number; quantity: number; image_url: string | null;
-}
-
 const StorePage = () => {
   const navigate = useNavigate();
   const t = useThemeColors();
+  const cartHook = useCart();
+  const { items: cart, total: cartTotal, count: cartCount, add: cartAdd, updateQty, remove, clear, user: cartUser } = cartHook;
+
   const [products, setProducts] = useState<DBProduct[]>([]);
   const [search, setSearch] = useState("");
-  const [cart, setCart] = useState<CartItem[]>([]);
   const [showCheckout, setShowCheckout] = useState(false);
   const [showAuthGate, setShowAuthGate] = useState(false);
   const [showOrderTracker, setShowOrderTracker] = useState(false);
+  const [showCart, setShowCart] = useState(false);
   const [detailProduct, setDetailProduct] = useState<DBProduct | null>(null);
   const [storeEnabled, setStoreEnabled] = useState(true);
   const [storeOrderMode, setStoreOrderMode] = useState<"ifood" | "whatsapp">("whatsapp");
@@ -79,15 +80,9 @@ const StorePage = () => {
   }, [search, products]);
 
   const handleAddToCart = (product: DBProduct, qty: number = 1) => {
-    setCart((prev) => {
-      const existing = prev.find((i) => i.id === product.id);
-      if (existing) return prev.map((i) => i.id === product.id ? { ...i, quantity: i.quantity + qty } : i);
-      return [...prev, { id: product.id, title: product.title, price: product.price, quantity: qty, image_url: product.image_url }];
-    });
+    cartAdd({ id: product.id, title: product.title, price: Number(product.price), image_url: product.image_url }, qty);
+    setShowCart(true);
   };
-
-  const cartTotal = cart.reduce((s, i) => s + i.price * i.quantity, 0);
-  const cartCount = cart.reduce((s, i) => s + i.quantity, 0);
 
   const openCheckout = async () => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -234,24 +229,38 @@ const StorePage = () => {
         </section>
       </main>
 
-      {/* Floating cart */}
+      {/* Floating cart — abre o drawer */}
       <AnimatePresence>
-        {cartCount > 0 && (
+        {cartCount > 0 && !showCart && (
           <motion.div initial={{ y: 80, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 80, opacity: 0 }}
             transition={{ type: "spring", damping: 22, stiffness: 280 }}
             className="fixed bottom-4 sm:bottom-6 left-4 right-4 max-w-md sm:max-w-lg mx-auto z-40">
-            <button onClick={openCheckout}
+            <button onClick={() => setShowCart(true)}
               className="w-full flex items-center justify-between px-5 py-4 rounded-2xl font-bold text-sm transition-all hover:translate-y-[-1px] active:scale-[0.99]"
               style={{ background: t.btnBg, color: t.btnColor, boxShadow: "0 12px 32px hsl(0 0% 0% / 0.25)" }}>
               <span className="flex items-center gap-2">
                 <ShoppingBag className="w-5 h-5" />
-                {cartCount} {cartCount === 1 ? "item" : "itens"}
+                {cartCount} {cartCount === 1 ? "item" : "itens"} · ver carrinho
               </span>
               <span>R$ {cartTotal.toFixed(2).replace(".", ",")}</span>
             </button>
           </motion.div>
         )}
       </AnimatePresence>
+
+      <CartDrawer
+        open={showCart}
+        onClose={() => setShowCart(false)}
+        items={cart}
+        total={cartTotal}
+        count={cartCount}
+        updateQty={updateQty}
+        remove={remove}
+        clear={clear}
+        isLogged={!!cartUser}
+        onCheckout={() => { setShowCart(false); openCheckout(); }}
+      />
+
 
       <AnimatePresence>
         {detailProduct && (
@@ -294,7 +303,7 @@ const StorePage = () => {
           <CheckoutModal
             items={cart}
             onClose={() => setShowCheckout(false)}
-            onSuccess={() => { setShowCheckout(false); setCart([]); }}
+            onSuccess={() => { setShowCheckout(false); clear(); }}
             mode={storeOrderMode}
             whatsappNumber={whatsappNumber}
             pixKey={pixKey}
