@@ -30,7 +30,7 @@ const Categories = () => {
   const [loading, setLoading] = useState(true);
 
   const fetchRows = async () => {
-    const { data } = await supabase.from("product_categories").select("*").order("sort_order");
+    const { data } = await (supabase as any).from("product_categories").select("*").order("sort_order");
     setRows((data as CategoryRow[]) || []);
     setLoading(false);
   };
@@ -51,13 +51,13 @@ const Categories = () => {
     if (!form.label.trim()) { toast.error("Informe o nome"); return; }
     const slug = (form.slug || slugify(form.label)).trim();
     if (editing) {
-      const { error } = await supabase.from("product_categories").update({
+      const { error } = await (supabase as any).from("product_categories").update({
         slug, label: form.label.trim(), icon: form.icon, sort_order: form.sort_order, active: form.active,
       }).eq("id", editing);
       if (error) { toast.error(error.message); return; }
       toast.success("Categoria atualizada");
     } else {
-      const { error } = await supabase.from("product_categories").insert({
+      const { error } = await (supabase as any).from("product_categories").insert({
         slug, label: form.label.trim(), icon: form.icon, sort_order: form.sort_order, active: form.active,
       });
       if (error) { toast.error(error.message); return; }
@@ -70,14 +70,14 @@ const Categories = () => {
   const remove = async (id: string, slug: string) => {
     if (slug === "geral") { toast.error("A categoria 'Outros' não pode ser excluída"); return; }
     if (!confirm("Excluir esta categoria? Produtos vinculados ficarão sem categoria.")) return;
-    const { error } = await supabase.from("product_categories").delete().eq("id", id);
+    const { error } = await (supabase as any).from("product_categories").delete().eq("id", id);
     if (error) { toast.error(error.message); return; }
     toast.success("Excluída");
     fetchRows();
   };
 
   const toggleActive = async (row: CategoryRow) => {
-    await supabase.from("product_categories").update({ active: !row.active }).eq("id", row.id);
+    await (supabase as any).from("product_categories").update({ active: !row.active }).eq("id", row.id);
     fetchRows();
   };
 
@@ -87,8 +87,8 @@ const Categories = () => {
     const swap = sorted[idx + dir];
     if (!swap) return;
     await Promise.all([
-      supabase.from("product_categories").update({ sort_order: swap.sort_order }).eq("id", row.id),
-      supabase.from("product_categories").update({ sort_order: row.sort_order }).eq("id", swap.id),
+      (supabase as any).from("product_categories").update({ sort_order: swap.sort_order }).eq("id", row.id),
+      (supabase as any).from("product_categories").update({ sort_order: row.sort_order }).eq("id", swap.id),
     ]);
     fetchRows();
   };
