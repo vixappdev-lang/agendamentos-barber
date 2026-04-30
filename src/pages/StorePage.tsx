@@ -22,7 +22,7 @@ interface DBProduct {
   stock?: number | null; highlights?: string[] | null; gallery?: string[] | null;
 }
 
-const CATEGORY_LABELS: Record<string, string> = {
+const FALLBACK_CATEGORY_LABELS: Record<string, string> = {
   cabelo: "Cabelo",
   barba: "Barba",
   pos_barba: "Pós-barba",
@@ -31,10 +31,6 @@ const CATEGORY_LABELS: Record<string, string> = {
   fragrancias: "Fragrâncias",
   geral: "Outros",
 };
-
-const formatCategoryLabel = (key: string) =>
-  CATEGORY_LABELS[key] ||
-  key.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 
 const StorePage = () => {
   const navigate = useNavigate();
