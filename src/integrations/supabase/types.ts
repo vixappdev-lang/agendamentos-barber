@@ -823,6 +823,7 @@ export type Database = {
         Row: {
           active: boolean
           brand: string | null
+          category: string | null
           created_at: string
           description: string | null
           gallery: Json | null
@@ -840,6 +841,7 @@ export type Database = {
         Insert: {
           active?: boolean
           brand?: string | null
+          category?: string | null
           created_at?: string
           description?: string | null
           gallery?: Json | null
@@ -857,6 +859,7 @@ export type Database = {
         Update: {
           active?: boolean
           brand?: string | null
+          category?: string | null
           created_at?: string
           description?: string | null
           gallery?: Json | null

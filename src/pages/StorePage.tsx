@@ -17,9 +17,24 @@ import type { User as AuthUser } from "@supabase/supabase-js";
 interface DBProduct {
   id: string; title: string; description: string | null; price: number;
   image_url: string | null; active: boolean; sort_order: number;
+  category?: string | null;
   long_description?: string | null; brand?: string | null; weight?: string | null;
   stock?: number | null; highlights?: string[] | null; gallery?: string[] | null;
 }
+
+const CATEGORY_LABELS: Record<string, string> = {
+  cabelo: "Cabelo",
+  barba: "Barba",
+  pos_barba: "Pós-barba",
+  combos: "Combos",
+  acessorios: "Acessórios",
+  fragrancias: "Fragrâncias",
+  geral: "Outros",
+};
+
+const formatCategoryLabel = (key: string) =>
+  CATEGORY_LABELS[key] ||
+  key.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 
 const StorePage = () => {
   const navigate = useNavigate();
@@ -73,11 +88,24 @@ const StorePage = () => {
 
   const filteredProducts = useMemo(() => {
     if (!search) return products;
+    const q = search.toLowerCase();
     return products.filter((p) =>
-      p.title.toLowerCase().includes(search.toLowerCase()) ||
-      (p.description || "").toLowerCase().includes(search.toLowerCase())
+      p.title.toLowerCase().includes(q) ||
+      (p.description || "").toLowerCase().includes(q) ||
+      (p.brand || "").toLowerCase().includes(q)
     );
   }, [search, products]);
+
+  // Group filtered products by category, preserving insertion order from sort_order
+  const groupedProducts = useMemo(() => {
+    const groups = new Map<string, DBProduct[]>();
+    for (const p of filteredProducts) {
+      const key = (p.category || "geral").toLowerCase();
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key)!.push(p);
+    }
+    return Array.from(groups.entries());
+  }, [filteredProducts]);
 
   const handleAddToCart = (product: DBProduct, qty: number = 1) => {
     cartAdd({ id: product.id, title: product.title, price: Number(product.price), image_url: product.image_url }, qty);
@@ -204,22 +232,59 @@ const StorePage = () => {
           </div>
 
           {loading ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
-              {Array.from({ length: 8 }).map((_, i) => (
-                <div key={i} className="rounded-2xl overflow-hidden animate-pulse" style={{ background: t.cardBgSubtle, height: 260 }} />
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
+              {Array.from({ length: 10 }).map((_, i) => (
+                <div key={i} className="rounded-2xl overflow-hidden animate-pulse" style={{ background: t.cardBgSubtle, height: 220 }} />
               ))}
             </div>
-          ) : filteredProducts.length > 0 ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
-              {filteredProducts.map((product, i) => (
-                <ProductCard
-                  key={product.id}
-                  product={{ ...product, description: product.description || "" }}
-                  onSelect={() => setDetailProduct(product)}
-                  index={i}
-                />
-              ))}
-            </div>
+          ) : groupedProducts.length > 0 ? (
+            <>
+              {/* Quick category jump (mobile-friendly horizontal chips) */}
+              {groupedProducts.length > 1 && (
+                <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-2 mb-2 -mx-1 px-1">
+                  {groupedProducts.map(([key, items]) => (
+                    <a
+                      key={key}
+                      href={`#cat-${key}`}
+                      className="shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-semibold transition-all hover:translate-y-[-1px]"
+                      style={{ background: t.cardBgSubtle, color: t.textSecondary, border: `1px solid ${t.borderSubtle}` }}
+                    >
+                      {formatCategoryLabel(key)}
+                      <span className="opacity-60">{items.length}</span>
+                    </a>
+                  ))}
+                </div>
+              )}
+
+              <div className="space-y-10 sm:space-y-12">
+                {groupedProducts.map(([catKey, items]) => (
+                  <section key={catKey} id={`cat-${catKey}`} className="scroll-mt-20">
+                    <div className="flex items-end justify-between gap-3 mb-3 sm:mb-4">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <h3 className="text-base sm:text-lg font-black tracking-tight truncate" style={{ color: t.textPrimary }}>
+                          {formatCategoryLabel(catKey)}
+                        </h3>
+                        <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full shrink-0" style={{ background: t.cardBgSubtle, color: t.textMuted }}>
+                          {items.length}
+                        </span>
+                      </div>
+                      <div className="hidden sm:block flex-1 h-px" style={{ background: t.borderSubtle }} />
+                    </div>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
+                      {items.map((product, i) => (
+                        <ProductCard
+                          key={product.id}
+                          product={{ ...product, description: product.description || "" }}
+                          onSelect={() => setDetailProduct(product)}
+                          index={i}
+                        />
+                      ))}
+                    </div>
+                  </section>
+                ))}
+              </div>
+            </>
           ) : (
             <div className="rounded-2xl p-10 text-center" style={{ background: t.cardBg, border: `1px solid ${t.borderSubtle}` }}>
               <ShoppingBag className="w-10 h-10 mx-auto mb-3" style={{ color: t.textMuted }} />

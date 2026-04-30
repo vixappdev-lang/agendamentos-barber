@@ -18,12 +18,24 @@ interface ProductRow {
   image_url: string | null;
   active: boolean;
   sort_order: number;
+  category: string | null;
 }
+
+const PRODUCT_CATEGORIES: { value: string; label: string }[] = [
+  { value: "cabelo", label: "Cabelo" },
+  { value: "barba", label: "Barba" },
+  { value: "pos_barba", label: "Pós-barba" },
+  { value: "combos", label: "Combos" },
+  { value: "acessorios", label: "Acessórios" },
+  { value: "fragrancias", label: "Fragrâncias" },
+  { value: "geral", label: "Outros" },
+];
 
 const emptyForm = {
   title: "", description: "", long_description: "", brand: "", weight: "",
   stock: 0, highlights: [] as string[], gallery: [] as string[],
   price: 0, image_url: "", active: true, sort_order: 0,
+  category: "geral",
 };
 
 const Products = () => {
@@ -93,6 +105,7 @@ const Products = () => {
       image_url: form.image_url || null,
       active: form.active,
       sort_order: form.sort_order,
+      category: form.category || "geral",
     };
 
     if (editing) {
@@ -114,6 +127,7 @@ const Products = () => {
       highlights: Array.isArray(p.highlights) ? p.highlights : [],
       gallery: Array.isArray(p.gallery) ? p.gallery : [],
       price: Number(p.price), image_url: p.image_url || "", active: p.active, sort_order: p.sort_order,
+      category: p.category || "geral",
     });
     setEditing(p.id); setShowModal(true);
   };
@@ -211,6 +225,18 @@ const Products = () => {
                   <div>
                     <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1 block">Estoque</label>
                     <input className="glass-input" type="number" min={0} step={1} value={form.stock} onChange={(e) => setForm({ ...form, stock: parseInt(e.target.value) || 0 })} />
+                  </div>
+                  <div className="sm:col-span-2">
+                    <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1 block">Categoria</label>
+                    <select
+                      className="glass-input"
+                      value={form.category}
+                      onChange={(e) => setForm({ ...form, category: e.target.value })}
+                    >
+                      {PRODUCT_CATEGORIES.map((c) => (
+                        <option key={c.value} value={c.value}>{c.label}</option>
+                      ))}
+                    </select>
                   </div>
                 </div>
 
