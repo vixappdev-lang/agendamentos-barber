@@ -7,6 +7,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useThemeColors } from "@/hooks/useThemeColors";
 import NotificationsBell from "@/components/NotificationsBell";
+import { usePushNotifications } from "@/hooks/usePushNotifications";
 import type { User as AuthUser } from "@supabase/supabase-js";
 
 interface Appointment {
