@@ -18,12 +18,24 @@ interface ProductRow {
   image_url: string | null;
   active: boolean;
   sort_order: number;
+  category: string | null;
 }
+
+const PRODUCT_CATEGORIES: { value: string; label: string }[] = [
+  { value: "cabelo", label: "Cabelo" },
+  { value: "barba", label: "Barba" },
+  { value: "pos_barba", label: "Pós-barba" },
+  { value: "combos", label: "Combos" },
+  { value: "acessorios", label: "Acessórios" },
+  { value: "fragrancias", label: "Fragrâncias" },
+  { value: "geral", label: "Outros" },
+];
 
 const emptyForm = {
   title: "", description: "", long_description: "", brand: "", weight: "",
   stock: 0, highlights: [] as string[], gallery: [] as string[],
   price: 0, image_url: "", active: true, sort_order: 0,
+  category: "geral",
 };
 
 const Products = () => {
