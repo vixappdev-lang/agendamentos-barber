@@ -149,6 +149,46 @@ const Finance = () => {
     URL.revokeObjectURL(url);
   };
 
+  const exportPDF = async () => {
+    try {
+      // Busca nome da barbearia
+      const { data: settings } = await supabase
+        .from("business_settings")
+        .select("key, value")
+        .in("key", ["business_name", "owner_name"]);
+      const settingsMap = Object.fromEntries((settings ?? []).map((s) => [s.key, s.value]));
+      const businessName = settingsMap.business_name || "Barbearia";
+      const ownerName = settingsMap.owner_name || session.barberName || "—";
+
+      const monthLabel = (() => {
+        const now = new Date();
+        if (period === "day") return now.toLocaleDateString("pt-BR");
+        if (period === "week") return `Últimos 7 dias — ${now.toLocaleDateString("pt-BR")}`;
+        return now.toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
+      })();
+
+      const blob = generateFinanceReport({
+        businessName,
+        ownerName,
+        monthLabel: monthLabel.charAt(0).toUpperCase() + monthLabel.slice(1),
+        stats,
+        topServices,
+        barberRanking,
+        dailyRevenue: chartData,
+      });
+
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `relatorio_financeiro_${new Date().toISOString().slice(0, 10)}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success("Relatório PDF gerado!");
+    } catch (e: any) {
+      toast.error("Erro ao gerar PDF: " + e.message);
+    }
+  };
+
   const formatCurrency = (value: number) => new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
   const periodLabels: Record<Period, string> = { day: "Hoje", week: "7 dias", month: "30 dias" };
 
