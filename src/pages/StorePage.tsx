@@ -24,12 +24,15 @@ interface DBProduct {
 const StorePage = () => {
   const navigate = useNavigate();
   const t = useThemeColors();
+  const cartHook = useCart();
+  const { items: cart, total: cartTotal, count: cartCount, add: cartAdd, updateQty, remove, clear, user: cartUser } = cartHook;
+
   const [products, setProducts] = useState<DBProduct[]>([]);
   const [search, setSearch] = useState("");
-  const [cart, setCart] = useState<CartItem[]>([]);
   const [showCheckout, setShowCheckout] = useState(false);
   const [showAuthGate, setShowAuthGate] = useState(false);
   const [showOrderTracker, setShowOrderTracker] = useState(false);
+  const [showCart, setShowCart] = useState(false);
   const [detailProduct, setDetailProduct] = useState<DBProduct | null>(null);
   const [storeEnabled, setStoreEnabled] = useState(true);
   const [storeOrderMode, setStoreOrderMode] = useState<"ifood" | "whatsapp">("whatsapp");
@@ -77,15 +80,9 @@ const StorePage = () => {
   }, [search, products]);
 
   const handleAddToCart = (product: DBProduct, qty: number = 1) => {
-    setCart((prev) => {
-      const existing = prev.find((i) => i.id === product.id);
-      if (existing) return prev.map((i) => i.id === product.id ? { ...i, quantity: i.quantity + qty } : i);
-      return [...prev, { id: product.id, title: product.title, price: product.price, quantity: qty, image_url: product.image_url }];
-    });
+    cartAdd({ id: product.id, title: product.title, price: Number(product.price), image_url: product.image_url }, qty);
+    setShowCart(true);
   };
-
-  const cartTotal = cart.reduce((s, i) => s + i.price * i.quantity, 0);
-  const cartCount = cart.reduce((s, i) => s + i.quantity, 0);
 
   const openCheckout = async () => {
     const { data: { session } } = await supabase.auth.getSession();
