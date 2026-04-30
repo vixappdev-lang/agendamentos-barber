@@ -66,6 +66,50 @@ const CheckoutModal = ({
     setTimeout(() => navigate("/membro?tab=orders"), 200);
   };
 
+  const applyCoupon = async () => {
+    const code = couponInput.trim().toUpperCase();
+    if (!code) return toast.error("Digite um código");
+    setValidating(true);
+    const { data, error } = await supabase
+      .from("coupons")
+      .select("code, discount_percent, discount_value, max_uses, current_uses, expires_at, active")
+      .eq("code", code)
+      .eq("active", true)
+      .maybeSingle();
+    setValidating(false);
+
+    if (error || !data) { toast.error("Cupom inválido"); return; }
+    if (data.expires_at && new Date(data.expires_at) < new Date()) {
+      toast.error("Cupom expirado"); return;
+    }
+    if (data.max_uses != null && (data.current_uses ?? 0) >= data.max_uses) {
+      toast.error("Cupom esgotado"); return;
+    }
+
+    let discountAmount = 0;
+    let type: "percent" | "value" = "percent";
+    let raw = 0;
+    if (data.discount_percent && Number(data.discount_percent) > 0) {
+      type = "percent";
+      raw = Number(data.discount_percent);
+      discountAmount = (subtotal * raw) / 100;
+    } else if (data.discount_value && Number(data.discount_value) > 0) {
+      type = "value";
+      raw = Number(data.discount_value);
+      discountAmount = raw;
+    } else {
+      toast.error("Cupom sem desconto configurado"); return;
+    }
+
+    setAppliedCoupon({ code: data.code, discount: discountAmount, type, raw });
+    toast.success(`Cupom ${data.code} aplicado! 🎉`);
+  };
+
+  const removeCoupon = () => {
+    setAppliedCoupon(null);
+    setCouponInput("");
+  };
+
   const handleSubmit = async () => {
     if (!form.name || !form.phone) return toast.error("Preencha nome e telefone");
     if (deliveryMode === "delivery" && (!form.address || !form.neighborhood)) {
