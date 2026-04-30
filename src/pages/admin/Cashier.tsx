@@ -98,13 +98,14 @@ const Cashier = () => {
     if (!current) return toast.error("Abra o caixa primeiro");
     const amt = Number(movAmount);
     if (!Number.isFinite(amt) || amt <= 0) return toast.error("Valor inválido");
+    const barberName = session.isBarberOnly && session.barberName ? session.barberName : (movBarber || null);
     const { error } = await supabase.from("cash_movements").insert({
       session_id: current.id,
       kind: movKind,
       amount: amt,
       payment_method: movMethod || null,
       description: movDesc || null,
-      barber_name: movBarber || null,
+      barber_name: barberName,
     });
     if (error) return toast.error(error.message);
     toast.success("Movimento registrado");
