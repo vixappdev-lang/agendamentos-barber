@@ -1,19 +1,21 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { ShoppingBag, Package, Settings, Tag, BarChart3 } from "lucide-react";
+import { ShoppingBag, Package, Settings, Tag, BarChart3, Star } from "lucide-react";
 import Products from "./Products";
 import Orders from "./Orders";
 import StoreSettings from "./StoreSettings";
 import Categories from "./Categories";
 import StoreKPIs from "./StoreKPIs";
+import ProductReviews from "./ProductReviews";
 
-type Tab = "kpis" | "products" | "categories" | "orders" | "settings";
+type Tab = "kpis" | "products" | "categories" | "orders" | "reviews" | "settings";
 
 const tabs: { id: Tab; label: string; icon: typeof ShoppingBag }[] = [
   { id: "kpis", label: "KPIs", icon: BarChart3 },
   { id: "products", label: "Produtos", icon: ShoppingBag },
   { id: "categories", label: "Categorias", icon: Tag },
   { id: "orders", label: "Pedidos", icon: Package },
+  { id: "reviews", label: "Avaliações", icon: Star },
   { id: "settings", label: "Configurações", icon: Settings },
 ];
 
@@ -49,6 +51,7 @@ const StoreDashboard = () => {
         {activeTab === "products" && <Products />}
         {activeTab === "categories" && <Categories />}
         {activeTab === "orders" && <Orders />}
+        {activeTab === "reviews" && <ProductReviews />}
         {activeTab === "settings" && <StoreSettings />}
       </motion.div>
     </div>

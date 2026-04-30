@@ -52,6 +52,7 @@ const Credit = lazy(() => import("./pages/admin/Credit"));
 const Inventory = lazy(() => import("./pages/admin/Inventory"));
 const Suppliers = lazy(() => import("./pages/admin/Suppliers"));
 const UsersAdmin = lazy(() => import("./pages/admin/Users"));
+const WhatsAppTemplates = lazy(() => import("./pages/admin/WhatsAppTemplates"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -131,6 +132,7 @@ const App = () => (
                   <Route path="coupons" element={<Coupons />} />
                   <Route path="store" element={<StoreDashboard />} />
                   <Route path="confg" element={<ChatProConfig />} />
+                  <Route path="whatsapp-templates" element={<WhatsAppTemplates />} />
                   <Route path="reviews" element={<Reviews />} />
                   <Route path="product-reviews" element={<ProductReviews />} />
                   <Route path="cashier" element={<Cashier />} />
@@ -172,6 +174,7 @@ const App = () => (
                   <Route path="coupons" element={<Coupons />} />
                   <Route path="store" element={<StoreDashboard />} />
                   <Route path="confg" element={<ChatProConfig />} />
+                  <Route path="whatsapp-templates" element={<WhatsAppTemplates />} />
                   <Route path="barbershops" element={<Barbershops />} />
                   <Route path="reviews" element={<Reviews />} />
                   <Route path="product-reviews" element={<ProductReviews />} />
