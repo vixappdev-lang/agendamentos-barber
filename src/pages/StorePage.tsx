@@ -32,6 +32,7 @@ const StorePage = () => {
   const [showCheckout, setShowCheckout] = useState(false);
   const [showAuthGate, setShowAuthGate] = useState(false);
   const [showOrderTracker, setShowOrderTracker] = useState(false);
+  const [detailProduct, setDetailProduct] = useState<DBProduct | null>(null);
   const [storeEnabled, setStoreEnabled] = useState(true);
   const [storeOrderMode, setStoreOrderMode] = useState<"ifood" | "whatsapp">("whatsapp");
   const [whatsappNumber, setWhatsappNumber] = useState("");
