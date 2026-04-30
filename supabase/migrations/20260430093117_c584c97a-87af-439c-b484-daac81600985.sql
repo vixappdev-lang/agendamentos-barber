@@ -1,0 +1,6 @@
+UPDATE public.products SET image_url = 'https://vikabbqyfduibrykikvx.supabase.co/storage/v1/object/public/public-assets/styllus-products/product-pomade.jpg' WHERE title = 'Pomada Styllus';
+UPDATE public.products SET image_url = 'https://vikabbqyfduibrykikvx.supabase.co/storage/v1/object/public/public-assets/styllus-products/product-beardoil.jpg' WHERE title = 'Óleo para Barba Styllus';
+UPDATE public.products SET image_url = 'https://vikabbqyfduibrykikvx.supabase.co/storage/v1/object/public/public-assets/styllus-products/product-shampoo.jpg' WHERE title = 'Shampoo Styllus Men';
+UPDATE public.products SET image_url = 'https://vikabbqyfduibrykikvx.supabase.co/storage/v1/object/public/public-assets/styllus-products/product-razor.jpg' WHERE title = 'Navalha Profissional';
+UPDATE public.products SET image_url = 'https://vikabbqyfduibrykikvx.supabase.co/storage/v1/object/public/public-assets/styllus-products/product-balm.jpg' WHERE title = 'Bálsamo para Barba';
+UPDATE public.products SET image_url = 'https://vikabbqyfduibrykikvx.supabase.co/storage/v1/object/public/public-assets/styllus-products/product-cologne.jpg' WHERE title = 'Eau de Parfum Styllus';
