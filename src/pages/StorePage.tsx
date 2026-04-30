@@ -6,6 +6,8 @@ import CheckoutModal from "@/components/store/CheckoutModal";
 import OrderTracker from "@/components/store/OrderTracker";
 import AuthRequiredModal from "@/components/store/AuthRequiredModal";
 import ProductDetailModal from "@/components/store/ProductDetailModal";
+import CartDrawer from "@/components/store/CartDrawer";
+import { useCart } from "@/hooks/useCart";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { useThemeColors } from "@/hooks/useThemeColors";
@@ -17,10 +19,6 @@ interface DBProduct {
   image_url: string | null; active: boolean; sort_order: number;
   long_description?: string | null; brand?: string | null; weight?: string | null;
   stock?: number | null; highlights?: string[] | null; gallery?: string[] | null;
-}
-
-interface CartItem {
-  id: string; title: string; price: number; quantity: number; image_url: string | null;
 }
 
 const StorePage = () => {
