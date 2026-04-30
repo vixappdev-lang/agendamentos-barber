@@ -458,20 +458,19 @@ const AgendaDireto = () => {
               <h2 className="text-[10px] uppercase tracking-[0.3em] opacity-50 font-bold mt-7 mb-3">
                 Data
               </h2>
-              <div className="flex gap-2.5 overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 scrollbar-none">
+              <div className="flex gap-2.5 overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 scrollbar-hide">
                 {dates.map((d) => {
                   const active = d.iso === date;
                   return (
                     <button
                       key={d.iso}
                       onClick={() => setDate(d.iso)}
-                      className="flex flex-col items-center justify-center min-w-[64px] h-[84px] rounded-2xl transition-all"
-                      style={{
-                        background: active ? t.textPrimary : (glassCard.background as string),
-                        color: active ? t.pageBg : t.textPrimary,
-                        border: `1px solid ${active ? t.textPrimary : subtleBorder}`,
-                        backdropFilter: active ? undefined : "blur(20px)",
-                      }}
+                      className="flex flex-col items-center justify-center min-w-[64px] h-[84px] rounded-2xl transition-all hover:translate-y-[-1px]"
+                      style={
+                        active
+                          ? { background: t.textPrimary, color: t.pageBg, border: `1px solid ${t.textPrimary}` }
+                          : glassCard
+                      }
                     >
                       <span className="text-[10px] uppercase opacity-60 font-semibold">{d.weekday}</span>
                       <span className="text-2xl font-black leading-none my-0.5">{d.day}</span>
@@ -491,13 +490,12 @@ const AgendaDireto = () => {
                     <button
                       key={tm}
                       onClick={() => setTime(tm)}
-                      className="h-11 rounded-xl text-[13px] font-semibold transition-all"
-                      style={{
-                        background: active ? t.textPrimary : (glassCard.background as string),
-                        color: active ? t.pageBg : t.textPrimary,
-                        border: `1px solid ${active ? t.textPrimary : subtleBorder}`,
-                        backdropFilter: active ? undefined : "blur(20px)",
-                      }}
+                      className="h-11 rounded-xl text-[13px] font-semibold transition-all hover:translate-y-[-1px]"
+                      style={
+                        active
+                          ? { background: t.textPrimary, color: t.pageBg, border: `1px solid ${t.textPrimary}` }
+                          : glassCard
+                      }
                     >
                       {tm}
                     </button>
