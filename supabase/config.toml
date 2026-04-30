@@ -2,3 +2,6 @@ project_id = "vikabbqyfduibrykikvx"
 
 [functions.seed-admin]
 verify_jwt = false
+
+[functions.appointment-reminders]
+verify_jwt = false
