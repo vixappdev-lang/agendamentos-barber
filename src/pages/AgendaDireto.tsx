@@ -228,28 +228,28 @@ const AgendaDireto = () => {
   const progress = stepOrder.indexOf(step) + 1;
   const isLight = t.isLight;
 
-  // Glass mais "presente" no dark — sem ficar invisível.
+  // Glass suave — sutil, sem exagero.
   const glassCard: React.CSSProperties = {
     background: isLight
-      ? "hsl(0 0% 100% / 0.72)"
-      : "linear-gradient(180deg, hsl(0 0% 100% / 0.06), hsl(0 0% 100% / 0.025))",
-    backdropFilter: "blur(28px) saturate(160%)",
-    WebkitBackdropFilter: "blur(28px) saturate(160%)",
-    border: `1px solid ${isLight ? "hsl(220 14% 89%)" : "hsl(0 0% 100% / 0.09)"}`,
+      ? "hsl(0 0% 100% / 0.6)"
+      : "hsl(0 0% 100% / 0.025)",
+    backdropFilter: "blur(12px)",
+    WebkitBackdropFilter: "blur(12px)",
+    border: `1px solid ${isLight ? "hsl(220 14% 90%)" : "hsl(0 0% 100% / 0.06)"}`,
     boxShadow: isLight
-      ? "0 1px 2px hsl(220 15% 20% / 0.04), 0 4px 16px hsl(220 15% 20% / 0.05)"
-      : "0 1px 0 hsl(0 0% 100% / 0.04) inset, 0 8px 24px hsl(0 0% 0% / 0.35)",
+      ? "0 1px 2px hsl(220 15% 20% / 0.03)"
+      : "none",
   };
   const glassCardActive: React.CSSProperties = {
     background: isLight
-      ? "hsl(0 0% 100% / 0.95)"
-      : "linear-gradient(180deg, hsl(0 0% 100% / 0.12), hsl(0 0% 100% / 0.06))",
-    backdropFilter: "blur(28px) saturate(160%)",
-    WebkitBackdropFilter: "blur(28px) saturate(160%)",
-    border: `1px solid ${isLight ? "hsl(220 18% 30%)" : "hsl(0 0% 100% / 0.28)"}`,
+      ? "hsl(0 0% 100%)"
+      : "hsl(0 0% 100% / 0.06)",
+    backdropFilter: "blur(12px)",
+    WebkitBackdropFilter: "blur(12px)",
+    border: `1px solid ${isLight ? "hsl(220 18% 25%)" : "hsl(0 0% 100% / 0.18)"}`,
     boxShadow: isLight
-      ? "0 4px 18px hsl(220 15% 20% / 0.12)"
-      : "0 0 0 1px hsl(0 0% 100% / 0.06) inset, 0 12px 32px hsl(0 0% 0% / 0.5)",
+      ? "0 2px 8px hsl(220 15% 20% / 0.08)"
+      : "0 0 0 1px hsl(0 0% 100% / 0.04) inset",
   };
   const subtleBorder = isLight ? "hsl(220 14% 89%)" : "hsl(0 0% 100% / 0.07)";
   const softBg = isLight ? "hsl(220 14% 96%)" : "hsl(0 0% 100% / 0.05)";
