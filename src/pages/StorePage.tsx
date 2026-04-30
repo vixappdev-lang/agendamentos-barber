@@ -254,6 +254,20 @@ const StorePage = () => {
       </AnimatePresence>
 
       <AnimatePresence>
+        {detailProduct && (
+          <ProductDetailModal
+            product={{
+              ...detailProduct,
+              highlights: Array.isArray(detailProduct.highlights) ? detailProduct.highlights : [],
+              gallery: Array.isArray(detailProduct.gallery) ? detailProduct.gallery : [],
+            }}
+            onClose={() => setDetailProduct(null)}
+            onAdd={(qty) => handleAddToCart(detailProduct, qty)}
+          />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
         {showAuthGate && (
           <AuthRequiredModal
             onClose={() => setShowAuthGate(false)}
