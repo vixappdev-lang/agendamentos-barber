@@ -807,16 +807,18 @@ const VilaNova = () => {
                     </a>
                   );
                 })()}
-                {settings.address && (
+              </div>
+              {settings.address && (
+                <div className="mt-4">
                   <button
                     onClick={() => setDirectionsOpen(true)}
-                    className="mt-2 inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all hover:translate-y-[-1px] active:scale-[0.98]"
+                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all hover:translate-y-[-1px] active:scale-[0.98]"
                     style={{ background: t.btnBg, color: t.btnColor, boxShadow: t.cardShadow }}
                   >
                     <MapPin className="w-3.5 h-3.5" /> Como chegar?
                   </button>
-                )}
-              </div>
+                </div>
+              )}
             </div>
             <div>
               <h4 className="font-bold text-sm mb-5" style={{ color: t.textPrimary }}>Horários</h4>

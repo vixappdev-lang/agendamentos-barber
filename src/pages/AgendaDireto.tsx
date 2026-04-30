@@ -228,28 +228,28 @@ const AgendaDireto = () => {
   const progress = stepOrder.indexOf(step) + 1;
   const isLight = t.isLight;
 
-  // Glass mais "presente" no dark — sem ficar invisível.
+  // Glass suave — sutil, sem exagero.
   const glassCard: React.CSSProperties = {
     background: isLight
-      ? "hsl(0 0% 100% / 0.72)"
-      : "linear-gradient(180deg, hsl(0 0% 100% / 0.06), hsl(0 0% 100% / 0.025))",
-    backdropFilter: "blur(28px) saturate(160%)",
-    WebkitBackdropFilter: "blur(28px) saturate(160%)",
-    border: `1px solid ${isLight ? "hsl(220 14% 89%)" : "hsl(0 0% 100% / 0.09)"}`,
+      ? "hsl(0 0% 100% / 0.6)"
+      : "hsl(0 0% 100% / 0.025)",
+    backdropFilter: "blur(12px)",
+    WebkitBackdropFilter: "blur(12px)",
+    border: `1px solid ${isLight ? "hsl(220 14% 90%)" : "hsl(0 0% 100% / 0.06)"}`,
     boxShadow: isLight
-      ? "0 1px 2px hsl(220 15% 20% / 0.04), 0 4px 16px hsl(220 15% 20% / 0.05)"
-      : "0 1px 0 hsl(0 0% 100% / 0.04) inset, 0 8px 24px hsl(0 0% 0% / 0.35)",
+      ? "0 1px 2px hsl(220 15% 20% / 0.03)"
+      : "none",
   };
   const glassCardActive: React.CSSProperties = {
     background: isLight
-      ? "hsl(0 0% 100% / 0.95)"
-      : "linear-gradient(180deg, hsl(0 0% 100% / 0.12), hsl(0 0% 100% / 0.06))",
-    backdropFilter: "blur(28px) saturate(160%)",
-    WebkitBackdropFilter: "blur(28px) saturate(160%)",
-    border: `1px solid ${isLight ? "hsl(220 18% 30%)" : "hsl(0 0% 100% / 0.28)"}`,
+      ? "hsl(0 0% 100%)"
+      : "hsl(0 0% 100% / 0.06)",
+    backdropFilter: "blur(12px)",
+    WebkitBackdropFilter: "blur(12px)",
+    border: `1px solid ${isLight ? "hsl(220 18% 25%)" : "hsl(0 0% 100% / 0.18)"}`,
     boxShadow: isLight
-      ? "0 4px 18px hsl(220 15% 20% / 0.12)"
-      : "0 0 0 1px hsl(0 0% 100% / 0.06) inset, 0 12px 32px hsl(0 0% 0% / 0.5)",
+      ? "0 2px 8px hsl(220 15% 20% / 0.08)"
+      : "0 0 0 1px hsl(0 0% 100% / 0.04) inset",
   };
   const subtleBorder = isLight ? "hsl(220 14% 89%)" : "hsl(0 0% 100% / 0.07)";
   const softBg = isLight ? "hsl(220 14% 96%)" : "hsl(0 0% 100% / 0.05)";
@@ -336,7 +336,7 @@ const AgendaDireto = () => {
                     <button
                       key={cat.id}
                       onClick={() => setActiveCat(cat.id)}
-                      className="px-5 h-10 rounded-full text-[13px] whitespace-nowrap transition-all"
+                      className="px-5 h-9 rounded-full text-[12.5px] whitespace-nowrap transition-all"
                       style={
                         active
                           ? { background: t.textPrimary, color: t.pageBg, border: `1px solid ${t.textPrimary}`, fontWeight: 700 }
@@ -349,7 +349,25 @@ const AgendaDireto = () => {
                 })}
               </div>
 
-              <div className="mt-5 space-y-2.5">
+              {/* Comodidades — logo abaixo das categorias, ícones compactos uniformes */}
+              {shopAmenities.length > 0 && (
+                <div className="mt-4 grid grid-cols-4 gap-2 sm:gap-2.5 sm:max-w-md">
+                  {shopAmenities.slice(0, 4).map((a) => (
+                    <button
+                      key={a.id}
+                      onClick={() => setAmenityOpen(a)}
+                      className="h-12 sm:h-14 rounded-xl flex items-center justify-center transition-all hover:translate-y-[-1px] active:scale-95"
+                      style={glassCard}
+                      aria-label={a.label}
+                      title={a.label}
+                    >
+                      <a.icon className="w-[18px] h-[18px] sm:w-5 sm:h-5 opacity-80" strokeWidth={1.6} />
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              <div className="mt-5 space-y-2">
                 {filteredServices.length === 0 && (
                   <p className="text-sm opacity-60 text-center py-10">Nenhum serviço encontrado.</p>
                 )}
@@ -360,45 +378,27 @@ const AgendaDireto = () => {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: Math.min(i * 0.035, 0.2), ease: easeSoft }}
                     onClick={() => { setService(s); setStep("barber"); }}
-                    className="w-full flex items-center gap-4 p-3 rounded-2xl text-left transition-all hover:translate-y-[-1px] group"
+                    className="w-full flex items-center gap-3 p-2.5 rounded-2xl text-left transition-all hover:translate-y-[-1px] group"
                     style={glassCard}
                   >
                     <img
                       src={s.image} alt={s.title}
-                      className="w-[88px] h-[88px] sm:w-24 sm:h-24 rounded-xl object-cover flex-shrink-0"
+                      className="w-16 h-16 sm:w-[72px] sm:h-[72px] rounded-xl object-cover flex-shrink-0"
                     />
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-bold text-[15px] leading-tight truncate">{s.title}</h3>
-                      <p className="text-[12px] opacity-60 mt-1 line-clamp-2 leading-snug">{s.subtitle}</p>
-                      <div className="flex items-center gap-3 mt-2.5 text-[12px]">
+                      <h3 className="font-bold text-[14px] leading-tight truncate">{s.title}</h3>
+                      <p className="text-[11.5px] opacity-60 mt-0.5 line-clamp-1 leading-snug">{s.subtitle}</p>
+                      <div className="flex items-center gap-3 mt-1.5 text-[11.5px]">
                         <span className="inline-flex items-center gap-1 opacity-60">
                           <Clock className="w-3 h-3" /> {s.duration}
                         </span>
-                        <span className="font-bold text-[14px]">R$ {s.price}</span>
+                        <span className="font-bold text-[13px]">R$ {s.price}</span>
                       </div>
                     </div>
-                    <ChevronRight className="w-5 h-5 opacity-30 flex-shrink-0 transition-all group-hover:translate-x-0.5 group-hover:opacity-60" />
+                    <ChevronRight className="w-4 h-4 opacity-30 flex-shrink-0 transition-all group-hover:translate-x-0.5 group-hover:opacity-60" />
                   </motion.button>
                 ))}
               </div>
-
-              {/* Comodidades — somente ícones em glass, sem título, abaixo da lista */}
-              {shopAmenities.length > 0 && (
-                <div className="mt-7 grid grid-cols-4 gap-2.5">
-                  {shopAmenities.slice(0, 4).map((a) => (
-                    <button
-                      key={a.id}
-                      onClick={() => setAmenityOpen(a)}
-                      className="aspect-square rounded-2xl flex items-center justify-center transition-all hover:translate-y-[-2px] active:scale-95"
-                      style={glassCard}
-                      aria-label={a.label}
-                      title={a.label}
-                    >
-                      <a.icon className="w-[22px] h-[22px] opacity-85" strokeWidth={1.5} />
-                    </button>
-                  ))}
-                </div>
-              )}
             </motion.div>
           )}
 
@@ -465,7 +465,7 @@ const AgendaDireto = () => {
                     <button
                       key={d.iso}
                       onClick={() => setDate(d.iso)}
-                      className="flex flex-col items-center justify-center min-w-[64px] h-[84px] rounded-2xl transition-all hover:translate-y-[-1px]"
+                      className="flex flex-col items-center justify-center min-w-[58px] h-[76px] rounded-2xl transition-all hover:translate-y-[-1px]"
                       style={
                         active
                           ? { background: t.textPrimary, color: t.pageBg, border: `1px solid ${t.textPrimary}` }
@@ -807,12 +807,12 @@ const AmenityModal = ({
         className="w-full max-w-md rounded-3xl p-6 relative overflow-hidden"
         style={{
           background: t.isLight
-            ? "hsl(0 0% 100% / 0.92)"
-            : "linear-gradient(180deg, hsl(220 18% 9% / 0.92), hsl(220 20% 5% / 0.92))",
-          backdropFilter: "blur(40px) saturate(160%)",
-          WebkitBackdropFilter: "blur(40px) saturate(160%)",
-          border: t.isLight ? "1px solid hsl(220 14% 88%)" : "1px solid hsl(0 0% 100% / 0.1)",
-          boxShadow: "0 24px 60px hsl(0 0% 0% / 0.45)",
+            ? "hsl(0 0% 100%)"
+            : "hsl(220 18% 9%)",
+          backdropFilter: "blur(16px)",
+          WebkitBackdropFilter: "blur(16px)",
+          border: t.isLight ? "1px solid hsl(220 14% 88%)" : "1px solid hsl(0 0% 100% / 0.08)",
+          boxShadow: "0 16px 40px hsl(0 0% 0% / 0.35)",
         }}
         onClick={(e) => e.stopPropagation()}
       >
