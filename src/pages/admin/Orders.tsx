@@ -154,7 +154,28 @@ const Orders = () => {
           <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: "hsl(245 60% 55% / 0.1)", color: "hsl(245 60% 70%)" }}>
             {orders.length}
           </span>
+          {newCount > 0 && (
+            <button
+              onClick={() => setNewCount(0)}
+              className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-full animate-pulse"
+              style={{ background: "hsl(140 60% 45% / 0.2)", color: "hsl(140 70% 75%)" }}
+            >
+              ● {newCount} novo{newCount > 1 ? "s" : ""}
+            </button>
+          )}
         </div>
+        <button
+          onClick={toggleSound}
+          className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-[11px] font-semibold transition-all"
+          style={{
+            background: soundEnabled ? "hsl(140 50% 45% / 0.15)" : "hsl(0 0% 100% / 0.04)",
+            color: soundEnabled ? "hsl(140 70% 70%)" : "hsl(0 0% 55%)",
+            border: `1px solid ${soundEnabled ? "hsl(140 50% 45% / 0.3)" : "hsl(0 0% 100% / 0.08)"}`,
+          }}
+          title={soundEnabled ? "Som ligado — clique para mutar" : "Som mutado — clique para ativar"}
+        >
+          {soundEnabled ? "🔔 Som ON" : "🔕 Mudo"}
+        </button>
       </div>
 
       {/* Filters */}
