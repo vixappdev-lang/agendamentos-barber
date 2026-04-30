@@ -5,6 +5,7 @@ import ProductCard from "@/components/ProductCard";
 import CheckoutModal from "@/components/store/CheckoutModal";
 import OrderTracker from "@/components/store/OrderTracker";
 import AuthRequiredModal from "@/components/store/AuthRequiredModal";
+import ProductDetailModal from "@/components/store/ProductDetailModal";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { useThemeColors } from "@/hooks/useThemeColors";
@@ -14,6 +15,8 @@ import type { User as AuthUser } from "@supabase/supabase-js";
 interface DBProduct {
   id: string; title: string; description: string | null; price: number;
   image_url: string | null; active: boolean; sort_order: number;
+  long_description?: string | null; brand?: string | null; weight?: string | null;
+  stock?: number | null; highlights?: string[] | null; gallery?: string[] | null;
 }
 
 interface CartItem {
@@ -29,6 +32,7 @@ const StorePage = () => {
   const [showCheckout, setShowCheckout] = useState(false);
   const [showAuthGate, setShowAuthGate] = useState(false);
   const [showOrderTracker, setShowOrderTracker] = useState(false);
+  const [detailProduct, setDetailProduct] = useState<DBProduct | null>(null);
   const [storeEnabled, setStoreEnabled] = useState(true);
   const [storeOrderMode, setStoreOrderMode] = useState<"ifood" | "whatsapp">("whatsapp");
   const [whatsappNumber, setWhatsappNumber] = useState("");
@@ -74,11 +78,11 @@ const StorePage = () => {
     );
   }, [search, products]);
 
-  const handleAddToCart = (product: DBProduct) => {
+  const handleAddToCart = (product: DBProduct, qty: number = 1) => {
     setCart((prev) => {
       const existing = prev.find((i) => i.id === product.id);
-      if (existing) return prev.map((i) => i.id === product.id ? { ...i, quantity: i.quantity + 1 } : i);
-      return [...prev, { id: product.id, title: product.title, price: product.price, quantity: 1, image_url: product.image_url }];
+      if (existing) return prev.map((i) => i.id === product.id ? { ...i, quantity: i.quantity + qty } : i);
+      return [...prev, { id: product.id, title: product.title, price: product.price, quantity: qty, image_url: product.image_url }];
     });
   };
 
@@ -216,7 +220,7 @@ const StorePage = () => {
                 <ProductCard
                   key={product.id}
                   product={{ ...product, description: product.description || "" }}
-                  onSelect={() => handleAddToCart(product)}
+                  onSelect={() => setDetailProduct(product)}
                   index={i}
                 />
               ))}
@@ -246,6 +250,20 @@ const StorePage = () => {
               <span>R$ {cartTotal.toFixed(2).replace(".", ",")}</span>
             </button>
           </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {detailProduct && (
+          <ProductDetailModal
+            product={{
+              ...detailProduct,
+              highlights: Array.isArray(detailProduct.highlights) ? detailProduct.highlights : [],
+              gallery: Array.isArray(detailProduct.gallery) ? detailProduct.gallery : [],
+            }}
+            onClose={() => setDetailProduct(null)}
+            onAdd={(qty) => handleAddToCart(detailProduct, qty)}
+          />
         )}
       </AnimatePresence>
 
