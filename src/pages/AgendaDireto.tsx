@@ -48,6 +48,7 @@ const AgendaDireto = () => {
   const [realBarbers, setRealBarbers] = useState<Array<{ id: string; name: string; specialty: string | null; avatar_url: string | null }>>([]);
   const [realServices, setRealServices] = useState<Array<{ id: string; title: string; subtitle: string | null; price: number; duration: string; image_url: string | null; category: string | null }>>([]);
   const [latePolicy, setLatePolicy] = useState("");
+  const [realAmenityKeys, setRealAmenityKeys] = useState<string[]>([]);
 
   const [service, setService] = useState<MockService | null>(null);
   const [barber, setBarber] = useState<MockBarber | null>(null);
@@ -93,14 +94,18 @@ const AgendaDireto = () => {
   // Fetch profissionais e serviços reais
   useEffect(() => {
     (async () => {
-      const [bRes, sRes, settingsRes] = await Promise.all([
+      const [bRes, sRes, settingsRes, amRes] = await Promise.all([
         supabase.from("barbers").select("id,name,specialty,avatar_url").eq("active", true).order("sort_order"),
         supabase.from("services").select("id,title,subtitle,price,duration,image_url,category").eq("active", true).order("sort_order"),
         supabase.from("business_settings").select("value").eq("key", "late_policy").maybeSingle(),
+        supabase.from("barbershop_amenities").select("amenity_key").eq("active", true).order("sort_order"),
       ]);
       if (bRes.data) setRealBarbers(bRes.data as any);
       if (sRes.data) setRealServices(sRes.data.map((s: any) => ({ ...s, price: Number(s.price) })));
       if (settingsRes.data?.value) setLatePolicy(settingsRes.data.value);
+      if (amRes.data && amRes.data.length > 0) {
+        setRealAmenityKeys(amRes.data.map((a: any) => a.amenity_key));
+      }
     })();
   }, []);
 
@@ -373,8 +378,9 @@ _Equipe Styllus_`;
   const subtleBorder = isLight ? "hsl(220 14% 89%)" : "hsl(0 0% 100% / 0.07)";
   const softBg = isLight ? "hsl(220 14% 96%)" : "hsl(0 0% 100% / 0.05)";
 
-  // Comodidades da barbearia (filtradas)
-  const shopAmenities = MOCK_AMENITIES.filter((a) => MOCK_BARBERSHOP_AMENITIES.includes(a.id));
+  // Comodidades da barbearia (DB primeiro, fallback no MOCK)
+  const activeAmenityKeys = realAmenityKeys.length > 0 ? realAmenityKeys : MOCK_BARBERSHOP_AMENITIES;
+  const shopAmenities = MOCK_AMENITIES.filter((a) => activeAmenityKeys.includes(a.id));
   const serviceAmenities = service?.amenities
     ? MOCK_AMENITIES.filter((a) => service.amenities!.includes(a.id))
     : shopAmenities;
