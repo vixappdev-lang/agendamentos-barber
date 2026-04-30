@@ -265,6 +265,16 @@ const Appointments = () => {
                 )}
 
                 <div className="flex items-center gap-1 shrink-0">
+                  {a.status !== "confirmed" && a.status !== "completed" && a.status !== "cancelled" && (
+                    <button
+                      onClick={() => updateStatus(a.id, "confirmed")}
+                      title="Confirmar e avisar cliente"
+                      className="p-2 rounded-lg transition-colors"
+                      style={{ background: 'hsl(200 70% 50% / 0.1)' }}
+                    >
+                      <CheckCircle2 className="w-4 h-4" style={{ color: 'hsl(200 70% 55%)' }} />
+                    </button>
+                  )}
                   {a.status !== "completed" && (
                     <button
                       onClick={() => updateStatus(a.id, "completed")}
