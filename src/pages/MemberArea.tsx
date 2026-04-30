@@ -356,6 +356,7 @@ const MemberArea = () => {
             </div>
           </div>
           <div className="flex items-center gap-3">
+            {user?.email && <NotificationsBell email={user.email} iconColor={t.textMuted} />}
             <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl" style={{ background: t.btnGhostBg, border: `1px solid ${borderColor}` }}>
               <div className="w-7 h-7 rounded-lg flex items-center justify-center text-[11px] font-bold" style={{ background: btnBg, color: btnColor }}>
                 {initials}
