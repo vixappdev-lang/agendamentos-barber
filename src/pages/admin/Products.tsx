@@ -105,6 +105,7 @@ const Products = () => {
       image_url: form.image_url || null,
       active: form.active,
       sort_order: form.sort_order,
+      category: form.category || "geral",
     };
 
     if (editing) {
@@ -126,6 +127,7 @@ const Products = () => {
       highlights: Array.isArray(p.highlights) ? p.highlights : [],
       gallery: Array.isArray(p.gallery) ? p.gallery : [],
       price: Number(p.price), image_url: p.image_url || "", active: p.active, sort_order: p.sort_order,
+      category: p.category || "geral",
     });
     setEditing(p.id); setShowModal(true);
   };
