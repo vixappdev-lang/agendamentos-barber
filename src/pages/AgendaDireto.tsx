@@ -16,6 +16,17 @@ import {
   MOCK_AMENITIES, MOCK_BARBERSHOP_AMENITIES,
   type MockService, type MockBarber, type MockAmenity,
 } from "@/data/agendaDiretoMock";
+import { stockImages } from "@/data/stockImages";
+
+const resolveServiceImage = (url: string | null): string => {
+  if (!url) return "/placeholder.svg";
+  if (url.startsWith("stock://")) {
+    const id = url.replace("stock://", "");
+    const stock = stockImages.find((s) => s.id === id);
+    return stock?.src || "/placeholder.svg";
+  }
+  return url;
+};
 
 type Step = "list" | "barber" | "datetime" | "auth" | "confirm" | "done";
 
@@ -126,7 +137,7 @@ const AgendaDireto = () => {
         subtitle: s.subtitle || "",
         price: s.price,
         duration: s.duration,
-        image: s.image_url || "/placeholder.svg",
+        image: resolveServiceImage(s.image_url),
         amenities: undefined as string[] | undefined,
       })) as MockService[];
     }
