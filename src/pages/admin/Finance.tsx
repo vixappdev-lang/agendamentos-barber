@@ -26,7 +26,7 @@ const Finance = () => {
   const [barberRanking, setBarberRanking] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => { fetchData(); }, [period]);
+  useEffect(() => { fetchData(); }, [period, session.barberName, session.isBarberOnly]);
 
   const fetchData = async () => {
     setLoading(true);
