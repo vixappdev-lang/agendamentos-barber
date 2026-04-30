@@ -23,7 +23,6 @@ export interface MockService {
 export interface MockCategory {
   id: string;
   label: string;
-  icon: string;
   services: MockService[];
 }
 
@@ -39,7 +38,6 @@ export const MOCK_CATEGORIES: MockCategory[] = [
   {
     id: "cabelo",
     label: "Cabelo",
-    icon: "✂️",
     services: [
       { id: "c1", title: "Corte Clássico", subtitle: "Tesoura e máquina, acabamento na navalha", price: 45, duration: "40 min", image: gallery1 },
       { id: "c2", title: "Corte Degradê", subtitle: "Fade tradicional ou americano, transição perfeita", price: 55, duration: "45 min", image: gallery2 },
@@ -50,7 +48,6 @@ export const MOCK_CATEGORIES: MockCategory[] = [
   {
     id: "barba",
     label: "Barba",
-    icon: "🪒",
     services: [
       { id: "b1", title: "Barba Completa", subtitle: "Toalha quente, navalha e finalização", price: 40, duration: "30 min", image: gallery5 },
       { id: "b2", title: "Acabamento de Barba", subtitle: "Contorno e ajuste", price: 25, duration: "20 min", image: gallery6 },
@@ -60,7 +57,6 @@ export const MOCK_CATEGORIES: MockCategory[] = [
   {
     id: "combos",
     label: "Combos",
-    icon: "💈",
     services: [
       { id: "co1", title: "Corte + Barba", subtitle: "O combo mais pedido da casa", price: 75, duration: "1h", image: hero1 },
       { id: "co2", title: "Pacote Completo", subtitle: "Corte, barba e sobrancelha", price: 95, duration: "1h 20min", image: hero3 },
@@ -70,7 +66,6 @@ export const MOCK_CATEGORIES: MockCategory[] = [
   {
     id: "tratamentos",
     label: "Tratamentos",
-    icon: "✨",
     services: [
       { id: "t1", title: "Hidratação Capilar", subtitle: "Recuperação profunda dos fios", price: 50, duration: "30 min", image: gallery3 },
       { id: "t2", title: "Pigmentação de Barba", subtitle: "Disfarce de falhas e brancos", price: 60, duration: "45 min", image: gallery5 },
