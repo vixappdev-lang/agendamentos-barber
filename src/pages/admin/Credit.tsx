@@ -22,7 +22,14 @@ interface Entry {
 
 const fmt = (n: number) => Number(n || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
+import { usePanelSession } from "@/hooks/usePanelSession";
+import BarberRestrictedNotice from "@/components/admin/BarberRestrictedNotice";
+
 const Credit = () => {
+  const session = usePanelSession();
+  if (session.isBarberOnly) {
+    return <BarberRestrictedNotice title="Fiados restrito" message="Apenas administradores e gerentes podem gerenciar fiados." />;
+  }
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [entries, setEntries] = useState<Entry[]>([]);
   const [loading, setLoading] = useState(true);
