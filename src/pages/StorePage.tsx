@@ -303,7 +303,7 @@ const StorePage = () => {
           <CheckoutModal
             items={cart}
             onClose={() => setShowCheckout(false)}
-            onSuccess={() => { setShowCheckout(false); setCart([]); }}
+            onSuccess={() => { setShowCheckout(false); clear(); }}
             mode={storeOrderMode}
             whatsappNumber={whatsappNumber}
             pixKey={pixKey}
