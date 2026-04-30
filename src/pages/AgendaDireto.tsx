@@ -493,7 +493,18 @@ _Equipe Styllus_`;
               <h2 className="text-[10px] uppercase tracking-[0.3em] opacity-50 font-bold mt-7 mb-3">
                 Profissionais
               </h2>
-              {MOCK_BARBERS.map((b, i) => {
+              {(realBarbers.length > 0
+                ? realBarbers.map((rb, idx) => ({
+                    id: rb.id,
+                    name: rb.name,
+                    specialty: rb.specialty || "Profissional",
+                    rating: 5,
+                    accent: ["hsl(220 80% 60%)", "hsl(280 70% 60%)", "hsl(150 60% 50%)", "hsl(30 90% 60%)"][idx % 4],
+                    initials: rb.name.split(" ").map((n) => n[0]).slice(0, 2).join("").toUpperCase(),
+                    avatar_url: rb.avatar_url,
+                  } as MockBarber & { avatar_url: string | null }))
+                : MOCK_BARBERS.map((b) => ({ ...b, avatar_url: null as string | null }))
+              ).map((b, i) => {
                 const active = barber?.id === b.id;
                 return (
                   <motion.button
@@ -505,14 +516,22 @@ _Equipe Styllus_`;
                     className="w-full flex items-center gap-3 p-3.5 rounded-2xl text-left transition-all hover:translate-y-[-1px]"
                     style={active ? glassCardActive : glassCard}
                   >
-                    <div
-                      className="w-12 h-12 rounded-full flex items-center justify-center font-bold text-[14px] flex-shrink-0 text-white"
-                      style={{
-                        background: `linear-gradient(135deg, ${b.accent}, ${b.accent.replace(/(\d+)%\)$/, (m, l) => `${Math.max(0, parseInt(l) - 15)}%)`)})`,
-                      }}
-                    >
-                      {b.initials}
-                    </div>
+                    {b.avatar_url ? (
+                      <img
+                        src={b.avatar_url}
+                        alt={b.name}
+                        className="w-12 h-12 rounded-full object-cover flex-shrink-0"
+                      />
+                    ) : (
+                      <div
+                        className="w-12 h-12 rounded-full flex items-center justify-center font-bold text-[14px] flex-shrink-0 text-white"
+                        style={{
+                          background: `linear-gradient(135deg, ${b.accent}, ${b.accent.replace(/(\d+)%\)$/, (m, l) => `${Math.max(0, parseInt(l) - 15)}%)`)})`,
+                        }}
+                      >
+                        {b.initials}
+                      </div>
+                    )}
                     <div className="flex-1 min-w-0">
                       <p className="font-semibold text-[14px] truncate">{b.name}</p>
                       <p className="text-[12px] opacity-60 truncate">{b.specialty}</p>
