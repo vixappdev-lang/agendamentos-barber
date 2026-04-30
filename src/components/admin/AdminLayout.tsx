@@ -236,13 +236,20 @@ const AdminLayout = () => {
         <header className="sticky top-0 z-30 flex items-center gap-3 px-4 sm:px-6 py-4"
           style={{ background: t.headerBg, backdropFilter: 'blur(12px)', borderBottom: `1px solid ${t.border}` }}>
           <button className="lg:hidden" onClick={() => setSidebarOpen(true)}><Menu className="w-5 h-5 text-foreground" /></button>
-          <h1 className="text-lg sm:text-xl font-bold text-foreground">
+          <h1 className="text-lg sm:text-xl font-bold text-foreground flex-1 min-w-0 truncate">
             {location.pathname === "/admin" ? (() => {
               const hour = new Date().getHours();
               const greeting = hour >= 5 && hour < 12 ? "Bom dia" : hour >= 12 && hour < 18 ? "Boa tarde" : hour >= 18 && hour < 24 ? "Boa noite" : "Boa madrugada";
-              return `${greeting}, Admin.`;
+              const who = panelSession?.full_name?.split(" ")[0] || (activeRole === "barber" ? "Barbeiro" : "Admin");
+              return `${greeting}, ${who}.`;
             })() : navItems.find((i) => i.path === location.pathname)?.label || "Admin"}
           </h1>
+          {activeRole !== "admin" && (
+            <span className="px-2.5 py-1 rounded-md text-[10px] font-semibold uppercase tracking-wider"
+              style={{ background: 'hsl(245 60% 55% / 0.12)', color: 'hsl(245 60% 75%)', border: '1px solid hsl(245 60% 55% / 0.2)' }}>
+              {activeRole === "barber" ? "Barbeiro" : "Gerente"}
+            </span>
+          )}
         </header>
 
         {welcomeSeen && !allDone && (
