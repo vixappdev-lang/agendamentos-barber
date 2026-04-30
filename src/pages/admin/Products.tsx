@@ -226,6 +226,18 @@ const Products = () => {
                     <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1 block">Estoque</label>
                     <input className="glass-input" type="number" min={0} step={1} value={form.stock} onChange={(e) => setForm({ ...form, stock: parseInt(e.target.value) || 0 })} />
                   </div>
+                  <div className="sm:col-span-2">
+                    <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1 block">Categoria</label>
+                    <select
+                      className="glass-input"
+                      value={form.category}
+                      onChange={(e) => setForm({ ...form, category: e.target.value })}
+                    >
+                      {PRODUCT_CATEGORIES.map((c) => (
+                        <option key={c.value} value={c.value}>{c.label}</option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
 
                 <div>
