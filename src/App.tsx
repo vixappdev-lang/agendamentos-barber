@@ -49,6 +49,7 @@ const Commissions = lazy(() => import("./pages/admin/Commissions"));
 const Credit = lazy(() => import("./pages/admin/Credit"));
 const Inventory = lazy(() => import("./pages/admin/Inventory"));
 const Suppliers = lazy(() => import("./pages/admin/Suppliers"));
+const UsersAdmin = lazy(() => import("./pages/admin/Users"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -134,6 +135,7 @@ const App = () => (
                   <Route path="credit" element={<Credit />} />
                   <Route path="inventory" element={<Inventory />} />
                   <Route path="suppliers" element={<Suppliers />} />
+                  <Route path="users" element={<UsersAdmin />} />
                   <Route path="settings" element={<Settings />} />
                 </Route>
                 {/* Legado da preview minimalista, mantido como rota oculta */}
@@ -174,6 +176,7 @@ const App = () => (
                   <Route path="credit" element={<Credit />} />
                   <Route path="inventory" element={<Inventory />} />
                   <Route path="suppliers" element={<Suppliers />} />
+                  <Route path="users" element={<UsersAdmin />} />
                   <Route path="settings" element={<Settings />} />
                 </Route>
               </Route>
