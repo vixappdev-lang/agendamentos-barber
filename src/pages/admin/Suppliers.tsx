@@ -19,7 +19,14 @@ const empty: Omit<Supplier, "id" | "active"> = {
   name: "", contact_name: "", phone: "", email: "", document: "", address: "", category: "", notes: "",
 };
 
+import { usePanelSession } from "@/hooks/usePanelSession";
+import BarberRestrictedNotice from "@/components/admin/BarberRestrictedNotice";
+
 const Suppliers = () => {
+  const session = usePanelSession();
+  if (session.isBarberOnly) {
+    return <BarberRestrictedNotice title="Fornecedores restrito" message="Apenas administradores e gerentes podem gerenciar fornecedores." />;
+  }
   const [list, setList] = useState<Supplier[]>([]);
   const [loading, setLoading] = useState(true);
   const [show, setShow] = useState(false);

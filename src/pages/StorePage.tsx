@@ -22,7 +22,7 @@ interface DBProduct {
   stock?: number | null; highlights?: string[] | null; gallery?: string[] | null;
 }
 
-const CATEGORY_LABELS: Record<string, string> = {
+const FALLBACK_CATEGORY_LABELS: Record<string, string> = {
   cabelo: "Cabelo",
   barba: "Barba",
   pos_barba: "Pós-barba",
@@ -31,10 +31,6 @@ const CATEGORY_LABELS: Record<string, string> = {
   fragrancias: "Fragrâncias",
   geral: "Outros",
 };
-
-const formatCategoryLabel = (key: string) =>
-  CATEGORY_LABELS[key] ||
-  key.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 
 const StorePage = () => {
   const navigate = useNavigate();
@@ -57,6 +53,12 @@ const StorePage = () => {
   const [businessName, setBusinessName] = useState("BarberShop Styllus");
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<AuthUser | null>(null);
+  const [categoryMap, setCategoryMap] = useState<Record<string, { label: string; sort: number; icon?: string }>>({});
+
+  const formatCategoryLabel = (key: string) =>
+    categoryMap[key]?.label ||
+    FALLBACK_CATEGORY_LABELS[key] ||
+    key.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => setUser(session?.user ?? null));
@@ -66,11 +68,17 @@ const StorePage = () => {
 
   useEffect(() => {
     const fetchAll = async () => {
-      const [productsRes, settingsRes] = await Promise.all([
+      const [productsRes, settingsRes, catsRes] = await Promise.all([
         supabase.from("products").select("*").eq("active", true).order("sort_order"),
         supabase.from("business_settings").select("*"),
+        (supabase as any).from("product_categories").select("slug,label,icon,sort_order").eq("active", true).order("sort_order"),
       ]);
       if (productsRes.data) setProducts(productsRes.data as DBProduct[]);
+      if (catsRes?.data) {
+        const m: Record<string, { label: string; sort: number; icon?: string }> = {};
+        for (const c of catsRes.data as any[]) m[c.slug] = { label: c.label, sort: c.sort_order, icon: c.icon };
+        setCategoryMap(m);
+      }
       if (settingsRes.data) {
         const map: Record<string, string> = {};
         for (const row of settingsRes.data) map[row.key] = row.value || "";
@@ -96,7 +104,7 @@ const StorePage = () => {
     );
   }, [search, products]);
 
-  // Group filtered products by category, preserving insertion order from sort_order
+  // Group filtered products by category, ordered by category sort_order
   const groupedProducts = useMemo(() => {
     const groups = new Map<string, DBProduct[]>();
     for (const p of filteredProducts) {
@@ -104,8 +112,12 @@ const StorePage = () => {
       if (!groups.has(key)) groups.set(key, []);
       groups.get(key)!.push(p);
     }
-    return Array.from(groups.entries());
-  }, [filteredProducts]);
+    return Array.from(groups.entries()).sort((a, b) => {
+      const sa = categoryMap[a[0]]?.sort ?? 999;
+      const sb = categoryMap[b[0]]?.sort ?? 999;
+      return sa - sb;
+    });
+  }, [filteredProducts, categoryMap]);
 
   const handleAddToCart = (product: DBProduct, qty: number = 1) => {
     cartAdd({ id: product.id, title: product.title, price: Number(product.price), image_url: product.image_url }, qty);

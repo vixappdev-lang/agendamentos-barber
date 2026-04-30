@@ -21,7 +21,8 @@ interface ProductRow {
   category: string | null;
 }
 
-const PRODUCT_CATEGORIES: { value: string; label: string }[] = [
+interface CategoryOption { value: string; label: string; icon?: string }
+const FALLBACK_CATEGORIES: CategoryOption[] = [
   { value: "cabelo", label: "Cabelo" },
   { value: "barba", label: "Barba" },
   { value: "pos_barba", label: "Pós-barba" },
@@ -40,6 +41,7 @@ const emptyForm = {
 
 const Products = () => {
   const [products, setProducts] = useState<ProductRow[]>([]);
+  const [categories, setCategories] = useState<CategoryOption[]>(FALLBACK_CATEGORIES);
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing] = useState<string | null>(null);
   const [form, setForm] = useState<typeof emptyForm>(emptyForm);
@@ -49,7 +51,18 @@ const Products = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const galleryInputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => { fetchProducts(); }, []);
+  useEffect(() => { fetchProducts(); fetchCategories(); }, []);
+
+  const fetchCategories = async () => {
+    const { data } = await (supabase as any)
+      .from("product_categories")
+      .select("slug,label,icon,active,sort_order")
+      .eq("active", true)
+      .order("sort_order");
+    if (data && data.length) {
+      setCategories(data.map((c: any) => ({ value: c.slug, label: c.label, icon: c.icon })));
+    }
+  };
 
   const fetchProducts = async () => {
     const { data } = await supabase.from("products").select("*").order("sort_order");
@@ -233,7 +246,7 @@ const Products = () => {
                       value={form.category}
                       onChange={(e) => setForm({ ...form, category: e.target.value })}
                     >
-                      {PRODUCT_CATEGORIES.map((c) => (
+                      {categories.map((c) => (
                         <option key={c.value} value={c.value}>{c.label}</option>
                       ))}
                     </select>

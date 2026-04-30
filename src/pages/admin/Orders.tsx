@@ -48,22 +48,63 @@ const Orders = () => {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [soundEnabled, setSoundEnabled] = useState(() => {
+    if (typeof window === "undefined") return true;
+    return localStorage.getItem("orders_sound") !== "off";
+  });
+  const [newCount, setNewCount] = useState(0);
 
-  useEffect(() => { fetchOrders(); setupRealtime(); }, []);
+  const playBeep = () => {
+    try {
+      const Ctx = (window as any).AudioContext || (window as any).webkitAudioContext;
+      if (!Ctx) return;
+      const ctx = new Ctx();
+      const tones = [880, 1175, 1568];
+      tones.forEach((freq, i) => {
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+        o.connect(g); g.connect(ctx.destination);
+        o.type = "sine";
+        o.frequency.value = freq;
+        const start = ctx.currentTime + i * 0.18;
+        g.gain.setValueAtTime(0.0001, start);
+        g.gain.exponentialRampToValueAtTime(0.25, start + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001, start + 0.18);
+        o.start(start); o.stop(start + 0.2);
+      });
+    } catch { /* noop */ }
+  };
+
+  useEffect(() => {
+    fetchOrders();
+    const channel = supabase.channel("orders-admin")
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "orders" }, (payload: any) => {
+        fetchOrders();
+        setNewCount((c) => c + 1);
+        const name = payload?.new?.customer_name || "Cliente";
+        toast.success(`🛎️ Novo pedido de ${name}!`, { duration: 5000 });
+        if (soundEnabled) playBeep();
+      })
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "orders" }, () => fetchOrders())
+      .on("postgres_changes", { event: "DELETE", schema: "public", table: "orders" }, () => fetchOrders())
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [soundEnabled]);
+
+  const toggleSound = () => {
+    const next = !soundEnabled;
+    setSoundEnabled(next);
+    localStorage.setItem("orders_sound", next ? "on" : "off");
+    if (next) playBeep();
+  };
 
   const fetchOrders = async () => {
-    setLoading(true);
     const { data } = await supabase.from("orders").select("*").order("created_at", { ascending: false });
     setOrders((data as Order[]) || []);
     setLoading(false);
   };
 
-  const setupRealtime = () => {
-    const channel = supabase.channel("orders-admin")
-      .on("postgres_changes", { event: "*", schema: "public", table: "orders" }, () => fetchOrders())
-      .subscribe();
-    return () => { supabase.removeChannel(channel); };
-  };
 
   const filteredOrders = useMemo(() => {
     return orders.filter((o) => {
@@ -113,7 +154,28 @@ const Orders = () => {
           <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: "hsl(245 60% 55% / 0.1)", color: "hsl(245 60% 70%)" }}>
             {orders.length}
           </span>
+          {newCount > 0 && (
+            <button
+              onClick={() => setNewCount(0)}
+              className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-full animate-pulse"
+              style={{ background: "hsl(140 60% 45% / 0.2)", color: "hsl(140 70% 75%)" }}
+            >
+              ● {newCount} novo{newCount > 1 ? "s" : ""}
+            </button>
+          )}
         </div>
+        <button
+          onClick={toggleSound}
+          className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-[11px] font-semibold transition-all"
+          style={{
+            background: soundEnabled ? "hsl(140 50% 45% / 0.15)" : "hsl(0 0% 100% / 0.04)",
+            color: soundEnabled ? "hsl(140 70% 70%)" : "hsl(0 0% 55%)",
+            border: `1px solid ${soundEnabled ? "hsl(140 50% 45% / 0.3)" : "hsl(0 0% 100% / 0.08)"}`,
+          }}
+          title={soundEnabled ? "Som ligado — clique para mutar" : "Som mutado — clique para ativar"}
+        >
+          {soundEnabled ? "🔔 Som ON" : "🔕 Mudo"}
+        </button>
       </div>
 
       {/* Filters */}

@@ -1,14 +1,16 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { ShoppingBag, Package, Settings } from "lucide-react";
+import { ShoppingBag, Package, Settings, Tag } from "lucide-react";
 import Products from "./Products";
 import Orders from "./Orders";
 import StoreSettings from "./StoreSettings";
+import Categories from "./Categories";
 
-type Tab = "products" | "orders" | "settings";
+type Tab = "products" | "categories" | "orders" | "settings";
 
 const tabs: { id: Tab; label: string; icon: typeof ShoppingBag }[] = [
   { id: "products", label: "Produtos", icon: ShoppingBag },
+  { id: "categories", label: "Categorias", icon: Tag },
   { id: "orders", label: "Pedidos", icon: Package },
   { id: "settings", label: "Configurações", icon: Settings },
 ];
@@ -42,6 +44,7 @@ const StoreDashboard = () => {
       {/* Tab content */}
       <motion.div key={activeTab} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }}>
         {activeTab === "products" && <Products />}
+        {activeTab === "categories" && <Categories />}
         {activeTab === "orders" && <Orders />}
         {activeTab === "settings" && <StoreSettings />}
       </motion.div>

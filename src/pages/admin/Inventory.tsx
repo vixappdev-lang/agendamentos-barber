@@ -30,7 +30,14 @@ const KIND_LABEL: Record<Movement["kind"], string> = {
 
 const fmt = (n: number) => Number(n || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
+import { usePanelSession } from "@/hooks/usePanelSession";
+import BarberRestrictedNotice from "@/components/admin/BarberRestrictedNotice";
+
 const Inventory = () => {
+  const session = usePanelSession();
+  if (session.isBarberOnly) {
+    return <BarberRestrictedNotice title="Estoque restrito" message="Apenas administradores e gerentes podem gerenciar o estoque." />;
+  }
   const [items, setItems] = useState<Item[]>([]);
   const [movs, setMovs] = useState<Movement[]>([]);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
