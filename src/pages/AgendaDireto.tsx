@@ -293,11 +293,45 @@ _Equipe Styllus_`;
   };
 
   const confirmBooking = async () => {
+    if (!service || !barber || !date || !time) {
+      toast.error("Dados incompletos");
+      return;
+    }
     setConfirming(true);
-    await sendWhatsAppConfirmation();
-    setConfirming(false);
-    setSuccessOpen(true);
-    setStep("done");
+    try {
+      // Verifica conflito em tempo real antes de inserir
+      if (rules.isSlotBlocked(date, time, barber.name)) {
+        toast.error("Horário acabou de ser ocupado. Escolha outro.");
+        setStep("datetime");
+        return;
+      }
+
+      // INSERT real (apenas se for serviço real do banco — UUID válido)
+      const isRealService = realServices.some((s) => s.id === service.id);
+      if (isRealService) {
+        const { error } = await supabase.from("appointments").insert({
+          customer_name: name.trim() || "Cliente",
+          customer_phone: onlyDigits(phone),
+          customer_email: signedUserId ? phoneToEmail(phone) : phoneToEmail(phone),
+          service_id: service.id,
+          barber_name: barber.name,
+          appointment_date: date,
+          appointment_time: time,
+          total_price: service.price,
+          status: rules.defaultStatus,
+        });
+        if (error) {
+          toast.error("Erro ao salvar: " + error.message);
+          return;
+        }
+      }
+
+      await sendWhatsAppConfirmation();
+      setSuccessOpen(true);
+      setStep("done");
+    } finally {
+      setConfirming(false);
+    }
   };
 
   const stepTitles: Record<Step, string> = {
