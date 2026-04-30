@@ -87,6 +87,16 @@ Deno.serve(async (req) => {
         } else {
           sent++;
         }
+
+        // Grava notificação para o cliente ver na área do membro
+        await supabase.from("notifications").insert({
+          customer_email: a.customer_email || null,
+          customer_phone: a.customer_phone || null,
+          title: "Lembrete de agendamento",
+          message: `Você tem agendamento amanhã (${dateBR}) às ${time}.`,
+          type: "reminder",
+          appointment_id: a.id,
+        });
       } catch (e) {
         failed++;
         console.error("Send exception:", e);

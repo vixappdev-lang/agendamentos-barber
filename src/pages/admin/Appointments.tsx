@@ -10,6 +10,7 @@ interface Appointment {
   id: string;
   customer_name: string;
   customer_phone: string | null;
+  customer_email: string | null;
   barber_name: string | null;
   appointment_date: string;
   appointment_time: string;
@@ -81,25 +82,68 @@ const Appointments = () => {
     return Math.random().toString(36).slice(2) + Date.now().toString(36);
   };
 
+  const DEFAULT_TEMPLATES: Record<string, string> = {
+    confirmed_whatsapp_template:
+      "✅ Olá *{cliente}*! Seu agendamento na *{barbearia}* foi *CONFIRMADO*.\n\n📅 {data} às {hora}{barbeiro_linha}\n\nTe esperamos! 💈",
+    cancelled_whatsapp_template:
+      "❌ Olá *{cliente}*, infelizmente seu agendamento na *{barbearia}* do dia {data} às {hora} foi *cancelado*.\n\nEntre em contato para reagendar.",
+    review_whatsapp_template:
+      "⭐ Olá *{cliente}*! Como foi seu atendimento na *{barbearia}*?\n\nDeixe sua avaliação: {link}\n\nSua opinião é muito importante 💈",
+  };
+
+  const STATUS_TEMPLATE_KEY: Record<string, string> = {
+    confirmed: "confirmed_whatsapp_template",
+    cancelled: "cancelled_whatsapp_template",
+  };
+
+  const ENABLED_KEY: Record<string, string> = {
+    confirmed_whatsapp_template: "confirmed_send_enabled",
+    cancelled_whatsapp_template: "cancelled_send_enabled",
+    review_whatsapp_template: "review_send_enabled",
+  };
+
+  const renderTemplate = (tmpl: string, vars: Record<string, string>) => {
+    let out = tmpl;
+    Object.entries(vars).forEach(([k, v]) => {
+      const escaped = `{${k}}`.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      out = out.replace(new RegExp(escaped, "g"), v);
+    });
+    return out;
+  };
+
+  const fetchSettingsMap = async (keys: string[]) => {
+    const { data } = await supabase
+      .from("business_settings")
+      .select("key,value")
+      .in("key", keys);
+    const map: Record<string, string> = {};
+    (data || []).forEach((s: any) => { map[s.key] = s.value || ""; });
+    return map;
+  };
+
+  const buildAppointmentVars = (a: Appointment, businessName: string, link?: string) => ({
+    cliente: a.customer_name,
+    barbearia: businessName,
+    data: format(new Date(a.appointment_date + "T00:00:00"), "dd/MM/yyyy"),
+    hora: a.appointment_time?.slice(0, 5) || "",
+    barbeiro: a.barber_name ? `\n💈 Barbeiro: ${a.barber_name}` : "",
+    barbeiro_linha: a.barber_name ? `\n💈 Barbeiro: ${a.barber_name}` : "",
+    link: link || "",
+  });
+
   const sendReviewWhatsApp = async (a: Appointment, token: string) => {
     if (!a.customer_phone) return;
     try {
-      const { data: settings } = await supabase
-        .from("business_settings")
-        .select("key,value")
-        .in("key", ["business_name", "review_whatsapp_template", "review_send_enabled"]);
-      const map: Record<string, string> = {};
-      (settings || []).forEach((s: any) => { map[s.key] = s.value || ""; });
+      const map = await fetchSettingsMap([
+        "business_name",
+        "review_whatsapp_template",
+        "review_send_enabled",
+      ]);
       if (map.review_send_enabled === "false") return;
       const businessName = map.business_name || "Barbearia";
       const link = `${window.location.origin}/avaliacao?token=${token}`;
-      const tmpl =
-        map.review_whatsapp_template ||
-        `⭐ Olá *{cliente}*! Como foi seu atendimento na *{barbearia}*?\n\nDeixe sua avaliação: {link}\n\nSua opinião é muito importante 💈`;
-      const message = tmpl
-        .replace(/\{cliente\}/g, a.customer_name)
-        .replace(/\{barbearia\}/g, businessName)
-        .replace(/\{link\}/g, link);
+      const tmpl = map.review_whatsapp_template || DEFAULT_TEMPLATES.review_whatsapp_template;
+      const message = renderTemplate(tmpl, buildAppointmentVars(a, businessName, link));
       await supabase.functions.invoke("chatpro", {
         body: { action: "send_message", phone: a.customer_phone, message },
       });
@@ -108,29 +152,53 @@ const Appointments = () => {
     }
   };
 
-  const STATUS_TEMPLATES: Record<string, (a: Appointment, businessName: string) => string> = {
-    confirmed: (a, biz) =>
-      `✅ Olá *${a.customer_name}*! Seu agendamento na *${biz}* foi *CONFIRMADO*.\n\n📅 ${format(new Date(a.appointment_date + "T00:00:00"), "dd/MM/yyyy")} às ${a.appointment_time?.slice(0, 5)}${a.barber_name ? `\n💈 Barbeiro: ${a.barber_name}` : ""}\n\nTe esperamos! 💈`,
-    cancelled: (a, biz) =>
-      `❌ Olá *${a.customer_name}*, infelizmente seu agendamento na *${biz}* do dia ${format(new Date(a.appointment_date + "T00:00:00"), "dd/MM/yyyy")} às ${a.appointment_time?.slice(0, 5)} foi *cancelado*.\n\nEntre em contato para reagendar.`,
-  };
-
   const sendStatusWhatsApp = async (a: Appointment, status: string) => {
     if (!a.customer_phone) return;
-    const tmpl = STATUS_TEMPLATES[status];
-    if (!tmpl) return;
+    const templateKey = STATUS_TEMPLATE_KEY[status];
+    if (!templateKey) return;
     try {
-      const { data: settings } = await supabase
-        .from("business_settings")
-        .select("key,value")
-        .eq("key", "business_name");
-      const businessName = settings?.[0]?.value || "Barbearia";
-      const message = tmpl(a, businessName);
+      const enabledKey = ENABLED_KEY[templateKey];
+      const map = await fetchSettingsMap([
+        "business_name",
+        templateKey,
+        ...(enabledKey ? [enabledKey] : []),
+      ]);
+      if (enabledKey && map[enabledKey] === "false") return;
+      const businessName = map.business_name || "Barbearia";
+      const tmpl = map[templateKey] || DEFAULT_TEMPLATES[templateKey];
+      const message = renderTemplate(tmpl, buildAppointmentVars(a, businessName));
       await supabase.functions.invoke("chatpro", {
         body: { action: "send_message", phone: a.customer_phone, message },
       });
     } catch (e) {
       console.error("Status WhatsApp error:", e);
+    }
+  };
+
+  const writeNotification = async (a: Appointment, status: string) => {
+    if (!a.customer_email && !a.customer_phone) return;
+    try {
+      const titles: Record<string, string> = {
+        confirmed: "Agendamento confirmado",
+        cancelled: "Agendamento cancelado",
+        completed: "Atendimento concluído",
+      };
+      const messages: Record<string, string> = {
+        confirmed: `Seu agendamento ${format(new Date(a.appointment_date + "T00:00:00"), "dd/MM/yyyy")} às ${a.appointment_time?.slice(0, 5)} foi confirmado.`,
+        cancelled: `Seu agendamento ${format(new Date(a.appointment_date + "T00:00:00"), "dd/MM/yyyy")} às ${a.appointment_time?.slice(0, 5)} foi cancelado.`,
+        completed: `Obrigado pela visita! Que tal avaliar seu atendimento?`,
+      };
+      if (!titles[status]) return;
+      await supabase.from("notifications").insert({
+        customer_email: a.customer_email || null,
+        customer_phone: a.customer_phone || null,
+        title: titles[status],
+        message: messages[status],
+        type: status,
+        appointment_id: a.id,
+      });
+    } catch (e) {
+      console.error("Notification error:", e);
     }
   };
 
@@ -149,6 +217,7 @@ const Appointments = () => {
       } else {
         await sendStatusWhatsApp(target, status);
       }
+      await writeNotification(target, status);
     }
     fetchAppointments();
   };
