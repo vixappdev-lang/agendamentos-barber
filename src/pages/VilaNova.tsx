@@ -304,11 +304,7 @@ const VilaNova = () => {
     { label: "Início", href: "#" },
     { label: "Sobre", href: "#sobre" },
     { label: "Serviços", href: "#servicos" },
-    { label: "Equipe", href: "#equipe" },
-    { label: "Galeria", href: "#galeria" },
-    { label: "FAQ", href: "#faq" },
     { label: "Loja", href: "/loja", external: true },
-    { label: "Contato", href: "#contato" },
   ];
 
   const handleGoToMember = () => {

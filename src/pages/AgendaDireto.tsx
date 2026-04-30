@@ -176,17 +176,39 @@ const AgendaDireto = () => {
   const sendWhatsAppConfirmation = async () => {
     if (!service || !barber || !date || !time || !phone) return;
     const dt = new Date(date + "T00:00").toLocaleDateString("pt-BR", {
-      weekday: "long", day: "2-digit", month: "long",
+      weekday: "long", day: "2-digit", month: "long", year: "numeric",
     });
+    const firstName = (name || "Cliente").split(" ")[0];
+    const priceFmt = `R$ ${service.price.toFixed(2).replace(".", ",")}`;
+    const protocolo = Math.random().toString(36).slice(2, 8).toUpperCase();
+
     const msg =
-      `*Barbearia Styllus* · Agendamento confirmado ✅\n\n` +
-      `👤 ${name || "Cliente"}\n` +
-      `✂️ ${service.title}\n` +
-      `🧔 ${barber.name}\n` +
-      `📅 ${dt} às ${time}\n` +
-      `💵 R$ ${service.price.toFixed(2).replace(".", ",")}\n\n` +
-      `📍 Rua Jatobás, 41 - Coqueiral de Aracruz/ES\n\n` +
-      `Te esperamos! Para remarcar ou cancelar, responda esta mensagem.`;
+`✂️ *BARBEARIA STYLLUS*
+━━━━━━━━━━━━━━━━━━━━
+
+Olá, *${firstName}*! 👋
+Seu agendamento foi *confirmado* com sucesso. ✅
+
+📋 *DETALHES DO ATENDIMENTO*
+• Serviço: *${service.title}*
+• Profissional: *${barber.name}*
+• Duração: ${service.duration}
+• Investimento: *${priceFmt}*
+
+📅 *DATA E HORÁRIO*
+${dt} — *${time}h*
+
+📍 *ENDEREÇO*
+Rua Jatobás, 41 — Coqueiral de Aracruz/ES
+
+━━━━━━━━━━━━━━━━━━━━
+🔖 Protocolo: *#${protocolo}*
+
+🕐 *Recomendamos chegar 5 min antes.*
+Para *remarcar* ou *cancelar*, basta responder esta mensagem.
+
+Estamos te esperando! 💈
+_Equipe Styllus_`;
 
     try {
       const { data, error } = await supabase.functions.invoke("chatpro", {
@@ -199,7 +221,6 @@ const AgendaDireto = () => {
       if (data?.success) {
         toast.success("WhatsApp enviado!", { description: "Confirmação chegou no seu celular." });
       } else if (data?.reason === "chatpro_not_configured") {
-        // silencioso — ChatPro não está configurado ainda
         console.info("ChatPro não configurado no admin.");
       }
     } catch (e) {
@@ -282,14 +303,13 @@ const AgendaDireto = () => {
         }}
       >
         <div className="w-full max-w-[1100px] mx-auto px-4 sm:px-6 h-16 flex items-center gap-3">
-          <button
-            onClick={goBack}
-            className="w-10 h-10 rounded-full flex items-center justify-center transition-all hover:scale-105 active:scale-95"
-            aria-label="Voltar"
+          <div
+            className="w-10 h-10 rounded-2xl flex items-center justify-center shrink-0"
             style={{ background: glassCard.background as string, border: glassCard.border as string }}
+            aria-hidden
           >
-            <ArrowLeft className="w-4 h-4" />
-          </button>
+            <Sparkles className="w-4 h-4 opacity-70" />
+          </div>
           <div className="flex-1 min-w-0">
             <p className="text-[10px] uppercase tracking-[0.3em] opacity-50 font-semibold">Agendamento</p>
             <h1 className="text-[15px] font-bold truncate -mt-0.5">{stepTitles[step]}</h1>
@@ -782,6 +802,58 @@ const Divider = ({ color }: { color: string }) => (
 );
 
 // ─── Amenity modal ────────────────────────────────────────────────────────────
+// Animações específicas por ícone — só dispara quando o modal abre.
+const amenityAnimations: Record<string, { animate: any; transition: any }> = {
+  wifi: {
+    animate: { scale: [0.9, 1.08, 1], opacity: [0.4, 1, 1] },
+    transition: { duration: 1.2, times: [0, 0.6, 1], repeat: Infinity, repeatDelay: 0.6, ease: "easeOut" },
+  },
+  coffee: {
+    animate: { y: [0, -3, 0], rotate: [-2, 2, -2] },
+    transition: { duration: 2.4, repeat: Infinity, ease: "easeInOut" },
+  },
+  parking: {
+    animate: { scale: [1, 1.08, 1] },
+    transition: { duration: 1.6, repeat: Infinity, ease: "easeInOut" },
+  },
+  ar: {
+    animate: { rotate: [0, 360] },
+    transition: { duration: 4, repeat: Infinity, ease: "linear" },
+  },
+  tv: {
+    animate: { opacity: [1, 0.55, 1] },
+    transition: { duration: 1.4, repeat: Infinity, ease: "easeInOut" },
+  },
+  produtos: {
+    animate: { scale: [1, 1.15, 1], rotate: [0, 12, -12, 0] },
+    transition: { duration: 2, repeat: Infinity, ease: "easeInOut" },
+  },
+  cartao: {
+    animate: { rotateY: [0, 180, 360] },
+    transition: { duration: 2.6, repeat: Infinity, ease: "easeInOut" },
+  },
+  acessivel: {
+    animate: { x: [0, 4, 0] },
+    transition: { duration: 1.8, repeat: Infinity, ease: "easeInOut" },
+  },
+  kids: {
+    animate: { y: [0, -4, 0] },
+    transition: { duration: 1.4, repeat: Infinity, ease: "easeOut" },
+  },
+  petfriendly: {
+    animate: { rotate: [-8, 8, -8] },
+    transition: { duration: 1.4, repeat: Infinity, ease: "easeInOut" },
+  },
+  drinks: {
+    animate: { rotate: [-6, 6, -6], y: [0, -2, 0] },
+    transition: { duration: 1.8, repeat: Infinity, ease: "easeInOut" },
+  },
+  som: {
+    animate: { scale: [1, 1.12, 1] },
+    transition: { duration: 0.6, repeat: Infinity, ease: "easeInOut" },
+  },
+};
+
 const AmenityModal = ({
   amenity, onClose, t, glass, softBg,
 }: {
@@ -791,6 +863,10 @@ const AmenityModal = ({
   softBg: string;
 }) => {
   const Icon = amenity.icon;
+  const anim = amenityAnimations[amenity.id] || {
+    animate: { scale: [1, 1.08, 1] },
+    transition: { duration: 1.6, repeat: Infinity, ease: "easeInOut" },
+  };
   return (
     <motion.div
       initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
@@ -824,12 +900,17 @@ const AmenityModal = ({
         >
           <X className="w-4 h-4" />
         </button>
-        <div
-          className="w-14 h-14 rounded-2xl flex items-center justify-center mb-4"
+        <motion.div
+          className="w-16 h-16 rounded-2xl flex items-center justify-center mb-4"
           style={{ background: softBg }}
+          initial={{ scale: 0, rotate: -20 }}
+          animate={{ scale: 1, rotate: 0 }}
+          transition={{ type: "spring", stiffness: 220, damping: 14, delay: 0.05 }}
         >
-          <Icon className="w-6 h-6" strokeWidth={1.6} />
-        </div>
+          <motion.div animate={anim.animate} transition={anim.transition} style={{ display: "inline-flex" }}>
+            <Icon className="w-7 h-7" strokeWidth={1.7} />
+          </motion.div>
+        </motion.div>
         <h3 className="text-xl font-black mb-2">{amenity.label}</h3>
         <p className="text-[14px] opacity-70 leading-relaxed">{amenity.description}</p>
         <button

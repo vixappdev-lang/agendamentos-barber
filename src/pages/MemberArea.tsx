@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Scissors, Calendar, Clock, LogOut, Loader2, CheckCircle, XCircle, AlertCircle, Plus, LayoutDashboard, ArrowLeft, ArrowRight, Check, User, Send, X, CreditCard, QrCode, Copy } from "lucide-react";
+import { Scissors, Calendar, Clock, LogOut, Loader2, CheckCircle, XCircle, AlertCircle, Plus, LayoutDashboard, ArrowLeft, ArrowRight, Check, User, Send, X, CreditCard, QrCode, Copy, Package } from "lucide-react";
+import OrderTracker from "@/components/store/OrderTracker";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -46,7 +47,7 @@ const MemberArea = () => {
   const [allServices, setAllServices] = useState<DBService[]>([]);
   const [serviceMap, setServiceMap] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState<"upcoming" | "history" | "pix">("upcoming");
+  const [tab, setTab] = useState<"upcoming" | "history" | "pix" | "orders">("upcoming");
 
   // PIX state
   const [pixAmount, setPixAmount] = useState("");
@@ -398,15 +399,26 @@ const MemberArea = () => {
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-1 p-1 rounded-xl mb-6" style={{ background: t.cardBgSubtle, border: `1px solid ${borderColor}` }}>
-          {(["upcoming", "history", "pix"] as const).map((tabKey) => (
-            <button key={tabKey} onClick={() => setTab(tabKey)}
-              className="flex-1 py-2.5 rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-1.5"
+        <div className="flex gap-1 p-1 rounded-xl mb-6 overflow-x-auto scrollbar-hide" style={{ background: t.cardBgSubtle, border: `1px solid ${borderColor}` }}>
+          {((["upcoming", "history", "pix", ...(settings.store_enabled === "true" ? ["orders" as const] : [])]) as const).map((tabKey) => (
+            <button key={tabKey} onClick={() => setTab(tabKey as any)}
+              className="flex-1 min-w-[88px] py-2.5 rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-1.5"
               style={{ background: tab === tabKey ? btnBg : "transparent", color: tab === tabKey ? btnColor : t.textMuted }}>
-              {tabKey === "upcoming" ? `Próximos (${upcoming.length})` : tabKey === "history" ? `Histórico (${history.length})` : <><CreditCard className="w-3.5 h-3.5" /> PIX</>}
+              {tabKey === "upcoming" ? `Próximos (${upcoming.length})`
+                : tabKey === "history" ? `Histórico (${history.length})`
+                : tabKey === "pix" ? <><CreditCard className="w-3.5 h-3.5" /> PIX</>
+                : <><Package className="w-3.5 h-3.5" /> Pedidos</>}
             </button>
           ))}
         </div>
+
+        {/* Orders Tab */}
+        {tab === "orders" && (
+          <OrderTracker
+            onClose={() => setTab("upcoming")}
+            customerPhone={(user?.user_metadata?.phone as string) || ""}
+          />
+        )}
 
         {/* PIX Tab */}
         {tab === "pix" && (
