@@ -220,7 +220,7 @@ const StorePage = () => {
                 <ProductCard
                   key={product.id}
                   product={{ ...product, description: product.description || "" }}
-                  onSelect={() => handleAddToCart(product)}
+                  onSelect={() => setDetailProduct(product)}
                   index={i}
                 />
               ))}
