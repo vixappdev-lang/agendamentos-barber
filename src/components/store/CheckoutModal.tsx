@@ -131,11 +131,16 @@ const CheckoutModal = ({
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
       className="fixed inset-0 z-[80] flex items-center justify-center p-4"
-      style={{ background: t.overlayBg, backdropFilter: "blur(12px)" }}
+      style={{ background: t.isLight ? "hsl(0 0% 0% / 0.45)" : "hsl(0 0% 0% / 0.78)", backdropFilter: "blur(18px)" }}
       onClick={onClose}>
       <motion.div initial={{ scale: 0.94, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.94, opacity: 0 }}
         className="w-full max-w-md p-5 space-y-4 max-h-[92vh] overflow-y-auto scrollbar-hide rounded-2xl"
-        style={{ background: t.modalCardBg, border: `1px solid ${t.border}`, boxShadow: t.cardShadowLg }}
+        style={{
+          background: t.isLight ? "hsl(0 0% 100% / 0.98)" : "hsl(220 22% 7% / 0.96)",
+          border: `1px solid ${t.isLight ? "hsl(220 12% 88%)" : "hsl(0 0% 100% / 0.1)"}`,
+          boxShadow: t.isLight ? "0 24px 60px hsl(220 20% 10% / 0.25)" : "0 24px 60px hsl(0 0% 0% / 0.6)",
+          backdropFilter: "blur(24px)"
+        }}
         onClick={(e) => e.stopPropagation()}>
 
         <div className="flex items-center justify-between">
