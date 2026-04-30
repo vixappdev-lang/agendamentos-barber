@@ -36,6 +36,7 @@ const FALLBACK_CATEGORY_LABELS: Record<string, string> = {
 const StorePage = () => {
   const navigate = useNavigate();
   const t = useThemeColors();
+  const ratings = useProductRatings();
   const cartHook = useCart();
   const { items: cart, total: cartTotal, count: cartCount, add: cartAdd, updateQty, remove, clear, user: cartUser } = cartHook;
 
