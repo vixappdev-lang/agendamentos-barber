@@ -44,6 +44,7 @@ const Finance = lazy(() => import("./pages/admin/Finance"));
 const ChatProConfig = lazy(() => import("./pages/admin/ChatProConfig"));
 const Barbershops = lazy(() => import("./pages/admin/Barbershops"));
 const Reviews = lazy(() => import("./pages/admin/Reviews"));
+const ProductReviews = lazy(() => import("./pages/admin/ProductReviews"));
 const Cashier = lazy(() => import("./pages/admin/Cashier"));
 const Commands = lazy(() => import("./pages/admin/Commands"));
 const Commissions = lazy(() => import("./pages/admin/Commissions"));
@@ -131,6 +132,7 @@ const App = () => (
                   <Route path="store" element={<StoreDashboard />} />
                   <Route path="confg" element={<ChatProConfig />} />
                   <Route path="reviews" element={<Reviews />} />
+                  <Route path="product-reviews" element={<ProductReviews />} />
                   <Route path="cashier" element={<Cashier />} />
                   <Route path="commands" element={<Commands />} />
                   <Route path="commissions" element={<Commissions />} />
@@ -172,6 +174,7 @@ const App = () => (
                   <Route path="confg" element={<ChatProConfig />} />
                   <Route path="barbershops" element={<Barbershops />} />
                   <Route path="reviews" element={<Reviews />} />
+                  <Route path="product-reviews" element={<ProductReviews />} />
                   <Route path="cashier" element={<Cashier />} />
                   <Route path="commands" element={<Commands />} />
                   <Route path="commissions" element={<Commissions />} />

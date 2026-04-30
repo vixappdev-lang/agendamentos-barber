@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Plus, Minus, ShoppingBag, Check, Package, Tag, Info } from "lucide-react";
+import { X, Plus, Minus, ShoppingBag, Check, Package, Tag, Info, Star } from "lucide-react";
 import { useThemeColors } from "@/hooks/useThemeColors";
+import { supabase } from "@/integrations/supabase/client";
 
 export interface DetailedProduct {
   id: string;
@@ -23,12 +24,35 @@ interface Props {
   onAdd: (qty: number) => void;
 }
 
+interface ReviewRow {
+  id: string;
+  customer_name: string;
+  rating: number;
+  comment: string | null;
+  created_at: string;
+}
+
 const ProductDetailModal = ({ product, onClose, onAdd }: Props) => {
   const t = useThemeColors();
   const [qty, setQty] = useState(1);
   const images = [product.image_url, ...(product.gallery || [])].filter(Boolean) as string[];
   const [activeImg, setActiveImg] = useState(images[0] || null);
   const inStock = product.stock == null || product.stock > 0;
+
+  const [reviews, setReviews] = useState<ReviewRow[]>([]);
+  useEffect(() => {
+    supabase
+      .from("product_reviews")
+      .select("id, customer_name, rating, comment, created_at")
+      .eq("product_id", product.id)
+      .eq("status", "approved")
+      .eq("is_public", true)
+      .order("created_at", { ascending: false })
+      .limit(20)
+      .then(({ data }) => setReviews((data as ReviewRow[]) || []));
+  }, [product.id]);
+
+  const avgRating = reviews.length > 0 ? reviews.reduce((s, r) => s + r.rating, 0) / reviews.length : 0;
 
   const handleAdd = () => {
     onAdd(qty);
@@ -95,6 +119,25 @@ const ProductDetailModal = ({ product, onClose, onAdd }: Props) => {
               {product.weight && (
                 <p className="text-xs mt-1 opacity-60" style={{ color: t.textSecondary }}>{product.weight}</p>
               )}
+              {reviews.length > 0 && (
+                <div className="flex items-center gap-1.5 mt-1.5">
+                  <div className="flex items-center gap-0.5">
+                    {[1, 2, 3, 4, 5].map((i) => (
+                      <Star
+                        key={i}
+                        className="w-3.5 h-3.5"
+                        style={{
+                          color: i <= Math.round(avgRating) ? "hsl(45 95% 60%)" : t.textSubtle,
+                          fill: i <= Math.round(avgRating) ? "hsl(45 95% 60%)" : "transparent",
+                        }}
+                      />
+                    ))}
+                  </div>
+                  <span className="text-xs font-semibold" style={{ color: t.textSecondary }}>
+                    {avgRating.toFixed(1)} <span className="opacity-60">({reviews.length})</span>
+                  </span>
+                </div>
+              )}
               {product.description && (
                 <p className="text-sm mt-2 leading-relaxed" style={{ color: t.textSecondary }}>{product.description}</p>
               )}
@@ -142,6 +185,35 @@ const ProductDetailModal = ({ product, onClose, onAdd }: Props) => {
               <p className="text-sm leading-relaxed whitespace-pre-line" style={{ color: t.textSecondary }}>
                 {product.long_description}
               </p>
+            </div>
+          )}
+
+          {/* Reviews */}
+          {reviews.length > 0 && (
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-wider mb-2" style={{ color: t.textMuted }}>
+                Avaliações ({reviews.length})
+              </p>
+              <div className="space-y-2 max-h-64 overflow-y-auto scrollbar-hide pr-1">
+                {reviews.map((r) => (
+                  <div key={r.id} className="rounded-xl p-3" style={{ background: t.cardBgSubtle, border: `1px solid ${t.borderSubtle}` }}>
+                    <div className="flex items-center justify-between gap-2 mb-1">
+                      <p className="text-xs font-semibold truncate" style={{ color: t.textPrimary }}>{r.customer_name}</p>
+                      <div className="flex items-center gap-0.5 shrink-0">
+                        {[1, 2, 3, 4, 5].map((i) => (
+                          <Star key={i} className="w-3 h-3" style={{
+                            color: i <= r.rating ? "hsl(45 95% 60%)" : t.textSubtle,
+                            fill: i <= r.rating ? "hsl(45 95% 60%)" : "transparent",
+                          }} />
+                        ))}
+                      </div>
+                    </div>
+                    {r.comment && (
+                      <p className="text-xs leading-relaxed" style={{ color: t.textSecondary }}>"{r.comment}"</p>
+                    )}
+                  </div>
+                ))}
+              </div>
             </div>
           )}
 

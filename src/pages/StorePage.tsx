@@ -11,6 +11,7 @@ import { useCart } from "@/hooks/useCart";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { useThemeColors } from "@/hooks/useThemeColors";
+import { useProductRatings } from "@/hooks/useProductRatings";
 import storeHero from "@/assets/styllus/store-hero.jpg";
 import type { User as AuthUser } from "@supabase/supabase-js";
 
@@ -35,6 +36,7 @@ const FALLBACK_CATEGORY_LABELS: Record<string, string> = {
 const StorePage = () => {
   const navigate = useNavigate();
   const t = useThemeColors();
+  const ratings = useProductRatings();
   const cartHook = useCart();
   const { items: cart, total: cartTotal, count: cartCount, add: cartAdd, updateQty, remove, clear, user: cartUser } = cartHook;
 
@@ -290,6 +292,7 @@ const StorePage = () => {
                           product={{ ...product, description: product.description || "" }}
                           onSelect={() => setDetailProduct(product)}
                           index={i}
+                          rating={ratings[product.id]}
                         />
                       ))}
                     </div>
