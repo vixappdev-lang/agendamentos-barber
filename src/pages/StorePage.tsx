@@ -78,11 +78,11 @@ const StorePage = () => {
     );
   }, [search, products]);
 
-  const handleAddToCart = (product: DBProduct) => {
+  const handleAddToCart = (product: DBProduct, qty: number = 1) => {
     setCart((prev) => {
       const existing = prev.find((i) => i.id === product.id);
-      if (existing) return prev.map((i) => i.id === product.id ? { ...i, quantity: i.quantity + 1 } : i);
-      return [...prev, { id: product.id, title: product.title, price: product.price, quantity: 1, image_url: product.image_url }];
+      if (existing) return prev.map((i) => i.id === product.id ? { ...i, quantity: i.quantity + qty } : i);
+      return [...prev, { id: product.id, title: product.title, price: product.price, quantity: qty, image_url: product.image_url }];
     });
   };
 
