@@ -132,6 +132,7 @@ const App = () => (
                   <Route path="store" element={<StoreDashboard />} />
                   <Route path="confg" element={<ChatProConfig />} />
                   <Route path="reviews" element={<Reviews />} />
+                  <Route path="product-reviews" element={<ProductReviews />} />
                   <Route path="cashier" element={<Cashier />} />
                   <Route path="commands" element={<Commands />} />
                   <Route path="commissions" element={<Commissions />} />
@@ -173,6 +174,7 @@ const App = () => (
                   <Route path="confg" element={<ChatProConfig />} />
                   <Route path="barbershops" element={<Barbershops />} />
                   <Route path="reviews" element={<Reviews />} />
+                  <Route path="product-reviews" element={<ProductReviews />} />
                   <Route path="cashier" element={<Cashier />} />
                   <Route path="commands" element={<Commands />} />
                   <Route path="commissions" element={<Commissions />} />
