@@ -177,6 +177,18 @@ const Finance = () => {
               {periodLabels[p]}
             </button>
           ))}
+          <button
+            onClick={exportCSV}
+            disabled={rawAppointments.length === 0}
+            className="ml-1 px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all disabled:opacity-40"
+            style={{
+              background: "hsl(140 60% 50% / 0.15)",
+              color: "hsl(140 60% 60%)",
+              border: "1px solid hsl(140 60% 50% / 0.3)",
+            }}
+          >
+            <Download className="w-3.5 h-3.5" /> CSV
+          </button>
         </div>
       </div>
 
