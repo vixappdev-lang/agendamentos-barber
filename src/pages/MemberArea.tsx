@@ -45,6 +45,7 @@ const MemberArea = () => {
   const navigate = useNavigate();
   const t = useThemeColors();
   const [user, setUser] = useState<AuthUser | null>(null);
+  usePushNotifications(user?.email);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [allServices, setAllServices] = useState<DBService[]>([]);
   const [serviceMap, setServiceMap] = useState<Record<string, string>>({});
