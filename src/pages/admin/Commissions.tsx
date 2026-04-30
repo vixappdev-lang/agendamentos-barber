@@ -15,6 +15,7 @@ const supabase = supabaseTyped as any;
 import { toast } from "sonner";
 import { ModuleSection, Stat, EmptyState, PrimaryButton, GhostButton, TextField } from "@/components/admin/ModuleUI";
 import { ModuleHeader } from "@/components/admin/HelpModal";
+import { usePanelSession } from "@/hooks/usePanelSession";
 
 interface Rule {
   id: string;
@@ -36,6 +37,7 @@ const today = () => new Date().toISOString().split("T")[0];
 const daysAgo = (n: number) => { const d = new Date(); d.setDate(d.getDate() - n); return d.toISOString().split("T")[0]; };
 
 const Commissions = () => {
+  const session = usePanelSession();
   const [rules, setRules] = useState<Rule[]>([]);
   const [payouts, setPayouts] = useState<Payout[]>([]);
   const [barbers, setBarbers] = useState<Barber[]>([]);
@@ -51,19 +53,31 @@ const Commissions = () => {
 
   const load = async () => {
     setLoading(true);
+    let rulesQ = supabase.from("commission_rules").select("*").order("created_at", { ascending: false });
+    let payoutsQ = supabase.from("commission_payouts").select("*").order("period_end", { ascending: false }).limit(50);
+
+    // Barbeiro só vê suas próprias regras (ou globais) e seus payouts
+    if (session.isBarberOnly && session.barberName) {
+      payoutsQ = payoutsQ.eq("barber_name", session.barberName);
+    }
+
     const [r, p, b, s] = await Promise.all([
-      supabase.from("commission_rules").select("*").order("created_at", { ascending: false }),
-      supabase.from("commission_payouts").select("*").order("period_end", { ascending: false }).limit(50),
+      rulesQ,
+      payoutsQ,
       supabase.from("barbers").select("id, name").eq("active", true),
       supabase.from("services").select("id, title").eq("active", true),
     ]);
-    setRules((r.data as Rule[]) || []);
+    let allRules = (r.data as Rule[]) || [];
+    if (session.isBarberOnly && session.barberName) {
+      allRules = allRules.filter((rule) => rule.scope === "global" || rule.scope === "service" || rule.barber_name === session.barberName);
+    }
+    setRules(allRules);
     setPayouts((p.data as Payout[]) || []);
     setBarbers((b.data as Barber[]) || []);
     setServices((s.data as Service[]) || []);
     setLoading(false);
   };
-  useEffect(() => { load(); }, []);
+  useEffect(() => { if (!session.loading) load(); }, [session.loading, session.barberName]);
 
   const addRule = async () => {
     const pct = Number(ruleForm.percent);
@@ -105,9 +119,13 @@ const Commissions = () => {
   };
 
   const calculate = async () => {
-    const { data, error } = await supabase.from("appointments")
+    let q = supabase.from("appointments")
       .select("*").gte("appointment_date", periodStart).lte("appointment_date", periodEnd)
       .in("status", ["confirmed", "completed"]);
+    if (session.isBarberOnly && session.barberName) {
+      q = q.eq("barber_name", session.barberName);
+    }
+    const { data, error } = await q;
     if (error) return toast.error(error.message);
     const list = (data as any[]) || [];
     const map = new Map<string, { name: string; revenue: number; commission: number; appointments: number }>();
