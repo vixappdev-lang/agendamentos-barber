@@ -6,6 +6,7 @@ import { ArrowRight, Lock, Mail, Scissors, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { useThemeColors } from "@/hooks/useThemeColors";
 import { clearAdminMysqlSession, setAdminMysqlSession } from "@/lib/adminMysqlSession";
+import { clearPanelUserSession, setPanelUserSession } from "@/hooks/usePanelSession";
 
 const floatingOrbs = [
   { size: 500, x: ["0%", "3%", "-2%", "0%"], y: ["0%", "-2%", "3%", "0%"], duration: 8, color: "hsl(245 80% 55% / 0.25)", blur: 80, left: "5%", top: "15%" },
@@ -25,6 +26,33 @@ const AdminLogin = () => {
     setLoading(true);
 
     clearAdminMysqlSession();
+    clearPanelUserSession();
+
+    // 1. Tenta login multi-perfil (panel_users) — admin/manager/barber
+    try {
+      const { data: panelRows, error: panelErr } = await (supabase as any)
+        .rpc("verify_panel_login", { _email: email, _plain: password });
+      if (!panelErr && Array.isArray(panelRows) && panelRows.length > 0) {
+        const u = panelRows[0];
+        let barberName: string | null = null;
+        if (u.barber_id) {
+          const { data: b } = await supabase.from("barbers").select("name").eq("id", u.barber_id).maybeSingle();
+          barberName = b?.name || null;
+        }
+        setPanelUserSession({
+          id: u.id, email: u.email, full_name: u.full_name,
+          role: (u.role as any) || "manager",
+          barber_id: u.barber_id, barber_name: barberName,
+          permissions: u.permissions || {},
+          source: "panel_users",
+        });
+        await supabase.auth.signOut();
+        toast.success(`Bem-vindo, ${u.full_name}!`);
+        navigate("/admin");
+        setLoading(false);
+        return;
+      }
+    } catch (_) { /* segue para próximos métodos */ }
 
     const { data: mysqlLogin } = await supabase.functions.invoke("mysql-proxy", {
       body: { action: "login", email, password },

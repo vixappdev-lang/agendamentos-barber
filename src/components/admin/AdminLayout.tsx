@@ -29,6 +29,7 @@ import {
 } from "lucide-react";
 import { isSuperAdmin } from "@/lib/superAdmin";
 import { clearAdminMysqlSession, getAdminMysqlSession } from "@/lib/adminMysqlSession";
+import { clearPanelUserSession, getPanelUserSession } from "@/hooks/usePanelSession";
 import WelcomeSetupModal from "@/components/admin/WelcomeSetupModal";
 import { useSetupProgress } from "@/hooks/useSetupProgress";
 import { Sparkles } from "lucide-react";
@@ -83,6 +84,12 @@ const AdminLayout = () => {
 
   useEffect(() => {
     const checkAdmin = async () => {
+      const panelSession = getPanelUserSession();
+      if (panelSession) {
+        setUserEmail(panelSession.email);
+        setLoading(false);
+        return;
+      }
       const mysqlSession = getAdminMysqlSession();
       if (mysqlSession) {
         setUserEmail(mysqlSession.email);
@@ -142,16 +149,32 @@ const AdminLayout = () => {
   // Refresh progresso quando rota muda
   useEffect(() => { if (!loading) refresh(); }, [location.pathname, loading, refresh]);
 
+  const panelSession = getPanelUserSession();
   const mysqlSession = getAdminMysqlSession();
+  // Permissões do usuário ativo: panel_users tem prioridade, senão mysql, senão tudo liberado
+  const activePerms: Record<string, boolean> | null =
+    panelSession?.permissions ?? (mysqlSession?.permissions as any) ?? null;
+  const activeRole = panelSession?.role ?? mysqlSession?.role ?? "admin";
+
   const visibleNavItems = navItems.filter((it) => {
     if (it.superAdminOnly) return isSuperAdmin(userEmail);
-    if (!mysqlSession?.permissions) return true;
+    // Barbeiro: limitar a Dashboard, Agendamentos, Comissões, Configurações
+    if (activeRole === "barber") {
+      const allowedBarberPaths = new Set(["/admin", "/admin/appointments", "/admin/commissions", "/admin/settings"]);
+      if (!allowedBarberPaths.has(it.path)) return false;
+    }
+    if (!activePerms) return true;
     const mapped = PATH_PERMISSION[it.path];
     const key = mapped || (it.path === "/admin" ? "dashboard" : it.path.split("/").pop() || "");
-    return mysqlSession.permissions[key] !== false;
+    return activePerms[key] !== false;
   });
 
-  const handleLogout = async () => { clearAdminMysqlSession(); await supabase.auth.signOut(); navigate("/admin/login"); };
+  const handleLogout = async () => {
+    clearPanelUserSession();
+    clearAdminMysqlSession();
+    await supabase.auth.signOut();
+    navigate("/admin/login");
+  };
 
   if (loading) {
     return (
@@ -213,13 +236,20 @@ const AdminLayout = () => {
         <header className="sticky top-0 z-30 flex items-center gap-3 px-4 sm:px-6 py-4"
           style={{ background: t.headerBg, backdropFilter: 'blur(12px)', borderBottom: `1px solid ${t.border}` }}>
           <button className="lg:hidden" onClick={() => setSidebarOpen(true)}><Menu className="w-5 h-5 text-foreground" /></button>
-          <h1 className="text-lg sm:text-xl font-bold text-foreground">
+          <h1 className="text-lg sm:text-xl font-bold text-foreground flex-1 min-w-0 truncate">
             {location.pathname === "/admin" ? (() => {
               const hour = new Date().getHours();
               const greeting = hour >= 5 && hour < 12 ? "Bom dia" : hour >= 12 && hour < 18 ? "Boa tarde" : hour >= 18 && hour < 24 ? "Boa noite" : "Boa madrugada";
-              return `${greeting}, Admin.`;
+              const who = panelSession?.full_name?.split(" ")[0] || (activeRole === "barber" ? "Barbeiro" : "Admin");
+              return `${greeting}, ${who}.`;
             })() : navItems.find((i) => i.path === location.pathname)?.label || "Admin"}
           </h1>
+          {activeRole !== "admin" && (
+            <span className="px-2.5 py-1 rounded-md text-[10px] font-semibold uppercase tracking-wider"
+              style={{ background: 'hsl(245 60% 55% / 0.12)', color: 'hsl(245 60% 75%)', border: '1px solid hsl(245 60% 55% / 0.2)' }}>
+              {activeRole === "barber" ? "Barbeiro" : "Gerente"}
+            </span>
+          )}
         </header>
 
         {welcomeSeen && !allDone && (
