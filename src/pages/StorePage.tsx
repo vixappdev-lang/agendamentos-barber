@@ -17,9 +17,24 @@ import type { User as AuthUser } from "@supabase/supabase-js";
 interface DBProduct {
   id: string; title: string; description: string | null; price: number;
   image_url: string | null; active: boolean; sort_order: number;
+  category?: string | null;
   long_description?: string | null; brand?: string | null; weight?: string | null;
   stock?: number | null; highlights?: string[] | null; gallery?: string[] | null;
 }
+
+const CATEGORY_LABELS: Record<string, string> = {
+  cabelo: "Cabelo",
+  barba: "Barba",
+  pos_barba: "Pós-barba",
+  combos: "Combos",
+  acessorios: "Acessórios",
+  fragrancias: "Fragrâncias",
+  geral: "Outros",
+};
+
+const formatCategoryLabel = (key: string) =>
+  CATEGORY_LABELS[key] ||
+  key.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 
 const StorePage = () => {
   const navigate = useNavigate();
