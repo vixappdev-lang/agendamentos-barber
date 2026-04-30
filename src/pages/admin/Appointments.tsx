@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
-import { CalendarDays, Search, ChevronLeft, ChevronRight, Check, X, Clock } from "lucide-react";
+import { CalendarDays, Search, ChevronLeft, ChevronRight, Check, X, Clock, CheckCircle2 } from "lucide-react";
 import { format, startOfMonth, endOfMonth, addMonths, subMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { usePanelSession } from "@/hooks/usePanelSession";
