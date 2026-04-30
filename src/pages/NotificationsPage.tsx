@@ -177,7 +177,7 @@ const NotificationsPage = () => {
   const pushButtonActive = push.permission === "granted" && push.enabled;
 
   return (
-    <div className="min-h-screen" style={{ background: t.bgBase, color: t.textPrimary }}>
+    <div className="min-h-screen" style={{ background: t.pageBg, color: t.textPrimary }}>
       <header
         className="sticky top-0 z-30 backdrop-blur-xl"
         style={{ background: "hsl(220 25% 6% / 0.85)", borderBottom: `1px solid ${t.borderSubtle}` }}
