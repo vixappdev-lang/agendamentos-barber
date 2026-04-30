@@ -91,7 +91,8 @@ const SAMPLE_DATA: Record<string, string> = {
 const renderPreview = (tmpl: string) => {
   let out = tmpl;
   Object.entries(SAMPLE_DATA).forEach(([k, v]) => {
-    out = out.replaceAll(k, v);
+    const escaped = k.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    out = out.replace(new RegExp(escaped, "g"), v);
   });
   return out;
 };
