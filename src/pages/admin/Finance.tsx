@@ -4,10 +4,12 @@ import { motion } from "framer-motion";
 import {
   DollarSign, TrendingUp, Users, ShoppingBag, Receipt,
   ArrowUpRight, ArrowDownRight, Calendar, Filter, Wallet,
-  BarChart3, Trophy, Percent, CreditCard, PiggyBank, Download
+  BarChart3, Trophy, Percent, CreditCard, PiggyBank, Download, FileText
 } from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, Bar, CartesianGrid } from "recharts";
 import { useThemeColors } from "@/hooks/useThemeColors";
+import { generateFinanceReport } from "@/lib/generateFinanceReport";
+import { toast } from "sonner";
 
 type Period = "day" | "week" | "month";
 
@@ -147,6 +149,46 @@ const Finance = () => {
     URL.revokeObjectURL(url);
   };
 
+  const exportPDF = async () => {
+    try {
+      // Busca nome da barbearia
+      const { data: settings } = await supabase
+        .from("business_settings")
+        .select("key, value")
+        .in("key", ["business_name", "owner_name"]);
+      const settingsMap = Object.fromEntries((settings ?? []).map((s) => [s.key, s.value]));
+      const businessName = settingsMap.business_name || "Barbearia";
+      const ownerName = settingsMap.owner_name || session.barberName || "—";
+
+      const monthLabel = (() => {
+        const now = new Date();
+        if (period === "day") return now.toLocaleDateString("pt-BR");
+        if (period === "week") return `Últimos 7 dias — ${now.toLocaleDateString("pt-BR")}`;
+        return now.toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
+      })();
+
+      const blob = generateFinanceReport({
+        businessName,
+        ownerName,
+        monthLabel: monthLabel.charAt(0).toUpperCase() + monthLabel.slice(1),
+        stats,
+        topServices,
+        barberRanking,
+        dailyRevenue: chartData,
+      });
+
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `relatorio_financeiro_${new Date().toISOString().slice(0, 10)}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success("Relatório PDF gerado!");
+    } catch (e: any) {
+      toast.error("Erro ao gerar PDF: " + e.message);
+    }
+  };
+
   const formatCurrency = (value: number) => new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
   const periodLabels: Record<Period, string> = { day: "Hoje", week: "7 dias", month: "30 dias" };
 
@@ -188,6 +230,18 @@ const Finance = () => {
             }}
           >
             <Download className="w-3.5 h-3.5" /> CSV
+          </button>
+          <button
+            onClick={exportPDF}
+            disabled={loading}
+            className="px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all disabled:opacity-40"
+            style={{
+              background: "hsl(0 80% 60% / 0.15)",
+              color: "hsl(0 80% 70%)",
+              border: "1px solid hsl(0 80% 60% / 0.3)",
+            }}
+          >
+            <FileText className="w-3.5 h-3.5" /> PDF Mensal
           </button>
         </div>
       </div>

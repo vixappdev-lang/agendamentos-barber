@@ -218,6 +218,17 @@ const Appointments = () => {
         await sendStatusWhatsApp(target, status);
       }
       await writeNotification(target, status);
+
+      // Sync com Google Calendar do barbeiro (silencioso, não bloqueia)
+      try {
+        const action: "create" | "update" | "delete" =
+          status === "cancelled" ? "delete" : status === "confirmed" ? "create" : "update";
+        await supabase.functions.invoke("google-calendar-sync", {
+          body: { appointment_id: id, action },
+        });
+      } catch (e) {
+        console.warn("[google-calendar-sync] skipped:", e);
+      }
     }
     fetchAppointments();
   };

@@ -39,6 +39,8 @@ export type Database = {
           customer_email: string | null
           customer_name: string
           customer_phone: string | null
+          google_calendar_barber_id: string | null
+          google_event_id: string | null
           id: string
           notes: string | null
           review_token: string | null
@@ -55,6 +57,8 @@ export type Database = {
           customer_email?: string | null
           customer_name: string
           customer_phone?: string | null
+          google_calendar_barber_id?: string | null
+          google_event_id?: string | null
           id?: string
           notes?: string | null
           review_token?: string | null
@@ -71,6 +75,8 @@ export type Database = {
           customer_email?: string | null
           customer_name?: string
           customer_phone?: string | null
+          google_calendar_barber_id?: string | null
+          google_event_id?: string | null
           id?: string
           notes?: string | null
           review_token?: string | null
@@ -581,6 +587,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      google_calendar_tokens: {
+        Row: {
+          access_token: string
+          barber_id: string
+          barber_name: string
+          calendar_id: string
+          created_at: string
+          expires_at: string
+          google_email: string | null
+          id: string
+          refresh_token: string
+          updated_at: string
+        }
+        Insert: {
+          access_token: string
+          barber_id: string
+          barber_name: string
+          calendar_id?: string
+          created_at?: string
+          expires_at: string
+          google_email?: string | null
+          id?: string
+          refresh_token: string
+          updated_at?: string
+        }
+        Update: {
+          access_token?: string
+          barber_id?: string
+          barber_name?: string
+          calendar_id?: string
+          created_at?: string
+          expires_at?: string
+          google_email?: string | null
+          id?: string
+          refresh_token?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       mysql_profiles: {
         Row: {
