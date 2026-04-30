@@ -228,14 +228,31 @@ const AgendaDireto = () => {
   const progress = stepOrder.indexOf(step) + 1;
   const isLight = t.isLight;
 
+  // Glass mais "presente" no dark — sem ficar invisível.
   const glassCard: React.CSSProperties = {
-    background: isLight ? "hsl(0 0% 100% / 0.65)" : "hsl(0 0% 100% / 0.025)",
-    backdropFilter: "blur(24px) saturate(140%)",
-    WebkitBackdropFilter: "blur(24px) saturate(140%)",
-    border: `1px solid ${isLight ? "hsl(220 14% 90%)" : "hsl(0 0% 100% / 0.05)"}`,
+    background: isLight
+      ? "hsl(0 0% 100% / 0.72)"
+      : "linear-gradient(180deg, hsl(0 0% 100% / 0.06), hsl(0 0% 100% / 0.025))",
+    backdropFilter: "blur(28px) saturate(160%)",
+    WebkitBackdropFilter: "blur(28px) saturate(160%)",
+    border: `1px solid ${isLight ? "hsl(220 14% 89%)" : "hsl(0 0% 100% / 0.09)"}`,
+    boxShadow: isLight
+      ? "0 1px 2px hsl(220 15% 20% / 0.04), 0 4px 16px hsl(220 15% 20% / 0.05)"
+      : "0 1px 0 hsl(0 0% 100% / 0.04) inset, 0 8px 24px hsl(0 0% 0% / 0.35)",
   };
-  const subtleBorder = isLight ? "hsl(220 14% 90%)" : "hsl(0 0% 100% / 0.05)";
-  const softBg = isLight ? "hsl(220 14% 96%)" : "hsl(0 0% 100% / 0.04)";
+  const glassCardActive: React.CSSProperties = {
+    background: isLight
+      ? "hsl(0 0% 100% / 0.95)"
+      : "linear-gradient(180deg, hsl(0 0% 100% / 0.12), hsl(0 0% 100% / 0.06))",
+    backdropFilter: "blur(28px) saturate(160%)",
+    WebkitBackdropFilter: "blur(28px) saturate(160%)",
+    border: `1px solid ${isLight ? "hsl(220 18% 30%)" : "hsl(0 0% 100% / 0.28)"}`,
+    boxShadow: isLight
+      ? "0 4px 18px hsl(220 15% 20% / 0.12)"
+      : "0 0 0 1px hsl(0 0% 100% / 0.06) inset, 0 12px 32px hsl(0 0% 0% / 0.5)",
+  };
+  const subtleBorder = isLight ? "hsl(220 14% 89%)" : "hsl(0 0% 100% / 0.07)";
+  const softBg = isLight ? "hsl(220 14% 96%)" : "hsl(0 0% 100% / 0.05)";
 
   // Comodidades da barbearia (filtradas)
   const shopAmenities = MOCK_AMENITIES.filter((a) => MOCK_BARBERSHOP_AMENITIES.includes(a.id));
@@ -312,8 +329,7 @@ const AgendaDireto = () => {
                 />
               </div>
 
-              {/* Categories */}
-              <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 scrollbar-none">
+              <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 scrollbar-hide">
                 {MOCK_CATEGORIES.map((cat) => {
                   const active = cat.id === activeCat;
                   return (
@@ -321,13 +337,11 @@ const AgendaDireto = () => {
                       key={cat.id}
                       onClick={() => setActiveCat(cat.id)}
                       className="px-5 h-10 rounded-full text-[13px] whitespace-nowrap transition-all"
-                      style={{
-                        background: active ? t.textPrimary : (glassCard.background as string),
-                        color: active ? t.pageBg : t.textPrimary,
-                        border: `1px solid ${active ? t.textPrimary : subtleBorder}`,
-                        backdropFilter: active ? undefined : "blur(20px)",
-                        fontWeight: active ? 700 : 500,
-                      }}
+                      style={
+                        active
+                          ? { background: t.textPrimary, color: t.pageBg, border: `1px solid ${t.textPrimary}`, fontWeight: 700 }
+                          : { ...glassCard, fontWeight: 500 }
+                      }
                     >
                       {cat.label}
                     </button>
@@ -368,28 +382,22 @@ const AgendaDireto = () => {
                 ))}
               </div>
 
-              {/* Comodidades — estilo AppBarber, abaixo da lista, máx 4 */}
+              {/* Comodidades — somente ícones em glass, sem título, abaixo da lista */}
               {shopAmenities.length > 0 && (
-                <section className="mt-9">
-                  <h2 className="text-[15px] font-bold mb-1">Comodidades</h2>
-                  <p className="text-[12px] opacity-50 mb-4">Toque no item para mais informações</p>
-                  <div className="grid grid-cols-4 gap-3">
-                    {shopAmenities.slice(0, 4).map((a) => (
-                      <button
-                        key={a.id}
-                        onClick={() => setAmenityOpen(a)}
-                        className="aspect-square rounded-2xl flex flex-col items-center justify-center gap-1.5 transition-all hover:translate-y-[-2px] active:scale-95"
-                        style={glassCard}
-                        aria-label={a.label}
-                      >
-                        <a.icon className="w-6 h-6 opacity-90" strokeWidth={1.5} />
-                        <span className="text-[10px] font-semibold opacity-70 leading-none text-center px-1">
-                          {a.label}
-                        </span>
-                      </button>
-                    ))}
-                  </div>
-                </section>
+                <div className="mt-7 grid grid-cols-4 gap-2.5">
+                  {shopAmenities.slice(0, 4).map((a) => (
+                    <button
+                      key={a.id}
+                      onClick={() => setAmenityOpen(a)}
+                      className="aspect-square rounded-2xl flex items-center justify-center transition-all hover:translate-y-[-2px] active:scale-95"
+                      style={glassCard}
+                      aria-label={a.label}
+                      title={a.label}
+                    >
+                      <a.icon className="w-[22px] h-[22px] opacity-85" strokeWidth={1.5} />
+                    </button>
+                  ))}
+                </div>
               )}
             </motion.div>
           )}
@@ -410,11 +418,8 @@ const AgendaDireto = () => {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: i * 0.04, ease: easeSoft }}
                     onClick={() => setBarber(b)}
-                    className="w-full flex items-center gap-3 p-3.5 rounded-2xl text-left transition-all"
-                    style={{
-                      ...glassCard,
-                      border: `1px solid ${active ? t.textPrimary : subtleBorder}`,
-                    }}
+                    className="w-full flex items-center gap-3 p-3.5 rounded-2xl text-left transition-all hover:translate-y-[-1px]"
+                    style={active ? glassCardActive : glassCard}
                   >
                     <div
                       className="w-12 h-12 rounded-full flex items-center justify-center font-bold text-[14px] flex-shrink-0 text-white"
@@ -453,20 +458,19 @@ const AgendaDireto = () => {
               <h2 className="text-[10px] uppercase tracking-[0.3em] opacity-50 font-bold mt-7 mb-3">
                 Data
               </h2>
-              <div className="flex gap-2.5 overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 scrollbar-none">
+              <div className="flex gap-2.5 overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 scrollbar-hide">
                 {dates.map((d) => {
                   const active = d.iso === date;
                   return (
                     <button
                       key={d.iso}
                       onClick={() => setDate(d.iso)}
-                      className="flex flex-col items-center justify-center min-w-[64px] h-[84px] rounded-2xl transition-all"
-                      style={{
-                        background: active ? t.textPrimary : (glassCard.background as string),
-                        color: active ? t.pageBg : t.textPrimary,
-                        border: `1px solid ${active ? t.textPrimary : subtleBorder}`,
-                        backdropFilter: active ? undefined : "blur(20px)",
-                      }}
+                      className="flex flex-col items-center justify-center min-w-[64px] h-[84px] rounded-2xl transition-all hover:translate-y-[-1px]"
+                      style={
+                        active
+                          ? { background: t.textPrimary, color: t.pageBg, border: `1px solid ${t.textPrimary}` }
+                          : glassCard
+                      }
                     >
                       <span className="text-[10px] uppercase opacity-60 font-semibold">{d.weekday}</span>
                       <span className="text-2xl font-black leading-none my-0.5">{d.day}</span>
@@ -486,13 +490,12 @@ const AgendaDireto = () => {
                     <button
                       key={tm}
                       onClick={() => setTime(tm)}
-                      className="h-11 rounded-xl text-[13px] font-semibold transition-all"
-                      style={{
-                        background: active ? t.textPrimary : (glassCard.background as string),
-                        color: active ? t.pageBg : t.textPrimary,
-                        border: `1px solid ${active ? t.textPrimary : subtleBorder}`,
-                        backdropFilter: active ? undefined : "blur(20px)",
-                      }}
+                      className="h-11 rounded-xl text-[13px] font-semibold transition-all hover:translate-y-[-1px]"
+                      style={
+                        active
+                          ? { background: t.textPrimary, color: t.pageBg, border: `1px solid ${t.textPrimary}` }
+                          : glassCard
+                      }
                     >
                       {tm}
                     </button>
@@ -801,8 +804,16 @@ const AmenityModal = ({
         animate={{ y: 0, opacity: 1, scale: 1 }}
         exit={{ y: 40, opacity: 0, scale: 0.98 }}
         transition={{ ease: easeSoft, duration: 0.32 }}
-        className="w-full max-w-md rounded-3xl p-6 relative"
-        style={{ ...glass, background: t.pageBg }}
+        className="w-full max-w-md rounded-3xl p-6 relative overflow-hidden"
+        style={{
+          background: t.isLight
+            ? "hsl(0 0% 100% / 0.92)"
+            : "linear-gradient(180deg, hsl(220 18% 9% / 0.92), hsl(220 20% 5% / 0.92))",
+          backdropFilter: "blur(40px) saturate(160%)",
+          WebkitBackdropFilter: "blur(40px) saturate(160%)",
+          border: t.isLight ? "1px solid hsl(220 14% 88%)" : "1px solid hsl(0 0% 100% / 0.1)",
+          boxShadow: "0 24px 60px hsl(0 0% 0% / 0.45)",
+        }}
         onClick={(e) => e.stopPropagation()}
       >
         <button
