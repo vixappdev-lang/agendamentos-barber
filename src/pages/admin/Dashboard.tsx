@@ -17,6 +17,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { useThemeColors } from "@/hooks/useThemeColors";
+import { usePanelSession } from "@/hooks/usePanelSession";
 
 const COLORS = [
   "hsl(245 60% 55%)",
@@ -29,6 +30,7 @@ const COLORS = [
 
 const Dashboard = () => {
   const t = useThemeColors();
+  const session = usePanelSession();
   const [stats, setStats] = useState({
     totalAppointments: 0,
     totalRevenue: 0,
@@ -39,6 +41,7 @@ const Dashboard = () => {
   const [serviceDistribution, setServiceDistribution] = useState<{ name: string; value: number }[]>([]);
 
   useEffect(() => {
+    if (session.loading) return;
     fetchDashboardData();
 
     const channel = supabase
@@ -49,13 +52,17 @@ const Dashboard = () => {
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, []);
+  }, [session.loading, session.barberName]);
 
   const fetchDashboardData = async () => {
     const today = new Date().toISOString().split("T")[0];
 
+    let aptQ = supabase.from("appointments").select("*");
+    if (session.isBarberOnly && session.barberName) {
+      aptQ = aptQ.eq("barber_name", session.barberName);
+    }
     const [appointmentsRes, servicesRes] = await Promise.all([
-      supabase.from("appointments").select("*"),
+      aptQ,
       supabase.from("services").select("*"),
     ]);
 
