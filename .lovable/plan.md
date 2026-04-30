@@ -1,113 +1,73 @@
 
-## 1. Fix booking final step (tela dark / não agenda) — global
+# Plano: Rebrand Styllus + Galeria do Insta + Nova rota /agenda-direto
 
-**Root cause investigation found two issues:**
+## 1. Scraping ao vivo do Instagram @barbeariastylluscoqueiral
 
-- `BookingFlow.tsx` calls `supabase.from("appointments").insert(...)` without `.select()` and only destructures `error`. On tenant domains the `tenantPublicBridge` routes this through `create_appointment`, but if the edge function call fails or never resolves, no toast is shown — `setSubmitting(false)` is never called and the modal stays in a half-rendered "dark" state.
-- The success modal (`showConfirmation`) uses `t.overlayBg` + `glass-card-strong`. Edge function logs (`mysql-proxy`) show **zero** `create_appointment` invocations, confirming the call is silently swallowed (likely thrown by the bridge before reaching the function — e.g. tenant context not active when click happens, or `then`/`await` chain swallowing).
+Usar **Firecrawl** (já recomendado nas instruções) via edge function temporária ou direto no shell para extrair:
 
-**Fixes:**
+- **Logo** (foto de perfil em alta)
+- **Nome real / bio / endereço / telefone / WhatsApp**
+- **Melhores fotos de cortes** (pegar ~12 posts, filtrar manualmente os melhores 6-8 cortes reais — sem flyers/promo)
 
-1. **`src/components/BookingFlow.tsx`** — wrap insert in `try/catch`, always reset `setSubmitting(false)`, log the real error to console, and show explicit toast on every failure path. Use the tenant `publicQuery` directly when available (via a small `useTenantSiteSafe()` helper) instead of relying solely on the bridge — this removes one layer of indirection on tenant domains.
-2. Add a final guard: if `setShowConfirmation(true)` runs but the modal can't paint (no theme), show a plain success card fallback.
-3. **`src/lib/tenantPublicBridge.ts`** — make `PublicInsertQuery.then` always resolve with `{data, error}` (never throw), so awaits never hang. Add `console.error` on bridge failures.
-4. **`supabase/functions/mysql-proxy/index.ts`** — return a structured error JSON (status 200) for `create_appointment` instead of throwing, so the client always gets `{error: {...}}`.
+Fluxo:
+1. `firecrawl scrape` da página do perfil → extrai metadados + lista de posts
+2. Para cada post relevante, baixar a imagem em alta (`scontent...cdninstagram.com`)
+3. Salvar em `src/assets/styllus/`:
+   - `logo.png` (avatar quadrado, redimensionado p/ caber no header sem distorcer)
+   - `hero-1.jpg`, `hero-2.jpg`, `hero-3.jpg` (3 melhores p/ slider topo)
+   - `gallery-1..6.jpg` (galeria/seção de cortes)
 
-This normalizes booking for every tenant (cloud + mysql, custom domain + subdomain + lovable preview).
+Se Firecrawl falhar com algum post (Insta bloqueia bastante), faço fallback via `code--fetch_website` na URL pública do post + extração do `og:image`.
 
-## 2. New commercial site at `/lynecloud`
+## 2. Atualizar o site Genesis (Styllus)
 
-A modern, animated SaaS landing page to sell the platform. Built with Framer Motion, Tailwind, and the existing dark glassmorphism design language.
+Editar **`src/pages/VilaNova.tsx`** (é o site principal usado pelo perfil Genesis):
 
-**Route:** add `/lynecloud` to `src/App.tsx` (lazy-loaded, public, no tenant wrapper).
+- Trocar imports `vilanova-hero-*` e `vilanova-gallery-*` pelos novos `styllus/*`
+- Trocar `vilanova-logo.png` no header pela nova `styllus/logo.png`
+  - Tamanho do logo: manter altura atual do header (≈40-48px), `object-contain`, sem esticar — adapto o aspect ratio real do avatar
+- Slider do topo: já roda em loop sobre `heroImages[]` — só troco a fonte das imagens
+- Slider/galeria de cortes: idem, troco `galleryImages[]`
+- Endereço, telefone, WhatsApp, Instagram: atualizar nas seções de contato/footer com os dados extraídos do Insta. Se algum campo não vier do Insta (endereço completo costuma vir só "Coqueiral, Aracaju"), uso o que estiver disponível e mantenho campos vazios em vez de inventar.
 
-**File:** `src/pages/LyneCloud.tsx`
+**Nada de design muda** — só conteúdo (imagens, textos de contato, logo).
 
-**Sections (top to bottom):**
+## 3. Nova rota `/agenda-direto`
 
-```text
-┌─────────────────────────────────────────┐
-│ Sticky nav (logo · recursos · planos)   │
-├─────────────────────────────────────────┤
-│ HERO                                    │
-│  - H1 animado (fade+slide)              │
-│  - Subtítulo "Gestão inteligente..."    │
-│  - CTAs: "Começar agora" / "Ver demo"   │
-│  - Mockup do painel real (parallax)     │
-├─────────────────────────────────────────┤
-│ FEATURES (grid 3x2 com ícones)          │
-│  Automação · Agenda · Financeiro ·      │
-│  Loja · Comissões · Fidelidade          │
-├─────────────────────────────────────────┤
-│ SHOWCASE PAINEL (real)                  │
-│  Screenshots reais de Dashboard,        │
-│  Finance, Appointments, Cashier         │
-│  com tabs animadas                      │
-├─────────────────────────────────────────┤
-│ MOBILE APP-LIKE (agendamento)           │
-│  Frame de celular com screenshots       │
-│  reais do BookingFlow mobile            │
-├─────────────────────────────────────────┤
-│ PLANO ÚNICO (card destaque)             │
-│  R$ 150/mês · lista de recursos         │
-│  CTA grande "Quero contratar"           │
-├─────────────────────────────────────────┤
-│ FAQ + Footer                            │
-└─────────────────────────────────────────┘
-```
+Criar **`src/pages/AgendaDireto.tsx`** e registrar em `src/App.tsx` dentro do `HostnameResolver mode="wrapper"` (mesmo grupo de `/agenda`).
 
-**Real screenshots (não recriar do zero):**
-Capturar via `browser--navigate_to_sandbox` + `browser--screenshot` as seguintes telas, salvar em `src/assets/lynecloud/`:
-- `dashboard.png` — `/admin` (1366×768)
-- `finance.png` — `/admin/finance`
-- `appointments.png` — `/admin/appointments`
-- `cashier.png` — `/admin/cashier`
-- `mobile-booking-1.png` — `/` em viewport 390×844, abrir BookingFlow step 0
-- `mobile-booking-2.png` — step 2 (data/hora)
-- `mobile-booking-3.png` — confirmação
+Diferenças vs `/agenda` (que é flow step-by-step embutido no VilaNova):
 
-**Plano (R$ 150/mês) — recursos listados:**
-- Agenda inteligente com confirmação automática
-- Notificações automatizadas para clientes
-- Painel financeiro completo (caixa, comissões, créditos)
-- Loja online integrada (delivery + retirada)
-- Comandas e estoque
-- Roleta de prêmios e cupons
-- Site personalizado com domínio próprio
-- Avaliações públicas automáticas
-- Multi-barbeiro com escalas
-- Suporte prioritário
+- **Layout direto, sem hero/landing** — vai direto pra escolha
+- **Listagem por categorias** (mock local, sem integrar admin):
+  - Cabelo (Corte clássico, Corte degradê, Corte tesoura, Platinado…)
+  - Barba (Barba completa, Acabamento, Barboterapia…)
+  - Combos (Cabelo + Barba, Pacote completo…)
+  - Tratamentos (Hidratação, Pigmentação, Sobrancelha…)
+- Tabs/chips horizontais de categoria + grid de cards de serviço (`ServiceCard` reusado)
+- Fluxo após selecionar serviço: **Profissional → Data/Hora → Dados → Confirmar** (mesmo modelo do existente, mas em página dedicada, mais "app-like")
+- Profissionais também mockados localmente (3-4 barbeiros fictícios com avatar)
+- Botão final mostra apenas um toast `"Agendamento simulado — preview"` (sem inserir no banco, conforme pedido "só pra mim ver")
 
-(Sem citar ChatPro — apenas "automação".)
+Componentes reutilizados: `ServiceCard`, design tokens `useThemeColors`, `framer-motion`, mesmos botões/inputs do shadcn.
 
-**Design / animações:**
-- Dark theme consistente (`hsl(220 25% 6%)`), gradientes sutis com `accentPurple`.
-- Framer Motion: `whileInView` fade+slide para cada seção, `motion.div` parallax no mockup do hero, hover-scale nos cards de feature, `AnimatePresence` para tabs do showcase.
-- Mockup de celular SVG inline envolvendo o screenshot mobile.
-- Sticky nav com blur ao scroll.
-- Botão "Quero contratar" abre WhatsApp (`wa.me/<número>`) — usar número do `business_settings` admin global (ou hardcode placeholder a confirmar).
+## 4. Arquivos
 
-**Sem backend novo:** página é 100% estática. Conversão via WhatsApp / e-mail.
+**Criar:**
+- `src/assets/styllus/logo.png`
+- `src/assets/styllus/hero-1.jpg`, `hero-2.jpg`, `hero-3.jpg`
+- `src/assets/styllus/gallery-1.jpg` … `gallery-6.jpg`
+- `src/pages/AgendaDireto.tsx`
+- `src/data/agendaDiretoMock.ts` (categorias + serviços + barbeiros mock)
 
-## 3. Detalhes técnicos
+**Editar:**
+- `src/pages/VilaNova.tsx` — imports de imagens, logo no header, dados de contato/endereço/telefone/instagram
+- `src/App.tsx` — registrar rota `/agenda-direto`
 
-- `src/App.tsx`: adicionar `<Route path="/lynecloud" element={<LyneCloud />} />` fora do `HostnameResolver` para evitar resolução de tenant.
-- Lazy-load: `const LyneCloud = lazy(() => import("./pages/LyneCloud"))`.
-- Imports de imagens via `import dashImg from "@/assets/lynecloud/dashboard.png"` para hash do Vite.
-- Não tocar em `src/integrations/supabase/*`.
-- SEO: `<title>` e meta description dentro de `<Helmet>`-style (ou direto no `useEffect`).
+## 5. Riscos e mitigação
 
-## Arquivos editados/criados
+- **Instagram pode bloquear scraping** → Firecrawl normalmente passa; fallback é pegar `og:image` de cada `/p/<shortcode>/` via fetch_website. Se nem isso funcionar, aviso e uso só o que conseguir + completo com placeholders neutros (sem inventar pessoas).
+- **Logo com fundo** (avatar Insta às vezes vem com bg) → se necessário, recorto/ajusto pra ficar limpo no header escuro.
+- **Endereço incompleto na bio** → uso o que tiver + Instagram/WhatsApp como contato principal.
 
-- ✏️ `src/components/BookingFlow.tsx` (fix do bug)
-- ✏️ `src/lib/tenantPublicBridge.ts` (resilience)
-- ✏️ `supabase/functions/mysql-proxy/index.ts` (erro estruturado)
-- ✏️ `src/App.tsx` (rota nova)
-- ➕ `src/pages/LyneCloud.tsx`
-- ➕ `src/assets/lynecloud/*.png` (capturas reais)
-
-## O que NÃO será feito
-
-- Não vou recriar imagens do painel via IA — todos screenshots são captura real do app.
-- Não vou alterar autenticação ou RLS.
-- Não vou adicionar checkout de pagamento ainda (CTA é WhatsApp). Se quiser, posso integrar Lovable Payments num próximo passo.
+Aprova pra eu executar?
