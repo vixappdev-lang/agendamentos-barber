@@ -64,11 +64,8 @@ const MapLibreDirections = ({ open, onClose, address, businessName }: Props) => 
     if (!open || !coords || !containerRef.current) return;
     if (mapRef.current) return;
 
-    const dark = !t.isLight;
-    // Tile sources (raster, clean)
-    const tilesUrl = dark
-      ? "https://cartodb-basemaps-{s}.global.ssl.fastly.net/dark_all/{z}/{x}/{y}.png"
-      : "https://cartodb-basemaps-{s}.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png";
+    // Voyager tiles (CARTO) — fundo branco com muitos detalhes (ruas, POIs, ícones), estilo Google Maps
+    const tilesUrl = "https://cartodb-basemaps-{s}.global.ssl.fastly.net/rastertiles/voyager/{z}/{x}/{y}.png";
 
     const map = new maplibregl.Map({
       container: containerRef.current,
@@ -85,7 +82,7 @@ const MapLibreDirections = ({ open, onClose, address, businessName }: Props) => 
         layers: [{ id: "carto-tiles", type: "raster", source: "carto" }],
       },
       center: [coords.lon, coords.lat],
-      zoom: 16,
+      zoom: 17,
       attributionControl: false,
     });
 
