@@ -1084,6 +1084,44 @@ const Settings = () => {
                     );
                   })()}
                 </div>
+
+                {/* Comodidades — exibidas em /agenda-direto (até 4) */}
+                <div className={`${cardStyle} flex-1`}>
+                  <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                    <Settings2 className="w-4 h-4" style={{ color: iconColor }} /> Comodidades
+                  </h3>
+                  <p className="text-[11px] text-muted-foreground -mt-1">
+                    Selecione até 4 comodidades exibidas no /agenda-direto. {activeAmenities.length}/4 ativas.
+                  </p>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    {MOCK_AMENITIES.map((a) => {
+                      const Icon = a.icon;
+                      const active = activeAmenities.includes(a.id);
+                      const disabled = !active && activeAmenities.length >= 4;
+                      return (
+                        <button
+                          key={a.id}
+                          type="button"
+                          disabled={disabled || savingAmenities}
+                          onClick={() => toggleAmenity(a.id)}
+                          className="relative flex items-center gap-2 px-3 py-2.5 rounded-xl text-left transition disabled:opacity-40 disabled:cursor-not-allowed"
+                          style={{
+                            background: active ? "hsl(0 0% 100% / 0.08)" : "hsl(0 0% 100% / 0.025)",
+                            border: active ? "1px solid hsl(0 0% 100% / 0.25)" : "1px solid hsl(0 0% 100% / 0.06)",
+                          }}
+                        >
+                          <Icon className="w-4 h-4 shrink-0" style={{ color: active ? iconColor : "hsl(var(--muted-foreground))" }} />
+                          <span className="text-[12px] font-medium truncate" style={{ color: active ? "hsl(var(--foreground))" : "hsl(var(--muted-foreground))" }}>
+                            {a.label}
+                          </span>
+                          {active && (
+                            <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full" style={{ background: iconColor }} />
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
               </div>
 
               {/* ---------- COLUNA DIREITA ---------- */}
