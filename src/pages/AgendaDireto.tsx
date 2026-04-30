@@ -336,7 +336,7 @@ const AgendaDireto = () => {
                     <button
                       key={cat.id}
                       onClick={() => setActiveCat(cat.id)}
-                      className="px-5 h-10 rounded-full text-[13px] whitespace-nowrap transition-all"
+                      className="px-5 h-9 rounded-full text-[12.5px] whitespace-nowrap transition-all"
                       style={
                         active
                           ? { background: t.textPrimary, color: t.pageBg, border: `1px solid ${t.textPrimary}`, fontWeight: 700 }
@@ -349,7 +349,25 @@ const AgendaDireto = () => {
                 })}
               </div>
 
-              <div className="mt-5 space-y-2.5">
+              {/* Comodidades — logo abaixo das categorias, ícones compactos uniformes */}
+              {shopAmenities.length > 0 && (
+                <div className="mt-4 grid grid-cols-4 gap-2 sm:gap-2.5 sm:max-w-md">
+                  {shopAmenities.slice(0, 4).map((a) => (
+                    <button
+                      key={a.id}
+                      onClick={() => setAmenityOpen(a)}
+                      className="h-12 sm:h-14 rounded-xl flex items-center justify-center transition-all hover:translate-y-[-1px] active:scale-95"
+                      style={glassCard}
+                      aria-label={a.label}
+                      title={a.label}
+                    >
+                      <a.icon className="w-[18px] h-[18px] sm:w-5 sm:h-5 opacity-80" strokeWidth={1.6} />
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              <div className="mt-5 space-y-2">
                 {filteredServices.length === 0 && (
                   <p className="text-sm opacity-60 text-center py-10">Nenhum serviço encontrado.</p>
                 )}
@@ -360,45 +378,27 @@ const AgendaDireto = () => {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: Math.min(i * 0.035, 0.2), ease: easeSoft }}
                     onClick={() => { setService(s); setStep("barber"); }}
-                    className="w-full flex items-center gap-4 p-3 rounded-2xl text-left transition-all hover:translate-y-[-1px] group"
+                    className="w-full flex items-center gap-3 p-2.5 rounded-2xl text-left transition-all hover:translate-y-[-1px] group"
                     style={glassCard}
                   >
                     <img
                       src={s.image} alt={s.title}
-                      className="w-[88px] h-[88px] sm:w-24 sm:h-24 rounded-xl object-cover flex-shrink-0"
+                      className="w-16 h-16 sm:w-[72px] sm:h-[72px] rounded-xl object-cover flex-shrink-0"
                     />
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-bold text-[15px] leading-tight truncate">{s.title}</h3>
-                      <p className="text-[12px] opacity-60 mt-1 line-clamp-2 leading-snug">{s.subtitle}</p>
-                      <div className="flex items-center gap-3 mt-2.5 text-[12px]">
+                      <h3 className="font-bold text-[14px] leading-tight truncate">{s.title}</h3>
+                      <p className="text-[11.5px] opacity-60 mt-0.5 line-clamp-1 leading-snug">{s.subtitle}</p>
+                      <div className="flex items-center gap-3 mt-1.5 text-[11.5px]">
                         <span className="inline-flex items-center gap-1 opacity-60">
                           <Clock className="w-3 h-3" /> {s.duration}
                         </span>
-                        <span className="font-bold text-[14px]">R$ {s.price}</span>
+                        <span className="font-bold text-[13px]">R$ {s.price}</span>
                       </div>
                     </div>
-                    <ChevronRight className="w-5 h-5 opacity-30 flex-shrink-0 transition-all group-hover:translate-x-0.5 group-hover:opacity-60" />
+                    <ChevronRight className="w-4 h-4 opacity-30 flex-shrink-0 transition-all group-hover:translate-x-0.5 group-hover:opacity-60" />
                   </motion.button>
                 ))}
               </div>
-
-              {/* Comodidades — somente ícones em glass, sem título, abaixo da lista */}
-              {shopAmenities.length > 0 && (
-                <div className="mt-7 grid grid-cols-4 gap-2.5">
-                  {shopAmenities.slice(0, 4).map((a) => (
-                    <button
-                      key={a.id}
-                      onClick={() => setAmenityOpen(a)}
-                      className="aspect-square rounded-2xl flex items-center justify-center transition-all hover:translate-y-[-2px] active:scale-95"
-                      style={glassCard}
-                      aria-label={a.label}
-                      title={a.label}
-                    >
-                      <a.icon className="w-[22px] h-[22px] opacity-85" strokeWidth={1.5} />
-                    </button>
-                  ))}
-                </div>
-              )}
             </motion.div>
           )}
 
