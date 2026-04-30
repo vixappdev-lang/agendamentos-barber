@@ -96,6 +96,7 @@ const App = () => (
               */}
               <Route element={<HostnameResolver mode="wrapper" />}>
                 <Route path="/agenda" element={<Index />} />
+                <Route path="/agenda-direto" element={<AgendaDireto />} />
                 <Route path="/loja" element={<StorePage />} />
                 <Route path="/navegacao" element={<Navigation />} />
                 <Route path="/demo-site" element={<DemoSite />} />
