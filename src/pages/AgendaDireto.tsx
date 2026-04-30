@@ -329,8 +329,7 @@ const AgendaDireto = () => {
                 />
               </div>
 
-              {/* Categories */}
-              <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 scrollbar-none">
+              <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 scrollbar-hide">
                 {MOCK_CATEGORIES.map((cat) => {
                   const active = cat.id === activeCat;
                   return (
@@ -338,13 +337,11 @@ const AgendaDireto = () => {
                       key={cat.id}
                       onClick={() => setActiveCat(cat.id)}
                       className="px-5 h-10 rounded-full text-[13px] whitespace-nowrap transition-all"
-                      style={{
-                        background: active ? t.textPrimary : (glassCard.background as string),
-                        color: active ? t.pageBg : t.textPrimary,
-                        border: `1px solid ${active ? t.textPrimary : subtleBorder}`,
-                        backdropFilter: active ? undefined : "blur(20px)",
-                        fontWeight: active ? 700 : 500,
-                      }}
+                      style={
+                        active
+                          ? { background: t.textPrimary, color: t.pageBg, border: `1px solid ${t.textPrimary}`, fontWeight: 700 }
+                          : { ...glassCard, fontWeight: 500 }
+                      }
                     >
                       {cat.label}
                     </button>
@@ -385,28 +382,22 @@ const AgendaDireto = () => {
                 ))}
               </div>
 
-              {/* Comodidades — estilo AppBarber, abaixo da lista, máx 4 */}
+              {/* Comodidades — somente ícones em glass, sem título, abaixo da lista */}
               {shopAmenities.length > 0 && (
-                <section className="mt-9">
-                  <h2 className="text-[15px] font-bold mb-1">Comodidades</h2>
-                  <p className="text-[12px] opacity-50 mb-4">Toque no item para mais informações</p>
-                  <div className="grid grid-cols-4 gap-3">
-                    {shopAmenities.slice(0, 4).map((a) => (
-                      <button
-                        key={a.id}
-                        onClick={() => setAmenityOpen(a)}
-                        className="aspect-square rounded-2xl flex flex-col items-center justify-center gap-1.5 transition-all hover:translate-y-[-2px] active:scale-95"
-                        style={glassCard}
-                        aria-label={a.label}
-                      >
-                        <a.icon className="w-6 h-6 opacity-90" strokeWidth={1.5} />
-                        <span className="text-[10px] font-semibold opacity-70 leading-none text-center px-1">
-                          {a.label}
-                        </span>
-                      </button>
-                    ))}
-                  </div>
-                </section>
+                <div className="mt-7 grid grid-cols-4 gap-2.5">
+                  {shopAmenities.slice(0, 4).map((a) => (
+                    <button
+                      key={a.id}
+                      onClick={() => setAmenityOpen(a)}
+                      className="aspect-square rounded-2xl flex items-center justify-center transition-all hover:translate-y-[-2px] active:scale-95"
+                      style={glassCard}
+                      aria-label={a.label}
+                      title={a.label}
+                    >
+                      <a.icon className="w-[22px] h-[22px] opacity-85" strokeWidth={1.5} />
+                    </button>
+                  ))}
+                </div>
               )}
             </motion.div>
           )}
