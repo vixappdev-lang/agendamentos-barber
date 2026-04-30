@@ -465,7 +465,7 @@ const AgendaDireto = () => {
                     <button
                       key={d.iso}
                       onClick={() => setDate(d.iso)}
-                      className="flex flex-col items-center justify-center min-w-[64px] h-[84px] rounded-2xl transition-all hover:translate-y-[-1px]"
+                      className="flex flex-col items-center justify-center min-w-[58px] h-[76px] rounded-2xl transition-all hover:translate-y-[-1px]"
                       style={
                         active
                           ? { background: t.textPrimary, color: t.pageBg, border: `1px solid ${t.textPrimary}` }
