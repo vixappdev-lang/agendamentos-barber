@@ -48,22 +48,63 @@ const Orders = () => {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [soundEnabled, setSoundEnabled] = useState(() => {
+    if (typeof window === "undefined") return true;
+    return localStorage.getItem("orders_sound") !== "off";
+  });
+  const [newCount, setNewCount] = useState(0);
 
-  useEffect(() => { fetchOrders(); setupRealtime(); }, []);
+  const playBeep = () => {
+    try {
+      const Ctx = (window as any).AudioContext || (window as any).webkitAudioContext;
+      if (!Ctx) return;
+      const ctx = new Ctx();
+      const tones = [880, 1175, 1568];
+      tones.forEach((freq, i) => {
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+        o.connect(g); g.connect(ctx.destination);
+        o.type = "sine";
+        o.frequency.value = freq;
+        const start = ctx.currentTime + i * 0.18;
+        g.gain.setValueAtTime(0.0001, start);
+        g.gain.exponentialRampToValueAtTime(0.25, start + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001, start + 0.18);
+        o.start(start); o.stop(start + 0.2);
+      });
+    } catch { /* noop */ }
+  };
+
+  useEffect(() => {
+    fetchOrders();
+    const channel = supabase.channel("orders-admin")
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "orders" }, (payload: any) => {
+        fetchOrders();
+        setNewCount((c) => c + 1);
+        const name = payload?.new?.customer_name || "Cliente";
+        toast.success(`🛎️ Novo pedido de ${name}!`, { duration: 5000 });
+        if (soundEnabled) playBeep();
+      })
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "orders" }, () => fetchOrders())
+      .on("postgres_changes", { event: "DELETE", schema: "public", table: "orders" }, () => fetchOrders())
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [soundEnabled]);
+
+  const toggleSound = () => {
+    const next = !soundEnabled;
+    setSoundEnabled(next);
+    localStorage.setItem("orders_sound", next ? "on" : "off");
+    if (next) playBeep();
+  };
 
   const fetchOrders = async () => {
-    setLoading(true);
     const { data } = await supabase.from("orders").select("*").order("created_at", { ascending: false });
     setOrders((data as Order[]) || []);
     setLoading(false);
   };
 
-  const setupRealtime = () => {
-    const channel = supabase.channel("orders-admin")
-      .on("postgres_changes", { event: "*", schema: "public", table: "orders" }, () => fetchOrders())
-      .subscribe();
-    return () => { supabase.removeChannel(channel); };
-  };
 
   const filteredOrders = useMemo(() => {
     return orders.filter((o) => {
