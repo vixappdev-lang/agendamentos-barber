@@ -9,6 +9,7 @@ import { findStockImage } from "@/data/stockImages";
 import { TeamSection, TestimonialsSection, FAQSection } from "@/components/landing/LandingExtras";
 import MapLibreDirections from "@/components/MapLibreDirections";
 import AllServicesModal from "@/components/AllServicesModal";
+import GalleryModal from "@/components/GalleryModal";
 import { useDevToolsBlock } from "@/hooks/useDevToolsBlock";
 
 import heroImg1 from "@/assets/styllus/hero-1.jpg";
@@ -23,7 +24,7 @@ import galleryImg6 from "@/assets/styllus/gallery-6.jpg";
 import brandLogo from "@/assets/styllus/logo.png";
 
 const heroImages = [heroImg1, heroImg2, heroImg3];
-const galleryImages = [galleryImg1, galleryImg2, galleryImg3, galleryImg4, galleryImg5, galleryImg6];
+const defaultGalleryImages = [galleryImg1, galleryImg2, galleryImg3, galleryImg4, galleryImg5, galleryImg6];
 
 interface DBService {
   id: string; title: string; subtitle: string | null; price: number;
@@ -49,6 +50,7 @@ const VilaNova = () => {
   const [scrolled, setScrolled] = useState(false);
   const [directionsOpen, setDirectionsOpen] = useState(false);
   const [allServicesOpen, setAllServicesOpen] = useState(false);
+  const [galleryModalOpen, setGalleryModalOpen] = useState(false);
 
   // Auth state
   const [user, setUser] = useState<AuthUser | null>(null);
