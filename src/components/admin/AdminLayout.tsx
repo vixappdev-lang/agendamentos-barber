@@ -54,7 +54,8 @@ const navItems: NavItem[] = [
   { label: "Fornecedores", path: "/admin/suppliers", icon: Truck },
   { label: "Cupons", path: "/admin/coupons", icon: Tag },
   { label: "Avaliações", path: "/admin/reviews", icon: Star },
-  { label: "ChatPro", path: "/admin/confg", icon: MessageSquare },
+  { label: "ChatPro", path: "/admin/confg", icon: MessageSquare, superAdminOnly: true },
+  { label: "Usuários", path: "/admin/users", icon: Users, superAdminOnly: true },
   { label: "Perfis Barbearias", path: "/admin/barbershops", icon: Building2, superAdminOnly: true },
   { label: "Configurações", path: "/admin/settings", icon: Settings },
 ];
