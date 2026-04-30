@@ -29,6 +29,7 @@ import {
 } from "lucide-react";
 import { isSuperAdmin } from "@/lib/superAdmin";
 import { clearAdminMysqlSession, getAdminMysqlSession } from "@/lib/adminMysqlSession";
+import { clearPanelUserSession, getPanelUserSession } from "@/hooks/usePanelSession";
 import WelcomeSetupModal from "@/components/admin/WelcomeSetupModal";
 import { useSetupProgress } from "@/hooks/useSetupProgress";
 import { Sparkles } from "lucide-react";
@@ -83,6 +84,12 @@ const AdminLayout = () => {
 
   useEffect(() => {
     const checkAdmin = async () => {
+      const panelSession = getPanelUserSession();
+      if (panelSession) {
+        setUserEmail(panelSession.email);
+        setLoading(false);
+        return;
+      }
       const mysqlSession = getAdminMysqlSession();
       if (mysqlSession) {
         setUserEmail(mysqlSession.email);
@@ -142,16 +149,32 @@ const AdminLayout = () => {
   // Refresh progresso quando rota muda
   useEffect(() => { if (!loading) refresh(); }, [location.pathname, loading, refresh]);
 
+  const panelSession = getPanelUserSession();
   const mysqlSession = getAdminMysqlSession();
+  // Permissões do usuário ativo: panel_users tem prioridade, senão mysql, senão tudo liberado
+  const activePerms: Record<string, boolean> | null =
+    panelSession?.permissions ?? (mysqlSession?.permissions as any) ?? null;
+  const activeRole = panelSession?.role ?? mysqlSession?.role ?? "admin";
+
   const visibleNavItems = navItems.filter((it) => {
     if (it.superAdminOnly) return isSuperAdmin(userEmail);
-    if (!mysqlSession?.permissions) return true;
+    // Barbeiro: limitar a Dashboard, Agendamentos, Comissões, Configurações
+    if (activeRole === "barber") {
+      const allowedBarberPaths = new Set(["/admin", "/admin/appointments", "/admin/commissions", "/admin/settings"]);
+      if (!allowedBarberPaths.has(it.path)) return false;
+    }
+    if (!activePerms) return true;
     const mapped = PATH_PERMISSION[it.path];
     const key = mapped || (it.path === "/admin" ? "dashboard" : it.path.split("/").pop() || "");
-    return mysqlSession.permissions[key] !== false;
+    return activePerms[key] !== false;
   });
 
-  const handleLogout = async () => { clearAdminMysqlSession(); await supabase.auth.signOut(); navigate("/admin/login"); };
+  const handleLogout = async () => {
+    clearPanelUserSession();
+    clearAdminMysqlSession();
+    await supabase.auth.signOut();
+    navigate("/admin/login");
+  };
 
   if (loading) {
     return (
