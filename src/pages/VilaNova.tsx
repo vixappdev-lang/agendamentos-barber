@@ -827,10 +827,27 @@ const VilaNova = () => {
             <p className="text-[11px]" style={{ color: t.textMuted }}>
               © {new Date().getFullYear()} {settings.business_name || "GenesisBarber"}. Todos os direitos reservados.
             </p>
-            <div className="flex gap-3">
-              {["Instagram", "WhatsApp"].map((s) => (
-                <span key={s} className="text-[11px] px-3 py-1.5 rounded-lg" style={{ background: t.cardBgSubtle, color: t.textMuted }}>{s}</span>
-              ))}
+            <div className="flex gap-2.5">
+              {settings.instagram && (() => {
+                const raw = settings.instagram.trim();
+                const match = raw.match(/instagram\.com\/([^/?#]+)/i);
+                const handle = match ? match[1].replace(/\/$/, "") : raw.replace(/^@/, "");
+                const url = match ? raw : `https://www.instagram.com/${handle}`;
+                return (
+                  <a key="ig" href={url} target="_blank" rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 text-[11px] px-3 py-1.5 rounded-lg transition-all hover:translate-y-[-1px]"
+                    style={{ background: t.cardBgSubtle, color: t.textMuted }}>
+                    <Instagram className="w-3 h-3" /> @{handle}
+                  </a>
+                );
+              })()}
+              {settings.whatsapp_number && (
+                <a href={`https://wa.me/${settings.whatsapp_number.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 text-[11px] px-3 py-1.5 rounded-lg transition-all hover:translate-y-[-1px]"
+                  style={{ background: t.cardBgSubtle, color: t.textMuted }}>
+                  <Phone className="w-3 h-3" /> WhatsApp
+                </a>
+              )}
             </div>
           </div>
         </div>
