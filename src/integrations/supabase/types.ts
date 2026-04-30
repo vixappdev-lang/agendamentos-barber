@@ -693,6 +693,8 @@ export type Database = {
           neighborhood: string | null
           notes: string | null
           payment_method: string | null
+          review_token: string | null
+          reviewed: boolean
           status: string
           total_price: number
           updated_at: string
@@ -711,6 +713,8 @@ export type Database = {
           neighborhood?: string | null
           notes?: string | null
           payment_method?: string | null
+          review_token?: string | null
+          reviewed?: boolean
           status?: string
           total_price?: number
           updated_at?: string
@@ -729,6 +733,8 @@ export type Database = {
           neighborhood?: string | null
           notes?: string | null
           payment_method?: string | null
+          review_token?: string | null
+          reviewed?: boolean
           status?: string
           total_price?: number
           updated_at?: string
@@ -815,6 +821,48 @@ export type Database = {
           label?: string
           probability?: number
           sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      product_reviews: {
+        Row: {
+          comment: string | null
+          created_at: string
+          customer_name: string
+          customer_phone: string | null
+          id: string
+          is_public: boolean
+          order_id: string | null
+          product_id: string
+          rating: number
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string
+          customer_name: string
+          customer_phone?: string | null
+          id?: string
+          is_public?: boolean
+          order_id?: string | null
+          product_id: string
+          rating: number
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string
+          customer_name?: string
+          customer_phone?: string | null
+          id?: string
+          is_public?: boolean
+          order_id?: string | null
+          product_id?: string
+          rating?: number
+          status?: string
           updated_at?: string
         }
         Relationships: []
