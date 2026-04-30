@@ -18,7 +18,7 @@ const tabs: { id: Tab; label: string; icon: typeof ShoppingBag }[] = [
 ];
 
 const StoreDashboard = () => {
-  const [activeTab, setActiveTab] = useState<Tab>("products");
+  const [activeTab, setActiveTab] = useState<Tab>("kpis");
 
   return (
     <div className="space-y-4">
