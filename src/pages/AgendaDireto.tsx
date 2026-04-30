@@ -783,7 +783,30 @@ _Equipe Styllus_`;
                 </>
               )}
 
-              <p className="text-[11px] opacity-50 mt-6 text-center">
+              {/* Aviso pré-confirmação */}
+              <div
+                className="mt-5 rounded-2xl p-4 flex items-start gap-3"
+                style={{
+                  ...glassCard,
+                  borderColor: isLight ? "hsl(38 90% 60% / 0.4)" : "hsl(38 90% 60% / 0.25)",
+                }}
+              >
+                <div
+                  className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+                  style={{ background: "hsl(38 90% 60% / 0.15)" }}
+                >
+                  <Clock className="w-4 h-4" style={{ color: "hsl(38 90% 50%)" }} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[12.5px] font-bold leading-tight">Antes de confirmar</p>
+                  <p className="text-[11.5px] opacity-70 leading-snug mt-1">
+                    {latePolicy ||
+                      "Chegue 5 minutos antes do horário marcado. Atrasos superiores a 15 minutos podem implicar remarcação ou cancelamento do atendimento."}
+                  </p>
+                </div>
+              </div>
+
+              <p className="text-[11px] opacity-50 mt-4 text-center">
                 Ao confirmar você receberá uma mensagem no WhatsApp com os detalhes.
               </p>
             </motion.div>
