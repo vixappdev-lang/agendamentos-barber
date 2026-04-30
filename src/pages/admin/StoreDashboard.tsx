@@ -44,6 +44,7 @@ const StoreDashboard = () => {
       {/* Tab content */}
       <motion.div key={activeTab} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }}>
         {activeTab === "products" && <Products />}
+        {activeTab === "categories" && <Categories />}
         {activeTab === "orders" && <Orders />}
         {activeTab === "settings" && <StoreSettings />}
       </motion.div>
