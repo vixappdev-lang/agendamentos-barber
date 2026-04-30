@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Scissors, Calendar, Clock, LogOut, Loader2, CheckCircle, XCircle, AlertCircle, Plus, LayoutDashboard, ArrowLeft, ArrowRight, Check, User, Send, X, CreditCard, QrCode, Copy } from "lucide-react";
+import { Scissors, Calendar, Clock, LogOut, Loader2, CheckCircle, XCircle, AlertCircle, Plus, LayoutDashboard, ArrowLeft, ArrowRight, Check, User, Send, X, CreditCard, QrCode, Copy, Package } from "lucide-react";
+import OrderTracker from "@/components/store/OrderTracker";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
