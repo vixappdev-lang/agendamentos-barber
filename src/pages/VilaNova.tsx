@@ -21,7 +21,7 @@ import galleryImg6 from "@/assets/styllus/gallery-6.jpg";
 import brandLogo from "@/assets/styllus/logo.png";
 
 const heroImages = [heroImg1, heroImg2, heroImg3];
-const galleryImages = [heroImg1, heroImg2, heroImg3, galleryImg1, galleryImg2, galleryImg3];
+const galleryImages = [galleryImg1, galleryImg2, galleryImg3, galleryImg4, galleryImg5, galleryImg6];
 
 interface DBService {
   id: string; title: string; subtitle: string | null; price: number;
