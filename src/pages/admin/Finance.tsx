@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import {
   DollarSign, TrendingUp, Users, ShoppingBag, Receipt,
   ArrowUpRight, ArrowDownRight, Calendar, Filter, Wallet,
-  BarChart3, Trophy, Percent, CreditCard, PiggyBank
+  BarChart3, Trophy, Percent, CreditCard, PiggyBank, Download
 } from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, Bar, CartesianGrid } from "recharts";
 import { useThemeColors } from "@/hooks/useThemeColors";
