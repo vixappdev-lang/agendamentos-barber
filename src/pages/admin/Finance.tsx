@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import {
   DollarSign, TrendingUp, Users, ShoppingBag, Receipt,
   ArrowUpRight, ArrowDownRight, Calendar, Filter, Wallet,
-  BarChart3, Trophy, Percent, CreditCard, PiggyBank
+  BarChart3, Trophy, Percent, CreditCard, PiggyBank, Download
 } from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, Bar, CartesianGrid } from "recharts";
 import { useThemeColors } from "@/hooks/useThemeColors";
@@ -24,6 +24,7 @@ const Finance = () => {
   const [chartData, setChartData] = useState<any[]>([]);
   const [topServices, setTopServices] = useState<any[]>([]);
   const [barberRanking, setBarberRanking] = useState<any[]>([]);
+  const [rawAppointments, setRawAppointments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => { fetchData(); }, [period, session.barberName, session.isBarberOnly]);
@@ -119,7 +120,31 @@ const Finance = () => {
       }
     }
     setBarberRanking(Object.values(barberMap).sort((a, b) => b.revenue - a.revenue));
+    setRawAppointments(apptList);
     setLoading(false);
+  };
+
+  const exportCSV = () => {
+    const rows = [
+      ["Data", "Hora", "Cliente", "Telefone", "Barbeiro", "Status", "Valor"],
+      ...rawAppointments.map((a) => [
+        a.appointment_date,
+        a.appointment_time,
+        a.customer_name,
+        a.customer_phone || "",
+        a.barber_name || "",
+        a.status,
+        Number(a.total_price || 0).toFixed(2),
+      ]),
+    ];
+    const csv = rows.map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(",")).join("\n");
+    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `financeiro_${period}_${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   const formatCurrency = (value: number) => new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
@@ -152,6 +177,18 @@ const Finance = () => {
               {periodLabels[p]}
             </button>
           ))}
+          <button
+            onClick={exportCSV}
+            disabled={rawAppointments.length === 0}
+            className="ml-1 px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all disabled:opacity-40"
+            style={{
+              background: "hsl(140 60% 50% / 0.15)",
+              color: "hsl(140 60% 60%)",
+              border: "1px solid hsl(140 60% 50% / 0.3)",
+            }}
+          >
+            <Download className="w-3.5 h-3.5" /> CSV
+          </button>
         </div>
       </div>
 
