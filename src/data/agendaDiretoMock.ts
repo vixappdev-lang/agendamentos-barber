@@ -64,10 +64,8 @@ export const MOCK_AMENITIES: MockAmenity[] = [
   { id: "som", label: "Ambiente sonoro", icon: Music, description: "Trilha sonora cuidadosamente selecionada para criar a atmosfera perfeita para o seu momento." },
 ];
 
-// Comodidades que ESTA barbearia oferece (em produção viria do admin)
-export const MOCK_BARBERSHOP_AMENITIES = [
-  "wifi", "coffee", "parking", "ar", "tv", "produtos", "cartao", "drinks",
-];
+// Comodidades que ESTA barbearia oferece (máx 4 — admin define)
+export const MOCK_BARBERSHOP_AMENITIES = ["wifi", "coffee", "parking", "ar"];
 
 const ALL = MOCK_BARBERSHOP_AMENITIES;
 

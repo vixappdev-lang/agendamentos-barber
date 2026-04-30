@@ -7,7 +7,9 @@ import { toast } from "sonner";
 import type { User as AuthUser } from "@supabase/supabase-js";
 import { findStockImage } from "@/data/stockImages";
 import { TeamSection, TestimonialsSection, FAQSection } from "@/components/landing/LandingExtras";
-import DirectionsModalSimple from "@/components/DirectionsModalSimple";
+import MapLibreDirections from "@/components/MapLibreDirections";
+import AllServicesModal from "@/components/AllServicesModal";
+import { useDevToolsBlock } from "@/hooks/useDevToolsBlock";
 
 import heroImg1 from "@/assets/styllus/hero-1.jpg";
 import heroImg2 from "@/assets/styllus/hero-2.jpg";
@@ -36,6 +38,7 @@ const steps = ["Serviço", "Barbeiro", "Data & Hora", "Seus Dados", "Confirmar"]
 
 const VilaNova = () => {
   const t = useThemeColors();
+  useDevToolsBlock();
   const [heroIndex, setHeroIndex] = useState(0);
   const [services, setServices] = useState<DBService[]>([]);
   const [barbers, setBarbers] = useState<DBBarber[]>([]);
@@ -45,6 +48,7 @@ const VilaNova = () => {
   const [mobileMenu, setMobileMenu] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [directionsOpen, setDirectionsOpen] = useState(false);
+  const [allServicesOpen, setAllServicesOpen] = useState(false);
 
   // Auth state
   const [user, setUser] = useState<AuthUser | null>(null);
@@ -432,18 +436,17 @@ const VilaNova = () => {
       {/* ─── HERO ─── */}
       <section ref={heroRef} className="relative h-screen min-h-[600px] max-h-[1000px] overflow-hidden">
         <motion.div style={{ scale: heroScale }} className="absolute inset-0">
-          <AnimatePresence mode="wait">
-            <motion.img
-              key={heroIndex}
-              src={heroImages[heroIndex]}
+          {heroImages.map((img, i) => (
+            <img
+              key={i}
+              src={img}
               alt={settings.business_name || "Barbearia Styllus"}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 1.2 }}
-              className="absolute inset-0 w-full h-full object-cover"
+              decoding="async"
+              fetchPriority={i === 0 ? "high" : "low"}
+              className="absolute inset-0 w-full h-full object-cover transition-opacity duration-[1200ms] ease-in-out"
+              style={{ opacity: i === heroIndex ? 1 : 0 }}
             />
-          </AnimatePresence>
+          ))}
         </motion.div>
 
         <div className="absolute inset-0" style={{
@@ -452,10 +455,19 @@ const VilaNova = () => {
 
         <motion.div style={{ opacity: heroOpacity }} className="relative z-10 h-full flex flex-col justify-end pb-12 sm:pb-20 px-4 sm:px-6 lg:px-8 max-w-[1600px] mx-auto w-full">
           <motion.div initial={{ y: 50, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.4, duration: 0.9 }}>
-            <div className="flex items-center gap-3 mb-5">
-              <div className="w-10 h-px" style={{ background: "hsl(0 0% 100% / 0.3)" }} />
-              <span className="text-[11px] sm:text-xs font-bold uppercase tracking-[0.35em]" style={{ color: "hsl(0 0% 100% / 0.5)" }}>
-                {settings.hero_subtitle || "Barbearia Premium"}
+            <div className="mb-5">
+              <span
+                className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-[11px] sm:text-xs font-semibold tracking-wide"
+                style={{
+                  background: "hsl(0 0% 100% / 0.08)",
+                  border: "1px solid hsl(0 0% 100% / 0.14)",
+                  backdropFilter: "blur(18px) saturate(140%)",
+                  WebkitBackdropFilter: "blur(18px) saturate(140%)",
+                  color: "hsl(0 0% 95%)",
+                }}
+              >
+                <span className="w-1.5 h-1.5 rounded-full" style={{ background: "hsl(140 60% 55%)" }} />
+                {settings.hero_subtitle || "Estilo e precisão há 20 anos"}
               </span>
             </div>
             <h1 className="text-5xl sm:text-7xl lg:text-8xl font-black leading-[0.9] tracking-tighter mb-5">
@@ -601,8 +613,8 @@ const VilaNova = () => {
             </p>
           </motion.div>
 
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {services.map((service, i) => (
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {services.slice(0, 4).map((service, i) => (
               <motion.div
                 key={service.id}
                 initial={{ opacity: 0, y: 25 }}
@@ -622,7 +634,7 @@ const VilaNova = () => {
                         src={imgSrc}
                         alt={service.title}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                        loading="lazy"
+                        decoding="async"
                         onError={(e) => {
                           const el = e.currentTarget as HTMLImageElement;
                           if (stock && el.src !== stock) el.src = stock;
@@ -660,6 +672,24 @@ const VilaNova = () => {
               </motion.div>
             ))}
           </div>
+
+          {services.length > 4 && (
+            <div className="flex justify-center mt-10">
+              <button
+                onClick={() => setAllServicesOpen(true)}
+                className="inline-flex items-center gap-2 px-7 py-3.5 rounded-full text-sm font-bold transition-all hover:translate-y-[-1px] active:scale-[0.98]"
+                style={{
+                  background: t.isLight ? "hsl(0 0% 100%)" : "hsl(0 0% 100% / 0.06)",
+                  border: `1px solid ${t.isLight ? "hsl(220 12% 88%)" : "hsl(0 0% 100% / 0.12)"}`,
+                  backdropFilter: "blur(20px)",
+                  color: t.textPrimary,
+                }}
+              >
+                Ver todos os serviços ({services.length})
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            </div>
+          )}
         </div>
       </section>
 
@@ -758,11 +788,25 @@ const VilaNova = () => {
                 <div className="flex items-center gap-2.5 text-xs" style={{ color: t.textSecondary }}>
                   <Phone className="w-3.5 h-3.5 shrink-0" /> {settings.whatsapp_number || "(00) 00000-0000"}
                 </div>
-                {settings.instagram && (
-                  <div className="flex items-center gap-2.5 text-xs" style={{ color: t.textSecondary }}>
-                    <Instagram className="w-3.5 h-3.5 shrink-0" /> {settings.instagram}
-                  </div>
-                )}
+                {settings.instagram && (() => {
+                  // extrai handle (@usuario) do link ou texto
+                  const raw = settings.instagram.trim();
+                  const match = raw.match(/instagram\.com\/([^/?#]+)/i);
+                  const handle = match ? match[1].replace(/\/$/, "") : raw.replace(/^@/, "");
+                  const url = match ? raw : `https://www.instagram.com/${handle}`;
+                  return (
+                    <a
+                      href={url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2.5 text-xs transition-opacity hover:opacity-100"
+                      style={{ color: t.textSecondary }}
+                    >
+                      <Instagram className="w-3.5 h-3.5 shrink-0" />
+                      <span className="font-semibold">@{handle}</span>
+                    </a>
+                  );
+                })()}
                 {settings.address && (
                   <button
                     onClick={() => setDirectionsOpen(true)}
@@ -786,21 +830,48 @@ const VilaNova = () => {
             <p className="text-[11px]" style={{ color: t.textMuted }}>
               © {new Date().getFullYear()} {settings.business_name || "GenesisBarber"}. Todos os direitos reservados.
             </p>
-            <div className="flex gap-3">
-              {["Instagram", "WhatsApp"].map((s) => (
-                <span key={s} className="text-[11px] px-3 py-1.5 rounded-lg" style={{ background: t.cardBgSubtle, color: t.textMuted }}>{s}</span>
-              ))}
+            <div className="flex gap-2.5">
+              {settings.instagram && (() => {
+                const raw = settings.instagram.trim();
+                const match = raw.match(/instagram\.com\/([^/?#]+)/i);
+                const handle = match ? match[1].replace(/\/$/, "") : raw.replace(/^@/, "");
+                const url = match ? raw : `https://www.instagram.com/${handle}`;
+                return (
+                  <a key="ig" href={url} target="_blank" rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 text-[11px] px-3 py-1.5 rounded-lg transition-all hover:translate-y-[-1px]"
+                    style={{ background: t.cardBgSubtle, color: t.textMuted }}>
+                    <Instagram className="w-3 h-3" /> @{handle}
+                  </a>
+                );
+              })()}
+              {settings.whatsapp_number && (
+                <a href={`https://wa.me/${settings.whatsapp_number.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 text-[11px] px-3 py-1.5 rounded-lg transition-all hover:translate-y-[-1px]"
+                  style={{ background: t.cardBgSubtle, color: t.textMuted }}>
+                  <Phone className="w-3 h-3" /> WhatsApp
+                </a>
+              )}
             </div>
           </div>
         </div>
       </footer>
 
-      {/* ─── DIRECTIONS MODAL ─── */}
-      <DirectionsModalSimple
+      {/* ─── DIRECTIONS MODAL (MapLibre) ─── */}
+      <MapLibreDirections
         open={directionsOpen}
         onClose={() => setDirectionsOpen(false)}
         address={settings.address || ""}
         businessName={settings.business_name}
+      />
+
+      {/* ─── ALL SERVICES MODAL ─── */}
+      <AllServicesModal
+        open={allServicesOpen}
+        onClose={() => setAllServicesOpen(false)}
+        services={services}
+        onPick={(s) => { setSelectedService(s); setCurrentStep(0); }}
+        selBg={selBg}
+        selColor={selColor}
       />
 
       {/* ─── LIGHTBOX ─── */}

@@ -8,6 +8,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { z } from "zod";
 import { useThemeColors } from "@/hooks/useThemeColors";
+import { useDevToolsBlock } from "@/hooks/useDevToolsBlock";
 import { supabase } from "@/integrations/supabase/client";
 import {
   MOCK_CATEGORIES, MOCK_BARBERS, MOCK_TIMES,
@@ -35,6 +36,7 @@ const easeSoft = [0.22, 1, 0.36, 1] as const;
 
 const AgendaDireto = () => {
   const t = useThemeColors();
+  useDevToolsBlock();
   const navigate = useNavigate();
   const [activeCat, setActiveCat] = useState(MOCK_CATEGORIES[0].id);
   const [search, setSearch] = useState("");
@@ -310,32 +312,6 @@ const AgendaDireto = () => {
                 />
               </div>
 
-              {/* Comodidades */}
-              <section className="mb-6">
-                <div className="flex items-baseline justify-between mb-2.5">
-                  <h2 className="text-[10px] uppercase tracking-[0.3em] opacity-50 font-bold">
-                    Comodidades
-                  </h2>
-                  <span className="text-[11px] opacity-40">Toque para detalhes</span>
-                </div>
-                <div className="flex gap-2.5 overflow-x-auto pb-1.5 -mx-4 px-4 sm:mx-0 sm:px-0 scrollbar-none">
-                  {shopAmenities.map((a) => (
-                    <button
-                      key={a.id}
-                      onClick={() => setAmenityOpen(a)}
-                      className="flex-shrink-0 w-[68px] h-[68px] rounded-2xl flex flex-col items-center justify-center gap-1 transition-all hover:translate-y-[-1px] active:scale-95"
-                      style={glassCard}
-                      aria-label={a.label}
-                    >
-                      <a.icon className="w-[18px] h-[18px] opacity-80" strokeWidth={1.6} />
-                      <span className="text-[9.5px] font-semibold opacity-70 leading-none">
-                        {a.label}
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              </section>
-
               {/* Categories */}
               <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 scrollbar-none">
                 {MOCK_CATEGORIES.map((cat) => {
@@ -374,7 +350,7 @@ const AgendaDireto = () => {
                     style={glassCard}
                   >
                     <img
-                      src={s.image} alt={s.title} loading="lazy"
+                      src={s.image} alt={s.title}
                       className="w-[88px] h-[88px] sm:w-24 sm:h-24 rounded-xl object-cover flex-shrink-0"
                     />
                     <div className="flex-1 min-w-0">
@@ -391,6 +367,30 @@ const AgendaDireto = () => {
                   </motion.button>
                 ))}
               </div>
+
+              {/* Comodidades — estilo AppBarber, abaixo da lista, máx 4 */}
+              {shopAmenities.length > 0 && (
+                <section className="mt-9">
+                  <h2 className="text-[15px] font-bold mb-1">Comodidades</h2>
+                  <p className="text-[12px] opacity-50 mb-4">Toque no item para mais informações</p>
+                  <div className="grid grid-cols-4 gap-3">
+                    {shopAmenities.slice(0, 4).map((a) => (
+                      <button
+                        key={a.id}
+                        onClick={() => setAmenityOpen(a)}
+                        className="aspect-square rounded-2xl flex flex-col items-center justify-center gap-1.5 transition-all hover:translate-y-[-2px] active:scale-95"
+                        style={glassCard}
+                        aria-label={a.label}
+                      >
+                        <a.icon className="w-6 h-6 opacity-90" strokeWidth={1.5} />
+                        <span className="text-[10px] font-semibold opacity-70 leading-none text-center px-1">
+                          {a.label}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </section>
+              )}
             </motion.div>
           )}
 
@@ -453,7 +453,7 @@ const AgendaDireto = () => {
               <h2 className="text-[10px] uppercase tracking-[0.3em] opacity-50 font-bold mt-7 mb-3">
                 Data
               </h2>
-              <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 scrollbar-none">
+              <div className="flex gap-2.5 overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 scrollbar-none">
                 {dates.map((d) => {
                   const active = d.iso === date;
                   return (
