@@ -132,6 +132,7 @@ const App = () => (
                   <Route path="coupons" element={<Coupons />} />
                   <Route path="store" element={<StoreDashboard />} />
                   <Route path="confg" element={<ChatProConfig />} />
+                  <Route path="whatsapp-templates" element={<WhatsAppTemplates />} />
                   <Route path="reviews" element={<Reviews />} />
                   <Route path="product-reviews" element={<ProductReviews />} />
                   <Route path="cashier" element={<Cashier />} />
