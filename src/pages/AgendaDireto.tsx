@@ -134,10 +134,15 @@ const AgendaDireto = () => {
     );
   }, [activeCat, search, realServices]);
 
+  // Datas vindas do hook centralizado (respeita admin)
   const dates = useMemo(() => {
+    if (rules.dates.length > 0) {
+      return rules.dates.map((d) => ({ iso: d.iso, day: d.day, weekday: d.weekday, month: d.month }));
+    }
+    // Fallback enquanto carrega
     const out: { iso: string; day: string; weekday: string; month: string }[] = [];
     const now = new Date();
-    for (let i = 0; i < 14; i++) {
+    for (let i = 0; i < 7; i++) {
       const d = new Date(now);
       d.setDate(d.getDate() + i);
       out.push({
@@ -148,7 +153,14 @@ const AgendaDireto = () => {
       });
     }
     return out;
-  }, []);
+  }, [rules.dates]);
+
+  // Horários do dia escolhido
+  const availableTimes = useMemo(() => {
+    if (!date) return [] as string[];
+    const list = rules.getTimesFor(date, barber?.name || null);
+    return list.length > 0 ? list : [];
+  }, [date, barber, rules]);
 
   const reset = () => {
     setStep("list");
