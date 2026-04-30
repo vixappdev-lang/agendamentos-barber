@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
-import { CalendarDays, Search, ChevronLeft, ChevronRight, Check, X, Clock } from "lucide-react";
+import { CalendarDays, Search, ChevronLeft, ChevronRight, Check, X, Clock, CheckCircle2 } from "lucide-react";
 import { format, startOfMonth, endOfMonth, addMonths, subMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { usePanelSession } from "@/hooks/usePanelSession";
@@ -108,6 +108,32 @@ const Appointments = () => {
     }
   };
 
+  const STATUS_TEMPLATES: Record<string, (a: Appointment, businessName: string) => string> = {
+    confirmed: (a, biz) =>
+      `✅ Olá *${a.customer_name}*! Seu agendamento na *${biz}* foi *CONFIRMADO*.\n\n📅 ${format(new Date(a.appointment_date + "T00:00:00"), "dd/MM/yyyy")} às ${a.appointment_time?.slice(0, 5)}${a.barber_name ? `\n💈 Barbeiro: ${a.barber_name}` : ""}\n\nTe esperamos! 💈`,
+    cancelled: (a, biz) =>
+      `❌ Olá *${a.customer_name}*, infelizmente seu agendamento na *${biz}* do dia ${format(new Date(a.appointment_date + "T00:00:00"), "dd/MM/yyyy")} às ${a.appointment_time?.slice(0, 5)} foi *cancelado*.\n\nEntre em contato para reagendar.`,
+  };
+
+  const sendStatusWhatsApp = async (a: Appointment, status: string) => {
+    if (!a.customer_phone) return;
+    const tmpl = STATUS_TEMPLATES[status];
+    if (!tmpl) return;
+    try {
+      const { data: settings } = await supabase
+        .from("business_settings")
+        .select("key,value")
+        .eq("key", "business_name");
+      const businessName = settings?.[0]?.value || "Barbearia";
+      const message = tmpl(a, businessName);
+      await supabase.functions.invoke("chatpro", {
+        body: { action: "send_message", phone: a.customer_phone, message },
+      });
+    } catch (e) {
+      console.error("Status WhatsApp error:", e);
+    }
+  };
+
   const updateStatus = async (id: string, status: string) => {
     const target = appointments.find((a) => a.id === id);
     const patch: Record<string, any> = { status };
@@ -117,8 +143,12 @@ const Appointments = () => {
       patch.review_token = token;
     }
     await supabase.from("appointments").update(patch).eq("id", id);
-    if (status === "completed" && target && token) {
-      await sendReviewWhatsApp(target, token);
+    if (target) {
+      if (status === "completed" && token) {
+        await sendReviewWhatsApp(target, token);
+      } else {
+        await sendStatusWhatsApp(target, status);
+      }
     }
     fetchAppointments();
   };
@@ -235,6 +265,16 @@ const Appointments = () => {
                 )}
 
                 <div className="flex items-center gap-1 shrink-0">
+                  {a.status !== "confirmed" && a.status !== "completed" && a.status !== "cancelled" && (
+                    <button
+                      onClick={() => updateStatus(a.id, "confirmed")}
+                      title="Confirmar e avisar cliente"
+                      className="p-2 rounded-lg transition-colors"
+                      style={{ background: 'hsl(200 70% 50% / 0.1)' }}
+                    >
+                      <CheckCircle2 className="w-4 h-4" style={{ color: 'hsl(200 70% 55%)' }} />
+                    </button>
+                  )}
                   {a.status !== "completed" && (
                     <button
                       onClick={() => updateStatus(a.id, "completed")}
