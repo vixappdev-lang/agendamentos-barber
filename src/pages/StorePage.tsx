@@ -53,6 +53,12 @@ const StorePage = () => {
   const [businessName, setBusinessName] = useState("BarberShop Styllus");
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<AuthUser | null>(null);
+  const [categoryMap, setCategoryMap] = useState<Record<string, { label: string; sort: number; icon?: string }>>({});
+
+  const formatCategoryLabel = (key: string) =>
+    categoryMap[key]?.label ||
+    FALLBACK_CATEGORY_LABELS[key] ||
+    key.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => setUser(session?.user ?? null));
