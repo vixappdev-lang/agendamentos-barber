@@ -47,7 +47,19 @@ const CheckoutModal = ({
   const [copied, setCopied] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  const total = items.reduce((s, i) => s + i.price * i.quantity, 0);
+  // Cupom
+  const [couponInput, setCouponInput] = useState("");
+  const [validating, setValidating] = useState(false);
+  const [appliedCoupon, setAppliedCoupon] = useState<{
+    code: string;
+    discount: number;
+    type: "percent" | "value";
+    raw: number;
+  } | null>(null);
+
+  const subtotal = items.reduce((s, i) => s + i.price * i.quantity, 0);
+  const discount = appliedCoupon?.discount || 0;
+  const total = Math.max(0, subtotal - discount);
 
   const goToOrders = () => {
     onSuccess();
