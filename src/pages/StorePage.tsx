@@ -68,11 +68,17 @@ const StorePage = () => {
 
   useEffect(() => {
     const fetchAll = async () => {
-      const [productsRes, settingsRes] = await Promise.all([
+      const [productsRes, settingsRes, catsRes] = await Promise.all([
         supabase.from("products").select("*").eq("active", true).order("sort_order"),
         supabase.from("business_settings").select("*"),
+        (supabase as any).from("product_categories").select("slug,label,icon,sort_order").eq("active", true).order("sort_order"),
       ]);
       if (productsRes.data) setProducts(productsRes.data as DBProduct[]);
+      if (catsRes?.data) {
+        const m: Record<string, { label: string; sort: number; icon?: string }> = {};
+        for (const c of catsRes.data as any[]) m[c.slug] = { label: c.label, sort: c.sort_order, icon: c.icon };
+        setCategoryMap(m);
+      }
       if (settingsRes.data) {
         const map: Record<string, string> = {};
         for (const row of settingsRes.data) map[row.key] = row.value || "";
