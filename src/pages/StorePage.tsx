@@ -11,6 +11,7 @@ import { useCart } from "@/hooks/useCart";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { useThemeColors } from "@/hooks/useThemeColors";
+import { useProductRatings } from "@/hooks/useProductRatings";
 import storeHero from "@/assets/styllus/store-hero.jpg";
 import type { User as AuthUser } from "@supabase/supabase-js";
 
@@ -290,6 +291,7 @@ const StorePage = () => {
                           product={{ ...product, description: product.description || "" }}
                           onSelect={() => setDetailProduct(product)}
                           index={i}
+                          rating={ratings[product.id]}
                         />
                       ))}
                     </div>
