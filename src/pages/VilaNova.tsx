@@ -436,7 +436,7 @@ const VilaNova = () => {
             <motion.img
               key={heroIndex}
               src={heroImages[heroIndex]}
-              alt="Barbearia Vila Nova"
+              alt={settings.business_name || "Barbearia Styllus"}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
