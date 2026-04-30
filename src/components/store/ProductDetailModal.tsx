@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Plus, Minus, ShoppingBag, Check, Package, Tag, Info } from "lucide-react";
+import { X, Plus, Minus, ShoppingBag, Check, Package, Tag, Info, Star } from "lucide-react";
 import { useThemeColors } from "@/hooks/useThemeColors";
+import { supabase } from "@/integrations/supabase/client";
 
 export interface DetailedProduct {
   id: string;
@@ -23,12 +24,35 @@ interface Props {
   onAdd: (qty: number) => void;
 }
 
+interface ReviewRow {
+  id: string;
+  customer_name: string;
+  rating: number;
+  comment: string | null;
+  created_at: string;
+}
+
 const ProductDetailModal = ({ product, onClose, onAdd }: Props) => {
   const t = useThemeColors();
   const [qty, setQty] = useState(1);
   const images = [product.image_url, ...(product.gallery || [])].filter(Boolean) as string[];
   const [activeImg, setActiveImg] = useState(images[0] || null);
   const inStock = product.stock == null || product.stock > 0;
+
+  const [reviews, setReviews] = useState<ReviewRow[]>([]);
+  useEffect(() => {
+    supabase
+      .from("product_reviews")
+      .select("id, customer_name, rating, comment, created_at")
+      .eq("product_id", product.id)
+      .eq("status", "approved")
+      .eq("is_public", true)
+      .order("created_at", { ascending: false })
+      .limit(20)
+      .then(({ data }) => setReviews((data as ReviewRow[]) || []));
+  }, [product.id]);
+
+  const avgRating = reviews.length > 0 ? reviews.reduce((s, r) => s + r.rating, 0) / reviews.length : 0;
 
   const handleAdd = () => {
     onAdd(qty);
