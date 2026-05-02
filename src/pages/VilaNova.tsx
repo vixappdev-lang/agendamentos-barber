@@ -12,16 +12,16 @@ import AllServicesModal from "@/components/AllServicesModal";
 import GalleryModal from "@/components/GalleryModal";
 import { useDevToolsBlock } from "@/hooks/useDevToolsBlock";
 
-import heroImg1 from "@/assets/styllus/hero-1.jpg";
-import heroImg2 from "@/assets/styllus/hero-2.jpg";
-import heroImg3 from "@/assets/styllus/hero-3.jpg";
-import galleryImg1 from "@/assets/styllus/gallery-1.jpg";
-import galleryImg2 from "@/assets/styllus/gallery-2.jpg";
-import galleryImg3 from "@/assets/styllus/gallery-3.jpg";
-import galleryImg4 from "@/assets/styllus/gallery-4.jpg";
-import galleryImg5 from "@/assets/styllus/gallery-5.jpg";
-import galleryImg6 from "@/assets/styllus/gallery-6.jpg";
-import brandLogo from "@/assets/styllus/logo.png";
+import heroImg1 from "@/assets/vilanova-hero-1.jpg";
+import heroImg2 from "@/assets/vilanova-hero-2.jpg";
+import heroImg3 from "@/assets/vilanova-hero-3.jpg";
+import galleryImg1 from "@/assets/vilanova-gallery-1.jpg";
+import galleryImg2 from "@/assets/vilanova-gallery-2.jpg";
+import galleryImg3 from "@/assets/vilanova-gallery-3.jpg";
+import galleryImg4 from "@/assets/vilanova-hero-1.jpg";
+import galleryImg5 from "@/assets/vilanova-hero-2.jpg";
+import galleryImg6 from "@/assets/vilanova-hero-3.jpg";
+import brandLogo from "@/assets/vilanova-logo.png";
 
 const heroImages = [heroImg1, heroImg2, heroImg3];
 const defaultGalleryImages = [galleryImg1, galleryImg2, galleryImg3, galleryImg4, galleryImg5, galleryImg6];
