@@ -12,7 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { useThemeColors } from "@/hooks/useThemeColors";
 import { useProductRatings } from "@/hooks/useProductRatings";
-import storeHero from "@/assets/styllus/store-hero.jpg";
+import storeHero from "@/assets/vilanova-hero-1.jpg";
 import type { User as AuthUser } from "@supabase/supabase-js";
 
 interface DBProduct {
@@ -52,7 +52,7 @@ const StorePage = () => {
   const [whatsappNumber, setWhatsappNumber] = useState("");
   const [pixKey, setPixKey] = useState("");
   const [pixType, setPixType] = useState("cpf");
-  const [businessName, setBusinessName] = useState("BarberShop Styllus");
+  const [businessName, setBusinessName] = useState("Sartoriall Barbearia");
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<AuthUser | null>(null);
   const [categoryMap, setCategoryMap] = useState<Record<string, { label: string; sort: number; icon?: string }>>({});
