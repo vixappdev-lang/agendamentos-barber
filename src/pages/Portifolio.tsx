@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Calendar,
   Smartphone,
@@ -120,13 +121,43 @@ function LivePhone({
 
 export default function Portifolio() {
   const [mounted, setMounted] = useState(false);
+  const [businessName, setBusinessName] = useState("sua barbearia");
   useEffect(() => setMounted(true), []);
 
   useEffect(() => {
-    document.title = "Portfólio · Sistema Completo para Barbearias";
+    let active = true;
+    const load = async () => {
+      const { data } = await supabase
+        .from("business_settings")
+        .select("value")
+        .eq("key", "business_name")
+        .maybeSingle();
+      if (active && data?.value) setBusinessName(data.value);
+    };
+    load();
+
+    const channel = supabase
+      .channel("portfolio-business-name")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "business_settings", filter: "key=eq.business_name" },
+        (payload: any) => {
+          const v = (payload.new as any)?.value;
+          if (v) setBusinessName(v);
+        },
+      )
+      .subscribe();
+
+    return () => {
+      active = false;
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+  useEffect(() => {
+    document.title = `${businessName} · Portfólio do Sistema`;
+    const desc = `Sistema profissional para ${businessName}: agendamento online, financeiro, WhatsApp e painel completo.`;
     const meta = document.querySelector('meta[name="description"]');
-    const desc =
-      "Sistema profissional para barbearia: agendamento online, financeiro, WhatsApp e painel completo. Veja o portfólio.";
     if (meta) meta.setAttribute("content", desc);
     else {
       const m = document.createElement("meta");
@@ -134,7 +165,7 @@ export default function Portifolio() {
       m.content = desc;
       document.head.appendChild(m);
     }
-  }, []);
+  }, [businessName]);
 
   // "Área do cliente" usa rota LOCAL com auto-login (mesma origem → sem CORS).
   // Admin removido a pedido (sem print, sem preview).
