@@ -269,8 +269,8 @@ export default function Portifolio() {
               className="font-bold leading-[1.02] tracking-tight"
               style={{ fontSize: "clamp(2.4rem, 6vw, 4.5rem)" }}
             >
-              O sistema que sua{" "}
-              <span style={{ color: `hsl(${BRAND})` }}>barbearia</span> merece.
+              O sistema que a{" "}
+              <span style={{ color: `hsl(${BRAND})` }}>{businessName}</span> merece.
             </motion.h1>
 
             <motion.p
