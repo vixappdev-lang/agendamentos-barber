@@ -22,8 +22,9 @@ import shotMenu from "@/assets/portfolio-shot-menu.png";
 import shotLoja from "@/assets/portfolio-shot-loja.png";
 import shotMembro from "@/assets/portfolio-shot-membro.png";
 import shotAdmin from "@/assets/portfolio-shot-admin.png";
+import shotAgenda from "@/assets/portfolio-shot-agenda.png";
 
-const WHATSAPP_NUMBER = "5527999999999";
+const WHATSAPP_NUMBER = "5527981120322";
 const WHATSAPP_MSG = encodeURIComponent(
   "Olá! Vi seu portfólio e quero um sistema completo para minha barbearia."
 );
@@ -142,11 +143,11 @@ export default function Portifolio() {
   }, []);
 
   const screens = [
-    { src: shotLanding, label: "Landing" },
+    { src: shotLanding, label: "Site da barbearia" },
+    { src: shotAgenda, label: "Agendamento" },
     { src: shotMembro, label: "Área do cliente" },
-    { src: shotMenu, label: "Menu" },
-    { src: shotLoja, label: "Loja" },
-    { src: shotAdmin, label: "Admin" },
+    { src: shotLoja, label: "Loja online" },
+    { src: shotAdmin, label: "Painel admin" },
   ];
 
   return (
