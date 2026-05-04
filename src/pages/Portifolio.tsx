@@ -1,5 +1,5 @@
-import { motion, useScroll, useTransform } from "framer-motion";
-import { useRef, useState, useEffect } from "react";
+import { motion } from "framer-motion";
+import { useState, useEffect } from "react";
 import {
   Calendar,
   Smartphone,
@@ -18,23 +18,21 @@ import {
   CalendarPlus,
   BellRing,
   Repeat,
+  ExternalLink,
 } from "lucide-react";
-
-import shotLanding from "@/assets/portfolio-shot-landing.png";
-import shotLoja from "@/assets/portfolio-shot-loja.png";
-import shotMembro from "@/assets/portfolio-shot-membro.png";
-import shotAdmin from "@/assets/portfolio-shot-admin.png";
-import shotAgenda from "@/assets/portfolio-shot-agenda.png";
 
 const WHATSAPP_NUMBER = "5527981120322";
 const WHATSAPP_MSG = encodeURIComponent(
   "Olá! Vi seu portfólio e quero um sistema completo para minha barbearia."
 );
 
-// Brand palette — alinhada ao painel (índigo/azul escuro)
-const BRAND = "245 60% 60%"; // accent claro pra textos
-const BRAND_DEEP = "245 65% 50%"; // base
-const BRAND_DARK = "245 70% 38%"; // sombras
+// Paleta sóbria — alinhada ao painel admin (índigo escuro), sem neon
+const BRAND = "245 55% 62%";
+const BRAND_DEEP = "245 55% 50%";
+const BRAND_DARK = "245 60% 38%";
+
+// Origem dos previews ao vivo
+const LIVE_ORIGIN = "https://lynecloud.online";
 
 const pains = [
   {
@@ -70,8 +68,21 @@ const stats = [
   { value: "100%", label: "no celular" },
 ];
 
-// PhoneFrame — moldura fina e elegante, sem notch nem bisel preto grosso
-function PhoneFrame({ src, alt, className = "" }: { src: string; alt: string; className?: string }) {
+/**
+ * LivePhone — moldura de celular fina contendo um iframe AO VIVO.
+ * Sem neon, sem bisel grosso. Apenas anel sutil + cantos arredondados.
+ */
+function LivePhone({
+  src,
+  label,
+  className = "",
+  interactive = true,
+}: {
+  src: string;
+  label: string;
+  className?: string;
+  interactive?: boolean;
+}) {
   return (
     <div
       className={`relative mx-auto ${className}`}
@@ -81,27 +92,26 @@ function PhoneFrame({ src, alt, className = "" }: { src: string; alt: string; cl
         aspectRatio: "9 / 19.5",
       }}
     >
-      {/* glow azul atrás */}
-      <div
-        className="absolute -inset-8 rounded-[3rem] blur-3xl opacity-50 pointer-events-none"
-        style={{
-          background: `radial-gradient(circle at 30% 20%, hsl(${BRAND} / 0.35), transparent 60%), radial-gradient(circle at 70% 80%, hsl(${BRAND_DEEP} / 0.25), transparent 60%)`,
-        }}
-      />
-      {/* screen — sem bisel duplo, só uma borda fina */}
       <div
         className="relative h-full w-full overflow-hidden rounded-[2rem]"
         style={{
-          background: "hsl(230 20% 5%)",
+          background: "hsl(230 15% 6%)",
           border: "1px solid hsl(0 0% 100% / 0.08)",
-          boxShadow: `0 30px 80px -20px hsl(${BRAND_DARK} / 0.45), 0 0 0 1px hsl(0 0% 100% / 0.04)`,
+          boxShadow:
+            "0 24px 60px -24px hsl(0 0% 0% / 0.7), 0 0 0 1px hsl(0 0% 100% / 0.04)",
         }}
       >
-        <img
+        <iframe
           src={src}
-          alt={alt}
+          title={label}
           loading="lazy"
-          className="block h-full w-full object-cover object-top"
+          className="block h-full w-full border-0"
+          style={{
+            background: "hsl(230 15% 6%)",
+            pointerEvents: interactive ? "auto" : "none",
+          }}
+          sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+          referrerPolicy="no-referrer"
         />
       </div>
     </div>
@@ -109,32 +119,29 @@ function PhoneFrame({ src, alt, className = "" }: { src: string; alt: string; cl
 }
 
 export default function Portifolio() {
-  const heroRef = useRef<HTMLDivElement>(null);
-  const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
-  const heroY = useTransform(scrollYProgress, [0, 1], [0, 140]);
-  const heroOpacity = useTransform(scrollYProgress, [0, 1], [1, 0.2]);
-  const heroScale = useTransform(scrollYProgress, [0, 1], [1, 0.92]);
-
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
   useEffect(() => {
     document.title = "Portfólio · Sistema Completo para Barbearias";
     const meta = document.querySelector('meta[name="description"]');
-    const desc = "Sistema profissional para barbearia: agendamento online, financeiro, WhatsApp e painel completo. Veja o portfólio.";
+    const desc =
+      "Sistema profissional para barbearia: agendamento online, financeiro, WhatsApp e painel completo. Veja o portfólio.";
     if (meta) meta.setAttribute("content", desc);
     else {
       const m = document.createElement("meta");
-      m.name = "description"; m.content = desc; document.head.appendChild(m);
+      m.name = "description";
+      m.content = desc;
+      document.head.appendChild(m);
     }
   }, []);
 
   const screens = [
-    { src: shotLanding, label: "Site da barbearia" },
-    { src: shotAgenda, label: "Agendamento" },
-    { src: shotMembro, label: "Área do cliente" },
-    { src: shotLoja, label: "Loja online" },
-    { src: shotAdmin, label: "Painel admin" },
+    { src: `${LIVE_ORIGIN}/`, label: "Site da barbearia" },
+    { src: `${LIVE_ORIGIN}/agenda-direto`, label: "Agendamento" },
+    { src: `${LIVE_ORIGIN}/admin/login`, label: "Painel admin" },
+    { src: `${LIVE_ORIGIN}/loja`, label: "Loja online" },
+    { src: `${LIVE_ORIGIN}/membro`, label: "Área do cliente" },
   ];
 
   const roiItems = [
@@ -142,48 +149,53 @@ export default function Portifolio() {
       icon: CalendarPlus,
       metric: "+8 cortes",
       sub: "por semana",
-      text: "Agenda 24/7 captura clientes que decidem marcar fora do horário comercial — antes iam pro concorrente que atende WhatsApp.",
+      text: "Agenda 24/7 captura clientes que decidem marcar fora do horário comercial — antes iam pro concorrente.",
     },
     {
       icon: BellRing,
       metric: "−14 no-shows",
       sub: "por mês",
-      text: "Lembrete automático 24h e 2h antes derruba a falta de 18% pra menos de 4%. Cada falta evitada = R$ 45 a R$ 90 no caixa.",
+      text: "Lembrete automático 24h e 2h antes derruba a falta de 18% pra menos de 4%. Cada falta evitada = R$ 45 a R$ 90.",
     },
     {
       icon: Repeat,
       metric: "+32% retorno",
       sub: "em 60 dias",
-      text: "Histórico, programa de fidelidade e reagendamento em 2 toques fazem o cliente voltar mais rápido. Cliente recorrente custa zero pra reconquistar.",
+      text: "Histórico, fidelidade e reagendamento em 2 toques fazem o cliente voltar mais rápido. Custo zero pra reconquistar.",
     },
   ];
 
   return (
-    <div className="min-h-screen bg-background text-foreground overflow-x-hidden">
-      {/* ambient gradients — azul escuro */}
+    <div
+      className="min-h-screen text-foreground overflow-x-hidden"
+      style={{ background: "hsl(230 18% 5%)" }}
+    >
+      {/* Fundo sóbrio — sem glows azuis fortes */}
       <div className="fixed inset-0 pointer-events-none -z-10">
         <div
-          className="absolute -top-40 -left-40 w-[40vw] h-[40vw] min-w-[400px] min-h-[400px] rounded-full blur-[140px] opacity-25"
-          style={{ background: `radial-gradient(circle, hsl(${BRAND_DEEP} / 0.55), transparent 70%)` }}
+          className="absolute inset-0"
+          style={{
+            background:
+              "radial-gradient(ellipse at top, hsl(230 18% 8%) 0%, hsl(230 18% 5%) 60%)",
+          }}
         />
         <div
-          className="absolute top-1/3 -right-40 w-[40vw] h-[40vw] min-w-[400px] min-h-[400px] rounded-full blur-[160px] opacity-15"
-          style={{ background: `radial-gradient(circle, hsl(${BRAND} / 0.4), transparent 70%)` }}
-        />
-        <div
-          className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[60vw] h-[40vw] min-w-[600px] min-h-[400px] rounded-full blur-[160px] opacity-10"
-          style={{ background: `radial-gradient(circle, hsl(${BRAND_DEEP} / 0.5), transparent 70%)` }}
+          className="absolute inset-0 opacity-[0.025]"
+          style={{
+            backgroundImage:
+              "radial-gradient(hsl(0 0% 100%) 1px, transparent 1px)",
+            backgroundSize: "3px 3px",
+          }}
         />
       </div>
 
-      {/* Top bar minimal */}
+      {/* Top bar */}
       <header className="relative z-20 px-5 sm:px-10 py-5 flex items-center justify-between max-w-7xl mx-auto">
         <div className="flex items-center gap-2">
           <div
             className="w-8 h-8 rounded-lg flex items-center justify-center"
             style={{
-              background: `linear-gradient(135deg, hsl(${BRAND}), hsl(${BRAND_DARK}))`,
-              boxShadow: `0 8px 20px -8px hsl(${BRAND_DEEP} / 0.6)`,
+              background: `linear-gradient(135deg, hsl(${BRAND_DEEP}), hsl(${BRAND_DARK}))`,
             }}
           >
             <Sparkles className="w-4 h-4" style={{ color: "hsl(0 0% 100%)" }} />
@@ -194,29 +206,25 @@ export default function Portifolio() {
           href={`https://wa.me/${WHATSAPP_NUMBER}?text=${WHATSAPP_MSG}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-xs sm:text-sm px-4 py-2 rounded-full font-medium backdrop-blur-xl border transition-colors hover:bg-white/10"
-          style={{ background: "hsl(0 0% 100% / 0.04)", borderColor: "hsl(0 0% 100% / 0.1)" }}
+          className="text-xs sm:text-sm px-4 py-2 rounded-full font-medium border transition-colors hover:bg-white/5"
+          style={{ background: "hsl(0 0% 100% / 0.03)", borderColor: "hsl(0 0% 100% / 0.1)" }}
         >
           Falar agora
         </a>
       </header>
 
       {/* HERO */}
-      <section ref={heroRef} className="relative px-5 sm:px-10 pt-8 pb-20 lg:pt-16 lg:pb-32">
-        <motion.div
-          style={{ y: heroY, opacity: heroOpacity, scale: heroScale }}
-          className="relative max-w-7xl mx-auto grid lg:grid-cols-[1.1fr_0.9fr] gap-10 lg:gap-16 items-center"
-        >
-          {/* left */}
+      <section className="relative px-5 sm:px-10 pt-8 pb-20 lg:pt-16 lg:pb-32">
+        <div className="relative max-w-7xl mx-auto grid lg:grid-cols-[1.1fr_0.9fr] gap-10 lg:gap-16 items-center">
           <div className="text-center lg:text-left">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={mounted ? { opacity: 1, y: 0 } : {}}
               transition={{ duration: 0.6 }}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-6 backdrop-blur-xl border"
-              style={{ background: "hsl(0 0% 100% / 0.04)", borderColor: "hsl(0 0% 100% / 0.1)" }}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-6 border"
+              style={{ background: "hsl(0 0% 100% / 0.03)", borderColor: "hsl(0 0% 100% / 0.1)" }}
             >
-              <span className="w-2 h-2 rounded-full animate-pulse" style={{ background: `hsl(${BRAND})` }} />
+              <span className="w-2 h-2 rounded-full" style={{ background: `hsl(${BRAND})` }} />
               <span className="text-xs font-medium tracking-wide text-foreground/80">
                 Disponível para 1 nova barbearia esse mês
               </span>
@@ -230,15 +238,7 @@ export default function Portifolio() {
               style={{ fontSize: "clamp(2.4rem, 6vw, 4.5rem)" }}
             >
               O sistema que sua{" "}
-              <span
-                className="bg-clip-text text-transparent inline-block"
-                style={{
-                  backgroundImage: `linear-gradient(135deg, hsl(${BRAND}) 0%, hsl(${BRAND_DEEP}) 50%, hsl(${BRAND_DARK}) 100%)`,
-                }}
-              >
-                barbearia
-              </span>{" "}
-              merece.
+              <span style={{ color: `hsl(${BRAND})` }}>barbearia</span> merece.
             </motion.h1>
 
             <motion.p
@@ -248,7 +248,8 @@ export default function Portifolio() {
               className="mt-6 text-base sm:text-lg text-foreground/65 leading-relaxed max-w-xl mx-auto lg:mx-0"
             >
               Agendamento online, financeiro, WhatsApp e dashboard completo.
-              Tudo num lugar só. Pronto pra rodar <span className="text-foreground font-medium">hoje</span>.
+              Tudo num lugar só. Pronto pra rodar{" "}
+              <span className="text-foreground font-medium">hoje</span>.
             </motion.p>
 
             <motion.div
@@ -261,26 +262,21 @@ export default function Portifolio() {
                 href={`https://wa.me/${WHATSAPP_NUMBER}?text=${WHATSAPP_MSG}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group relative w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-4 rounded-2xl font-semibold text-sm sm:text-base transition-all active:scale-[0.97] hover:opacity-95"
-                style={{
-                  background: "hsl(0 0% 100%)",
-                  color: "hsl(0 0% 0%)",
-                  boxShadow: `0 15px 50px -10px hsl(${BRAND_DEEP} / 0.45)`,
-                }}
+                className="group w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-4 rounded-2xl font-semibold text-sm sm:text-base transition-all active:scale-[0.97] hover:opacity-90"
+                style={{ background: "hsl(0 0% 100%)", color: "hsl(0 0% 0%)" }}
               >
                 Quero esse sistema
                 <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
               </a>
               <a
                 href="#sistema"
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-4 rounded-2xl font-medium text-sm sm:text-base backdrop-blur-xl border transition-colors hover:bg-white/5"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-4 rounded-2xl font-medium text-sm sm:text-base border transition-colors hover:bg-white/5"
                 style={{ background: "hsl(0 0% 100% / 0.03)", borderColor: "hsl(0 0% 100% / 0.1)" }}
               >
-                Ver o sistema
+                Ver o sistema ao vivo
               </a>
             </motion.div>
 
-            {/* stats */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={mounted ? { opacity: 1 } : {}}
@@ -290,7 +286,7 @@ export default function Portifolio() {
               {stats.map((s, i) => (
                 <div
                   key={i}
-                  className="rounded-2xl py-3 px-2 backdrop-blur-xl border text-center"
+                  className="rounded-2xl py-3 px-2 border text-center"
                   style={{ background: "hsl(0 0% 100% / 0.03)", borderColor: "hsl(0 0% 100% / 0.08)" }}
                 >
                   <div className="text-base sm:text-xl font-bold" style={{ color: `hsl(${BRAND})` }}>
@@ -304,20 +300,27 @@ export default function Portifolio() {
             </motion.div>
           </div>
 
-          {/* right — phone mockup */}
           <motion.div
-            initial={{ opacity: 0, y: 40, rotate: -4 }}
-            animate={mounted ? { opacity: 1, y: 0, rotate: 0 } : {}}
+            initial={{ opacity: 0, y: 30 }}
+            animate={mounted ? { opacity: 1, y: 0 } : {}}
             transition={{ duration: 0.9, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
             className="relative"
           >
-            <PhoneFrame src={shotLanding} alt="Tela inicial real do sistema" className="lg:max-w-[320px]" />
+            <LivePhone
+              src={`${LIVE_ORIGIN}/`}
+              label="Tela inicial ao vivo"
+              className="lg:max-w-[320px]"
+              interactive={false}
+            />
+            <div className="mt-4 text-center text-[11px] uppercase tracking-wider text-foreground/45">
+              Preview ao vivo · não é imagem
+            </div>
           </motion.div>
-        </motion.div>
+        </div>
       </section>
 
       {/* DOR */}
-      <section className="relative px-5 sm:px-10 py-20 lg:py-32">
+      <section className="relative px-5 sm:px-10 py-20 lg:py-28">
         <div className="max-w-5xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -326,16 +329,10 @@ export default function Portifolio() {
             transition={{ duration: 0.6 }}
             className="text-center mb-12"
           >
-            <span
-              className="text-xs font-medium tracking-widest uppercase"
-              style={{ color: `hsl(${BRAND})` }}
-            >
+            <span className="text-xs font-medium tracking-widest uppercase" style={{ color: `hsl(${BRAND})` }}>
               Reconhece isso?
             </span>
-            <h2
-              className="mt-3 font-bold leading-tight"
-              style={{ fontSize: "clamp(1.8rem, 4vw, 3rem)" }}
-            >
+            <h2 className="mt-3 font-bold leading-tight" style={{ fontSize: "clamp(1.8rem, 4vw, 3rem)" }}>
               Toda barbearia perde dinheiro
               <br />
               <span className="text-foreground/40">sem perceber.</span>
@@ -350,14 +347,15 @@ export default function Portifolio() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: "-50px" }}
                 transition={{ duration: 0.5, delay: i * 0.1 }}
-                className="rounded-2xl p-6 backdrop-blur-xl border"
+                className="rounded-2xl p-6 border"
                 style={{ background: "hsl(0 0% 100% / 0.03)", borderColor: "hsl(0 0% 100% / 0.08)" }}
               >
                 <div
                   className="w-11 h-11 rounded-xl flex items-center justify-center mb-4"
                   style={{
-                    background: "linear-gradient(135deg, hsl(0 60% 50% / 0.18), hsl(0 60% 50% / 0.05))",
-                    color: "hsl(0 70% 70%)",
+                    background: "hsl(0 50% 50% / 0.12)",
+                    color: "hsl(0 60% 70%)",
+                    border: "1px solid hsl(0 50% 50% / 0.18)",
                   }}
                 >
                   <p.icon className="w-5 h-5" />
@@ -367,25 +365,11 @@ export default function Portifolio() {
               </motion.div>
             ))}
           </div>
-
-          <motion.p
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6, delay: 0.3 }}
-            className="text-center mt-10 text-sm sm:text-base text-foreground/55 italic max-w-xl mx-auto"
-          >
-            Cada cliente perdido = R$ 50, R$ 75, R$ 100 indo embora.
-            <br />
-            <span className="text-foreground/85 not-italic font-medium">
-              Quanto isso dá no fim do mês?
-            </span>
-          </motion.p>
         </div>
       </section>
 
-      {/* SISTEMA — telas reais */}
-      <section id="sistema" className="relative px-5 sm:px-10 py-20 lg:py-32">
+      {/* SISTEMA — telas REAIS AO VIVO */}
+      <section id="sistema" className="relative px-5 sm:px-10 py-20 lg:py-28">
         <div className="max-w-7xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -394,56 +378,63 @@ export default function Portifolio() {
             transition={{ duration: 0.6 }}
             className="text-center mb-14"
           >
-            <span
-              className="text-xs font-medium tracking-widest uppercase"
-              style={{ color: `hsl(${BRAND})` }}
-            >
-              O sistema por dentro
+            <span className="text-xs font-medium tracking-widest uppercase" style={{ color: `hsl(${BRAND})` }}>
+              O sistema ao vivo
             </span>
-            <h2
-              className="mt-3 font-bold leading-tight"
-              style={{ fontSize: "clamp(1.8rem, 4vw, 3rem)" }}
-            >
-              Cada tela. Cada detalhe.
+            <h2 className="mt-3 font-bold leading-tight" style={{ fontSize: "clamp(1.8rem, 4vw, 3rem)" }}>
+              Toque, role, explore.
               <br />
-              <span style={{ color: `hsl(${BRAND})` }}>Em produção, agora.</span>
+              <span className="text-foreground/45">Não são imagens.</span>
             </h2>
             <p className="mt-4 text-sm sm:text-base text-foreground/60 max-w-xl mx-auto">
-              Capturas diretas do produto rodando no celular. Nada de protótipo.
+              Cada tela abaixo é o sistema de verdade rodando agora — clique e interaja.
             </p>
           </motion.div>
 
-          {/* phones grid */}
-          <div className="grid grid-cols-2 lg:grid-cols-5 gap-8 sm:gap-10 lg:gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 sm:gap-8">
             {screens.map((s, i) => (
               <motion.div
                 key={i}
-                initial={{ opacity: 0, y: 40 }}
+                initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: "-80px" }}
-                transition={{ duration: 0.6, delay: i * 0.08 }}
-                whileHover={{ y: -8 }}
+                viewport={{ once: true, margin: "-60px" }}
+                transition={{ duration: 0.5, delay: i * 0.06 }}
                 className="flex flex-col items-center gap-4"
               >
-                <PhoneFrame src={s.src} alt={`Tela ${s.label}`} />
-                <div
-                  className="text-[11px] sm:text-xs font-medium tracking-wider uppercase px-3 py-1.5 rounded-full backdrop-blur-xl border"
-                  style={{
-                    background: "hsl(0 0% 100% / 0.03)",
-                    borderColor: "hsl(0 0% 100% / 0.08)",
-                    color: "hsl(0 0% 80%)",
-                  }}
-                >
-                  {s.label}
+                <LivePhone src={s.src} label={s.label} />
+                <div className="flex flex-col items-center gap-1.5">
+                  <div
+                    className="text-[11px] sm:text-xs font-medium tracking-wider uppercase px-3 py-1.5 rounded-full border"
+                    style={{
+                      background: "hsl(0 0% 100% / 0.03)",
+                      borderColor: "hsl(0 0% 100% / 0.08)",
+                      color: "hsl(0 0% 80%)",
+                    }}
+                  >
+                    {s.label}
+                  </div>
+                  <a
+                    href={s.src}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-[10px] text-foreground/45 hover:text-foreground/80 transition-colors"
+                  >
+                    abrir em tela cheia
+                    <ExternalLink className="w-2.5 h-2.5" />
+                  </a>
                 </div>
               </motion.div>
             ))}
           </div>
+
+          <p className="text-center mt-10 text-xs text-foreground/40 max-w-lg mx-auto">
+            Os previews são carregados em iframe direto da barbearia parceira em produção.
+          </p>
         </div>
       </section>
 
       {/* FEATURES */}
-      <section className="relative px-5 sm:px-10 py-20 lg:py-32">
+      <section className="relative px-5 sm:px-10 py-20 lg:py-28">
         <div className="max-w-6xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -452,16 +443,10 @@ export default function Portifolio() {
             transition={{ duration: 0.6 }}
             className="text-center mb-12"
           >
-            <span
-              className="text-xs font-medium tracking-widest uppercase"
-              style={{ color: `hsl(${BRAND})` }}
-            >
+            <span className="text-xs font-medium tracking-widest uppercase" style={{ color: `hsl(${BRAND})` }}>
               Tudo incluso
             </span>
-            <h2
-              className="mt-3 font-bold leading-tight"
-              style={{ fontSize: "clamp(1.8rem, 4vw, 3rem)" }}
-            >
+            <h2 className="mt-3 font-bold leading-tight" style={{ fontSize: "clamp(1.8rem, 4vw, 3rem)" }}>
               Funcionalidades que
               <br />
               <span className="text-foreground/40">fazem dinheiro.</span>
@@ -476,16 +461,15 @@ export default function Portifolio() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: "-50px" }}
                 transition={{ duration: 0.5, delay: i * 0.06 }}
-                whileHover={{ y: -4 }}
-                className="group rounded-2xl p-6 backdrop-blur-xl border transition-all"
+                className="rounded-2xl p-6 border transition-colors hover:bg-white/[0.04]"
                 style={{ background: "hsl(0 0% 100% / 0.03)", borderColor: "hsl(0 0% 100% / 0.08)" }}
               >
                 <div
-                  className="w-11 h-11 rounded-xl flex items-center justify-center mb-4 transition-transform group-hover:scale-110 group-hover:rotate-3"
+                  className="w-11 h-11 rounded-xl flex items-center justify-center mb-4"
                   style={{
-                    background: `linear-gradient(135deg, hsl(${BRAND_DEEP} / 0.25), hsl(${BRAND_DARK} / 0.05))`,
+                    background: `hsl(${BRAND_DEEP} / 0.15)`,
                     color: `hsl(${BRAND})`,
-                    boxShadow: `inset 0 0 0 1px hsl(${BRAND_DEEP} / 0.2)`,
+                    border: `1px solid hsl(${BRAND_DEEP} / 0.22)`,
                   }}
                 >
                   <f.icon className="w-5 h-5" />
@@ -499,24 +483,19 @@ export default function Portifolio() {
       </section>
 
       {/* DIFERENCIAIS */}
-      <section className="relative px-5 sm:px-10 py-20 lg:py-32">
+      <section className="relative px-5 sm:px-10 py-20 lg:py-28">
         <div className="max-w-4xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
-            className="rounded-3xl p-8 sm:p-12 backdrop-blur-xl border relative overflow-hidden"
+            className="rounded-3xl p-8 sm:p-12 border relative overflow-hidden"
             style={{
-              background: "linear-gradient(135deg, hsl(0 0% 100% / 0.05), hsl(0 0% 100% / 0.02))",
+              background: "hsl(0 0% 100% / 0.03)",
               borderColor: `hsl(${BRAND_DEEP} / 0.22)`,
             }}
           >
-            <div
-              className="absolute -top-32 -right-32 w-80 h-80 rounded-full blur-[100px] opacity-25"
-              style={{ background: `hsl(${BRAND_DEEP})` }}
-            />
-
             <div className="relative">
               <div className="flex items-center gap-2 mb-5">
                 <Zap className="w-5 h-5" style={{ color: `hsl(${BRAND})` }} />
@@ -527,10 +506,7 @@ export default function Portifolio() {
                   Por que comigo
                 </span>
               </div>
-              <h2
-                className="font-bold leading-tight mb-8"
-                style={{ fontSize: "clamp(1.6rem, 3.5vw, 2.5rem)" }}
-              >
+              <h2 className="font-bold leading-tight mb-8" style={{ fontSize: "clamp(1.6rem, 3.5vw, 2.5rem)" }}>
                 Não é só código.
                 <br />
                 É um <span style={{ color: `hsl(${BRAND})` }}>sócio digital</span>.
@@ -555,7 +531,7 @@ export default function Portifolio() {
                   >
                     <div
                       className="shrink-0 w-5 h-5 rounded-full flex items-center justify-center mt-0.5"
-                      style={{ background: `hsl(${BRAND_DEEP} / 0.22)` }}
+                      style={{ background: `hsl(${BRAND_DEEP} / 0.18)` }}
                     >
                       <Check className="w-3 h-3" style={{ color: `hsl(${BRAND})` }} />
                     </div>
@@ -568,8 +544,8 @@ export default function Portifolio() {
         </div>
       </section>
 
-      {/* ROI INTELIGENTE */}
-      <section className="relative px-5 sm:px-10 py-20 lg:py-32">
+      {/* ROI */}
+      <section className="relative px-5 sm:px-10 py-20 lg:py-28">
         <div className="max-w-6xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -578,26 +554,19 @@ export default function Portifolio() {
             transition={{ duration: 0.6 }}
             className="text-center mb-12"
           >
-            <span
-              className="text-xs font-medium tracking-widest uppercase"
-              style={{ color: `hsl(${BRAND})` }}
-            >
+            <span className="text-xs font-medium tracking-widest uppercase" style={{ color: `hsl(${BRAND})` }}>
               ROI inteligente
             </span>
-            <h2
-              className="mt-3 font-bold leading-tight"
-              style={{ fontSize: "clamp(1.8rem, 4vw, 3rem)" }}
-            >
+            <h2 className="mt-3 font-bold leading-tight" style={{ fontSize: "clamp(1.8rem, 4vw, 3rem)" }}>
               Quanto o sistema
               <br />
               <span style={{ color: `hsl(${BRAND})` }}>devolve no seu bolso.</span>
             </h2>
             <p className="mt-4 text-sm sm:text-base text-foreground/60 max-w-xl mx-auto">
-              Cenário real de barbearia média com 3 cadeiras, ticket médio R$ 55 e ~280 atendimentos/mês.
+              Cenário real: barbearia média com 3 cadeiras, ticket médio R$ 55, ~280 atendimentos/mês.
             </p>
           </motion.div>
 
-          {/* Big metrics */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-6">
             {[
               { value: "+R$ 1.840", label: "faturamento extra/mês" },
@@ -610,26 +579,20 @@ export default function Portifolio() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: i * 0.08 }}
-                className="rounded-2xl p-6 backdrop-blur-xl border text-center"
+                className="rounded-2xl p-6 border text-center"
                 style={{
-                  background: `linear-gradient(135deg, hsl(${BRAND_DEEP} / 0.12), hsl(${BRAND_DEEP} / 0.03))`,
-                  borderColor: `hsl(${BRAND_DEEP} / 0.25)`,
+                  background: `hsl(${BRAND_DEEP} / 0.06)`,
+                  borderColor: `hsl(${BRAND_DEEP} / 0.22)`,
                 }}
               >
-                <div
-                  className="text-3xl sm:text-4xl font-bold tracking-tight"
-                  style={{ color: `hsl(${BRAND})` }}
-                >
+                <div className="text-3xl sm:text-4xl font-bold tracking-tight" style={{ color: `hsl(${BRAND})` }}>
                   {m.value}
                 </div>
-                <div className="text-xs sm:text-sm text-foreground/60 mt-2 leading-tight">
-                  {m.label}
-                </div>
+                <div className="text-xs sm:text-sm text-foreground/60 mt-2 leading-tight">{m.label}</div>
               </motion.div>
             ))}
           </div>
 
-          {/* Breakdown */}
           <div className="grid md:grid-cols-3 gap-3 sm:gap-4">
             {roiItems.map((r, i) => (
               <motion.div
@@ -638,24 +601,21 @@ export default function Portifolio() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: "-50px" }}
                 transition={{ duration: 0.5, delay: i * 0.1 }}
-                className="rounded-2xl p-6 backdrop-blur-xl border"
+                className="rounded-2xl p-6 border"
                 style={{ background: "hsl(0 0% 100% / 0.03)", borderColor: "hsl(0 0% 100% / 0.08)" }}
               >
                 <div
                   className="w-11 h-11 rounded-xl flex items-center justify-center mb-4"
                   style={{
-                    background: `linear-gradient(135deg, hsl(${BRAND_DEEP} / 0.22), hsl(${BRAND_DARK} / 0.05))`,
+                    background: `hsl(${BRAND_DEEP} / 0.15)`,
                     color: `hsl(${BRAND})`,
-                    boxShadow: `inset 0 0 0 1px hsl(${BRAND_DEEP} / 0.2)`,
+                    border: `1px solid hsl(${BRAND_DEEP} / 0.22)`,
                   }}
                 >
                   <r.icon className="w-5 h-5" />
                 </div>
                 <div className="flex items-baseline gap-2">
-                  <span
-                    className="text-2xl font-bold tracking-tight"
-                    style={{ color: `hsl(${BRAND})` }}
-                  >
+                  <span className="text-2xl font-bold tracking-tight" style={{ color: `hsl(${BRAND})` }}>
                     {r.metric}
                   </span>
                   <span className="text-xs text-foreground/50">{r.sub}</span>
@@ -686,11 +646,11 @@ export default function Portifolio() {
       <section className="relative px-5 sm:px-10 py-16 lg:py-24">
         <div className="max-w-2xl mx-auto text-center">
           <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
+            initial={{ opacity: 0, scale: 0.97 }}
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
-            className="rounded-3xl p-8 sm:p-10 backdrop-blur-xl border"
+            className="rounded-3xl p-8 sm:p-10 border"
             style={{ background: "hsl(0 0% 100% / 0.03)", borderColor: "hsl(0 0% 100% / 0.08)" }}
           >
             <div className="flex justify-center gap-1 mb-5">
@@ -719,10 +679,7 @@ export default function Portifolio() {
             transition={{ duration: 0.7 }}
             className="text-center"
           >
-            <h2
-              className="font-bold leading-tight"
-              style={{ fontSize: "clamp(2rem, 5vw, 3.5rem)" }}
-            >
+            <h2 className="font-bold leading-tight" style={{ fontSize: "clamp(2rem, 5vw, 3.5rem)" }}>
               Sua concorrência
               <br />
               <span style={{ color: `hsl(${BRAND})` }}>já está saindo na frente.</span>
@@ -737,12 +694,8 @@ export default function Portifolio() {
                 href={`https://wa.me/${WHATSAPP_NUMBER}?text=${WHATSAPP_MSG}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 rounded-2xl font-semibold text-base transition-all active:scale-[0.97] hover:opacity-95"
-                style={{
-                  background: "hsl(0 0% 100%)",
-                  color: "hsl(0 0% 0%)",
-                  boxShadow: `0 20px 60px -12px hsl(${BRAND_DEEP} / 0.5)`,
-                }}
+                className="group w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 rounded-2xl font-semibold text-base transition-all active:scale-[0.97] hover:opacity-90"
+                style={{ background: "hsl(0 0% 100%)", color: "hsl(0 0% 0%)" }}
               >
                 Falar no WhatsApp agora
                 <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
