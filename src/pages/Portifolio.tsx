@@ -260,7 +260,7 @@ export default function Portifolio() {
                 className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-4 rounded-2xl font-medium text-sm sm:text-base backdrop-blur-xl border transition-colors hover:bg-white/5"
                 style={{ background: "hsl(0 0% 100% / 0.03)", borderColor: "hsl(0 0% 100% / 0.1)" }}
               >
-                Ver telas reais
+                Ver o sistema
               </a>
             </motion.div>
 
@@ -382,18 +382,18 @@ export default function Portifolio() {
               className="text-xs font-medium tracking-widest uppercase"
               style={{ color: "hsl(45 100% 60%)" }}
             >
-              Telas reais · Sistema rodando
+              O sistema por dentro
             </span>
             <h2
               className="mt-3 font-bold leading-tight"
               style={{ fontSize: "clamp(1.8rem, 4vw, 3rem)" }}
             >
-              Não é maquete.
+              Cada tela. Cada detalhe.
               <br />
-              <span style={{ color: "hsl(45 100% 60%)" }}>É o sistema funcionando.</span>
+              <span style={{ color: "hsl(45 100% 60%)" }}>Em produção, agora.</span>
             </h2>
             <p className="mt-4 text-sm sm:text-base text-foreground/60 max-w-xl mx-auto">
-              Cada print abaixo foi capturado direto do produto — no celular, em tempo real.
+              Capturas diretas do produto rodando no celular. Nada de protótipo.
             </p>
           </motion.div>
 
