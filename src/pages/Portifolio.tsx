@@ -97,16 +97,7 @@ function PhoneFrame({ src, alt, className = "" }: { src: string; alt: string; cl
           className="relative h-full w-full overflow-hidden rounded-[1.85rem]"
           style={{ background: "hsl(230 20% 5%)" }}
         >
-          {/* dynamic island */}
-          <div
-            className="absolute top-2 left-1/2 -translate-x-1/2 z-10 rounded-full"
-            style={{
-              width: "30%",
-              height: 18,
-              background: "hsl(0 0% 0%)",
-              boxShadow: "inset 0 0 0 1px hsl(0 0% 100% / 0.08)",
-            }}
-          />
+          {/* notch removido para preview limpo */}
           {/* screen */}
           <img
             src={src}
