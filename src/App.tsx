@@ -31,6 +31,7 @@ const TenantSite = lazy(() => import("./pages/tenant/TenantSite"));
 const TenantBooking = lazy(() => import("./pages/tenant/TenantBooking"));
 const LyneCloud = lazy(() => import("./pages/LyneCloud"));
 const AgendaDireto = lazy(() => import("./pages/AgendaDireto"));
+const Portifolio = lazy(() => import("./pages/Portifolio"));
 
 const AdminLogin = lazy(() => import("./pages/AdminLogin"));
 const AdminLayout = lazy(() => import("./components/admin/AdminLayout"));
@@ -91,6 +92,10 @@ const App = () => (
 
               {/* Site comercial LyneCloud — sempre global, ignora tenant */}
               <Route path="/lynecloud" element={<LyneCloud />} />
+
+              {/* Portfólio comercial — sempre global */}
+              <Route path="/portifolio" element={<Portifolio />} />
+              <Route path="/portfolio" element={<Portifolio />} />
 
               {/*
                 Rotas globais (sem slug) sob HostnameResolver em modo wrapper:
