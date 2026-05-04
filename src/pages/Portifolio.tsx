@@ -136,12 +136,13 @@ export default function Portifolio() {
     }
   }, []);
 
+  // "Área do cliente" usa rota LOCAL com auto-login (mesma origem → sem CORS).
+  // Admin removido a pedido (sem print, sem preview).
   const screens = [
     { src: `${LIVE_ORIGIN}/`, label: "Site da barbearia" },
     { src: `${LIVE_ORIGIN}/agenda-direto`, label: "Agendamento" },
-    { src: `${LIVE_ORIGIN}/admin/login`, label: "Painel admin" },
     { src: `${LIVE_ORIGIN}/loja`, label: "Loja online" },
-    { src: `${LIVE_ORIGIN}/membro`, label: "Área do cliente" },
+    { src: `/portifolio/preview/membro`, label: "Área do cliente" },
   ];
 
   const roiItems = [
@@ -391,7 +392,7 @@ export default function Portifolio() {
             </p>
           </motion.div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 sm:gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8 max-w-6xl mx-auto">
             {screens.map((s, i) => (
               <motion.div
                 key={i}
