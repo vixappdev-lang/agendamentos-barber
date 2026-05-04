@@ -438,7 +438,7 @@ const VilaNova = () => {
             <img
               key={i}
               src={img}
-              alt={settings.business_name || "Sartoriall Barbearia"}
+              alt={settings.business_name || "Barbearia"}
               decoding="async"
               fetchPriority={i === 0 ? "high" : "low"}
               className="absolute inset-0 w-full h-full object-cover transition-opacity duration-[1200ms] ease-in-out"
