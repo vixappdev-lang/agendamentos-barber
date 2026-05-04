@@ -1,94 +1,47 @@
-## Objetivo
+## Mudanças
 
-Corrigir o portfólio em `/portfolio`: trocar a cor amarela por azul escuro do painel + botões brancos, recapturar os prints reais (incluindo o admin logado), profissionalizar a seção de prints e adicionar uma seção de ROI real e persuasivo.
+### 1. Atualizar print da loja
+Já recapturei o print real de `https://lynecloud.online/loja` (mostra "Pomada Gel" + "Pomada Styllus" com fotos reais dos produtos) e substituí em `src/assets/portfolio-shot-loja.png`. Esse arquivo permanece como fallback caso o iframe falhe, mas a seção principal vira live preview.
 
-## 1. Recapturar prints reais
+### 2. Telas reais ao vivo (substitui os prints estáticos)
+Trocar a grid de prints por **iframes ao vivo** — o usuário toca, rola e interage de verdade:
 
-Capturar do site real `https://lynecloud.online` (390x844, mobile real) e do admin logado:
-
-| Arquivo | Origem | Como capturar |
+| Ordem | Label | URL embedada |
 |---|---|---|
-| `portfolio-shot-landing.png` | `https://lynecloud.online/` | navigate_to_url + screenshot |
-| `portfolio-shot-agenda.png` | `https://lynecloud.online/` → fluxo de agendamento | navegar pelo flow + screenshot |
-| `portfolio-shot-loja.png` | `https://lynecloud.online/loja` | navigate_to_url + screenshot |
-| `portfolio-shot-membro.png` | `https://lynecloud.online/membro` (após login) | screenshot da área do cliente |
-| `portfolio-shot-admin.png` | `/admin` no preview, logado como `admin-barber@gmail.com` / `admin@2026` | navigate_to_sandbox + login + screenshot do dashboard real |
+| 1 | Site da barbearia | `https://lynecloud.online/` |
+| 2 | Agendamento | `https://lynecloud.online/agenda-direto` |
+| 3 | Painel admin | `https://lynecloud.online/admin/login` ← ao lado do agendamento |
+| 4 | Loja online | `https://lynecloud.online/loja` |
+| 5 | Área do cliente | `https://lynecloud.online/membro` |
 
-Todos os PNGs serão salvos diretamente em `src/assets/` (sobrescrevendo os atuais). Sem mais edição manual de PIL — só o print real e cru.
+Verifiquei: `lynecloud.online` não envia `X-Frame-Options` nem `frame-ancestors` — todos os iframes carregam normalmente. Cada iframe usa `sandbox="allow-scripts allow-same-origin allow-forms allow-popups"` e fica dentro de uma moldura fina de celular (sem bisel grosso, sem notch, sem neon).
 
-## 2. Trocar paleta amarela por azul escuro do painel
+A hero do topo também usa um LivePhone do `/`, mas com `pointer-events: none` pra não roubar o scroll.
 
-O painel admin usa `hsl(245 60% 55%)` (índigo/azul escuro) como cor primária. Vou substituir TODAS as ocorrências de `hsl(45 100% ...)` (amarelo) em `src/pages/Portifolio.tsx` por essa paleta:
+Cada card tem um link discreto "abrir em tela cheia" abaixo do label.
 
-- **Acento principal** (textos eyebrow, gradientes de título, ícones, halo do phone, glows ambient): `hsl(245 60% 60%)` / `hsl(245 60% 55%)` / `hsl(245 70% 45%)`
-- **Botões CTA** ("Quero esse sistema", "Falar no WhatsApp agora"):
-  - `background: hsl(0 0% 100%)` (branco)
-  - `color: hsl(0 0% 0%)` (texto preto)
-  - `boxShadow` neutro/sutil
-- **Stats numbers, badges, checks**: cor azul escura `hsl(245 60% 65%)`
-- **Ponto pulsante do badge "Disponível"**: `hsl(245 70% 60%)`
+### 3. Remover o fundo azul forte e neon
+- Apagar os 3 grandes radial gradients azuis fixos no fundo (estavam muito intensos).
+- Trocar por um fundo escuro neutro (`hsl(230 18% 5%)`) com vinheta sutil + textura de grão quase imperceptível.
+- Remover **todos** os glows/halos:
+  - Halo azul atrás dos celulares — REMOVIDO.
+  - `boxShadow` colorido azul nos botões CTA — REMOVIDO (botões brancos com texto preto puro, sem brilho).
+  - Glow azul no card "Por que comigo" — REMOVIDO.
+  - Sombras de blur neon azul — REMOVIDAS.
+- Acentos azuis ficam apenas em: textos eyebrow, ícones, números do ROI, bullet points. Tudo num azul mais sóbrio (`hsl(245 55% 62%)` em vez de 60% saturado).
 
-Resultado: portfólio com identidade visual coerente com o painel real (sem amarelo em lugar nenhum).
+### 4. Profissionalizar a seção das telas
+- Grid responsiva: 1 col mobile / 2 col sm / 3 col md-lg / 5 col xl (desktop largo). Em telas médias os 5 não cabem espremidos — quebra pra 3+2 limpo.
+- `gap-6 sm:gap-8` pra respirar.
+- Label em pílula uppercase + link "abrir em tela cheia" abaixo.
+- Subtítulo da seção: "**Toque, role, explore. Não são imagens.**" + caption explicando que são iframes da barbearia em produção.
 
-## 3. Profissionalizar seção de prints (sem "borda preta sobreposta")
+### 5. Limpar resto
+- Remover `useScroll`/parallax do hero (mais leve, sem efeito exagerado).
+- Remover `backdrop-blur-xl` de todos os cards (não tem mais glass por trás, ficava sujo).
+- Manter ROI, Diferenciais, Social Proof, CTA — só com acentos azuis sóbrios e sem glows.
 
-Reescrever o componente `PhoneFrame`:
-
-- Remover o frame preto grosso atual (que sobrepõe o conteúdo).
-- Trocar por moldura **fina e elegante**: borda de 2px `hsl(0 0% 100% / 0.08)`, raio `1.5rem`, sombra suave azul `0 30px 80px -20px hsl(245 60% 30% / 0.4)`.
-- Sem bisel duplo, sem notch — só o print "flutuando" com leve glow azul atrás.
-- `object-fit: cover` + `object-position: top` mantidos para não cortar headers reais.
-- Aumentar `maxWidth` para 300px e melhorar espaçamento da grid de prints (`gap-10` no desktop) para respirar.
-
-## 4. Nova seção: ROI Inteligente (real e persuasivo)
-
-Inserir entre **DIFERENCIAIS** e **SOCIAL PROOF**, com cálculos concretos baseados no mercado de barbearia:
-
-```text
-┌─ Quanto o sistema devolve no seu bolso ──────────┐
-│                                                   │
-│  Cenário real de barbearia média (3 cadeiras):   │
-│                                                   │
-│  ┌──────────────┬──────────────┬──────────────┐  │
-│  │ +12          │ −8           │ +R$ 1.840    │  │
-│  │ agendamentos │ no-shows/mês │ faturamento  │  │
-│  │ /semana      │ evitados     │ extra/mês    │  │
-│  └──────────────┴──────────────┴──────────────┘  │
-│                                                   │
-│  Como?                                            │
-│  • Agenda 24/7: cliente marca 2h da manhã        │
-│    = +8 cortes/semana que iam pro concorrente    │
-│  • Lembrete WhatsApp automático 24h antes        │
-│    = corta no-show de 18% pra 4%                 │
-│  • Histórico + fidelidade no app                 │
-│    = 32% mais retorno em 60 dias                 │
-│                                                   │
-│  Investimento se paga em ~22 dias.               │
-└───────────────────────────────────────────────────┘
-```
-
-Componente novo: card grande em destaque com:
-- Eyebrow "ROI INTELIGENTE" em azul
-- 3 cards com métricas grandes (+12 / −8 / +R$ 1.840)
-- Lista explicativa (3 bullets com cálculo real)
-- Linha final destacada: **"Investimento se paga em ~22 dias"**
-
-Tom: específico, com números reais de mercado, não promessa vaga.
-
-## 5. Pequenos ajustes finais
-
-- Atualizar todos os labels da grid de screens com nomes profissionais já existentes.
-- Manter `WHATSAPP_NUMBER = "5527981120322"`.
-- Manter copy atual da hero, dor, features, CTA — só trocar cores.
-
-## Detalhes técnicos
-
-**Arquivos editados:**
-- `src/pages/Portifolio.tsx` — substituição de cores, novo PhoneFrame, nova seção ROI
-- `src/assets/portfolio-shot-landing.png` — recaptura real
-- `src/assets/portfolio-shot-loja.png` — recaptura real
-- `src/assets/portfolio-shot-agenda.png` — recaptura real
-- `src/assets/portfolio-shot-membro.png` — recaptura real
-- `src/assets/portfolio-shot-admin.png` — recaptura real (dashboard logado)
-
-**Sem mudanças em:** rotas, supabase, outras páginas. Só o `/portfolio` e seus assets.
+## Arquivos editados
+- `src/pages/Portifolio.tsx` — reescrito (LivePhone com iframe, fundo neutro, sem neon)
+- `src/assets/portfolio-shot-loja.png` — recapturado com o print real atualizado da loja (fallback caso iframe não carregue)
+- Os outros assets `portfolio-shot-*.png` ficam no projeto mas não são mais importados/usados na página.
