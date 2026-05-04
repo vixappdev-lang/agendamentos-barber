@@ -97,6 +97,8 @@ const App = () => (
               {/* Portfólio comercial — sempre global */}
               <Route path="/portifolio" element={<Portifolio />} />
               <Route path="/portfolio" element={<Portifolio />} />
+              <Route path="/portifolio/preview/membro" element={<MemberPreviewDemo />} />
+              <Route path="/portfolio/preview/membro" element={<MemberPreviewDemo />} />
 
               {/*
                 Rotas globais (sem slug) sob HostnameResolver em modo wrapper:
