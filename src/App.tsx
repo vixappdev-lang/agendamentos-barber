@@ -32,6 +32,7 @@ const TenantBooking = lazy(() => import("./pages/tenant/TenantBooking"));
 const LyneCloud = lazy(() => import("./pages/LyneCloud"));
 const AgendaDireto = lazy(() => import("./pages/AgendaDireto"));
 const Portifolio = lazy(() => import("./pages/Portifolio"));
+const MemberPreviewDemo = lazy(() => import("./pages/MemberPreviewDemo"));
 
 const AdminLogin = lazy(() => import("./pages/AdminLogin"));
 const AdminLayout = lazy(() => import("./components/admin/AdminLayout"));
