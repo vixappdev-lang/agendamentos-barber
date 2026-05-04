@@ -1,149 +1,94 @@
+## Objetivo
 
-# Plano: Fase 11 + Fase 19 + Acesso Mobile via Wi-Fi
+Corrigir o portfólio em `/portfolio`: trocar a cor amarela por azul escuro do painel + botões brancos, recapturar os prints reais (incluindo o admin logado), profissionalizar a seção de prints e adicionar uma seção de ROI real e persuasivo.
 
-Vou entregar 3 coisas independentes em uma só rodada.
+## 1. Recapturar prints reais
 
----
+Capturar do site real `https://lynecloud.online` (390x844, mobile real) e do admin logado:
 
-## 🧾 Fase 11 — Relatório Financeiro PDF Mensal
+| Arquivo | Origem | Como capturar |
+|---|---|---|
+| `portfolio-shot-landing.png` | `https://lynecloud.online/` | navigate_to_url + screenshot |
+| `portfolio-shot-agenda.png` | `https://lynecloud.online/` → fluxo de agendamento | navegar pelo flow + screenshot |
+| `portfolio-shot-loja.png` | `https://lynecloud.online/loja` | navigate_to_url + screenshot |
+| `portfolio-shot-membro.png` | `https://lynecloud.online/membro` (após login) | screenshot da área do cliente |
+| `portfolio-shot-admin.png` | `/admin` no preview, logado como `admin-barber@gmail.com` / `admin@2026` | navigate_to_sandbox + login + screenshot do dashboard real |
 
-### O que será feito
-- Geração de **PDF mensal** com a marca da barbearia, contendo:
-  - Cabeçalho (logo + nome + período)
-  - Resumo: Receita, Despesas, Lucro líquido, Nº de atendimentos, Ticket médio, Vendas da loja
-  - Gráfico/tabela de receita por dia
-  - Top serviços
-  - Ranking de barbeiros (faturamento + atendimentos)
-  - Rodapé "assinado por" (nome do dono/barbeiro logado + data)
-- Botão **"Baixar relatório PDF"** no `Finance.tsx` (já tem ícone `Download` importado)
-- Seletor de mês (ex: Outubro/2026, Novembro/2026)
+Todos os PNGs serão salvos diretamente em `src/assets/` (sobrescrevendo os atuais). Sem mais edição manual de PIL — só o print real e cru.
 
-### Como (técnico)
-- Lib: **`jspdf` + `jspdf-autotable`** (client-side, sem custo de edge function, evita Python/skill PDF que só roda no sandbox e não no app do usuário)
-- Novo arquivo: `src/lib/generateFinanceReport.ts` — função pura que recebe `stats`, `appointments`, `barberRanking`, `topServices`, `period` e devolve um `Blob`
-- Reaproveita os dados que `Finance.tsx` já busca, só adiciona um filtro de mês específico
-- Logo: lê `business_settings.logo_url` se existir
+## 2. Trocar paleta amarela por azul escuro do painel
 
-### Sem mexer em
-- Estrutura do banco (zero migração)
-- Layout existente do Finance — só adiciona um botão e um `<select>` de mês
+O painel admin usa `hsl(245 60% 55%)` (índigo/azul escuro) como cor primária. Vou substituir TODAS as ocorrências de `hsl(45 100% ...)` (amarelo) em `src/pages/Portifolio.tsx` por essa paleta:
 
----
+- **Acento principal** (textos eyebrow, gradientes de título, ícones, halo do phone, glows ambient): `hsl(245 60% 60%)` / `hsl(245 60% 55%)` / `hsl(245 70% 45%)`
+- **Botões CTA** ("Quero esse sistema", "Falar no WhatsApp agora"):
+  - `background: hsl(0 0% 100%)` (branco)
+  - `color: hsl(0 0% 0%)` (texto preto)
+  - `boxShadow` neutro/sutil
+- **Stats numbers, badges, checks**: cor azul escura `hsl(245 60% 65%)`
+- **Ponto pulsante do badge "Disponível"**: `hsl(245 70% 60%)`
 
-## 📅 Fase 19 — Integração Google Calendar (sync bidirecional)
+Resultado: portfólio com identidade visual coerente com o painel real (sem amarelo em lugar nenhum).
 
-### O que será feito
-- Cada **barbeiro** pode conectar a própria conta Google em "Configurações"
-- Ao **confirmar** um agendamento → cria evento no Google Calendar do barbeiro
-- Ao **cancelar/reagendar** → atualiza/remove o evento
-- (Opcional fase futura: sync inverso Google → app)
+## 3. Profissionalizar seção de prints (sem "borda preta sobreposta")
 
-### Como (técnico)
+Reescrever o componente `PhoneFrame`:
 
-**1. Banco (1 migração pequena)**
-```sql
-CREATE TABLE public.google_calendar_tokens (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  barber_id uuid NOT NULL,
-  barber_name text NOT NULL,
-  access_token text NOT NULL,
-  refresh_token text NOT NULL,
-  expires_at timestamptz NOT NULL,
-  calendar_id text DEFAULT 'primary',
-  created_at timestamptz DEFAULT now()
-);
-ALTER TABLE appointments ADD COLUMN google_event_id text;
+- Remover o frame preto grosso atual (que sobrepõe o conteúdo).
+- Trocar por moldura **fina e elegante**: borda de 2px `hsl(0 0% 100% / 0.08)`, raio `1.5rem`, sombra suave azul `0 30px 80px -20px hsl(245 60% 30% / 0.4)`.
+- Sem bisel duplo, sem notch — só o print "flutuando" com leve glow azul atrás.
+- `object-fit: cover` + `object-position: top` mantidos para não cortar headers reais.
+- Aumentar `maxWidth` para 300px e melhorar espaçamento da grid de prints (`gap-10` no desktop) para respirar.
+
+## 4. Nova seção: ROI Inteligente (real e persuasivo)
+
+Inserir entre **DIFERENCIAIS** e **SOCIAL PROOF**, com cálculos concretos baseados no mercado de barbearia:
+
+```text
+┌─ Quanto o sistema devolve no seu bolso ──────────┐
+│                                                   │
+│  Cenário real de barbearia média (3 cadeiras):   │
+│                                                   │
+│  ┌──────────────┬──────────────┬──────────────┐  │
+│  │ +12          │ −8           │ +R$ 1.840    │  │
+│  │ agendamentos │ no-shows/mês │ faturamento  │  │
+│  │ /semana      │ evitados     │ extra/mês    │  │
+│  └──────────────┴──────────────┴──────────────┘  │
+│                                                   │
+│  Como?                                            │
+│  • Agenda 24/7: cliente marca 2h da manhã        │
+│    = +8 cortes/semana que iam pro concorrente    │
+│  • Lembrete WhatsApp automático 24h antes        │
+│    = corta no-show de 18% pra 4%                 │
+│  • Histórico + fidelidade no app                 │
+│    = 32% mais retorno em 60 dias                 │
+│                                                   │
+│  Investimento se paga em ~22 dias.               │
+└───────────────────────────────────────────────────┘
 ```
-- RLS: só admin lê/escreve tokens (admins gerenciam). Evita escopo público.
 
-**2. Secrets a pedir ao usuário**
-- `GOOGLE_CLIENT_ID`
-- `GOOGLE_CLIENT_SECRET`
-- `GOOGLE_REDIRECT_URI` (será a URL da edge function de callback)
+Componente novo: card grande em destaque com:
+- Eyebrow "ROI INTELIGENTE" em azul
+- 3 cards com métricas grandes (+12 / −8 / +R$ 1.840)
+- Lista explicativa (3 bullets com cálculo real)
+- Linha final destacada: **"Investimento se paga em ~22 dias"**
 
-**3. Edge functions novas**
-- `google-oauth-start` → gera URL de consent do Google
-- `google-oauth-callback` → troca `code` por tokens, salva em `google_calendar_tokens`
-- `google-calendar-sync` → recebe `{appointment_id, action: 'create'|'update'|'delete'}`, faz refresh de token se preciso, chama API do Calendar
+Tom: específico, com números reais de mercado, não promessa vaga.
 
-**4. Frontend**
-- Nova aba em `/admin/settings`: **"Google Calendar"** com botão "Conectar conta Google" (por barbeiro)
-- Em `Appointments.tsx` `updateStatus`: depois do WhatsApp, dispara `google-calendar-sync`
-- Estado visual: ✅ conectado / ⚠️ desconectado por barbeiro
+## 5. Pequenos ajustes finais
 
-### O que vou pedir ao usuário antes de implementar
-- As 3 secrets do Google Cloud Console (vou explicar passo a passo como criar o OAuth Client)
+- Atualizar todos os labels da grid de screens com nomes profissionais já existentes.
+- Manter `WHATSAPP_NUMBER = "5527981120322"`.
+- Manter copy atual da hero, dor, features, CTA — só trocar cores.
 
----
+## Detalhes técnicos
 
-## 📱 Acesso Mobile via Wi-Fi (sem erro de DNS / NXDOMAIN)
+**Arquivos editados:**
+- `src/pages/Portifolio.tsx` — substituição de cores, novo PhoneFrame, nova seção ROI
+- `src/assets/portfolio-shot-landing.png` — recaptura real
+- `src/assets/portfolio-shot-loja.png` — recaptura real
+- `src/assets/portfolio-shot-agenda.png` — recaptura real
+- `src/assets/portfolio-shot-membro.png` — recaptura real
+- `src/assets/portfolio-shot-admin.png` — recaptura real (dashboard logado)
 
-### O problema que você descreveu
-Quando tenta abrir o app pelo celular na mesma rede Wi-Fi do PC, dá erro de DNS / `NXDOMAIN`. Isso acontece porque:
-- O dev server roda em `localhost` (só o PC enxerga)
-- Ou o Vite escuta só em `127.0.0.1`, não no IP da rede local
-- Ou o domínio Lovable depende de internet (não funciona offline na LAN)
-
-### Solução proposta
-Como o app **já está publicado na Vercel** (`vercel.json` existe), o caminho real é garantir que ele seja acessível por:
-
-**A) Acesso pela URL pública da Vercel (recomendado, sempre funciona)**
-- Criar arquivo `MOBILE-ACCESS.md` na raiz com instruções claras de como acessar pelo celular usando a URL `.vercel.app` ou domínio custom
-- Ajustar `vercel.json` para garantir headers corretos de CORS e cache para mobile
-
-**B) Acesso via LAN local (Wi-Fi sem internet)**
-- Criar script `scripts/dev-mobile.sh` (ou `.bat` pra Windows) que:
-  - Detecta o IP local da máquina (`192.168.x.x`)
-  - Roda `vite --host 0.0.0.0 --port 8080`
-  - Imprime QR Code do endereço `http://192.168.x.x:8080` pra escanear no celular
-- Ajusta `vite.config.ts` adicionando `server: { host: '0.0.0.0', port: 8080 }`
-- Cria `scripts/deploy-vercel.sh` simples que roda `vercel --prod` (caso queira atualizar via CLI)
-
-**C) PWA leve (só manifest, sem service worker)**
-- Atenção: já existe `public/notifications-sw.js` registrado pelas push notifications. **NÃO vou adicionar `vite-plugin-pwa`** (cacheia e quebra preview)
-- Só vou adicionar `public/manifest.json` + ícones + `<link rel="manifest">` no `index.html`
-- Resultado: dá pra "Adicionar à tela de início" no celular e abre como app, sem cache problemático
-
-### Sem mexer em
-- O service worker de notificações que já existe
-- Configuração de auth/OAuth
-
----
-
-## 📦 Arquivos que serão criados/editados
-
-**Fase 11:**
-- ➕ `src/lib/generateFinanceReport.ts`
-- ✏️ `src/pages/admin/Finance.tsx` (botão + seletor mês)
-- ➕ deps: `jspdf`, `jspdf-autotable`
-
-**Fase 19:**
-- ➕ migração SQL (tabela tokens + coluna `google_event_id`)
-- ➕ `supabase/functions/google-oauth-start/index.ts`
-- ➕ `supabase/functions/google-oauth-callback/index.ts`
-- ➕ `supabase/functions/google-calendar-sync/index.ts`
-- ✏️ `supabase/config.toml` (3 funções com `verify_jwt` adequado)
-- ✏️ `src/pages/admin/Settings.tsx` (nova aba Google Calendar)
-- ✏️ `src/pages/admin/Appointments.tsx` (dispara sync no `updateStatus`)
-- 🔐 secrets: `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI`
-
-**Mobile:**
-- ➕ `MOBILE-ACCESS.md` (guia passo a passo)
-- ➕ `scripts/dev-mobile.sh` + `scripts/dev-mobile.bat`
-- ➕ `scripts/deploy-vercel.sh`
-- ✏️ `vite.config.ts` (host 0.0.0.0)
-- ✏️ `vercel.json` (headers CORS leves)
-- ➕ `public/manifest.json` (PWA leve, só manifest)
-- ✏️ `index.html` (link do manifest)
-
----
-
-## ❓ Antes de começar, preciso confirmar 1 coisa
-
-Pra Fase 19 funcionar, vou precisar das credenciais do Google. **Você já tem um projeto no Google Cloud Console com OAuth Client criado?**
-- Se **sim** → me manda o `CLIENT_ID` e `CLIENT_SECRET` quando eu pedir
-- Se **não** → eu te passo um passo-a-passo curtinho de como criar (leva uns 3 minutos)
-
-Se quiser que eu **comece já pelas Fases 11 e Mobile** (que não precisam de credencial nenhuma) e a Fase 19 entra logo depois quando você tiver as keys, é só falar.
-
-**Aprovar este plano pra eu seguir?**
+**Sem mudanças em:** rotas, supabase, outras páginas. Só o `/portfolio` e seus assets.
