@@ -22,8 +22,9 @@ import shotMenu from "@/assets/portfolio-shot-menu.png";
 import shotLoja from "@/assets/portfolio-shot-loja.png";
 import shotMembro from "@/assets/portfolio-shot-membro.png";
 import shotAdmin from "@/assets/portfolio-shot-admin.png";
+import shotAgenda from "@/assets/portfolio-shot-agenda.png";
 
-const WHATSAPP_NUMBER = "5527999999999";
+const WHATSAPP_NUMBER = "5527981120322";
 const WHATSAPP_MSG = encodeURIComponent(
   "Olá! Vi seu portfólio e quero um sistema completo para minha barbearia."
 );
@@ -96,16 +97,7 @@ function PhoneFrame({ src, alt, className = "" }: { src: string; alt: string; cl
           className="relative h-full w-full overflow-hidden rounded-[1.85rem]"
           style={{ background: "hsl(230 20% 5%)" }}
         >
-          {/* dynamic island */}
-          <div
-            className="absolute top-2 left-1/2 -translate-x-1/2 z-10 rounded-full"
-            style={{
-              width: "30%",
-              height: 18,
-              background: "hsl(0 0% 0%)",
-              boxShadow: "inset 0 0 0 1px hsl(0 0% 100% / 0.08)",
-            }}
-          />
+          {/* notch removido para preview limpo */}
           {/* screen */}
           <img
             src={src}
@@ -142,11 +134,11 @@ export default function Portifolio() {
   }, []);
 
   const screens = [
-    { src: shotLanding, label: "Landing" },
+    { src: shotLanding, label: "Site da barbearia" },
+    { src: shotAgenda, label: "Agendamento" },
     { src: shotMembro, label: "Área do cliente" },
-    { src: shotMenu, label: "Menu" },
-    { src: shotLoja, label: "Loja" },
-    { src: shotAdmin, label: "Admin" },
+    { src: shotLoja, label: "Loja online" },
+    { src: shotAdmin, label: "Painel admin" },
   ];
 
   return (
@@ -268,7 +260,7 @@ export default function Portifolio() {
                 className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-4 rounded-2xl font-medium text-sm sm:text-base backdrop-blur-xl border transition-colors hover:bg-white/5"
                 style={{ background: "hsl(0 0% 100% / 0.03)", borderColor: "hsl(0 0% 100% / 0.1)" }}
               >
-                Ver telas reais
+                Ver o sistema
               </a>
             </motion.div>
 
@@ -390,18 +382,18 @@ export default function Portifolio() {
               className="text-xs font-medium tracking-widest uppercase"
               style={{ color: "hsl(45 100% 60%)" }}
             >
-              Telas reais · Sistema rodando
+              O sistema por dentro
             </span>
             <h2
               className="mt-3 font-bold leading-tight"
               style={{ fontSize: "clamp(1.8rem, 4vw, 3rem)" }}
             >
-              Não é maquete.
+              Cada tela. Cada detalhe.
               <br />
-              <span style={{ color: "hsl(45 100% 60%)" }}>É o sistema funcionando.</span>
+              <span style={{ color: "hsl(45 100% 60%)" }}>Em produção, agora.</span>
             </h2>
             <p className="mt-4 text-sm sm:text-base text-foreground/60 max-w-xl mx-auto">
-              Cada print abaixo foi capturado direto do produto — no celular, em tempo real.
+              Capturas diretas do produto rodando no celular. Nada de protótipo.
             </p>
           </motion.div>
 
