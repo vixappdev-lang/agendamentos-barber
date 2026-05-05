@@ -10,7 +10,7 @@ export interface CartItem {
   image_url: string | null;
 }
 
-const STORAGE_KEY = "styllus_cart_v1";
+const STORAGE_KEY = "genesis_store_cart_v2";
 
 const readLocal = (): CartItem[] => {
   try {

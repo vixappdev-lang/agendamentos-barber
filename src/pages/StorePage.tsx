@@ -1,12 +1,13 @@
 import { useState, useMemo, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ShoppingBag, Search, Package, ArrowLeft, Sparkles, Truck, ShieldCheck, Star } from "lucide-react";
+import { ShoppingBag, Search, Package, ArrowLeft, Sparkles, Truck, ShieldCheck, Star, User, CreditCard, QrCode, BadgeCheck, RotateCcw, Headphones, Shirt, MapPin } from "lucide-react";
 import ProductCard from "@/components/ProductCard";
 import CheckoutModal from "@/components/store/CheckoutModal";
 import OrderTracker from "@/components/store/OrderTracker";
 import AuthRequiredModal from "@/components/store/AuthRequiredModal";
 import ProductDetailModal from "@/components/store/ProductDetailModal";
 import CartDrawer from "@/components/store/CartDrawer";
+import StoreAccountModal from "@/components/store/StoreAccountModal";
 import { useCart } from "@/hooks/useCart";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
@@ -24,15 +25,18 @@ interface DBProduct {
 }
 
 const FALLBACK_CATEGORY_LABELS: Record<string, string> = {
-  roupas: "Roupas",
-  bermudas: "Bermudas",
-  cabelo: "Cabelo",
-  barba: "Barba",
+  camisetas: "Camisetas Premium",
+  roupas: "Camisetas Premium",
+  bermudas: "Bermudas & Shorts",
+  tenis: "Tênis & Calçados",
+  moletons: "Moletons & Jaquetas",
+  cabelo: "Finalizadores de Cabelo",
+  barba: "Cuidados para Barba",
   pos_barba: "Pós-barba",
-  combos: "Combos",
-  acessorios: "Acessórios",
-  fragrancias: "Fragrâncias",
-  geral: "Outros",
+  combos: "Kits & Combos",
+  acessorios: "Acessórios Masculinos",
+  fragrancias: "Perfumes & Fragrâncias",
+  geral: "Coleção Geral",
 };
 
 const StorePage = () => {
@@ -47,6 +51,8 @@ const StorePage = () => {
   const [showCheckout, setShowCheckout] = useState(false);
   const [showAuthGate, setShowAuthGate] = useState(false);
   const [showOrderTracker, setShowOrderTracker] = useState(false);
+  const [showAccount, setShowAccount] = useState(false);
+  const [authAfter, setAuthAfter] = useState<"checkout" | "account">("checkout");
   const [showCart, setShowCart] = useState(false);
   const [detailProduct, setDetailProduct] = useState<DBProduct | null>(null);
   const [storeEnabled, setStoreEnabled] = useState(true);
@@ -58,6 +64,8 @@ const StorePage = () => {
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<AuthUser | null>(null);
   const [categoryMap, setCategoryMap] = useState<Record<string, { label: string; sort: number; icon?: string }>>({});
+  const [activeCategory, setActiveCategory] = useState("todos");
+  const [heroIndex, setHeroIndex] = useState(0);
 
   const formatCategoryLabel = (key: string) =>
     categoryMap[key]?.label ||
@@ -98,15 +106,32 @@ const StorePage = () => {
     fetchAll();
   }, []);
 
+  const categoryOptions = useMemo(() => {
+    const keys = Array.from(new Set(products.map((p) => (p.category || "geral").toLowerCase())));
+    return keys.sort((a, b) => (categoryMap[a]?.sort ?? 999) - (categoryMap[b]?.sort ?? 999));
+  }, [products, categoryMap]);
+
+  const heroProducts = useMemo(() => products.filter((p) => p.image_url).slice(0, 6), [products]);
+  const currentHero = heroProducts[heroIndex] || null;
+
+  useEffect(() => {
+    if (heroProducts.length <= 1) return;
+    const timer = window.setInterval(() => setHeroIndex((i) => (i + 1) % heroProducts.length), 4500);
+    return () => window.clearInterval(timer);
+  }, [heroProducts.length]);
+
   const filteredProducts = useMemo(() => {
-    if (!search) return products;
+    const byCategory = activeCategory === "todos"
+      ? products
+      : products.filter((p) => (p.category || "geral").toLowerCase() === activeCategory);
+    if (!search) return byCategory;
     const q = search.toLowerCase();
-    return products.filter((p) =>
+    return byCategory.filter((p) =>
       p.title.toLowerCase().includes(q) ||
       (p.description || "").toLowerCase().includes(q) ||
       (p.brand || "").toLowerCase().includes(q)
     );
-  }, [search, products]);
+  }, [search, products, activeCategory]);
 
   // Group filtered products by category, ordered by category sort_order
   const groupedProducts = useMemo(() => {
@@ -131,6 +156,7 @@ const StorePage = () => {
   const openCheckout = async () => {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session?.user) {
+      setAuthAfter("checkout");
       setShowAuthGate(true);
       return;
     }
@@ -142,6 +168,17 @@ const StorePage = () => {
     const { data: { session } } = await supabase.auth.getSession();
     if (session?.user) setUser(session.user);
     setShowOrderTracker(true);
+  };
+
+  const openAccount = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user) {
+      setAuthAfter("account");
+      setShowAuthGate(true);
+      return;
+    }
+    setUser(session.user);
+    setShowAccount(true);
   };
 
   const userPrefill = user ? {
@@ -182,19 +219,30 @@ const StorePage = () => {
               <span className="text-sm font-bold truncate">{businessName}</span>
             </div>
           </div>
-          <button onClick={openOrders}
-            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-[11px] font-semibold transition-all shrink-0"
-            style={{ background: t.btnGhostBg, color: t.btnGhostColor, border: `1px solid ${t.btnGhostBorder}` }}>
-            <Package className="w-3.5 h-3.5" />
-            <span>Pedidos</span>
-          </button>
+          <div className="flex items-center gap-2 shrink-0">
+            <button onClick={openAccount}
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-[11px] font-semibold transition-all"
+              style={{ background: t.btnGhostBg, color: t.btnGhostColor, border: `1px solid ${t.btnGhostBorder}` }}>
+              <User className="w-3.5 h-3.5" />
+              <span>Conta</span>
+            </button>
+            <button onClick={openOrders}
+              className="hidden sm:inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-[11px] font-semibold transition-all"
+              style={{ background: t.btnGhostBg, color: t.btnGhostColor, border: `1px solid ${t.btnGhostBorder}` }}>
+              <Package className="w-3.5 h-3.5" />
+              <span>Pedidos</span>
+            </button>
+          </div>
         </div>
       </header>
 
       {/* Hero compacto */}
       <section className="relative w-full">
         <div className="relative w-full h-[200px] sm:h-[260px] lg:h-[320px] overflow-hidden">
-          <img src={storeHero} alt={businessName} className="absolute inset-0 w-full h-full object-cover" fetchPriority="high" />
+          <AnimatePresence mode="wait">
+            <motion.img key={currentHero?.id || "hero"} src={currentHero?.image_url || storeHero} alt={currentHero?.title || businessName} className="absolute inset-0 w-full h-full object-cover" fetchPriority="high"
+              initial={{ opacity: 0, scale: 1.03 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.7 }} />
+          </AnimatePresence>
           <div className="absolute inset-0" style={{
             background: "linear-gradient(180deg, hsl(220 20% 4% / 0.6) 0%, hsl(220 20% 4% / 0.4) 50%, hsl(220 20% 4% / 0.92) 100%)"
           }} />
@@ -206,6 +254,12 @@ const StorePage = () => {
               <h1 className="text-2xl sm:text-4xl lg:text-5xl font-black tracking-tight text-white leading-[1.05]">
                 {businessName}
               </h1>
+              {currentHero && (
+                <button onClick={() => setDetailProduct(currentHero)} className="mt-3 inline-flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold text-white"
+                  style={{ background: "hsl(0 0% 100% / 0.14)", border: "1px solid hsl(0 0% 100% / 0.22)", backdropFilter: "blur(10px)" }}>
+                  <Shirt className="w-3.5 h-3.5" /> {currentHero.title}
+                </button>
+              )}
             </motion.div>
           </div>
         </div>
@@ -255,20 +309,23 @@ const StorePage = () => {
             </div>
           ) : groupedProducts.length > 0 ? (
             <>
-              {/* Quick category jump (mobile-friendly horizontal chips) */}
-              {groupedProducts.length > 1 && (
-                <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-2 mb-2 -mx-1 px-1">
-                  {groupedProducts.map(([key, items]) => (
-                    <a
-                      key={key}
-                      href={`#cat-${key}`}
-                      className="shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-semibold transition-all hover:translate-y-[-1px]"
-                      style={{ background: t.cardBgSubtle, color: t.textSecondary, border: `1px solid ${t.borderSubtle}` }}
-                    >
-                      {formatCategoryLabel(key)}
-                      <span className="opacity-60">{items.length}</span>
-                    </a>
-                  ))}
+              {categoryOptions.length > 1 && (
+                <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-2 mb-3 -mx-1 px-1">
+                  {["todos", ...categoryOptions].map((key) => {
+                    const active = activeCategory === key;
+                    const total = key === "todos" ? products.length : products.filter((p) => (p.category || "geral").toLowerCase() === key).length;
+                    return (
+                      <button
+                        key={key}
+                        onClick={() => setActiveCategory(key)}
+                        className="shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-semibold transition-all hover:translate-y-[-1px]"
+                        style={{ background: active ? t.btnBg : t.cardBgSubtle, color: active ? t.btnColor : t.textSecondary, border: `1px solid ${active ? t.btnBg : t.borderSubtle}` }}
+                      >
+                        {key === "todos" ? "Todos" : formatCategoryLabel(key)}
+                        <span className="opacity-60">{total}</span>
+                      </button>
+                    );
+                  })}
                 </div>
               )}
 
@@ -310,6 +367,34 @@ const StorePage = () => {
           )}
         </section>
       </main>
+
+      <footer className="w-full mt-4" style={{ background: t.cardBg, borderTop: `1px solid ${t.border}` }}>
+        <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-10 xl:px-16 py-8 grid gap-6 md:grid-cols-[1.3fr_1fr_1fr]">
+          <div>
+            <div className="flex items-center gap-2 mb-2"><ShoppingBag className="w-4 h-4" style={{ color: t.textLink }} /><span className="text-sm font-black">{businessName}</span></div>
+            <p className="text-xs leading-relaxed max-w-md" style={{ color: t.textMuted }}>Loja oficial com catálogo atualizado, carrinho salvo, pedidos acompanháveis e atendimento direto.</p>
+          </div>
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-wider mb-3" style={{ color: t.textMuted }}>Pagamentos</p>
+            <div className="flex flex-wrap gap-2">
+              {[{ label: "PIX", icon: QrCode }, { label: "VISA", icon: CreditCard }, { label: "Mastercard", icon: CreditCard }, { label: "Cartão", icon: CreditCard }].map((p) => (
+                <span key={p.label} className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10px] font-bold" style={{ background: t.cardBgSubtle, color: t.textSecondary, border: `1px solid ${t.borderSubtle}` }}>
+                  <p.icon className="w-3.5 h-3.5" /> {p.label}
+                </span>
+              ))}
+            </div>
+          </div>
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-wider mb-3" style={{ color: t.textMuted }}>Compra segura</p>
+            <div className="grid gap-2 text-[11px]" style={{ color: t.textSecondary }}>
+              <span className="flex items-center gap-2"><BadgeCheck className="w-3.5 h-3.5" /> Produtos conferidos</span>
+              <span className="flex items-center gap-2"><RotateCcw className="w-3.5 h-3.5" /> Trocas combinadas no atendimento</span>
+              <span className="flex items-center gap-2"><Headphones className="w-3.5 h-3.5" /> Suporte pelo WhatsApp</span>
+              <span className="flex items-center gap-2"><MapPin className="w-3.5 h-3.5" /> Retirada ou entrega local</span>
+            </div>
+          </div>
+        </div>
+      </footer>
 
       {/* Floating cart — abre o drawer */}
       <AnimatePresence>
@@ -362,10 +447,23 @@ const StorePage = () => {
         {showAuthGate && (
           <AuthRequiredModal
             onClose={() => setShowAuthGate(false)}
-            onAuthenticated={() => {
+            onAuthenticated={async () => {
+              const { data: { session } } = await supabase.auth.getSession();
+              if (session?.user) setUser(session.user);
               setShowAuthGate(false);
-              setShowCheckout(true);
+              if (authAfter === "account") setShowAccount(true);
+              else setShowCheckout(true);
             }}
+          />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showAccount && user && (
+          <StoreAccountModal
+            user={user}
+            onClose={() => setShowAccount(false)}
+            onSignedOut={() => { setUser(null); setShowAccount(false); }}
           />
         )}
       </AnimatePresence>

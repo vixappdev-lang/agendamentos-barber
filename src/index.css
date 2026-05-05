@@ -415,4 +415,13 @@
     from { opacity: 0; transform: translateY(4px); }
     to   { opacity: 1; transform: translateY(0); }
   }
+
+  @media (max-width: 767px) {
+    .admin-mobile-stable [style*="opacity: 0"] {
+      opacity: 1 !important;
+    }
+    .admin-mobile-stable [style*="translateY"] {
+      transform: none !important;
+    }
+  }
 }

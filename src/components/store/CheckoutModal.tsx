@@ -123,19 +123,6 @@ const CheckoutModal = ({
       ? `${form.notes ? form.notes + " | " : ""}Cupom ${appliedCoupon.code} -R$ ${discount.toFixed(2)} (subtotal R$ ${subtotal.toFixed(2)})`
       : form.notes;
 
-    if (mode === "whatsapp") {
-      const itemsText = items.map((i) => `• ${i.quantity}x ${i.title} - R$ ${(i.price * i.quantity).toFixed(2)}`).join("\n");
-      const deliveryText = deliveryMode === "delivery"
-        ? `\n📍 ${form.address}, ${form.number}\n🏘️ ${form.neighborhood} — ${form.city}`
-        : "\n🏪 Retirada no local";
-      const payText = paymentMethod === "pix" ? "PIX" : "Na entrega";
-      const subtotalLine = appliedCoupon ? `💵 *Subtotal:* R$ ${subtotal.toFixed(2)}\n` : "";
-      const msg = `🛒 *Novo Pedido*\n\n👤 ${form.name}\n📱 ${form.phone}\n\n📦 *Itens:*\n${itemsText}\n\n${subtotalLine}${couponLine ? couponLine + "\n" : ""}💰 *Total:* R$ ${total.toFixed(2)}\n💳 *Pagamento:* ${payText}${deliveryText}\n\n📝 ${form.notes || "—"}`;
-      window.open(`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(msg)}`, "_blank");
-      goToOrders();
-      return;
-    }
-
     setSubmitting(true);
     const { data: order, error } = await supabase.from("orders").insert({
       customer_name: form.name,
@@ -159,13 +146,19 @@ const CheckoutModal = ({
       return;
     }
 
-    await supabase.from("order_items").insert(items.map((i) => ({
+    const { error: itemsError } = await supabase.from("order_items").insert(items.map((i) => ({
       order_id: order.id,
       product_id: i.id,
       product_title: i.title,
       product_price: i.price,
       quantity: i.quantity,
     })));
+
+    if (itemsError) {
+      toast.error("Pedido criado, mas houve erro ao salvar os itens");
+      setSubmitting(false);
+      return;
+    }
 
     // Incrementa uso do cupom (best-effort)
     if (appliedCoupon) {
@@ -183,6 +176,20 @@ const CheckoutModal = ({
     }
 
     setSubmitting(false);
+
+    if (mode === "whatsapp") {
+      const itemsText = items.map((i) => `• ${i.quantity}x ${i.title} - R$ ${(i.price * i.quantity).toFixed(2)}`).join("\n");
+      const deliveryText = deliveryMode === "delivery"
+        ? `\n📍 ${form.address}, ${form.number}\n🏘️ ${form.neighborhood} — ${form.city}`
+        : "\n🏪 Retirada no local";
+      const payText = paymentMethod === "pix" ? "PIX" : "Na entrega";
+      const subtotalLine = appliedCoupon ? `💵 *Subtotal:* R$ ${subtotal.toFixed(2)}\n` : "";
+      const msg = `🛒 *Novo Pedido #${String(order.id).slice(0, 8)}*\n\n👤 ${form.name}\n📱 ${form.phone}\n\n📦 *Itens:*\n${itemsText}\n\n${subtotalLine}${couponLine ? couponLine + "\n" : ""}💰 *Total:* R$ ${total.toFixed(2)}\n💳 *Pagamento:* ${payText}${deliveryText}\n\n📝 ${form.notes || "—"}`;
+      if (whatsappNumber) window.open(`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(msg)}`, "_blank");
+      toast.success("Pedido salvo na sua conta!");
+      goToOrders();
+      return;
+    }
 
     if (paymentMethod === "delivery") {
       setStep("confirmed");
