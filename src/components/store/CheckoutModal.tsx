@@ -220,10 +220,8 @@ const CheckoutModal = ({
           <button onClick={onClose}><X className="w-5 h-5" style={{ color: t.textMuted }} /></button>
         </div>
 
-        <div className="space-y-3">
-          <div className="hidden">
-
           <div className="space-y-3">
+
             <div className="p-3 rounded-xl space-y-2" style={{ background: t.cardBgSubtle, border: `1px solid ${t.borderSubtle}` }}>
               <p className="text-[10px] uppercase tracking-wider font-semibold" style={{ color: t.textMuted }}>Resumo</p>
               {items.map((item) => (
