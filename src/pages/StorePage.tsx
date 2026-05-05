@@ -339,6 +339,57 @@ const StorePage = () => {
             </div>
           ) : groupedProducts.length > 0 ? (
             <>
+              {activeCategory === "todos" && !search && (newArrivals.length > 0 || topRated.length > 0) && (
+                <div className="space-y-8 mb-10">
+                  {newArrivals.length > 0 && (
+                    <div>
+                      <div className="flex items-end justify-between mb-3">
+                        <div className="flex items-center gap-2">
+                          <Sparkles className="w-4 h-4" style={{ color: t.textLink }} />
+                          <h3 className="text-base sm:text-lg font-black tracking-tight">Novidades</h3>
+                        </div>
+                        <span className="text-[11px] opacity-60">Recém-chegados</span>
+                      </div>
+                      <div className="flex gap-3 overflow-x-auto scrollbar-hide -mx-4 px-4 pb-2 snap-x snap-mandatory">
+                        {newArrivals.map((p, i) => (
+                          <div key={p.id} className="snap-start shrink-0 w-[46%] sm:w-[28%] md:w-[22%] lg:w-[18%]">
+                            <ProductCard
+                              product={{ ...p, description: p.description || "" }}
+                              onSelect={() => setDetailProduct(p)}
+                              index={i}
+                              rating={ratings[p.id]}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {topRated.length > 0 && (
+                    <div>
+                      <div className="flex items-end justify-between mb-3">
+                        <div className="flex items-center gap-2">
+                          <Star className="w-4 h-4" style={{ color: t.textLink }} />
+                          <h3 className="text-base sm:text-lg font-black tracking-tight">Mais avaliados</h3>
+                        </div>
+                        <span className="text-[11px] opacity-60">Favoritos dos clientes</span>
+                      </div>
+                      <div className="flex gap-3 overflow-x-auto scrollbar-hide -mx-4 px-4 pb-2 snap-x snap-mandatory">
+                        {topRated.map((p, i) => (
+                          <div key={p.id} className="snap-start shrink-0 w-[46%] sm:w-[28%] md:w-[22%] lg:w-[18%]">
+                            <ProductCard
+                              product={{ ...p, description: p.description || "" }}
+                              onSelect={() => setDetailProduct(p)}
+                              index={i}
+                              rating={ratings[p.id]}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
               {categoryOptions.length > 1 && (
                 <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-2 mb-3 -mx-1 px-1">
                   {["todos", ...categoryOptions].map((key) => {
