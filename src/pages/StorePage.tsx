@@ -52,6 +52,7 @@ const StorePage = () => {
   const [showAuthGate, setShowAuthGate] = useState(false);
   const [showOrderTracker, setShowOrderTracker] = useState(false);
   const [showAccount, setShowAccount] = useState(false);
+  const [authAfter, setAuthAfter] = useState<"checkout" | "account">("checkout");
   const [showCart, setShowCart] = useState(false);
   const [detailProduct, setDetailProduct] = useState<DBProduct | null>(null);
   const [storeEnabled, setStoreEnabled] = useState(true);
@@ -111,6 +112,7 @@ const StorePage = () => {
   }, [products, categoryMap]);
 
   const heroProducts = useMemo(() => products.filter((p) => p.image_url).slice(0, 6), [products]);
+  const currentHero = heroProducts[heroIndex] || null;
 
   useEffect(() => {
     if (heroProducts.length <= 1) return;
@@ -154,6 +156,7 @@ const StorePage = () => {
   const openCheckout = async () => {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session?.user) {
+      setAuthAfter("checkout");
       setShowAuthGate(true);
       return;
     }
@@ -165,6 +168,17 @@ const StorePage = () => {
     const { data: { session } } = await supabase.auth.getSession();
     if (session?.user) setUser(session.user);
     setShowOrderTracker(true);
+  };
+
+  const openAccount = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user) {
+      setAuthAfter("account");
+      setShowAuthGate(true);
+      return;
+    }
+    setUser(session.user);
+    setShowAccount(true);
   };
 
   const userPrefill = user ? {
