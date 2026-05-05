@@ -7,6 +7,7 @@ import OrderTracker from "@/components/store/OrderTracker";
 import AuthRequiredModal from "@/components/store/AuthRequiredModal";
 import ProductDetailModal from "@/components/store/ProductDetailModal";
 import CartDrawer from "@/components/store/CartDrawer";
+import StoreAccountModal from "@/components/store/StoreAccountModal";
 import { useCart } from "@/hooks/useCart";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
@@ -50,6 +51,7 @@ const StorePage = () => {
   const [showCheckout, setShowCheckout] = useState(false);
   const [showAuthGate, setShowAuthGate] = useState(false);
   const [showOrderTracker, setShowOrderTracker] = useState(false);
+  const [showAccount, setShowAccount] = useState(false);
   const [showCart, setShowCart] = useState(false);
   const [detailProduct, setDetailProduct] = useState<DBProduct | null>(null);
   const [storeEnabled, setStoreEnabled] = useState(true);
@@ -61,6 +63,8 @@ const StorePage = () => {
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<AuthUser | null>(null);
   const [categoryMap, setCategoryMap] = useState<Record<string, { label: string; sort: number; icon?: string }>>({});
+  const [activeCategory, setActiveCategory] = useState("todos");
+  const [heroIndex, setHeroIndex] = useState(0);
 
   const formatCategoryLabel = (key: string) =>
     categoryMap[key]?.label ||
