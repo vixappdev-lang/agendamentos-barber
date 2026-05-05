@@ -106,16 +106,14 @@ const AdminLogin = () => {
             <div className="w-20 h-20 rounded-full" style={{ border: `1px solid ${t.accentPurpleBorder}` }} />
           </motion.div>
 
-          <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.3, duration: 0.6 }} className="relative z-10">
-            <motion.div className="flex items-center gap-2 mb-6" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
-              <motion.div className="w-12 h-12 rounded-xl flex items-center justify-center"
-                style={{ background: t.accentPurpleBg, border: `1px solid ${t.accentPurpleBorder}` }}
-                animate={{ boxShadow: ['0 0 0px hsl(245 60% 55% / 0)', '0 0 20px hsl(245 60% 55% / 0.3)', '0 0 0px hsl(245 60% 55% / 0)'] }}
-                transition={{ duration: 3, repeat: Infinity }}>
+          <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2, duration: 0.5 }} className="relative z-10">
+            <div className="flex items-center gap-2 mb-6">
+              <div className="w-12 h-12 rounded-xl flex items-center justify-center"
+                style={{ background: t.accentPurpleBg, border: `1px solid ${t.accentPurpleBorder}` }}>
                 <Scissors className="w-6 h-6" style={{ color: t.accentPurpleLight }} />
-              </motion.div>
+              </div>
               <span className="text-xs font-semibold tracking-[0.2em] uppercase" style={{ color: t.accentPurpleLight }}>PAINEL ADMIN</span>
-            </motion.div>
+            </div>
 
             <motion.h1 className="text-3xl lg:text-4xl font-extrabold text-foreground leading-tight mb-3"
               initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}>
