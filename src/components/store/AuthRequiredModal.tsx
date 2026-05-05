@@ -12,7 +12,7 @@ interface Props {
 }
 
 const onlyDigits = (v: string) => v.replace(/\D/g, "");
-const phoneToEmail = (raw: string) => `${onlyDigits(raw)}@styllus.barber`;
+const phoneToEmail = (raw: string) => `${onlyDigits(raw)}@genesis.barber`;
 const formatPhone = (raw: string) => {
   const d = onlyDigits(raw).slice(0, 11);
   if (d.length <= 2) return d;
