@@ -130,6 +130,7 @@ const WhatsAppTemplates = () => {
   const [activeTab, setActiveTab] = useState<TemplateKey>(TEMPLATES[0].key);
   const [testPhone, setTestPhone] = useState("");
   const [sendingTest, setSendingTest] = useState(false);
+  const [testProvider, setTestProvider] = useState<"chatpro" | "render">("chatpro");
   const [runningReminders, setRunningReminders] = useState(false);
 
   useEffect(() => {
