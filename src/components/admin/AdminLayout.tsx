@@ -185,7 +185,7 @@ const AdminLayout = () => {
   }
 
   return (
-    <div className="min-h-screen flex" style={{ background: t.pageBgAlt }}>
+    <div className="min-h-screen flex overflow-x-hidden" style={{ background: t.pageBgAlt }}>
       {sidebarOpen && (
         <div
           className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden"
