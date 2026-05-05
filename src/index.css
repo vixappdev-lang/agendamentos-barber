@@ -428,13 +428,11 @@
       animation-delay: 0ms !important;
       transition-duration: 0.001ms !important;
     }
-    .admin-mobile-stable [style*="opacity: 0"],
-    .admin-mobile-stable [style*="opacity:0"] {
+    .admin-mobile-stable [style*="opacity"] {
       opacity: 1 !important;
     }
     .admin-mobile-stable [style*="translate"],
-    .admin-mobile-stable [style*="translateY"],
-    .admin-mobile-stable [style*="translateX"] {
+    .admin-mobile-stable [style*="transform"] {
       transform: none !important;
     }
   }
