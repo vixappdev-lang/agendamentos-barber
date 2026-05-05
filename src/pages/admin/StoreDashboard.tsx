@@ -27,19 +27,19 @@ const StoreDashboard = () => {
       <h2 className="text-base sm:text-lg font-bold text-foreground">Loja</h2>
 
       {/* Tab bar */}
-      <div className="flex gap-1.5 overflow-x-auto scrollbar-hide pb-1">
+      <div className="flex gap-1.5 overflow-x-auto scrollbar-hide pb-1 -mx-1 px-1 snap-x">
         {tabs.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className="shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all"
+            className="shrink-0 snap-start flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-[11px] sm:text-xs font-semibold transition-all whitespace-nowrap"
             style={{
               background: activeTab === tab.id ? "hsl(245 60% 55% / 0.15)" : "hsl(0 0% 100% / 0.04)",
               color: activeTab === tab.id ? "hsl(245 60% 70%)" : "hsl(0 0% 50%)",
               border: `1px solid ${activeTab === tab.id ? "hsl(245 60% 55% / 0.3)" : "hsl(0 0% 100% / 0.08)"}`,
             }}
           >
-            <tab.icon className="w-4 h-4" />
+            <tab.icon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             {tab.label}
           </button>
         ))}
