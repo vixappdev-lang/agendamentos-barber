@@ -196,10 +196,7 @@ const StorePage = () => {
             <ShoppingBag className="w-7 h-7 opacity-60" />
           </div>
           <h1 className="text-2xl font-black mb-2">Loja indisponível</h1>
-          <p className="text-sm opacity-60 mb-6">Nossa loja online está temporariamente fora do ar.</p>
-          <button onClick={() => navigate("/")} className="px-5 py-3 rounded-xl text-sm font-bold" style={{ background: t.btnBg, color: t.btnColor }}>
-            Voltar
-          </button>
+          <p className="text-sm opacity-60">Nossa loja online está temporariamente fora do ar.</p>
         </div>
       </div>
     );
