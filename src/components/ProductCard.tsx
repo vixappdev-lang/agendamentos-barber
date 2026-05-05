@@ -1,4 +1,3 @@
-import { motion } from "framer-motion";
 import { ShoppingBag, Plus, Star } from "lucide-react";
 import { useThemeColors } from "@/hooks/useThemeColors";
 
@@ -15,14 +14,11 @@ interface ProductCardProps {
   rating?: { avg: number; count: number };
 }
 
-const ProductCard = ({ product, onSelect, index, rating }: ProductCardProps) => {
+const ProductCard = ({ product, onSelect, rating }: ProductCardProps) => {
   const t = useThemeColors();
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 16 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.35, delay: Math.min(index * 0.04, 0.3) }}
+    <div
       className="cursor-pointer group flex flex-col overflow-hidden rounded-2xl transition-all duration-300 hover:-translate-y-0.5 active:scale-[0.98]"
       style={{
         background: t.cardBg,
@@ -31,7 +27,6 @@ const ProductCard = ({ product, onSelect, index, rating }: ProductCardProps) => 
       }}
       onClick={onSelect}
     >
-      {/* Imagem — proporção fixa para uniformidade */}
       <div className="relative w-full aspect-square overflow-hidden" style={{ background: t.cardBgSubtle }}>
         {product.image_url ? (
           <img
@@ -39,6 +34,7 @@ const ProductCard = ({ product, onSelect, index, rating }: ProductCardProps) => 
             alt={product.title}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
             loading="lazy"
+            decoding="async"
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
@@ -47,7 +43,6 @@ const ProductCard = ({ product, onSelect, index, rating }: ProductCardProps) => 
         )}
       </div>
 
-      {/* Conteúdo — altura padronizada */}
       <div className="flex flex-col flex-1 p-2.5 sm:p-3.5 gap-1">
         <h3
           className="text-[12px] sm:text-sm font-bold tracking-tight leading-tight line-clamp-2 min-h-[2.4em]"
@@ -86,7 +81,7 @@ const ProductCard = ({ product, onSelect, index, rating }: ProductCardProps) => 
           </button>
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 };
 

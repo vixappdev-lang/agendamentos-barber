@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 export interface ProductRatingSummary {
@@ -7,13 +7,14 @@ export interface ProductRatingSummary {
 }
 
 /**
- * Returns an aggregate { product_id: { avg, count } } map of approved + public reviews.
- * Refreshes when realtime emits changes on product_reviews.
+ * Aggregate map { product_id: { avg, count } } of approved+public reviews.
+ * Lazy: fetched after first paint via requestIdleCallback. No realtime
+ * subscription on initial load — call refresh() (returned) when needed.
  */
 export const useProductRatings = () => {
   const [ratings, setRatings] = useState<Record<string, ProductRatingSummary>>({});
 
-  const fetchAll = async () => {
+  const fetchAll = useCallback(async () => {
     const { data } = await supabase
       .from("product_reviews")
       .select("product_id, rating")
@@ -30,16 +31,20 @@ export const useProductRatings = () => {
       out[k] = { avg: v.sum / v.count, count: v.count };
     });
     setRatings(out);
-  };
+  }, []);
 
   useEffect(() => {
-    fetchAll();
-    const channel = supabase
-      .channel("public-product-reviews")
-      .on("postgres_changes", { event: "*", schema: "public", table: "product_reviews" }, () => fetchAll())
-      .subscribe();
-    return () => { supabase.removeChannel(channel); };
-  }, []);
+    const idle = (cb: () => void) =>
+      "requestIdleCallback" in window
+        ? (window as any).requestIdleCallback(cb, { timeout: 4000 })
+        : setTimeout(cb, 1500);
+    const handle = idle(() => { fetchAll(); });
+    return () => {
+      if ("cancelIdleCallback" in window && typeof handle === "number") {
+        (window as any).cancelIdleCallback(handle);
+      }
+    };
+  }, [fetchAll]);
 
   return ratings;
 };
