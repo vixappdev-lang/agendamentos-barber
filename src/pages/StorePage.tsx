@@ -178,7 +178,8 @@ const StorePage = () => {
       return;
     }
     setUser(session.user);
-    setShowAccount(true);
+    setView("account");
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const userPrefill = user ? {
