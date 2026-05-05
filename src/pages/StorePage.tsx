@@ -210,15 +210,9 @@ const StorePage = () => {
       {/* Header */}
       <header className="sticky top-0 z-40 w-full" style={{ background: t.headerBg, backdropFilter: "blur(20px)", borderBottom: `1px solid ${t.border}` }}>
         <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-10 xl:px-16 h-14 sm:h-16 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3 min-w-0">
-            <button onClick={() => navigate("/")} className="flex items-center gap-2 text-sm font-medium transition-colors hover:opacity-80 shrink-0" style={{ color: t.textSecondary }} aria-label="Voltar">
-              <ArrowLeft className="w-4 h-4" /> <span className="hidden sm:inline">Voltar</span>
-            </button>
-            <div className="w-px h-5 hidden sm:block" style={{ background: t.border }} />
-            <div className="flex items-center gap-2 min-w-0">
-              <ShoppingBag className="w-4 h-4 shrink-0" style={{ color: t.textLink }} />
-              <span className="text-sm font-bold truncate">{businessName}</span>
-            </div>
+          <div className="flex items-center gap-2 min-w-0">
+            <ShoppingBag className="w-4 h-4 shrink-0" style={{ color: t.textLink }} />
+            <span className="text-sm font-bold truncate">{businessName}</span>
           </div>
           <div className="flex items-center gap-2 shrink-0">
             <button onClick={() => setShowCart(true)} aria-label="Carrinho"
