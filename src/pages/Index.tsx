@@ -1,16 +1,10 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, lazy, Suspense } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Scissors, Search, ShoppingBag, Package } from "lucide-react";
 import Header from "@/components/Header";
 import ServiceCard from "@/components/ServiceCard";
 import ProductCard from "@/components/ProductCard";
-import BookingFlow from "@/components/BookingFlow";
-
 import Footer from "@/components/Footer";
-import DirectionsModal from "@/components/DirectionsModal";
-import PrizeWheel from "@/components/PrizeWheel";
-import CheckoutModal from "@/components/store/CheckoutModal";
-import OrderTracker from "@/components/store/OrderTracker";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { stockImages } from "@/data/stockImages";
@@ -21,6 +15,13 @@ import imgCombo from "@/assets/service-combo.jpg";
 import imgSobrancelha from "@/assets/service-sobrancelha.jpg";
 import imgHidratacao from "@/assets/service-hidratacao.jpg";
 import imgPremium from "@/assets/service-premium.jpg";
+
+// Lazy: tudo que só abre por clique
+const BookingFlow = lazy(() => import("@/components/BookingFlow"));
+const DirectionsModal = lazy(() => import("@/components/DirectionsModal"));
+const PrizeWheel = lazy(() => import("@/components/PrizeWheel"));
+const CheckoutModal = lazy(() => import("@/components/store/CheckoutModal"));
+const OrderTracker = lazy(() => import("@/components/store/OrderTracker"));
 
 const fallbackImages: Record<string, string> = {
   "Corte Masculino": imgCorte, "Barba": imgBarba, "Corte + Barba": imgCombo,
@@ -94,13 +95,12 @@ const Index = () => {
 
   useEffect(() => {
     const fetchAll = async () => {
-      const [servicesRes, productsRes, settingsRes] = await Promise.all([
-        supabase.from("services").select("*").eq("active", true).order("sort_order"),
-        supabase.from("products").select("*").eq("active", true).order("sort_order"),
-        supabase.from("business_settings").select("*"),
+      const [servicesRes, settingsRes] = await Promise.all([
+        supabase.from("services").select("id,title,subtitle,price,duration,image_url,active,sort_order").eq("active", true).order("sort_order"),
+        supabase.from("business_settings").select("key,value")
+          .in("key", ["store_enabled","prize_wheel_enabled","store_order_mode","whatsapp_number","pix_key","pix_type","site_status","business_name"]),
       ]);
       if (servicesRes.data) setServices(servicesRes.data as DBService[]);
-      if (productsRes.data) setProducts(productsRes.data as DBProduct[]);
       if (settingsRes.data) {
         const map: Record<string, string> = {};
         for (const row of settingsRes.data) map[row.key] = row.value || "";
@@ -116,6 +116,13 @@ const Index = () => {
     };
     fetchAll();
   }, []);
+
+  // Produtos só carregam quando aba "Loja" é aberta
+  useEffect(() => {
+    if (mainTab !== "store" || products.length > 0) return;
+    supabase.from("products").select("id,title,description,price,image_url,active,sort_order").eq("active", true).order("sort_order")
+      .then(({ data }) => { if (data) setProducts(data as DBProduct[]); });
+  }, [mainTab, products.length]);
 
   const now = new Date();
   const weekday = now.toLocaleDateString("pt-BR", { weekday: "long" });
@@ -318,38 +325,39 @@ const Index = () => {
         <Footer />
       </div>
 
-      <AnimatePresence>
-        {selectedService && <BookingFlow service={selectedService} onClose={() => setSelectedService(null)} user={user} />}
-      </AnimatePresence>
+      <Suspense fallback={null}>
+        <AnimatePresence>
+          {selectedService && <BookingFlow service={selectedService} onClose={() => setSelectedService(null)} user={user} />}
+        </AnimatePresence>
 
+        <AnimatePresence>
+          {showDirections && <DirectionsModal onClose={() => setShowDirections(false)} />}
+        </AnimatePresence>
 
-      <AnimatePresence>
-        {showDirections && <DirectionsModal onClose={() => setShowDirections(false)} />}
-      </AnimatePresence>
+        <AnimatePresence>
+          {showWheel && <PrizeWheel onClose={() => setShowWheel(false)} />}
+        </AnimatePresence>
 
-      <AnimatePresence>
-        {showWheel && <PrizeWheel onClose={() => setShowWheel(false)} />}
-      </AnimatePresence>
+        <AnimatePresence>
+          {showOrderTracker && (
+            <OrderTracker onClose={() => setShowOrderTracker(false)} customerPhone="" />
+          )}
+        </AnimatePresence>
 
-      <AnimatePresence>
-        {showOrderTracker && (
-          <OrderTracker onClose={() => setShowOrderTracker(false)} customerPhone="" />
-        )}
-      </AnimatePresence>
-
-      <AnimatePresence>
-        {showCheckout && (
-          <CheckoutModal
-            items={cart}
-            onClose={() => setShowCheckout(false)}
-            onSuccess={() => { setShowCheckout(false); setCart([]); }}
-            mode={storeOrderMode}
-            whatsappNumber={whatsappNumber}
-            pixKey={pixKey}
-            pixType={pixType}
-          />
-        )}
-      </AnimatePresence>
+        <AnimatePresence>
+          {showCheckout && (
+            <CheckoutModal
+              items={cart}
+              onClose={() => setShowCheckout(false)}
+              onSuccess={() => { setShowCheckout(false); setCart([]); }}
+              mode={storeOrderMode}
+              whatsappNumber={whatsappNumber}
+              pixKey={pixKey}
+              pixType={pixType}
+            />
+          )}
+        </AnimatePresence>
+      </Suspense>
     </div>
   );
 };
