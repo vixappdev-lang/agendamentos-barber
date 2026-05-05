@@ -229,7 +229,7 @@ const AdminLayout = () => {
             <LogOut className="w-4 h-4" /> Sair
           </button>
         </div>
-      </motion.aside>
+      </aside>
 
 
       <div className="flex-1 flex flex-col min-w-0">
