@@ -48,17 +48,18 @@ export const useCart = () => {
     return () => subscription.unsubscribe();
   }, []);
 
-  // Hydrate from remote on login + merge local
+  // Hydrate from remote on login + merge local (after first paint)
   useEffect(() => {
-    const hydrate = async () => {
+    let cancelled = false;
+    const run = async () => {
       if (!user) {
         setHydrated(true);
         return;
       }
       const { data } = await supabase.from("user_carts").select("items").eq("user_id", user.id).maybeSingle();
+      if (cancelled) return;
       const remote: CartItem[] = Array.isArray(data?.items) ? (data!.items as any) : [];
       const local = readLocal();
-      // Merge: soma quantidades por id; produtos só locais entram
       const map = new Map<string, CartItem>();
       for (const it of remote) map.set(it.id, { ...it });
       for (const it of local) {
@@ -67,11 +68,19 @@ export const useCart = () => {
         else map.set(it.id, { ...it });
       }
       const merged = Array.from(map.values());
-      skipNextSync.current = false;
+      skipNextSync.current = true; // a primeira escrita pós-hidratação não precisa replicar
       setItems(merged);
       setHydrated(true);
     };
-    hydrate();
+    const idle = (cb: () => void) =>
+      "requestIdleCallback" in window
+        ? (window as any).requestIdleCallback(cb, { timeout: 3000 })
+        : setTimeout(cb, 200);
+    const handle = idle(run);
+    return () => {
+      cancelled = true;
+      if ("cancelIdleCallback" in window && typeof handle === "number") (window as any).cancelIdleCallback(handle);
+    };
   }, [user?.id]);
 
   // Persist (local sempre, remoto se logado)
@@ -86,7 +95,7 @@ export const useCart = () => {
         items: items as any,
         updated_at: new Date().toISOString(),
       }, { onConflict: "user_id" });
-    }, 400);
+    }, 600);
     return () => clearTimeout(t);
   }, [items, user?.id, hydrated]);
 
