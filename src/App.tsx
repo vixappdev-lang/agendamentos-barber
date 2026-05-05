@@ -7,7 +7,7 @@ import { ThemeProvider } from "@/contexts/ThemeContext";
 import { lazy, Suspense } from "react";
 import { Loader2 } from "lucide-react";
 
-import VilaNova from "./pages/VilaNova"; // landing eager (LCP)
+const VilaNova = lazy(() => import("./pages/VilaNova"));
 import HostnameResolver from "./components/HostnameResolver";
 import MemberRouteGuard from "./components/MemberRouteGuard";
 import LoginRedirectGuard from "./components/LoginRedirectGuard";

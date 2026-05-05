@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, lazy, Suspense } from "react";
 import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion";
 import { Scissors, Clock, MapPin, Phone, Instagram, ChevronRight, ChevronDown, Star, X, ArrowLeft, ArrowRight, Check, Calendar, User, Send, Loader2, CheckCircle, Menu, LogOut, Award, Users, Heart } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -6,11 +6,15 @@ import { useThemeColors } from "@/hooks/useThemeColors";
 import { toast } from "sonner";
 import type { User as AuthUser } from "@supabase/supabase-js";
 import { findStockImage } from "@/data/stockImages";
-import { TeamSection, TestimonialsSection, FAQSection } from "@/components/landing/LandingExtras";
-import MapLibreDirections from "@/components/MapLibreDirections";
-import AllServicesModal from "@/components/AllServicesModal";
-import GalleryModal from "@/components/GalleryModal";
 import { useDevToolsBlock } from "@/hooks/useDevToolsBlock";
+
+// Lazy: tudo abaixo da dobra ou modais
+const TeamSection = lazy(() => import("@/components/landing/LandingExtras").then(m => ({ default: m.TeamSection })));
+const TestimonialsSection = lazy(() => import("@/components/landing/LandingExtras").then(m => ({ default: m.TestimonialsSection })));
+const FAQSection = lazy(() => import("@/components/landing/LandingExtras").then(m => ({ default: m.FAQSection })));
+const MapLibreDirections = lazy(() => import("@/components/MapLibreDirections"));
+const AllServicesModal = lazy(() => import("@/components/AllServicesModal"));
+const GalleryModal = lazy(() => import("@/components/GalleryModal"));
 
 import heroImg1 from "@/assets/vilanova-hero-1.jpg";
 import heroImg2 from "@/assets/vilanova-hero-2.jpg";
@@ -110,7 +114,7 @@ const VilaNova = () => {
   useEffect(() => {
     const fetchData = async () => {
       const [servicesRes, barbersRes, settingsRes] = await Promise.all([
-        supabase.from("services").select("*").eq("active", true).order("sort_order"),
+        supabase.from("services").select("id,title,subtitle,price,duration,image_url").eq("active", true).order("sort_order"),
         supabase.from("barbers").select("id, name, specialty, avatar_url").eq("active", true).order("sort_order"),
         supabase.from("business_settings").select("key, value"),
       ]);
@@ -692,7 +696,7 @@ const VilaNova = () => {
       </section>
 
       {/* ─── EQUIPE ─── */}
-      <TeamSection barbers={barbers} />
+      <Suspense fallback={null}><TeamSection barbers={barbers} /></Suspense>
 
       {/* ─── GALLERY ─── */}
       {(() => {
@@ -759,11 +763,15 @@ const VilaNova = () => {
             </section>
 
             {/* Gallery Modal (full grid) */}
-            <GalleryModal
-              open={galleryModalOpen}
-              onClose={() => setGalleryModalOpen(false)}
-              images={galleryImages}
-            />
+            <Suspense fallback={null}>
+              {galleryModalOpen && (
+                <GalleryModal
+                  open={galleryModalOpen}
+                  onClose={() => setGalleryModalOpen(false)}
+                  images={galleryImages}
+                />
+              )}
+            </Suspense>
 
             {/* ─── LIGHTBOX (single-image preview from grid) ─── */}
             <AnimatePresence>
@@ -791,10 +799,10 @@ const VilaNova = () => {
       })()}
 
       {/* ─── DEPOIMENTOS ─── */}
-      <TestimonialsSection />
+      <Suspense fallback={null}><TestimonialsSection /></Suspense>
 
       {/* ─── FAQ ─── */}
-      <FAQSection />
+      <Suspense fallback={null}><FAQSection /></Suspense>
 
       {/* ─── CTA BANNER ─── */}
       <section className="py-16 sm:py-24 px-4 sm:px-6 lg:px-8" style={{ background: t.isLight ? "hsl(220 12% 95%)" : "hsl(220 18% 5%)" }}>
@@ -916,23 +924,30 @@ const VilaNova = () => {
       </footer>
 
       {/* ─── DIRECTIONS MODAL (MapLibre) ─── */}
-      <MapLibreDirections
-        open={directionsOpen}
-        onClose={() => setDirectionsOpen(false)}
-        address={settings.address || ""}
-        businessName={settings.business_name}
-      />
+      <Suspense fallback={null}>
+        {directionsOpen && (
+          <MapLibreDirections
+            open={directionsOpen}
+            onClose={() => setDirectionsOpen(false)}
+            address={settings.address || ""}
+            businessName={settings.business_name}
+          />
+        )}
+      </Suspense>
 
       {/* ─── ALL SERVICES MODAL ─── */}
-      <AllServicesModal
-        open={allServicesOpen}
-        onClose={() => setAllServicesOpen(false)}
-        services={services}
-        onPick={(s) => { setSelectedService(s); setCurrentStep(0); }}
-        selBg={selBg}
-        selColor={selColor}
-      />
-
+      <Suspense fallback={null}>
+        {allServicesOpen && (
+          <AllServicesModal
+            open={allServicesOpen}
+            onClose={() => setAllServicesOpen(false)}
+            services={services}
+            onPick={(s) => { setSelectedService(s); setCurrentStep(0); }}
+            selBg={selBg}
+            selColor={selColor}
+          />
+        )}
+      </Suspense>
       {/* Lightbox now rendered inside dynamic gallery block above */}
 
       {/* ─── BOOKING MODAL ─── */}

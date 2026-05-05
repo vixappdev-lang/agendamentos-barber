@@ -1,13 +1,7 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, lazy, Suspense } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ShoppingBag, Search, Package, ArrowLeft, Sparkles, Truck, ShieldCheck, Star, User, CreditCard, QrCode, BadgeCheck, RotateCcw, Headphones, Shirt, MapPin } from "lucide-react";
+import { ShoppingBag, Search, Package, Sparkles, Truck, ShieldCheck, Star, User, CreditCard, QrCode, BadgeCheck, RotateCcw, Headphones, Shirt, MapPin } from "lucide-react";
 import ProductCard from "@/components/ProductCard";
-import CheckoutModal from "@/components/store/CheckoutModal";
-import OrderTracker from "@/components/store/OrderTracker";
-import AuthRequiredModal from "@/components/store/AuthRequiredModal";
-import ProductDetailModal from "@/components/store/ProductDetailModal";
-import CartDrawer from "@/components/store/CartDrawer";
-import AccountInline from "@/components/store/AccountInline";
 import { useCart } from "@/hooks/useCart";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
@@ -15,6 +9,14 @@ import { useThemeColors } from "@/hooks/useThemeColors";
 import { useProductRatings } from "@/hooks/useProductRatings";
 import storeHero from "@/assets/vilanova-hero-1.jpg";
 import type { User as AuthUser } from "@supabase/supabase-js";
+
+// Lazy: modais e telas que só abrem por interação
+const CheckoutModal = lazy(() => import("@/components/store/CheckoutModal"));
+const OrderTracker = lazy(() => import("@/components/store/OrderTracker"));
+const AuthRequiredModal = lazy(() => import("@/components/store/AuthRequiredModal"));
+const ProductDetailModal = lazy(() => import("@/components/store/ProductDetailModal"));
+const CartDrawer = lazy(() => import("@/components/store/CartDrawer"));
+const AccountInline = lazy(() => import("@/components/store/AccountInline"));
 
 interface DBProduct {
   id: string; title: string; description: string | null; price: number;
@@ -81,8 +83,11 @@ const StorePage = () => {
   useEffect(() => {
     const fetchAll = async () => {
       const [productsRes, settingsRes, catsRes] = await Promise.all([
-        supabase.from("products").select("*").eq("active", true).order("sort_order"),
-        supabase.from("business_settings").select("*"),
+        supabase.from("products")
+          .select("id,title,description,price,image_url,active,sort_order,category,brand,stock,highlights,gallery,long_description,weight")
+          .eq("active", true).order("sort_order"),
+        supabase.from("business_settings").select("key,value")
+          .in("key", ["store_enabled","store_order_mode","whatsapp_number","pix_key","pix_type","business_name"]),
         (supabase as any).from("product_categories").select("slug,label,icon,sort_order").eq("active", true).order("sort_order"),
       ]);
       if (productsRes.data) setProducts(productsRes.data as DBProduct[]);
@@ -240,7 +245,9 @@ const StorePage = () => {
       </header>
 
       {view === "account" && user ? (
-        <AccountInline user={user} t={t} onBack={() => setView("shop")} onSignedOut={() => { setUser(null); setView("shop"); }} />
+        <Suspense fallback={<div className="min-h-[60vh]" />}>
+          <AccountInline user={user} t={t} onBack={() => setView("shop")} onSignedOut={() => { setUser(null); setView("shop"); }} />
+        </Suspense>
       ) : (
       <>
       {/* Hero compacto */}
@@ -451,73 +458,84 @@ const StorePage = () => {
         )}
       </AnimatePresence>
 
-      <CartDrawer
-        open={showCart}
-        onClose={() => setShowCart(false)}
-        items={cart}
-        total={cartTotal}
-        count={cartCount}
-        updateQty={updateQty}
-        remove={remove}
-        clear={clear}
-        isLogged={!!cartUser}
-        onCheckout={() => { setShowCart(false); openCheckout(); }}
-      />
-
-
-      <AnimatePresence>
-        {detailProduct && (
-          <ProductDetailModal
-            product={{
-              ...detailProduct,
-              highlights: Array.isArray(detailProduct.highlights) ? detailProduct.highlights : [],
-              gallery: Array.isArray(detailProduct.gallery) ? detailProduct.gallery : [],
-            }}
-            onClose={() => setDetailProduct(null)}
-            onAdd={(qty) => handleAddToCart(detailProduct, qty)}
-          />
-        )}
-      </AnimatePresence>
-
-      <AnimatePresence>
-        {showAuthGate && (
-          <AuthRequiredModal
-            onClose={() => setShowAuthGate(false)}
-            onAuthenticated={async () => {
-              const { data: { session } } = await supabase.auth.getSession();
-              if (session?.user) setUser(session.user);
-              setShowAuthGate(false);
-              if (authAfter === "account") { setView("account"); window.scrollTo({ top: 0 }); }
-              else setShowCheckout(true);
-            }}
-          />
-        )}
-      </AnimatePresence>
-
-      <AnimatePresence>
-        {showOrderTracker && (
-          <OrderTracker
-            onClose={() => setShowOrderTracker(false)}
-            customerPhone=""
-            customerEmail={user?.email || undefined}
-          />
-        )}
-      </AnimatePresence>
-
-      <AnimatePresence>
-        {showCheckout && (
-          <CheckoutModal
+      <Suspense fallback={null}>
+        {showCart && (
+          <CartDrawer
+            open={showCart}
+            onClose={() => setShowCart(false)}
             items={cart}
-            onClose={() => setShowCheckout(false)}
-            onSuccess={() => { setShowCheckout(false); clear(); }}
-            mode={storeOrderMode}
-            whatsappNumber={whatsappNumber}
-            pixKey={pixKey}
-            pixType={pixType}
-            prefill={userPrefill}
+            total={cartTotal}
+            count={cartCount}
+            updateQty={updateQty}
+            remove={remove}
+            clear={clear}
+            isLogged={!!cartUser}
+            onCheckout={() => { setShowCart(false); openCheckout(); }}
           />
         )}
-      </AnimatePresence>
+      </Suspense>
+
+      <Suspense fallback={null}>
+        <AnimatePresence>
+          {detailProduct && (
+            <ProductDetailModal
+              product={{
+                ...detailProduct,
+                highlights: Array.isArray(detailProduct.highlights) ? detailProduct.highlights : [],
+                gallery: Array.isArray(detailProduct.gallery) ? detailProduct.gallery : [],
+              }}
+              onClose={() => setDetailProduct(null)}
+              onAdd={(qty) => handleAddToCart(detailProduct, qty)}
+            />
+          )}
+        </AnimatePresence>
+      </Suspense>
+
+      <Suspense fallback={null}>
+        <AnimatePresence>
+          {showAuthGate && (
+            <AuthRequiredModal
+              onClose={() => setShowAuthGate(false)}
+              onAuthenticated={async () => {
+                const { data: { session } } = await supabase.auth.getSession();
+                if (session?.user) setUser(session.user);
+                setShowAuthGate(false);
+                if (authAfter === "account") { setView("account"); window.scrollTo({ top: 0 }); }
+                else setShowCheckout(true);
+              }}
+            />
+          )}
+        </AnimatePresence>
+      </Suspense>
+
+      <Suspense fallback={null}>
+        <AnimatePresence>
+          {showOrderTracker && (
+            <OrderTracker
+              onClose={() => setShowOrderTracker(false)}
+              customerPhone=""
+              customerEmail={user?.email || undefined}
+            />
+          )}
+        </AnimatePresence>
+      </Suspense>
+
+      <Suspense fallback={null}>
+        <AnimatePresence>
+          {showCheckout && (
+            <CheckoutModal
+              items={cart}
+              onClose={() => setShowCheckout(false)}
+              onSuccess={() => { setShowCheckout(false); clear(); }}
+              mode={storeOrderMode}
+              whatsappNumber={whatsappNumber}
+              pixKey={pixKey}
+              pixType={pixType}
+              prefill={userPrefill}
+            />
+          )}
+        </AnimatePresence>
+      </Suspense>
     </div>
   );
 };
