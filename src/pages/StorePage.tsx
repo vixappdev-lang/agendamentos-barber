@@ -452,19 +452,9 @@ const StorePage = () => {
               const { data: { session } } = await supabase.auth.getSession();
               if (session?.user) setUser(session.user);
               setShowAuthGate(false);
-              if (authAfter === "account") setShowAccount(true);
+              if (authAfter === "account") { setView("account"); window.scrollTo({ top: 0 }); }
               else setShowCheckout(true);
             }}
-          />
-        )}
-      </AnimatePresence>
-
-      <AnimatePresence>
-        {showAccount && user && (
-          <StoreAccountModal
-            user={user}
-            onClose={() => setShowAccount(false)}
-            onSignedOut={() => { setUser(null); setShowAccount(false); }}
           />
         )}
       </AnimatePresence>
