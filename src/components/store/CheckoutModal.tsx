@@ -392,45 +392,9 @@ const CheckoutModal = ({
             <button onClick={handleSubmit} disabled={submitting}
               className="w-full py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all disabled:opacity-50"
               style={{ background: t.btnBg, color: t.btnColor }}>
-              {submitting ? "Enviando..." : mode === "whatsapp" ? "Enviar pelo WhatsApp" : "Confirmar Pedido"}
+              {submitting ? "Enviando..." : "Enviar pelo WhatsApp"}
             </button>
           </div>
-        )}
-
-        {step === "payment" && (
-          <div className="space-y-4 text-center">
-            <div className="w-16 h-16 rounded-2xl mx-auto flex items-center justify-center" style={{ background: t.accentPurpleBg }}>
-              <QrCode className="w-8 h-8" style={{ color: t.accentPurple }} />
-            </div>
-            <div>
-              <p className="text-sm mb-1" style={{ color: t.textMuted }}>Valor a pagar:</p>
-              <p className="text-2xl font-bold" style={{ color: t.accentPurple }}>R$ {total.toFixed(2)}</p>
-            </div>
-            <div className="p-3 rounded-xl text-left" style={{ background: t.cardBgSubtle, border: `1px solid ${t.borderSubtle}` }}>
-              <p className="text-[10px] uppercase tracking-wider mb-1" style={{ color: t.textMuted }}>Chave PIX ({pixType})</p>
-              <div className="flex items-center gap-2">
-                <p className="text-sm font-mono flex-1 truncate" style={{ color: t.textPrimary }}>{pixKey || "Não configurada"}</p>
-                {pixKey && (
-                  <button onClick={handleCopyPix} className="p-2 rounded-lg shrink-0" style={{ background: t.accentPurpleBg }}>
-                    {copied ? <Check className="w-4 h-4" style={{ color: "hsl(140 60% 55%)" }} /> : <Copy className="w-4 h-4" style={{ color: t.accentPurple }} />}
-                  </button>
-                )}
-              </div>
-            </div>
-            <button onClick={handleConfirmPayment}
-              className="w-full py-3 rounded-xl font-bold text-sm transition-all"
-              style={{ background: "hsl(140 60% 45%)", color: "white" }}>
-              ✅ Já paguei
-            </button>
-          </div>
-        )}
-
-        {step === "confirmed" && (
-          <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="text-center space-y-3 py-4">
-            <div className="text-5xl">🎉</div>
-            <h3 className="text-lg font-bold" style={{ color: t.textPrimary }}>Pedido Realizado!</h3>
-            <p className="text-sm" style={{ color: t.textMuted }}>Acompanhe na área do cliente.</p>
-          </motion.div>
         )}
       </motion.div>
     </motion.div>
