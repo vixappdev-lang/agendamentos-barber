@@ -194,7 +194,7 @@ const AdminLayout = () => {
       </AnimatePresence>
 
       <motion.aside
-        className={`fixed lg:sticky top-0 left-0 z-50 h-screen w-64 flex flex-col transition-transform lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}
+        className={`fixed lg:sticky top-0 left-0 z-50 h-[100dvh] w-[82vw] max-w-72 lg:w-64 flex flex-col transition-transform lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}
         style={{ background: t.sidebarBg, borderRight: `1px solid ${t.border}` }}>
         <div className="p-5 flex items-center justify-between" style={{ borderBottom: `1px solid ${t.border}` }}>
           <div className="flex items-center gap-2">
@@ -207,7 +207,7 @@ const AdminLayout = () => {
           <button className="lg:hidden text-muted-foreground" onClick={() => setSidebarOpen(false)}><X className="w-5 h-5" /></button>
         </div>
 
-        <nav className="flex-1 p-3 space-y-1 overflow-y-auto scrollbar-hidden">
+        <nav className="flex-1 p-3 space-y-1 overflow-y-auto overscroll-contain scrollbar-hidden pb-6">
           {visibleNavItems.map((item) => {
             const isActive = location.pathname === item.path;
             return (
@@ -278,7 +278,7 @@ const AdminLayout = () => {
           </button>
         )}
 
-        <main className="flex-1 p-4 sm:p-6 overflow-auto"><Outlet /></main>
+        <main className="admin-mobile-stable flex-1 p-4 sm:p-6 overflow-auto"><Outlet /></main>
       </div>
 
       <WelcomeSetupModal
