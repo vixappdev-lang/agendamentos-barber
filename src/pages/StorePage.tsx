@@ -24,6 +24,7 @@ interface DBProduct {
   category?: string | null;
   long_description?: string | null; brand?: string | null; weight?: string | null;
   stock?: number | null; highlights?: string[] | null; gallery?: string[] | null;
+  created_at?: string | null;
 }
 
 const FALLBACK_CATEGORY_LABELS: Record<string, string> = {
