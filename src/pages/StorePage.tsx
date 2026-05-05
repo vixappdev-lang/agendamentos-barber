@@ -120,6 +120,20 @@ const StorePage = () => {
   const heroProducts = useMemo(() => products.filter((p) => p.image_url).slice(0, 6), [products]);
   const currentHero = heroProducts[heroIndex] || null;
 
+  const newArrivals = useMemo(() => {
+    return [...products]
+      .filter((p) => p.image_url)
+      .sort((a, b) => (b.created_at || "").localeCompare(a.created_at || ""))
+      .slice(0, 8);
+  }, [products]);
+
+  const topRated = useMemo(() => {
+    return [...products]
+      .filter((p) => p.image_url && (ratings[p.id]?.count ?? 0) > 0)
+      .sort((a, b) => (ratings[b.id]?.avg ?? 0) - (ratings[a.id]?.avg ?? 0))
+      .slice(0, 8);
+  }, [products, ratings]);
+
   useEffect(() => {
     if (heroProducts.length <= 1) return;
     const timer = window.setInterval(() => setHeroIndex((i) => (i + 1) % heroProducts.length), 4500);
