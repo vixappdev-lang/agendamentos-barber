@@ -393,7 +393,7 @@ const CheckoutModal = ({
               {submitting ? "Enviando..." : "Enviar pelo WhatsApp"}
             </button>
           </div>
-        )}
+
       </motion.div>
     </motion.div>
   );
