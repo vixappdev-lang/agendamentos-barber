@@ -7,7 +7,7 @@ import OrderTracker from "@/components/store/OrderTracker";
 import AuthRequiredModal from "@/components/store/AuthRequiredModal";
 import ProductDetailModal from "@/components/store/ProductDetailModal";
 import CartDrawer from "@/components/store/CartDrawer";
-import StoreAccountModal from "@/components/store/StoreAccountModal";
+import AccountInline from "@/components/store/AccountInline";
 import { useCart } from "@/hooks/useCart";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
