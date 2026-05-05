@@ -8,12 +8,6 @@ import { useThemeColors } from "@/hooks/useThemeColors";
 import { clearAdminMysqlSession, setAdminMysqlSession } from "@/lib/adminMysqlSession";
 import { clearPanelUserSession, setPanelUserSession } from "@/hooks/usePanelSession";
 
-const floatingOrbs = [
-  { size: 500, x: ["0%", "3%", "-2%", "0%"], y: ["0%", "-2%", "3%", "0%"], duration: 8, color: "hsl(245 80% 55% / 0.25)", blur: 80, left: "5%", top: "15%" },
-  { size: 350, x: ["0%", "-3%", "4%", "0%"], y: ["0%", "4%", "-2%", "0%"], duration: 12, color: "hsl(280 70% 50% / 0.15)", blur: 60, right: "5%", bottom: "15%" },
-  { size: 200, x: ["0%", "5%", "-3%", "0%"], y: ["0%", "-4%", "2%", "0%"], duration: 10, color: "hsl(200 80% 50% / 0.12)", blur: 50, left: "40%", top: "60%" },
-];
-
 const AdminLogin = () => {
   const t = useThemeColors();
   const [email, setEmail] = useState("");
@@ -95,39 +89,9 @@ const AdminLogin = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden" style={{ background: t.pageBg }}>
-      {/* Animated floating orbs */}
-      {floatingOrbs.map((orb, i) => (
-        <motion.div
-          key={i}
-          className="absolute rounded-full pointer-events-none"
-          style={{
-            width: orb.size, height: orb.size,
-            background: `radial-gradient(circle, ${orb.color}, transparent 70%)`,
-            filter: `blur(${orb.blur}px)`,
-            left: orb.left, right: (orb as any).right, top: orb.top, bottom: (orb as any).bottom,
-          }}
-          animate={{ x: orb.x, y: orb.y, scale: [1, 1.1, 0.95, 1] }}
-          transition={{ duration: orb.duration, repeat: Infinity, ease: "easeInOut" }}
-        />
-      ))}
-
-      {/* Animated grid lines */}
-      <div className="absolute inset-0 pointer-events-none" style={{
-        backgroundImage: `linear-gradient(hsl(245 60% 55% / 0.03) 1px, transparent 1px), linear-gradient(90deg, hsl(245 60% 55% / 0.03) 1px, transparent 1px)`,
-        backgroundSize: '60px 60px',
-      }} />
-
-      {/* Floating particles */}
-      {[...Array(6)].map((_, i) => (
-        <motion.div key={`particle-${i}`} className="absolute w-1 h-1 rounded-full pointer-events-none"
-          style={{ background: 'hsl(245 60% 70% / 0.4)', left: `${15 + i * 14}%`, top: `${20 + (i % 3) * 25}%` }}
-          animate={{ y: [0, -30, 0], opacity: [0.2, 0.8, 0.2], scale: [1, 1.5, 1] }}
-          transition={{ duration: 3 + i * 0.5, repeat: Infinity, delay: i * 0.7 }} />
-      ))}
-
       <motion.div
-        initial={{ opacity: 0, y: 30, scale: 0.97 }} animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+        initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
         className="w-full max-w-5xl grid md:grid-cols-2 gap-0 glass-card-strong overflow-hidden relative z-10"
       >
         {/* Left - Branding */}
