@@ -221,11 +221,22 @@ const StorePage = () => {
             </div>
           </div>
           <div className="flex items-center gap-2 shrink-0">
+            <button onClick={() => setShowCart(true)} aria-label="Carrinho"
+              className="relative inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-[11px] font-semibold transition-all"
+              style={{ background: t.btnGhostBg, color: t.btnGhostColor, border: `1px solid ${t.btnGhostBorder}` }}>
+              <ShoppingBag className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Carrinho</span>
+              {cartCount > 0 && (
+                <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-black flex items-center justify-center" style={{ background: t.btnBg, color: t.btnColor }}>
+                  {cartCount}
+                </span>
+              )}
+            </button>
             <button onClick={openAccount}
               className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-[11px] font-semibold transition-all"
-              style={{ background: t.btnGhostBg, color: t.btnGhostColor, border: `1px solid ${t.btnGhostBorder}` }}>
+              style={{ background: view === "account" ? t.btnBg : t.btnGhostBg, color: view === "account" ? t.btnColor : t.btnGhostColor, border: `1px solid ${t.btnGhostBorder}` }}>
               <User className="w-3.5 h-3.5" />
-              <span>Conta</span>
+              <span className="hidden sm:inline">Conta</span>
             </button>
             <button onClick={openOrders}
               className="hidden sm:inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-[11px] font-semibold transition-all"
