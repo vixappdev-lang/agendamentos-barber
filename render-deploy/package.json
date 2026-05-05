@@ -1,0 +1,20 @@
+{
+  "name": "lovable-baileys-render",
+  "version": "1.0.0",
+  "description": "WhatsApp Baileys server para hospedar no Render.com (free tier)",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@whiskeysockets/baileys": "^6.7.16",
+    "@supabase/supabase-js": "^2.45.4",
+    "express": "^4.21.0",
+    "qrcode": "^1.5.4",
+    "pino": "^9.5.0"
+  }
+}
