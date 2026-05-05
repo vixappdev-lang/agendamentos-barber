@@ -430,12 +430,12 @@ const StorePage = () => {
         })}
       </nav>
 
-      {/* Floating cart — abre o drawer */}
+      {/* Floating cart — apenas em telas maiores (no mobile há bottom nav) */}
       <AnimatePresence>
         {cartCount > 0 && !showCart && (
           <motion.div initial={{ y: 80, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 80, opacity: 0 }}
             transition={{ type: "spring", damping: 22, stiffness: 280 }}
-            className="fixed bottom-4 sm:bottom-6 left-4 right-4 max-w-md sm:max-w-lg mx-auto z-40">
+            className="hidden sm:block fixed bottom-6 left-4 right-4 max-w-md sm:max-w-lg mx-auto z-40">
             <button onClick={() => setShowCart(true)}
               className="w-full flex items-center justify-between px-5 py-4 rounded-2xl font-bold text-sm transition-all hover:translate-y-[-1px] active:scale-[0.99]"
               style={{ background: t.btnBg, color: t.btnColor, boxShadow: "0 12px 32px hsl(0 0% 0% / 0.25)" }}>
