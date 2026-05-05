@@ -227,7 +227,7 @@ const StorePage = () => {
               <span>Conta</span>
             </button>
             <button onClick={openOrders}
-              className="hidden xs:inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-[11px] font-semibold transition-all"
+              className="hidden sm:inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-[11px] font-semibold transition-all"
               style={{ background: t.btnGhostBg, color: t.btnGhostColor, border: `1px solid ${t.btnGhostBorder}` }}>
               <Package className="w-3.5 h-3.5" />
               <span>Pedidos</span>
@@ -447,10 +447,23 @@ const StorePage = () => {
         {showAuthGate && (
           <AuthRequiredModal
             onClose={() => setShowAuthGate(false)}
-            onAuthenticated={() => {
+            onAuthenticated={async () => {
+              const { data: { session } } = await supabase.auth.getSession();
+              if (session?.user) setUser(session.user);
               setShowAuthGate(false);
-              setShowCheckout(true);
+              if (authAfter === "account") setShowAccount(true);
+              else setShowCheckout(true);
             }}
+          />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showAccount && user && (
+          <StoreAccountModal
+            user={user}
+            onClose={() => setShowAccount(false)}
+            onSignedOut={() => { setUser(null); setShowAccount(false); }}
           />
         )}
       </AnimatePresence>
