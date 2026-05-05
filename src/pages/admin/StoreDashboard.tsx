@@ -23,8 +23,8 @@ const StoreDashboard = () => {
   const [activeTab, setActiveTab] = useState<Tab>("kpis");
 
   return (
-    <div className="space-y-4">
-      <h2 className="text-lg font-bold text-foreground">Loja</h2>
+    <div className="space-y-3 sm:space-y-4">
+      <h2 className="text-base sm:text-lg font-bold text-foreground">Loja</h2>
 
       {/* Tab bar */}
       <div className="flex gap-1.5 overflow-x-auto scrollbar-hide pb-1">
