@@ -418,13 +418,15 @@ const StorePage = () => {
           const active = (it.id === "shop" && view === "shop") || (it.id === "account" && view === "account");
           return (
             <button key={it.id} onClick={it.onClick}
-              className="relative flex flex-col items-center justify-center gap-0.5 px-3 py-1.5 rounded-xl transition-all"
+              className="relative flex-1 flex flex-col items-center justify-center gap-0.5 px-2 py-1.5 rounded-xl transition-all"
               style={{ color: active ? t.textPrimary : t.textMuted }}>
-              <it.icon className="w-5 h-5" />
+              <span className="relative">
+                <it.icon className="w-5 h-5" />
+                {it.badge && it.badge > 0 ? (
+                  <span className="absolute -top-1.5 -right-2 min-w-[16px] h-[16px] px-1 rounded-full text-[9px] font-black flex items-center justify-center leading-none" style={{ background: t.btnBg, color: t.btnColor }}>{it.badge}</span>
+                ) : null}
+              </span>
               <span className="text-[10px] font-bold">{it.label}</span>
-              {it.badge && it.badge > 0 ? (
-                <span className="absolute top-0 right-1 min-w-[16px] h-[16px] px-1 rounded-full text-[9px] font-black flex items-center justify-center" style={{ background: t.btnBg, color: t.btnColor }}>{it.badge}</span>
-              ) : null}
             </button>
           );
         })}
