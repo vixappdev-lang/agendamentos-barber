@@ -278,7 +278,7 @@ const AdminLayout = () => {
           </button>
         )}
 
-        <main key={location.pathname} className="flex-1 p-4 sm:p-6 overflow-auto admin-page-enter"><Outlet /></main>
+        <main className="flex-1 p-4 sm:p-6 overflow-auto"><Outlet /></main>
       </div>
 
       <WelcomeSetupModal
