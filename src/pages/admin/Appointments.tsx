@@ -310,8 +310,6 @@ const Appointments = () => {
             <motion.div
               key={a.id}
               layout
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
               className="glass-card p-4"
             >
               <div className="flex flex-col sm:flex-row sm:items-center gap-3">

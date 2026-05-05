@@ -24,6 +24,8 @@ interface DBProduct {
 }
 
 const FALLBACK_CATEGORY_LABELS: Record<string, string> = {
+  roupas: "Roupas",
+  bermudas: "Bermudas",
   cabelo: "Cabelo",
   barba: "Barba",
   pos_barba: "Pós-barba",
