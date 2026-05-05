@@ -23,13 +23,16 @@ interface ProductRow {
 
 interface CategoryOption { value: string; label: string; icon?: string }
 const FALLBACK_CATEGORIES: CategoryOption[] = [
-  { value: "cabelo", label: "Cabelo" },
-  { value: "barba", label: "Barba" },
-  { value: "pos_barba", label: "Pós-barba" },
-  { value: "combos", label: "Combos" },
-  { value: "acessorios", label: "Acessórios" },
-  { value: "fragrancias", label: "Fragrâncias" },
-  { value: "geral", label: "Outros" },
+  { value: "camisetas", label: "Camisetas Premium" },
+  { value: "bermudas", label: "Bermudas & Shorts" },
+  { value: "tenis", label: "Tênis & Calçados" },
+  { value: "moletons", label: "Moletons & Jaquetas" },
+  { value: "acessorios", label: "Acessórios Masculinos" },
+  { value: "barba", label: "Cuidados para Barba" },
+  { value: "cabelo", label: "Finalizadores de Cabelo" },
+  { value: "fragrancias", label: "Perfumes & Fragrâncias" },
+  { value: "combos", label: "Kits & Combos" },
+  { value: "geral", label: "Coleção Geral" },
 ];
 
 const emptyForm = {
@@ -225,7 +228,7 @@ const Products = () => {
                   </div>
                   <div>
                     <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1 block">Marca</label>
-                    <input className="glass-input" value={form.brand} onChange={(e) => setForm({ ...form, brand: e.target.value })} placeholder="Ex: Styllus" />
+                    <input className="glass-input" value={form.brand} onChange={(e) => setForm({ ...form, brand: e.target.value })} placeholder="Ex: Genesis Sistemas" />
                   </div>
                   <div>
                     <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1 block">Peso / Volume</label>
