@@ -96,15 +96,9 @@ const AdminLogin = () => {
       >
         {/* Left - Branding */}
         <div className="hidden md:flex flex-col justify-center p-10 lg:p-14 relative overflow-hidden" style={{ background: t.cardBgSubtle }}>
-          <motion.div className="absolute w-80 h-80 rounded-full"
-            style={{ background: 'radial-gradient(circle, hsl(245 80% 55% / 0.15), transparent 60%)', filter: 'blur(40px)', left: '-20%', top: '30%' }}
-            animate={{ scale: [1, 1.3, 1], opacity: [0.4, 0.8, 0.4] }}
-            transition={{ duration: 5, repeat: Infinity }} />
+          <div className="absolute w-80 h-80 rounded-full pointer-events-none"
+            style={{ background: 'radial-gradient(circle, hsl(245 60% 55% / 0.06), transparent 70%)', filter: 'blur(40px)', left: '-20%', top: '30%' }} />
 
-          <motion.div className="absolute" style={{ right: '10%', top: '15%' }}
-            animate={{ rotate: 360 }} transition={{ duration: 20, repeat: Infinity, ease: "linear" }}>
-            <div className="w-20 h-20 rounded-full" style={{ border: `1px solid ${t.accentPurpleBorder}` }} />
-          </motion.div>
 
           <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2, duration: 0.5 }} className="relative z-10">
             <div className="flex items-center gap-2 mb-6">
@@ -118,7 +112,7 @@ const AdminLogin = () => {
             <motion.h1 className="text-3xl lg:text-4xl font-extrabold text-foreground leading-tight mb-3"
               initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}>
               Gerencie sua{" "}
-              <motion.span style={{ color: t.accentPurple }} animate={{ opacity: [1, 0.7, 1] }} transition={{ duration: 2, repeat: Infinity }}>Barbearia.</motion.span>
+              <span style={{ color: t.accentPurple }}>Barbearia.</span>
             </motion.h1>
 
             <motion.p className="text-muted-foreground text-sm leading-relaxed max-w-sm"
@@ -141,21 +135,17 @@ const AdminLogin = () => {
         <div className="flex flex-col justify-center p-8 sm:p-10 lg:p-14">
           <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.4, duration: 0.5 }}>
             <div className="md:hidden flex items-center gap-2 mb-8">
-              <motion.div className="w-10 h-10 rounded-xl flex items-center justify-center"
-                style={{ background: t.accentPurpleBg, border: `1px solid ${t.accentPurpleBorder}` }}
-                animate={{ boxShadow: ['0 0 0px hsl(245 60% 55% / 0)', '0 0 15px hsl(245 60% 55% / 0.3)', '0 0 0px hsl(245 60% 55% / 0)'] }}
-                transition={{ duration: 3, repeat: Infinity }}>
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center"
+                style={{ background: t.accentPurpleBg, border: `1px solid ${t.accentPurpleBorder}` }}>
                 <Scissors className="w-5 h-5" style={{ color: t.accentPurpleLight }} />
-              </motion.div>
+              </div>
               <span className="text-xs font-semibold tracking-[0.2em] uppercase" style={{ color: t.accentPurpleLight }}>ADMIN</span>
             </div>
 
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}>
               <div className="flex items-center gap-2 mb-1">
                 <h2 className="text-xl sm:text-2xl font-bold text-foreground">Acesse sua conta</h2>
-                <motion.div animate={{ rotate: [0, 15, -15, 0] }} transition={{ duration: 2, repeat: Infinity, delay: 1 }}>
-                  <Sparkles className="w-5 h-5" style={{ color: t.accentPurple }} />
-                </motion.div>
+                <Sparkles className="w-5 h-5" style={{ color: t.accentPurple }} />
               </div>
               <p className="text-muted-foreground text-sm mb-8">Bem-vindo de volta. Digite seus dados para entrar.</p>
             </motion.div>
@@ -178,15 +168,11 @@ const AdminLogin = () => {
               </motion.div>
 
               <motion.button type="submit" disabled={loading}
-                className="w-full py-3.5 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-all duration-300 disabled:opacity-50 relative overflow-hidden"
-                style={{ background: 'linear-gradient(135deg, hsl(245 60% 50%), hsl(265 60% 55%))', color: 'white', boxShadow: '0 4px 20px hsl(245 60% 55% / 0.3)' }}
-                whileHover={{ scale: 1.01, boxShadow: '0 8px 30px hsl(245 60% 55% / 0.4)' }}
+                className="w-full py-3.5 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-all duration-200 disabled:opacity-50"
+                style={{ background: 'hsl(245 55% 50%)', color: 'white' }}
                 whileTap={{ scale: 0.98 }}
                 initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.65 }}>
-                <motion.div className="absolute inset-0 pointer-events-none"
-                  style={{ background: 'linear-gradient(90deg, transparent, hsl(0 0% 100% / 0.1), transparent)' }}
-                  animate={{ x: ['-100%', '200%'] }} transition={{ duration: 2.5, repeat: Infinity, repeatDelay: 3 }} />
-                <span className="relative z-10 flex items-center gap-2">
+                <span className="flex items-center gap-2">
                   {loading ? (
                     <>
                       <motion.div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full"
