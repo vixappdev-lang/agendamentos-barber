@@ -412,6 +412,32 @@ const StorePage = () => {
           </div>
         </div>
       </footer>
+      </>
+      )}
+
+      {/* Bottom nav mobile */}
+      <nav className="sm:hidden fixed bottom-0 inset-x-0 z-[60] flex items-center justify-around px-2 pt-2 pb-[max(8px,env(safe-area-inset-bottom))]"
+        style={{ background: t.headerBg, borderTop: `1px solid ${t.border}`, backdropFilter: "blur(20px)" }}>
+        {[
+          { id: "shop" as const, label: "Loja", icon: ShoppingBag, onClick: () => { setView("shop"); setActiveCategory("todos"); window.scrollTo({ top: 0, behavior: "smooth" }); } },
+          { id: "cart" as const, label: "Carrinho", icon: Package, onClick: () => setShowCart(true), badge: cartCount },
+          { id: "orders" as const, label: "Pedidos", icon: Truck, onClick: () => openOrders() },
+          { id: "account" as const, label: "Conta", icon: User, onClick: () => openAccount() },
+        ].map((it) => {
+          const active = (it.id === "shop" && view === "shop") || (it.id === "account" && view === "account");
+          return (
+            <button key={it.id} onClick={it.onClick}
+              className="relative flex flex-col items-center justify-center gap-0.5 px-3 py-1.5 rounded-xl transition-all"
+              style={{ color: active ? t.textPrimary : t.textMuted }}>
+              <it.icon className="w-5 h-5" />
+              <span className="text-[10px] font-bold">{it.label}</span>
+              {it.badge && it.badge > 0 ? (
+                <span className="absolute top-0 right-1 min-w-[16px] h-[16px] px-1 rounded-full text-[9px] font-black flex items-center justify-center" style={{ background: t.btnBg, color: t.btnColor }}>{it.badge}</span>
+              ) : null}
+            </button>
+          );
+        })}
+      </nav>
 
       {/* Floating cart — abre o drawer */}
       <AnimatePresence>
