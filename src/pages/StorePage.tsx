@@ -309,20 +309,23 @@ const StorePage = () => {
             </div>
           ) : groupedProducts.length > 0 ? (
             <>
-              {/* Quick category jump (mobile-friendly horizontal chips) */}
-              {groupedProducts.length > 1 && (
-                <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-2 mb-2 -mx-1 px-1">
-                  {groupedProducts.map(([key, items]) => (
-                    <a
-                      key={key}
-                      href={`#cat-${key}`}
-                      className="shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-semibold transition-all hover:translate-y-[-1px]"
-                      style={{ background: t.cardBgSubtle, color: t.textSecondary, border: `1px solid ${t.borderSubtle}` }}
-                    >
-                      {formatCategoryLabel(key)}
-                      <span className="opacity-60">{items.length}</span>
-                    </a>
-                  ))}
+              {categoryOptions.length > 1 && (
+                <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-2 mb-3 -mx-1 px-1">
+                  {["todos", ...categoryOptions].map((key) => {
+                    const active = activeCategory === key;
+                    const total = key === "todos" ? products.length : products.filter((p) => (p.category || "geral").toLowerCase() === key).length;
+                    return (
+                      <button
+                        key={key}
+                        onClick={() => setActiveCategory(key)}
+                        className="shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-semibold transition-all hover:translate-y-[-1px]"
+                        style={{ background: active ? t.btnBg : t.cardBgSubtle, color: active ? t.btnColor : t.textSecondary, border: `1px solid ${active ? t.btnBg : t.borderSubtle}` }}
+                      >
+                        {key === "todos" ? "Todos" : formatCategoryLabel(key)}
+                        <span className="opacity-60">{total}</span>
+                      </button>
+                    );
+                  })}
                 </div>
               )}
 
@@ -364,6 +367,34 @@ const StorePage = () => {
           )}
         </section>
       </main>
+
+      <footer className="w-full mt-4" style={{ background: t.cardBg, borderTop: `1px solid ${t.border}` }}>
+        <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-10 xl:px-16 py-8 grid gap-6 md:grid-cols-[1.3fr_1fr_1fr]">
+          <div>
+            <div className="flex items-center gap-2 mb-2"><ShoppingBag className="w-4 h-4" style={{ color: t.textLink }} /><span className="text-sm font-black">{businessName}</span></div>
+            <p className="text-xs leading-relaxed max-w-md" style={{ color: t.textMuted }}>Loja oficial com catálogo atualizado, carrinho salvo, pedidos acompanháveis e atendimento direto.</p>
+          </div>
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-wider mb-3" style={{ color: t.textMuted }}>Pagamentos</p>
+            <div className="flex flex-wrap gap-2">
+              {[{ label: "PIX", icon: QrCode }, { label: "VISA", icon: CreditCard }, { label: "Mastercard", icon: CreditCard }, { label: "Cartão", icon: CreditCard }].map((p) => (
+                <span key={p.label} className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10px] font-bold" style={{ background: t.cardBgSubtle, color: t.textSecondary, border: `1px solid ${t.borderSubtle}` }}>
+                  <p.icon className="w-3.5 h-3.5" /> {p.label}
+                </span>
+              ))}
+            </div>
+          </div>
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-wider mb-3" style={{ color: t.textMuted }}>Compra segura</p>
+            <div className="grid gap-2 text-[11px]" style={{ color: t.textSecondary }}>
+              <span className="flex items-center gap-2"><BadgeCheck className="w-3.5 h-3.5" /> Produtos conferidos</span>
+              <span className="flex items-center gap-2"><RotateCcw className="w-3.5 h-3.5" /> Trocas combinadas no atendimento</span>
+              <span className="flex items-center gap-2"><Headphones className="w-3.5 h-3.5" /> Suporte pelo WhatsApp</span>
+              <span className="flex items-center gap-2"><MapPin className="w-3.5 h-3.5" /> Retirada ou entrega local</span>
+            </div>
+          </div>
+        </div>
+      </footer>
 
       {/* Floating cart — abre o drawer */}
       <AnimatePresence>
