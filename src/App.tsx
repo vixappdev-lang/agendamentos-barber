@@ -143,7 +143,7 @@ const App = () => (
                   <Route path="appointments" element={<Appointments />} />
                   <Route path="coupons" element={<Coupons />} />
                   <Route path="store" element={<StoreDashboard />} />
-                  <Route path="confg" element={<ChatProConfig />} />
+                  <Route path="confg" element={<WhatsAppProviders />} />
                   <Route path="whatsapp-templates" element={<WhatsAppTemplates />} />
                   <Route path="google-calendar" element={<GoogleCalendar />} />
                   <Route path="reviews" element={<Reviews />} />
@@ -187,7 +187,7 @@ const App = () => (
                   <Route path="appointments" element={<Appointments />} />
                   <Route path="coupons" element={<Coupons />} />
                   <Route path="store" element={<StoreDashboard />} />
-                  <Route path="confg" element={<ChatProConfig />} />
+                  <Route path="confg" element={<WhatsAppProviders />} />
                   <Route path="whatsapp-templates" element={<WhatsAppTemplates />} />
                   <Route path="google-calendar" element={<GoogleCalendar />} />
                   <Route path="barbershops" element={<Barbershops />} />
