@@ -146,8 +146,8 @@ const AdminLayout = () => {
     if (welcomeSeen === false) setShowWelcome(true);
   }, [loading, welcomeSeen]);
 
-  // Refresh progresso quando rota muda
-  useEffect(() => { if (!loading) refresh(); }, [location.pathname, loading, refresh]);
+  // Refresh progresso quando rota muda + fecha o menu mobile
+  useEffect(() => { if (!loading) refresh(); setSidebarOpen(false); }, [location.pathname, loading, refresh]);
 
   const panelSession = getPanelUserSession();
   const mysqlSession = getAdminMysqlSession();
