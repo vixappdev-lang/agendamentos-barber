@@ -121,7 +121,7 @@ function LivePhone({
 
 export default function Portifolio() {
   const [mounted, setMounted] = useState(false);
-  const [businessName, setBusinessName] = useState("sua barbearia");
+  const [businessName, setBusinessName] = useState("Sua Loja");
   useEffect(() => setMounted(true), []);
 
   useEffect(() => {
