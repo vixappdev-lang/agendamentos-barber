@@ -186,15 +186,15 @@ const AdminLayout = () => {
 
   return (
     <div className="min-h-screen flex" style={{ background: t.pageBgAlt }}>
-      <AnimatePresence>
-        {sidebarOpen && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden" onClick={() => setSidebarOpen(false)} />
-        )}
-      </AnimatePresence>
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
 
-      <motion.aside
-        className={`fixed lg:sticky top-0 left-0 z-50 h-[100dvh] w-[82vw] max-w-72 lg:w-64 flex flex-col transition-transform lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}
+      <aside
+        className={`fixed lg:sticky top-0 left-0 z-50 h-[100dvh] w-[86vw] max-w-[300px] lg:w-64 lg:max-w-none flex flex-col transition-transform duration-200 lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}
         style={{ background: t.sidebarBg, borderRight: `1px solid ${t.border}` }}>
         <div className="p-5 flex items-center justify-between" style={{ borderBottom: `1px solid ${t.border}` }}>
           <div className="flex items-center gap-2">
