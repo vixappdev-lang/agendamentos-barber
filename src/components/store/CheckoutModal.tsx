@@ -26,14 +26,11 @@ interface CheckoutModalProps {
 
 type DeliveryMode = "delivery" | "pickup";
 type PaymentMethod = "pix" | "delivery";
-type Step = "info" | "payment" | "confirmed";
 
 const CheckoutModal = ({
   items, onClose, onSuccess, mode, whatsappNumber, pixKey, pixType, prefill,
 }: CheckoutModalProps) => {
   const t = useThemeColors();
-  const navigate = useNavigate();
-  const [step, setStep] = useState<Step>("info");
   const [deliveryMode, setDeliveryMode] = useState<DeliveryMode>("pickup");
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("pix");
   const [form, setForm] = useState({
@@ -43,7 +40,6 @@ const CheckoutModal = ({
     address: "", number: "", complement: "", neighborhood: "", city: "",
     notes: "",
   });
-  const [copied, setCopied] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   // Cupom
@@ -59,11 +55,6 @@ const CheckoutModal = ({
   const subtotal = items.reduce((s, i) => s + i.price * i.quantity, 0);
   const discount = appliedCoupon?.discount || 0;
   const total = Math.max(0, subtotal - discount);
-
-  const goToOrders = () => {
-    onSuccess();
-    setTimeout(() => navigate("/membro?tab=orders"), 200);
-  };
 
   const applyCoupon = async () => {
     const code = couponInput.trim().toUpperCase();
