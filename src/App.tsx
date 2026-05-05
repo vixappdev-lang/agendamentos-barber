@@ -45,6 +45,7 @@ const Settings = lazy(() => import("./pages/admin/Settings"));
 const StoreDashboard = lazy(() => import("./pages/admin/StoreDashboard"));
 const Finance = lazy(() => import("./pages/admin/Finance"));
 const ChatProConfig = lazy(() => import("./pages/admin/ChatProConfig"));
+const WhatsAppProviders = lazy(() => import("./pages/admin/WhatsAppProviders"));
 const Barbershops = lazy(() => import("./pages/admin/Barbershops"));
 const Reviews = lazy(() => import("./pages/admin/Reviews"));
 const ProductReviews = lazy(() => import("./pages/admin/ProductReviews"));
@@ -142,7 +143,7 @@ const App = () => (
                   <Route path="appointments" element={<Appointments />} />
                   <Route path="coupons" element={<Coupons />} />
                   <Route path="store" element={<StoreDashboard />} />
-                  <Route path="confg" element={<ChatProConfig />} />
+                  <Route path="confg" element={<WhatsAppProviders />} />
                   <Route path="whatsapp-templates" element={<WhatsAppTemplates />} />
                   <Route path="google-calendar" element={<GoogleCalendar />} />
                   <Route path="reviews" element={<Reviews />} />
@@ -186,7 +187,7 @@ const App = () => (
                   <Route path="appointments" element={<Appointments />} />
                   <Route path="coupons" element={<Coupons />} />
                   <Route path="store" element={<StoreDashboard />} />
-                  <Route path="confg" element={<ChatProConfig />} />
+                  <Route path="confg" element={<WhatsAppProviders />} />
                   <Route path="whatsapp-templates" element={<WhatsAppTemplates />} />
                   <Route path="google-calendar" element={<GoogleCalendar />} />
                   <Route path="barbershops" element={<Barbershops />} />

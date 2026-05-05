@@ -1,0 +1,4 @@
+node_modules/
+.env
+*.log
+baileys_auth/
