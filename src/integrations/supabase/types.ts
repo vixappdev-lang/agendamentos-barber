@@ -1044,6 +1044,51 @@ export type Database = {
         }
         Relationships: []
       }
+      render_baileys_session: {
+        Row: {
+          auth_state: Json | null
+          id: number
+          updated_at: string
+        }
+        Insert: {
+          auth_state?: Json | null
+          id?: number
+          updated_at?: string
+        }
+        Update: {
+          auth_state?: Json | null
+          id?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      render_config: {
+        Row: {
+          created_at: string
+          enabled: boolean
+          id: string
+          shared_secret: string
+          updated_at: string
+          url: string
+        }
+        Insert: {
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          shared_secret?: string
+          updated_at?: string
+          url?: string
+        }
+        Update: {
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          shared_secret?: string
+          updated_at?: string
+          url?: string
+        }
+        Relationships: []
+      }
       reviews: {
         Row: {
           appointment_id: string | null
