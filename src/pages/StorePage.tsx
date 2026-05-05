@@ -85,7 +85,7 @@ const StorePage = () => {
     const fetchAll = async () => {
       const [productsRes, settingsRes, catsRes] = await Promise.all([
         supabase.from("products")
-          .select("id,title,description,price,image_url,active,sort_order,category,brand,stock,highlights,gallery,long_description,weight")
+          .select("id,title,description,price,image_url,active,sort_order,category,brand,stock,highlights,gallery,long_description,weight,created_at")
           .eq("active", true).order("sort_order"),
         supabase.from("business_settings").select("key,value")
           .in("key", ["store_enabled","store_order_mode","whatsapp_number","pix_key","pix_type","business_name"]),
