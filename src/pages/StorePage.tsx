@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ShoppingBag, Search, Package, ArrowLeft, Sparkles, Truck, ShieldCheck, Star } from "lucide-react";
+import { ShoppingBag, Search, Package, ArrowLeft, Sparkles, Truck, ShieldCheck, Star, User, CreditCard, QrCode, BadgeCheck, RotateCcw, Headphones, Shirt, MapPin } from "lucide-react";
 import ProductCard from "@/components/ProductCard";
 import CheckoutModal from "@/components/store/CheckoutModal";
 import OrderTracker from "@/components/store/OrderTracker";
@@ -24,15 +24,18 @@ interface DBProduct {
 }
 
 const FALLBACK_CATEGORY_LABELS: Record<string, string> = {
-  roupas: "Roupas",
-  bermudas: "Bermudas",
-  cabelo: "Cabelo",
-  barba: "Barba",
+  camisetas: "Camisetas Premium",
+  roupas: "Camisetas Premium",
+  bermudas: "Bermudas & Shorts",
+  tenis: "Tênis & Calçados",
+  moletons: "Moletons & Jaquetas",
+  cabelo: "Finalizadores de Cabelo",
+  barba: "Cuidados para Barba",
   pos_barba: "Pós-barba",
-  combos: "Combos",
-  acessorios: "Acessórios",
-  fragrancias: "Fragrâncias",
-  geral: "Outros",
+  combos: "Kits & Combos",
+  acessorios: "Acessórios Masculinos",
+  fragrancias: "Perfumes & Fragrâncias",
+  geral: "Coleção Geral",
 };
 
 const StorePage = () => {
