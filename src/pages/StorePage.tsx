@@ -248,8 +248,13 @@ const StorePage = () => {
         </div>
       </header>
 
+      {view === "account" && user ? (
+        <AccountInline user={user} t={t} onBack={() => setView("shop")} onSignedOut={() => { setUser(null); setView("shop"); }} />
+      ) : (
+      <>
       {/* Hero compacto */}
       <section className="relative w-full">
+
         <div className="relative w-full h-[200px] sm:h-[260px] lg:h-[320px] overflow-hidden">
           <AnimatePresence mode="wait">
             <motion.img key={currentHero?.id || "hero"} src={currentHero?.image_url || storeHero} alt={currentHero?.title || businessName} className="absolute inset-0 w-full h-full object-cover" fetchPriority="high"
