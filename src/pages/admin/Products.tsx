@@ -157,44 +157,44 @@ const Products = () => {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg font-bold text-foreground">Produtos / Loja</h2>
+      <div className="flex items-center justify-between gap-2 flex-wrap">
+        <h2 className="text-base sm:text-lg font-bold text-foreground">Produtos / Loja</h2>
         <button onClick={() => { setForm(emptyForm); setEditing(null); setShowModal(true); }}
-          className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all"
+          className="flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl text-[11px] sm:text-xs font-semibold transition-all shrink-0"
           style={{ background: 'hsl(245 60% 55%)', color: 'white' }}>
-          <Plus className="w-4 h-4" /> Novo Produto
+          <Plus className="w-4 h-4" /> <span className="hidden xs:inline">Novo Produto</span><span className="xs:hidden">Novo</span>
         </button>
       </div>
 
       <div className="grid gap-3">
         {products.map((p) => (
-          <motion.div key={p.id} layout className="glass-card p-4 flex items-center gap-4">
+          <motion.div key={p.id} layout className="glass-card p-3 sm:p-4 flex items-start sm:items-center gap-3 sm:gap-4">
             {p.image_url ? (
-              <img src={p.image_url} alt={p.title} className="w-14 h-14 rounded-xl object-cover shrink-0" />
+              <img src={p.image_url} alt={p.title} className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl object-cover shrink-0" />
             ) : (
-              <div className="w-14 h-14 rounded-xl shrink-0 flex items-center justify-center" style={{ background: 'hsl(0 0% 100% / 0.05)' }}>
+              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl shrink-0 flex items-center justify-center" style={{ background: 'hsl(0 0% 100% / 0.05)' }}>
                 <ShoppingBag className="w-5 h-5 text-muted-foreground" />
               </div>
             )}
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 flex-wrap">
-                <h3 className="text-sm font-semibold text-foreground truncate">{p.title}</h3>
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <h3 className="text-xs sm:text-sm font-semibold text-foreground truncate max-w-[160px] sm:max-w-none">{p.title}</h3>
                 {p.brand && <span className="text-[9px] px-1.5 py-0.5 rounded-md uppercase tracking-wider font-bold" style={{ background: 'hsl(245 60% 55% / 0.12)', color: 'hsl(245 60% 75%)' }}>{p.brand}</span>}
                 {!p.active && <span className="text-[10px] px-2 py-0.5 rounded-full" style={{ background: 'hsl(0 60% 50% / 0.15)', color: 'hsl(0 60% 65%)' }}>Inativo</span>}
                 {p.stock != null && p.stock <= 0 && <span className="text-[10px] px-2 py-0.5 rounded-full" style={{ background: 'hsl(40 80% 50% / 0.15)', color: 'hsl(40 80% 60%)' }}>Sem estoque</span>}
               </div>
-              <p className="text-xs text-muted-foreground truncate">{p.description}</p>
-              <div className="flex items-center gap-3 mt-1">
-                <span className="text-sm font-bold" style={{ color: 'hsl(245 60% 70%)' }}>R$ {Number(p.price).toFixed(2)}</span>
+              <p className="text-[11px] sm:text-xs text-muted-foreground truncate">{p.description}</p>
+              <div className="flex items-center gap-2 sm:gap-3 mt-1 flex-wrap">
+                <span className="text-xs sm:text-sm font-bold" style={{ color: 'hsl(245 60% 70%)' }}>R$ {Number(p.price).toFixed(2)}</span>
                 {p.stock != null && <span className="text-[10px] text-muted-foreground">Estoque: {p.stock}</span>}
               </div>
             </div>
-            <div className="flex items-center gap-2 shrink-0">
-              <button onClick={() => handleEdit(p)} className="p-2 rounded-lg" style={{ background: 'hsl(0 0% 100% / 0.05)' }}>
-                <Pencil className="w-4 h-4 text-muted-foreground" />
+            <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+              <button onClick={() => handleEdit(p)} className="p-1.5 sm:p-2 rounded-lg" style={{ background: 'hsl(0 0% 100% / 0.05)' }}>
+                <Pencil className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-muted-foreground" />
               </button>
-              <button onClick={() => handleDelete(p.id)} className="p-2 rounded-lg" style={{ background: 'hsl(0 60% 50% / 0.1)' }}>
-                <Trash2 className="w-4 h-4" style={{ color: 'hsl(0 60% 60%)' }} />
+              <button onClick={() => handleDelete(p.id)} className="p-1.5 sm:p-2 rounded-lg" style={{ background: 'hsl(0 60% 50% / 0.1)' }}>
+                <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" style={{ color: 'hsl(0 60% 60%)' }} />
               </button>
             </div>
           </motion.div>

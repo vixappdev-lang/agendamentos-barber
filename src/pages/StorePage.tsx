@@ -62,7 +62,7 @@ const StorePage = () => {
   const [whatsappNumber, setWhatsappNumber] = useState("");
   const [pixKey, setPixKey] = useState("");
   const [pixType, setPixType] = useState("cpf");
-  const [businessName, setBusinessName] = useState("Barbearia");
+  const [businessName, setBusinessName] = useState("Sua Loja");
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<AuthUser | null>(null);
   const [categoryMap, setCategoryMap] = useState<Record<string, { label: string; sort: number; icon?: string }>>({});
