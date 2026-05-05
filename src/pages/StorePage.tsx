@@ -376,7 +376,7 @@ const StorePage = () => {
         </section>
       </main>
 
-      <footer className="w-full mt-4" style={{ background: t.cardBg, borderTop: `1px solid ${t.border}` }}>
+      <footer className="w-full mt-4 pb-[calc(96px+env(safe-area-inset-bottom))] sm:pb-0" style={{ background: t.cardBg, borderTop: `1px solid ${t.border}` }}>
         <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-10 xl:px-16 py-8 grid gap-6 md:grid-cols-[1.3fr_1fr_1fr]">
           <div>
             <div className="flex items-center gap-2 mb-2"><ShoppingBag className="w-4 h-4" style={{ color: t.textLink }} /><span className="text-sm font-black">{businessName}</span></div>
