@@ -45,6 +45,7 @@ const Settings = lazy(() => import("./pages/admin/Settings"));
 const StoreDashboard = lazy(() => import("./pages/admin/StoreDashboard"));
 const Finance = lazy(() => import("./pages/admin/Finance"));
 const ChatProConfig = lazy(() => import("./pages/admin/ChatProConfig"));
+const WhatsAppProviders = lazy(() => import("./pages/admin/WhatsAppProviders"));
 const Barbershops = lazy(() => import("./pages/admin/Barbershops"));
 const Reviews = lazy(() => import("./pages/admin/Reviews"));
 const ProductReviews = lazy(() => import("./pages/admin/ProductReviews"));
