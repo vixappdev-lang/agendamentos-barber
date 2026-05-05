@@ -411,7 +411,7 @@ const StorePage = () => {
         style={{ background: t.headerBg, borderTop: `1px solid ${t.border}`, backdropFilter: "blur(20px)" }}>
         {[
           { id: "shop" as const, label: "Loja", icon: ShoppingBag, onClick: () => { setView("shop"); setActiveCategory("todos"); window.scrollTo({ top: 0, behavior: "smooth" }); } },
-          { id: "cart" as const, label: "Carrinho", icon: Package, onClick: () => setShowCart(true), badge: cartCount },
+          { id: "cart" as const, label: "Carrinho", icon: ShoppingBag, onClick: () => setShowCart(true), badge: cartCount },
           { id: "orders" as const, label: "Pedidos", icon: Truck, onClick: () => openOrders() },
           { id: "account" as const, label: "Conta", icon: User, onClick: () => openAccount() },
         ].map((it) => {
