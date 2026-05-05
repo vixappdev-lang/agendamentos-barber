@@ -245,7 +245,9 @@ const StorePage = () => {
       </header>
 
       {view === "account" && user ? (
-        <AccountInline user={user} t={t} onBack={() => setView("shop")} onSignedOut={() => { setUser(null); setView("shop"); }} />
+        <Suspense fallback={<div className="min-h-[60vh]" />}>
+          <AccountInline user={user} t={t} onBack={() => setView("shop")} onSignedOut={() => { setUser(null); setView("shop"); }} />
+        </Suspense>
       ) : (
       <>
       {/* Hero compacto */}
@@ -456,73 +458,84 @@ const StorePage = () => {
         )}
       </AnimatePresence>
 
-      <CartDrawer
-        open={showCart}
-        onClose={() => setShowCart(false)}
-        items={cart}
-        total={cartTotal}
-        count={cartCount}
-        updateQty={updateQty}
-        remove={remove}
-        clear={clear}
-        isLogged={!!cartUser}
-        onCheckout={() => { setShowCart(false); openCheckout(); }}
-      />
-
-
-      <AnimatePresence>
-        {detailProduct && (
-          <ProductDetailModal
-            product={{
-              ...detailProduct,
-              highlights: Array.isArray(detailProduct.highlights) ? detailProduct.highlights : [],
-              gallery: Array.isArray(detailProduct.gallery) ? detailProduct.gallery : [],
-            }}
-            onClose={() => setDetailProduct(null)}
-            onAdd={(qty) => handleAddToCart(detailProduct, qty)}
-          />
-        )}
-      </AnimatePresence>
-
-      <AnimatePresence>
-        {showAuthGate && (
-          <AuthRequiredModal
-            onClose={() => setShowAuthGate(false)}
-            onAuthenticated={async () => {
-              const { data: { session } } = await supabase.auth.getSession();
-              if (session?.user) setUser(session.user);
-              setShowAuthGate(false);
-              if (authAfter === "account") { setView("account"); window.scrollTo({ top: 0 }); }
-              else setShowCheckout(true);
-            }}
-          />
-        )}
-      </AnimatePresence>
-
-      <AnimatePresence>
-        {showOrderTracker && (
-          <OrderTracker
-            onClose={() => setShowOrderTracker(false)}
-            customerPhone=""
-            customerEmail={user?.email || undefined}
-          />
-        )}
-      </AnimatePresence>
-
-      <AnimatePresence>
-        {showCheckout && (
-          <CheckoutModal
+      <Suspense fallback={null}>
+        {showCart && (
+          <CartDrawer
+            open={showCart}
+            onClose={() => setShowCart(false)}
             items={cart}
-            onClose={() => setShowCheckout(false)}
-            onSuccess={() => { setShowCheckout(false); clear(); }}
-            mode={storeOrderMode}
-            whatsappNumber={whatsappNumber}
-            pixKey={pixKey}
-            pixType={pixType}
-            prefill={userPrefill}
+            total={cartTotal}
+            count={cartCount}
+            updateQty={updateQty}
+            remove={remove}
+            clear={clear}
+            isLogged={!!cartUser}
+            onCheckout={() => { setShowCart(false); openCheckout(); }}
           />
         )}
-      </AnimatePresence>
+      </Suspense>
+
+      <Suspense fallback={null}>
+        <AnimatePresence>
+          {detailProduct && (
+            <ProductDetailModal
+              product={{
+                ...detailProduct,
+                highlights: Array.isArray(detailProduct.highlights) ? detailProduct.highlights : [],
+                gallery: Array.isArray(detailProduct.gallery) ? detailProduct.gallery : [],
+              }}
+              onClose={() => setDetailProduct(null)}
+              onAdd={(qty) => handleAddToCart(detailProduct, qty)}
+            />
+          )}
+        </AnimatePresence>
+      </Suspense>
+
+      <Suspense fallback={null}>
+        <AnimatePresence>
+          {showAuthGate && (
+            <AuthRequiredModal
+              onClose={() => setShowAuthGate(false)}
+              onAuthenticated={async () => {
+                const { data: { session } } = await supabase.auth.getSession();
+                if (session?.user) setUser(session.user);
+                setShowAuthGate(false);
+                if (authAfter === "account") { setView("account"); window.scrollTo({ top: 0 }); }
+                else setShowCheckout(true);
+              }}
+            />
+          )}
+        </AnimatePresence>
+      </Suspense>
+
+      <Suspense fallback={null}>
+        <AnimatePresence>
+          {showOrderTracker && (
+            <OrderTracker
+              onClose={() => setShowOrderTracker(false)}
+              customerPhone=""
+              customerEmail={user?.email || undefined}
+            />
+          )}
+        </AnimatePresence>
+      </Suspense>
+
+      <Suspense fallback={null}>
+        <AnimatePresence>
+          {showCheckout && (
+            <CheckoutModal
+              items={cart}
+              onClose={() => setShowCheckout(false)}
+              onSuccess={() => { setShowCheckout(false); clear(); }}
+              mode={storeOrderMode}
+              whatsappNumber={whatsappNumber}
+              pixKey={pixKey}
+              pixType={pixType}
+              prefill={userPrefill}
+            />
+          )}
+        </AnimatePresence>
+      </Suspense>
     </div>
   );
 };
