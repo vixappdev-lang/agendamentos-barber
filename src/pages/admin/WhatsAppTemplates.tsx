@@ -208,7 +208,8 @@ const WhatsAppTemplates = () => {
     setSendingTest(true);
     try {
       const message = renderPreview(values[t.key] || t.defaultValue);
-      const { error } = await supabase.functions.invoke("chatpro", {
+      const fnName = testProvider === "render" ? "render-whatsapp" : "chatpro";
+      const { error } = await supabase.functions.invoke(fnName, {
         body: { action: "send_message", phone: testPhone, message },
       });
       if (error) throw error;
