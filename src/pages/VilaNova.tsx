@@ -696,7 +696,7 @@ const VilaNova = () => {
       </section>
 
       {/* ─── EQUIPE ─── */}
-      <TeamSection barbers={barbers} />
+      <Suspense fallback={null}><TeamSection barbers={barbers} /></Suspense>
 
       {/* ─── GALLERY ─── */}
       {(() => {
@@ -763,11 +763,15 @@ const VilaNova = () => {
             </section>
 
             {/* Gallery Modal (full grid) */}
-            <GalleryModal
-              open={galleryModalOpen}
-              onClose={() => setGalleryModalOpen(false)}
-              images={galleryImages}
-            />
+            <Suspense fallback={null}>
+              {galleryModalOpen && (
+                <GalleryModal
+                  open={galleryModalOpen}
+                  onClose={() => setGalleryModalOpen(false)}
+                  images={galleryImages}
+                />
+              )}
+            </Suspense>
 
             {/* ─── LIGHTBOX (single-image preview from grid) ─── */}
             <AnimatePresence>
@@ -795,10 +799,10 @@ const VilaNova = () => {
       })()}
 
       {/* ─── DEPOIMENTOS ─── */}
-      <TestimonialsSection />
+      <Suspense fallback={null}><TestimonialsSection /></Suspense>
 
       {/* ─── FAQ ─── */}
-      <FAQSection />
+      <Suspense fallback={null}><FAQSection /></Suspense>
 
       {/* ─── CTA BANNER ─── */}
       <section className="py-16 sm:py-24 px-4 sm:px-6 lg:px-8" style={{ background: t.isLight ? "hsl(220 12% 95%)" : "hsl(220 18% 5%)" }}>
