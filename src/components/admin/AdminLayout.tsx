@@ -106,35 +106,36 @@ const AdminLayout = () => {
     checkAdmin();
   }, [navigate]);
 
-  // Pré-carrega chunks das rotas admin em background (após sessão validada)
+  // Pré-carrega chunks da rota atual e adjacentes em idle (sem custo no 1º load)
   useEffect(() => {
     if (loading) return;
-    const idle = (cb: () => void) =>
+    const isMobile = typeof window !== "undefined" && window.matchMedia("(max-width: 768px)").matches;
+    const idle = (cb: () => void, delay = 1500) =>
       "requestIdleCallback" in window
-        ? (window as any).requestIdleCallback(cb, { timeout: 1500 })
-        : setTimeout(cb, 200);
+        ? (window as any).requestIdleCallback(cb, { timeout: 3000 })
+        : setTimeout(cb, delay);
+    // Em mobile, só pré-carrega rotas mais usadas; desktop carrega todas
     idle(() => {
-      // todas as rotas — qualquer clique fica instantâneo após o 1º carregamento
       void import("@/pages/admin/Dashboard");
-      void import("@/pages/admin/Services");
-      void import("@/pages/admin/Barbers");
       void import("@/pages/admin/Appointments");
-      void import("@/pages/admin/Coupons");
-      void import("@/pages/admin/StoreDashboard");
-      void import("@/pages/admin/Finance");
-      void import("@/pages/admin/ChatProConfig");
-      void import("@/pages/admin/Reviews");
-      void import("@/pages/admin/Settings");
       void import("@/pages/admin/Cashier");
       void import("@/pages/admin/Commands");
-      void import("@/pages/admin/Commissions");
-      void import("@/pages/admin/Credit");
-      void import("@/pages/admin/Inventory");
-      void import("@/pages/admin/Suppliers");
-      if (isSuperAdmin(userEmail)) {
-        void import("@/pages/admin/Barbershops");
+      if (!isMobile) {
+        void import("@/pages/admin/Services");
+        void import("@/pages/admin/Barbers");
+        void import("@/pages/admin/Coupons");
+        void import("@/pages/admin/StoreDashboard");
+        void import("@/pages/admin/Finance");
+        void import("@/pages/admin/Reviews");
+        void import("@/pages/admin/Settings");
+        void import("@/pages/admin/Commissions");
+        void import("@/pages/admin/Credit");
+        void import("@/pages/admin/Inventory");
+        void import("@/pages/admin/Suppliers");
+        void import("@/pages/admin/ChatProConfig");
+        if (isSuperAdmin(userEmail)) void import("@/pages/admin/Barbershops");
       }
-    });
+    }, 2500);
   }, [loading, userEmail]);
 
 
