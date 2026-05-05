@@ -51,7 +51,6 @@ const StorePage = () => {
   const [showCheckout, setShowCheckout] = useState(false);
   const [showAuthGate, setShowAuthGate] = useState(false);
   const [showOrderTracker, setShowOrderTracker] = useState(false);
-  const [showAccount, setShowAccount] = useState(false);
   const [authAfter, setAuthAfter] = useState<"checkout" | "account">("checkout");
   const [showCart, setShowCart] = useState(false);
   const [detailProduct, setDetailProduct] = useState<DBProduct | null>(null);
@@ -66,6 +65,7 @@ const StorePage = () => {
   const [categoryMap, setCategoryMap] = useState<Record<string, { label: string; sort: number; icon?: string }>>({});
   const [activeCategory, setActiveCategory] = useState("todos");
   const [heroIndex, setHeroIndex] = useState(0);
+  const [view, setView] = useState<"shop" | "account">("shop");
 
   const formatCategoryLabel = (key: string) =>
     categoryMap[key]?.label ||
