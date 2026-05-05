@@ -167,39 +167,34 @@ const CheckoutModal = ({
 
     setSubmitting(false);
 
-    if (mode === "whatsapp") {
-      const itemsText = items.map((i) => `• ${i.quantity}x ${i.title} - R$ ${(i.price * i.quantity).toFixed(2)}`).join("\n");
-      const deliveryText = deliveryMode === "delivery"
-        ? `\n📍 ${form.address}, ${form.number}\n🏘️ ${form.neighborhood} — ${form.city}`
-        : "\n🏪 Retirada no local";
-      const payText = paymentMethod === "pix" ? "PIX" : "Na entrega";
-      const subtotalLine = appliedCoupon ? `💵 *Subtotal:* R$ ${subtotal.toFixed(2)}\n` : "";
-      const msg = `🛒 *Novo Pedido #${String(order.id).slice(0, 8)}*\n\n👤 ${form.name}\n📱 ${form.phone}\n\n📦 *Itens:*\n${itemsText}\n\n${subtotalLine}${couponLine ? couponLine + "\n" : ""}💰 *Total:* R$ ${total.toFixed(2)}\n💳 *Pagamento:* ${payText}${deliveryText}\n\n📝 ${form.notes || "—"}`;
-      if (whatsappNumber) window.open(`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(msg)}`, "_blank");
-      toast.success("Pedido salvo na sua conta!");
-      goToOrders();
-      return;
-    }
+    // Mensagem profissional pro WhatsApp pedindo PIX/forma de pagto
+    const itemsText = items.map((i) => `• ${i.quantity}x ${i.title} — R$ ${(i.price * i.quantity).toFixed(2).replace(".", ",")}`).join("\n");
+    const deliveryText = deliveryMode === "delivery"
+      ? `📍 *Entrega:* ${form.address}, ${form.number}${form.complement ? " — " + form.complement : ""}\n🏘️ ${form.neighborhood}${form.city ? " · " + form.city : ""}`
+      : "🏪 *Retirada no local*";
+    const payText = paymentMethod === "pix"
+      ? "PIX (aguardando chave para pagamento)"
+      : "Pagamento na entrega/retirada";
+    const subtotalLine = appliedCoupon ? `Subtotal: R$ ${subtotal.toFixed(2).replace(".", ",")}\n` : "";
+    const couponMsgLine = appliedCoupon ? `🎟️ Cupom: *${appliedCoupon.code}* (−R$ ${discount.toFixed(2).replace(".", ",")})\n` : "";
+    const greeting = paymentMethod === "pix"
+      ? `Oi! Acabei de finalizar minha compra na loja e gostaria de pagar via *PIX*. Pode me enviar a chave por favor?`
+      : `Oi! Acabei de finalizar minha compra na loja e vou pagar *na entrega/retirada*. Pode confirmar?`;
 
-    if (paymentMethod === "delivery") {
-      setStep("confirmed");
-      setTimeout(goToOrders, 1500);
+    const msg = `${greeting}\n\n🛒 *Pedido #${String(order.id).slice(0, 8).toUpperCase()}*\n👤 ${form.name}\n📱 ${form.phone}\n\n📦 *Itens:*\n${itemsText}\n\n${subtotalLine}${couponMsgLine}💰 *Total: R$ ${total.toFixed(2).replace(".", ",")}*\n💳 ${payText}\n\n${deliveryText}${form.notes ? `\n\n📝 Obs: ${form.notes}` : ""}\n\nObrigado! 🙏`;
+
+    setSubmitting(false);
+
+    const target = whatsappNumber ? whatsappNumber.replace(/\D/g, "") : "";
+    if (target) {
+      window.open(`https://wa.me/${target}?text=${encodeURIComponent(msg)}`, "_blank");
     } else {
-      setStep("payment");
+      // Sem número configurado, copia mensagem
+      try { await navigator.clipboard.writeText(msg); } catch {}
+      toast.error("Número da loja não configurado. Mensagem copiada.");
     }
-  };
-
-  const handleCopyPix = () => {
-    navigator.clipboard.writeText(pixKey);
-    setCopied(true);
-    toast.success("Chave PIX copiada!");
-    setTimeout(() => setCopied(false), 2000);
-  };
-
-  const handleConfirmPayment = () => {
-    setStep("confirmed");
-    toast.success("Pedido realizado! 🎉");
-    setTimeout(goToOrders, 1500);
+    toast.success("Pedido enviado! Continue no WhatsApp.");
+    onSuccess();
   };
 
   const labelCls = "text-[10px] font-semibold uppercase tracking-wider mb-1 block";
@@ -221,11 +216,11 @@ const CheckoutModal = ({
         onClick={(e) => e.stopPropagation()}>
 
         <div className="flex items-center justify-between">
-          <h2 className="text-base font-bold" style={{ color: t.textPrimary }}>
-            {step === "info" ? "Finalizar Pedido" : step === "payment" ? "Pagamento PIX" : "Pedido Confirmado!"}
-          </h2>
+          <h2 className="text-base font-bold" style={{ color: t.textPrimary }}>Finalizar Pedido</h2>
           <button onClick={onClose}><X className="w-5 h-5" style={{ color: t.textMuted }} /></button>
         </div>
+
+        {true && (
 
         {step === "info" && (
           <div className="space-y-3">
