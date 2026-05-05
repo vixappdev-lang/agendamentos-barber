@@ -105,15 +105,31 @@ const StorePage = () => {
     fetchAll();
   }, []);
 
+  const categoryOptions = useMemo(() => {
+    const keys = Array.from(new Set(products.map((p) => (p.category || "geral").toLowerCase())));
+    return keys.sort((a, b) => (categoryMap[a]?.sort ?? 999) - (categoryMap[b]?.sort ?? 999));
+  }, [products, categoryMap]);
+
+  const heroProducts = useMemo(() => products.filter((p) => p.image_url).slice(0, 6), [products]);
+
+  useEffect(() => {
+    if (heroProducts.length <= 1) return;
+    const timer = window.setInterval(() => setHeroIndex((i) => (i + 1) % heroProducts.length), 4500);
+    return () => window.clearInterval(timer);
+  }, [heroProducts.length]);
+
   const filteredProducts = useMemo(() => {
-    if (!search) return products;
+    const byCategory = activeCategory === "todos"
+      ? products
+      : products.filter((p) => (p.category || "geral").toLowerCase() === activeCategory);
+    if (!search) return byCategory;
     const q = search.toLowerCase();
-    return products.filter((p) =>
+    return byCategory.filter((p) =>
       p.title.toLowerCase().includes(q) ||
       (p.description || "").toLowerCase().includes(q) ||
       (p.brand || "").toLowerCase().includes(q)
     );
-  }, [search, products]);
+  }, [search, products, activeCategory]);
 
   // Group filtered products by category, ordered by category sort_order
   const groupedProducts = useMemo(() => {
