@@ -219,19 +219,30 @@ const StorePage = () => {
               <span className="text-sm font-bold truncate">{businessName}</span>
             </div>
           </div>
-          <button onClick={openOrders}
-            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-[11px] font-semibold transition-all shrink-0"
-            style={{ background: t.btnGhostBg, color: t.btnGhostColor, border: `1px solid ${t.btnGhostBorder}` }}>
-            <Package className="w-3.5 h-3.5" />
-            <span>Pedidos</span>
-          </button>
+          <div className="flex items-center gap-2 shrink-0">
+            <button onClick={openAccount}
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-[11px] font-semibold transition-all"
+              style={{ background: t.btnGhostBg, color: t.btnGhostColor, border: `1px solid ${t.btnGhostBorder}` }}>
+              <User className="w-3.5 h-3.5" />
+              <span>Conta</span>
+            </button>
+            <button onClick={openOrders}
+              className="hidden xs:inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-[11px] font-semibold transition-all"
+              style={{ background: t.btnGhostBg, color: t.btnGhostColor, border: `1px solid ${t.btnGhostBorder}` }}>
+              <Package className="w-3.5 h-3.5" />
+              <span>Pedidos</span>
+            </button>
+          </div>
         </div>
       </header>
 
       {/* Hero compacto */}
       <section className="relative w-full">
         <div className="relative w-full h-[200px] sm:h-[260px] lg:h-[320px] overflow-hidden">
-          <img src={storeHero} alt={businessName} className="absolute inset-0 w-full h-full object-cover" fetchPriority="high" />
+          <AnimatePresence mode="wait">
+            <motion.img key={currentHero?.id || "hero"} src={currentHero?.image_url || storeHero} alt={currentHero?.title || businessName} className="absolute inset-0 w-full h-full object-cover" fetchPriority="high"
+              initial={{ opacity: 0, scale: 1.03 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.7 }} />
+          </AnimatePresence>
           <div className="absolute inset-0" style={{
             background: "linear-gradient(180deg, hsl(220 20% 4% / 0.6) 0%, hsl(220 20% 4% / 0.4) 50%, hsl(220 20% 4% / 0.92) 100%)"
           }} />
@@ -243,6 +254,12 @@ const StorePage = () => {
               <h1 className="text-2xl sm:text-4xl lg:text-5xl font-black tracking-tight text-white leading-[1.05]">
                 {businessName}
               </h1>
+              {currentHero && (
+                <button onClick={() => setDetailProduct(currentHero)} className="mt-3 inline-flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold text-white"
+                  style={{ background: "hsl(0 0% 100% / 0.14)", border: "1px solid hsl(0 0% 100% / 0.22)", backdropFilter: "blur(10px)" }}>
+                  <Shirt className="w-3.5 h-3.5" /> {currentHero.title}
+                </button>
+              )}
             </motion.div>
           </div>
         </div>
