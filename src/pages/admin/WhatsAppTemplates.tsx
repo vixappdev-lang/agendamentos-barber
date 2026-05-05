@@ -364,6 +364,29 @@ const WhatsAppTemplates = () => {
           {/* Test send */}
           <div className="pt-3 border-t border-white/5 space-y-2">
             <label className="text-xs font-semibold text-muted-foreground">Enviar teste</label>
+            <div className="flex gap-1.5">
+              {(["chatpro", "render"] as const).map((p) => (
+                <button
+                  key={p}
+                  type="button"
+                  onClick={() => setTestProvider(p)}
+                  className="flex-1 px-2 py-1.5 rounded-lg text-[10px] font-semibold uppercase transition-all"
+                  style={{
+                    background: testProvider === p
+                      ? (p === "render" ? "hsl(245 60% 55% / 0.18)" : "hsl(140 60% 50% / 0.18)")
+                      : "hsl(0 0% 100% / 0.04)",
+                    color: testProvider === p
+                      ? (p === "render" ? "hsl(245 60% 70%)" : "hsl(140 60% 60%)")
+                      : "hsl(0 0% 50%)",
+                    border: `1px solid ${testProvider === p
+                      ? (p === "render" ? "hsl(245 60% 55% / 0.35)" : "hsl(140 60% 50% / 0.35)")
+                      : "hsl(0 0% 100% / 0.08)"}`,
+                  }}
+                >
+                  {p === "render" ? "Render" : "ChatPro"}
+                </button>
+              ))}
+            </div>
             <div className="flex gap-2">
               <input
                 value={testPhone}
@@ -376,9 +399,9 @@ const WhatsAppTemplates = () => {
                 disabled={sendingTest}
                 className="px-3 py-2 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all disabled:opacity-40"
                 style={{
-                  background: "hsl(140 60% 50% / 0.15)",
-                  color: "hsl(140 60% 60%)",
-                  border: "1px solid hsl(140 60% 50% / 0.3)",
+                  background: testProvider === "render" ? "hsl(245 60% 55% / 0.15)" : "hsl(140 60% 50% / 0.15)",
+                  color: testProvider === "render" ? "hsl(245 60% 70%)" : "hsl(140 60% 60%)",
+                  border: `1px solid ${testProvider === "render" ? "hsl(245 60% 55% / 0.3)" : "hsl(140 60% 50% / 0.3)"}`,
                 }}
               >
                 <Send className="w-3.5 h-3.5" />
