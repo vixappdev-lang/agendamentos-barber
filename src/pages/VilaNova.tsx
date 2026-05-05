@@ -924,23 +924,30 @@ const VilaNova = () => {
       </footer>
 
       {/* ─── DIRECTIONS MODAL (MapLibre) ─── */}
-      <MapLibreDirections
-        open={directionsOpen}
-        onClose={() => setDirectionsOpen(false)}
-        address={settings.address || ""}
-        businessName={settings.business_name}
-      />
+      <Suspense fallback={null}>
+        {directionsOpen && (
+          <MapLibreDirections
+            open={directionsOpen}
+            onClose={() => setDirectionsOpen(false)}
+            address={settings.address || ""}
+            businessName={settings.business_name}
+          />
+        )}
+      </Suspense>
 
       {/* ─── ALL SERVICES MODAL ─── */}
-      <AllServicesModal
-        open={allServicesOpen}
-        onClose={() => setAllServicesOpen(false)}
-        services={services}
-        onPick={(s) => { setSelectedService(s); setCurrentStep(0); }}
-        selBg={selBg}
-        selColor={selColor}
-      />
-
+      <Suspense fallback={null}>
+        {allServicesOpen && (
+          <AllServicesModal
+            open={allServicesOpen}
+            onClose={() => setAllServicesOpen(false)}
+            services={services}
+            onPick={(s) => { setSelectedService(s); setCurrentStep(0); }}
+            selBg={selBg}
+            selColor={selColor}
+          />
+        )}
+      </Suspense>
       {/* Lightbox now rendered inside dynamic gallery block above */}
 
       {/* ─── BOOKING MODAL ─── */}
