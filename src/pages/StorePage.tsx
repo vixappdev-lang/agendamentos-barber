@@ -196,10 +196,7 @@ const StorePage = () => {
             <ShoppingBag className="w-7 h-7 opacity-60" />
           </div>
           <h1 className="text-2xl font-black mb-2">Loja indisponível</h1>
-          <p className="text-sm opacity-60 mb-6">Nossa loja online está temporariamente fora do ar.</p>
-          <button onClick={() => navigate("/")} className="px-5 py-3 rounded-xl text-sm font-bold" style={{ background: t.btnBg, color: t.btnColor }}>
-            Voltar
-          </button>
+          <p className="text-sm opacity-60">Nossa loja online está temporariamente fora do ar.</p>
         </div>
       </div>
     );
@@ -210,15 +207,9 @@ const StorePage = () => {
       {/* Header */}
       <header className="sticky top-0 z-40 w-full" style={{ background: t.headerBg, backdropFilter: "blur(20px)", borderBottom: `1px solid ${t.border}` }}>
         <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-10 xl:px-16 h-14 sm:h-16 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3 min-w-0">
-            <button onClick={() => navigate("/")} className="flex items-center gap-2 text-sm font-medium transition-colors hover:opacity-80 shrink-0" style={{ color: t.textSecondary }} aria-label="Voltar">
-              <ArrowLeft className="w-4 h-4" /> <span className="hidden sm:inline">Voltar</span>
-            </button>
-            <div className="w-px h-5 hidden sm:block" style={{ background: t.border }} />
-            <div className="flex items-center gap-2 min-w-0">
-              <ShoppingBag className="w-4 h-4 shrink-0" style={{ color: t.textLink }} />
-              <span className="text-sm font-bold truncate">{businessName}</span>
-            </div>
+          <div className="flex items-center gap-2 min-w-0">
+            <ShoppingBag className="w-4 h-4 shrink-0" style={{ color: t.textLink }} />
+            <span className="text-sm font-bold truncate">{businessName}</span>
           </div>
           <div className="flex items-center gap-2 shrink-0">
             <button onClick={() => setShowCart(true)} aria-label="Carrinho"
@@ -385,7 +376,7 @@ const StorePage = () => {
         </section>
       </main>
 
-      <footer className="w-full mt-4" style={{ background: t.cardBg, borderTop: `1px solid ${t.border}` }}>
+      <footer className="w-full mt-4 pb-[calc(96px+env(safe-area-inset-bottom))] sm:pb-0" style={{ background: t.cardBg, borderTop: `1px solid ${t.border}` }}>
         <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-10 xl:px-16 py-8 grid gap-6 md:grid-cols-[1.3fr_1fr_1fr]">
           <div>
             <div className="flex items-center gap-2 mb-2"><ShoppingBag className="w-4 h-4" style={{ color: t.textLink }} /><span className="text-sm font-black">{businessName}</span></div>
@@ -420,31 +411,33 @@ const StorePage = () => {
         style={{ background: t.headerBg, borderTop: `1px solid ${t.border}`, backdropFilter: "blur(20px)" }}>
         {[
           { id: "shop" as const, label: "Loja", icon: ShoppingBag, onClick: () => { setView("shop"); setActiveCategory("todos"); window.scrollTo({ top: 0, behavior: "smooth" }); } },
-          { id: "cart" as const, label: "Carrinho", icon: Package, onClick: () => setShowCart(true), badge: cartCount },
+          { id: "cart" as const, label: "Carrinho", icon: ShoppingBag, onClick: () => setShowCart(true), badge: cartCount },
           { id: "orders" as const, label: "Pedidos", icon: Truck, onClick: () => openOrders() },
           { id: "account" as const, label: "Conta", icon: User, onClick: () => openAccount() },
         ].map((it) => {
           const active = (it.id === "shop" && view === "shop") || (it.id === "account" && view === "account");
           return (
             <button key={it.id} onClick={it.onClick}
-              className="relative flex flex-col items-center justify-center gap-0.5 px-3 py-1.5 rounded-xl transition-all"
+              className="relative flex-1 flex flex-col items-center justify-center gap-0.5 px-2 py-1.5 rounded-xl transition-all"
               style={{ color: active ? t.textPrimary : t.textMuted }}>
-              <it.icon className="w-5 h-5" />
+              <span className="relative">
+                <it.icon className="w-5 h-5" />
+                {it.badge && it.badge > 0 ? (
+                  <span className="absolute -top-1.5 -right-2 min-w-[16px] h-[16px] px-1 rounded-full text-[9px] font-black flex items-center justify-center leading-none" style={{ background: t.btnBg, color: t.btnColor }}>{it.badge}</span>
+                ) : null}
+              </span>
               <span className="text-[10px] font-bold">{it.label}</span>
-              {it.badge && it.badge > 0 ? (
-                <span className="absolute top-0 right-1 min-w-[16px] h-[16px] px-1 rounded-full text-[9px] font-black flex items-center justify-center" style={{ background: t.btnBg, color: t.btnColor }}>{it.badge}</span>
-              ) : null}
             </button>
           );
         })}
       </nav>
 
-      {/* Floating cart — abre o drawer */}
+      {/* Floating cart — apenas em telas maiores (no mobile há bottom nav) */}
       <AnimatePresence>
         {cartCount > 0 && !showCart && (
           <motion.div initial={{ y: 80, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 80, opacity: 0 }}
             transition={{ type: "spring", damping: 22, stiffness: 280 }}
-            className="fixed bottom-4 sm:bottom-6 left-4 right-4 max-w-md sm:max-w-lg mx-auto z-40">
+            className="hidden sm:block fixed bottom-6 left-4 right-4 max-w-md sm:max-w-lg mx-auto z-40">
             <button onClick={() => setShowCart(true)}
               className="w-full flex items-center justify-between px-5 py-4 rounded-2xl font-bold text-sm transition-all hover:translate-y-[-1px] active:scale-[0.99]"
               style={{ background: t.btnBg, color: t.btnColor, boxShadow: "0 12px 32px hsl(0 0% 0% / 0.25)" }}>
