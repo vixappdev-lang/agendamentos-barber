@@ -135,7 +135,7 @@ const NotificationsBell = ({ email, iconColor = "hsl(0 0% 70%)" }: Props) => {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -8, scale: 0.96 }}
             transition={{ duration: 0.15 }}
-            className="absolute right-0 mt-2 w-[340px] sm:w-[380px] max-h-[500px] rounded-2xl shadow-2xl overflow-hidden z-50 flex flex-col"
+            className="fixed sm:absolute right-2 sm:right-0 left-2 sm:left-auto top-14 sm:top-auto sm:mt-2 sm:w-[380px] max-h-[70vh] sm:max-h-[500px] rounded-2xl shadow-2xl overflow-hidden z-[80] flex flex-col"
             style={{
               background: "hsl(220 25% 8%)",
               border: "1px solid hsl(0 0% 100% / 0.08)",

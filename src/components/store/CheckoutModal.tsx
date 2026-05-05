@@ -1,9 +1,8 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Truck, Store, QrCode, Copy, Check, Banknote, Tag, Loader2 } from "lucide-react";
+import { X, Truck, Store, QrCode, Banknote, Tag, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { useNavigate } from "react-router-dom";
 import { useThemeColors } from "@/hooks/useThemeColors";
 
 interface CartItem {
@@ -27,14 +26,11 @@ interface CheckoutModalProps {
 
 type DeliveryMode = "delivery" | "pickup";
 type PaymentMethod = "pix" | "delivery";
-type Step = "info" | "payment" | "confirmed";
 
 const CheckoutModal = ({
   items, onClose, onSuccess, mode, whatsappNumber, pixKey, pixType, prefill,
 }: CheckoutModalProps) => {
   const t = useThemeColors();
-  const navigate = useNavigate();
-  const [step, setStep] = useState<Step>("info");
   const [deliveryMode, setDeliveryMode] = useState<DeliveryMode>("pickup");
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("pix");
   const [form, setForm] = useState({
@@ -44,7 +40,6 @@ const CheckoutModal = ({
     address: "", number: "", complement: "", neighborhood: "", city: "",
     notes: "",
   });
-  const [copied, setCopied] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   // Cupom
@@ -60,11 +55,6 @@ const CheckoutModal = ({
   const subtotal = items.reduce((s, i) => s + i.price * i.quantity, 0);
   const discount = appliedCoupon?.discount || 0;
   const total = Math.max(0, subtotal - discount);
-
-  const goToOrders = () => {
-    onSuccess();
-    setTimeout(() => navigate("/membro?tab=orders"), 200);
-  };
 
   const applyCoupon = async () => {
     const code = couponInput.trim().toUpperCase();
@@ -177,39 +167,34 @@ const CheckoutModal = ({
 
     setSubmitting(false);
 
-    if (mode === "whatsapp") {
-      const itemsText = items.map((i) => `• ${i.quantity}x ${i.title} - R$ ${(i.price * i.quantity).toFixed(2)}`).join("\n");
-      const deliveryText = deliveryMode === "delivery"
-        ? `\n📍 ${form.address}, ${form.number}\n🏘️ ${form.neighborhood} — ${form.city}`
-        : "\n🏪 Retirada no local";
-      const payText = paymentMethod === "pix" ? "PIX" : "Na entrega";
-      const subtotalLine = appliedCoupon ? `💵 *Subtotal:* R$ ${subtotal.toFixed(2)}\n` : "";
-      const msg = `🛒 *Novo Pedido #${String(order.id).slice(0, 8)}*\n\n👤 ${form.name}\n📱 ${form.phone}\n\n📦 *Itens:*\n${itemsText}\n\n${subtotalLine}${couponLine ? couponLine + "\n" : ""}💰 *Total:* R$ ${total.toFixed(2)}\n💳 *Pagamento:* ${payText}${deliveryText}\n\n📝 ${form.notes || "—"}`;
-      if (whatsappNumber) window.open(`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(msg)}`, "_blank");
-      toast.success("Pedido salvo na sua conta!");
-      goToOrders();
-      return;
-    }
+    // Mensagem profissional pro WhatsApp pedindo PIX/forma de pagto
+    const itemsText = items.map((i) => `• ${i.quantity}x ${i.title} — R$ ${(i.price * i.quantity).toFixed(2).replace(".", ",")}`).join("\n");
+    const deliveryText = deliveryMode === "delivery"
+      ? `📍 *Entrega:* ${form.address}, ${form.number}${form.complement ? " — " + form.complement : ""}\n🏘️ ${form.neighborhood}${form.city ? " · " + form.city : ""}`
+      : "🏪 *Retirada no local*";
+    const payText = paymentMethod === "pix"
+      ? "PIX (aguardando chave para pagamento)"
+      : "Pagamento na entrega/retirada";
+    const subtotalLine = appliedCoupon ? `Subtotal: R$ ${subtotal.toFixed(2).replace(".", ",")}\n` : "";
+    const couponMsgLine = appliedCoupon ? `🎟️ Cupom: *${appliedCoupon.code}* (−R$ ${discount.toFixed(2).replace(".", ",")})\n` : "";
+    const greeting = paymentMethod === "pix"
+      ? `Oi! Acabei de finalizar minha compra na loja e gostaria de pagar via *PIX*. Pode me enviar a chave por favor?`
+      : `Oi! Acabei de finalizar minha compra na loja e vou pagar *na entrega/retirada*. Pode confirmar?`;
 
-    if (paymentMethod === "delivery") {
-      setStep("confirmed");
-      setTimeout(goToOrders, 1500);
+    const msg = `${greeting}\n\n🛒 *Pedido #${String(order.id).slice(0, 8).toUpperCase()}*\n👤 ${form.name}\n📱 ${form.phone}\n\n📦 *Itens:*\n${itemsText}\n\n${subtotalLine}${couponMsgLine}💰 *Total: R$ ${total.toFixed(2).replace(".", ",")}*\n💳 ${payText}\n\n${deliveryText}${form.notes ? `\n\n📝 Obs: ${form.notes}` : ""}\n\nObrigado! 🙏`;
+
+    setSubmitting(false);
+
+    const target = whatsappNumber ? whatsappNumber.replace(/\D/g, "") : "";
+    if (target) {
+      window.open(`https://wa.me/${target}?text=${encodeURIComponent(msg)}`, "_blank");
     } else {
-      setStep("payment");
+      // Sem número configurado, copia mensagem
+      try { await navigator.clipboard.writeText(msg); } catch {}
+      toast.error("Número da loja não configurado. Mensagem copiada.");
     }
-  };
-
-  const handleCopyPix = () => {
-    navigator.clipboard.writeText(pixKey);
-    setCopied(true);
-    toast.success("Chave PIX copiada!");
-    setTimeout(() => setCopied(false), 2000);
-  };
-
-  const handleConfirmPayment = () => {
-    setStep("confirmed");
-    toast.success("Pedido realizado! 🎉");
-    setTimeout(goToOrders, 1500);
+    toast.success("Pedido enviado! Continue no WhatsApp.");
+    onSuccess();
   };
 
   const labelCls = "text-[10px] font-semibold uppercase tracking-wider mb-1 block";
@@ -231,14 +216,12 @@ const CheckoutModal = ({
         onClick={(e) => e.stopPropagation()}>
 
         <div className="flex items-center justify-between">
-          <h2 className="text-base font-bold" style={{ color: t.textPrimary }}>
-            {step === "info" ? "Finalizar Pedido" : step === "payment" ? "Pagamento PIX" : "Pedido Confirmado!"}
-          </h2>
+          <h2 className="text-base font-bold" style={{ color: t.textPrimary }}>Finalizar Pedido</h2>
           <button onClick={onClose}><X className="w-5 h-5" style={{ color: t.textMuted }} /></button>
         </div>
 
-        {step === "info" && (
           <div className="space-y-3">
+
             <div className="p-3 rounded-xl space-y-2" style={{ background: t.cardBgSubtle, border: `1px solid ${t.borderSubtle}` }}>
               <p className="text-[10px] uppercase tracking-wider font-semibold" style={{ color: t.textMuted }}>Resumo</p>
               {items.map((item) => (
@@ -407,46 +390,10 @@ const CheckoutModal = ({
             <button onClick={handleSubmit} disabled={submitting}
               className="w-full py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all disabled:opacity-50"
               style={{ background: t.btnBg, color: t.btnColor }}>
-              {submitting ? "Enviando..." : mode === "whatsapp" ? "Enviar pelo WhatsApp" : "Confirmar Pedido"}
+              {submitting ? "Enviando..." : "Enviar pelo WhatsApp"}
             </button>
           </div>
-        )}
 
-        {step === "payment" && (
-          <div className="space-y-4 text-center">
-            <div className="w-16 h-16 rounded-2xl mx-auto flex items-center justify-center" style={{ background: t.accentPurpleBg }}>
-              <QrCode className="w-8 h-8" style={{ color: t.accentPurple }} />
-            </div>
-            <div>
-              <p className="text-sm mb-1" style={{ color: t.textMuted }}>Valor a pagar:</p>
-              <p className="text-2xl font-bold" style={{ color: t.accentPurple }}>R$ {total.toFixed(2)}</p>
-            </div>
-            <div className="p-3 rounded-xl text-left" style={{ background: t.cardBgSubtle, border: `1px solid ${t.borderSubtle}` }}>
-              <p className="text-[10px] uppercase tracking-wider mb-1" style={{ color: t.textMuted }}>Chave PIX ({pixType})</p>
-              <div className="flex items-center gap-2">
-                <p className="text-sm font-mono flex-1 truncate" style={{ color: t.textPrimary }}>{pixKey || "Não configurada"}</p>
-                {pixKey && (
-                  <button onClick={handleCopyPix} className="p-2 rounded-lg shrink-0" style={{ background: t.accentPurpleBg }}>
-                    {copied ? <Check className="w-4 h-4" style={{ color: "hsl(140 60% 55%)" }} /> : <Copy className="w-4 h-4" style={{ color: t.accentPurple }} />}
-                  </button>
-                )}
-              </div>
-            </div>
-            <button onClick={handleConfirmPayment}
-              className="w-full py-3 rounded-xl font-bold text-sm transition-all"
-              style={{ background: "hsl(140 60% 45%)", color: "white" }}>
-              ✅ Já paguei
-            </button>
-          </div>
-        )}
-
-        {step === "confirmed" && (
-          <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="text-center space-y-3 py-4">
-            <div className="text-5xl">🎉</div>
-            <h3 className="text-lg font-bold" style={{ color: t.textPrimary }}>Pedido Realizado!</h3>
-            <p className="text-sm" style={{ color: t.textMuted }}>Acompanhe na área do cliente.</p>
-          </motion.div>
-        )}
       </motion.div>
     </motion.div>
   );

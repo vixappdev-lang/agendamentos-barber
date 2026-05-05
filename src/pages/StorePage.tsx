@@ -7,7 +7,7 @@ import OrderTracker from "@/components/store/OrderTracker";
 import AuthRequiredModal from "@/components/store/AuthRequiredModal";
 import ProductDetailModal from "@/components/store/ProductDetailModal";
 import CartDrawer from "@/components/store/CartDrawer";
-import StoreAccountModal from "@/components/store/StoreAccountModal";
+import AccountInline from "@/components/store/AccountInline";
 import { useCart } from "@/hooks/useCart";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
@@ -51,7 +51,6 @@ const StorePage = () => {
   const [showCheckout, setShowCheckout] = useState(false);
   const [showAuthGate, setShowAuthGate] = useState(false);
   const [showOrderTracker, setShowOrderTracker] = useState(false);
-  const [showAccount, setShowAccount] = useState(false);
   const [authAfter, setAuthAfter] = useState<"checkout" | "account">("checkout");
   const [showCart, setShowCart] = useState(false);
   const [detailProduct, setDetailProduct] = useState<DBProduct | null>(null);
@@ -66,6 +65,7 @@ const StorePage = () => {
   const [categoryMap, setCategoryMap] = useState<Record<string, { label: string; sort: number; icon?: string }>>({});
   const [activeCategory, setActiveCategory] = useState("todos");
   const [heroIndex, setHeroIndex] = useState(0);
+  const [view, setView] = useState<"shop" | "account">("shop");
 
   const formatCategoryLabel = (key: string) =>
     categoryMap[key]?.label ||
@@ -178,7 +178,8 @@ const StorePage = () => {
       return;
     }
     setUser(session.user);
-    setShowAccount(true);
+    setView("account");
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const userPrefill = user ? {
@@ -220,11 +221,22 @@ const StorePage = () => {
             </div>
           </div>
           <div className="flex items-center gap-2 shrink-0">
+            <button onClick={() => setShowCart(true)} aria-label="Carrinho"
+              className="relative inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-[11px] font-semibold transition-all"
+              style={{ background: t.btnGhostBg, color: t.btnGhostColor, border: `1px solid ${t.btnGhostBorder}` }}>
+              <ShoppingBag className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Carrinho</span>
+              {cartCount > 0 && (
+                <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-black flex items-center justify-center" style={{ background: t.btnBg, color: t.btnColor }}>
+                  {cartCount}
+                </span>
+              )}
+            </button>
             <button onClick={openAccount}
               className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-[11px] font-semibold transition-all"
-              style={{ background: t.btnGhostBg, color: t.btnGhostColor, border: `1px solid ${t.btnGhostBorder}` }}>
+              style={{ background: view === "account" ? t.btnBg : t.btnGhostBg, color: view === "account" ? t.btnColor : t.btnGhostColor, border: `1px solid ${t.btnGhostBorder}` }}>
               <User className="w-3.5 h-3.5" />
-              <span>Conta</span>
+              <span className="hidden sm:inline">Conta</span>
             </button>
             <button onClick={openOrders}
               className="hidden sm:inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-[11px] font-semibold transition-all"
@@ -236,8 +248,13 @@ const StorePage = () => {
         </div>
       </header>
 
+      {view === "account" && user ? (
+        <AccountInline user={user} t={t} onBack={() => setView("shop")} onSignedOut={() => { setUser(null); setView("shop"); }} />
+      ) : (
+      <>
       {/* Hero compacto */}
       <section className="relative w-full">
+
         <div className="relative w-full h-[200px] sm:h-[260px] lg:h-[320px] overflow-hidden">
           <AnimatePresence mode="wait">
             <motion.img key={currentHero?.id || "hero"} src={currentHero?.image_url || storeHero} alt={currentHero?.title || businessName} className="absolute inset-0 w-full h-full object-cover" fetchPriority="high"
@@ -395,6 +412,32 @@ const StorePage = () => {
           </div>
         </div>
       </footer>
+      </>
+      )}
+
+      {/* Bottom nav mobile */}
+      <nav className="sm:hidden fixed bottom-0 inset-x-0 z-[60] flex items-center justify-around px-2 pt-2 pb-[max(8px,env(safe-area-inset-bottom))]"
+        style={{ background: t.headerBg, borderTop: `1px solid ${t.border}`, backdropFilter: "blur(20px)" }}>
+        {[
+          { id: "shop" as const, label: "Loja", icon: ShoppingBag, onClick: () => { setView("shop"); setActiveCategory("todos"); window.scrollTo({ top: 0, behavior: "smooth" }); } },
+          { id: "cart" as const, label: "Carrinho", icon: Package, onClick: () => setShowCart(true), badge: cartCount },
+          { id: "orders" as const, label: "Pedidos", icon: Truck, onClick: () => openOrders() },
+          { id: "account" as const, label: "Conta", icon: User, onClick: () => openAccount() },
+        ].map((it) => {
+          const active = (it.id === "shop" && view === "shop") || (it.id === "account" && view === "account");
+          return (
+            <button key={it.id} onClick={it.onClick}
+              className="relative flex flex-col items-center justify-center gap-0.5 px-3 py-1.5 rounded-xl transition-all"
+              style={{ color: active ? t.textPrimary : t.textMuted }}>
+              <it.icon className="w-5 h-5" />
+              <span className="text-[10px] font-bold">{it.label}</span>
+              {it.badge && it.badge > 0 ? (
+                <span className="absolute top-0 right-1 min-w-[16px] h-[16px] px-1 rounded-full text-[9px] font-black flex items-center justify-center" style={{ background: t.btnBg, color: t.btnColor }}>{it.badge}</span>
+              ) : null}
+            </button>
+          );
+        })}
+      </nav>
 
       {/* Floating cart — abre o drawer */}
       <AnimatePresence>
@@ -451,19 +494,9 @@ const StorePage = () => {
               const { data: { session } } = await supabase.auth.getSession();
               if (session?.user) setUser(session.user);
               setShowAuthGate(false);
-              if (authAfter === "account") setShowAccount(true);
+              if (authAfter === "account") { setView("account"); window.scrollTo({ top: 0 }); }
               else setShowCheckout(true);
             }}
-          />
-        )}
-      </AnimatePresence>
-
-      <AnimatePresence>
-        {showAccount && user && (
-          <StoreAccountModal
-            user={user}
-            onClose={() => setShowAccount(false)}
-            onSignedOut={() => { setUser(null); setShowAccount(false); }}
           />
         )}
       </AnimatePresence>
