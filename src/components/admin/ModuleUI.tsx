@@ -18,9 +18,9 @@ export const ModuleSection = ({
   children: ReactNode;
 }) => (
   <motion.section
-    initial={{ opacity: 0, y: 8 }}
+    initial={false}
     animate={{ opacity: 1, y: 0 }}
-    transition={{ duration: 0.25 }}
+    transition={{ duration: 0.2 }}
     className="rounded-2xl p-5 sm:p-6"
     style={{
       background: "hsl(0 0% 100% / 0.025)",

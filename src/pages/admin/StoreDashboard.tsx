@@ -46,7 +46,7 @@ const StoreDashboard = () => {
       </div>
 
       {/* Tab content */}
-      <motion.div key={activeTab} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }}>
+      <motion.div key={activeTab} initial={false} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.15 }}>
         {activeTab === "kpis" && <StoreKPIs />}
         {activeTab === "products" && <Products />}
         {activeTab === "categories" && <Categories />}
